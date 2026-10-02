@@ -80,7 +80,7 @@
                                    Description="The NVIDIA driver limiter for the Roblox player. Zero means no limit. Same setting as on the NVIDIA tab.">
                 <controls:OptionControl Header="Frames per second" Description="{Binding FrameLimitStatus, Mode=OneWay}">
                     <StackPanel Orientation="Horizontal">
-                        <ui:NumberBox IntegersOnly="True" Width="110" Min="0" Max="1000" Value="{Binding DriverFrameLimit, Mode=TwoWay}" IsEnabled="{Binding FrameLimiterAvailable, Mode=OneWay}" />
+                        <ui:NumberBox ClearButtonEnabled="False" IntegersOnly="True" Width="140" Min="0" Max="1000" Value="{Binding DriverFrameLimit, Mode=TwoWay}" IsEnabled="{Binding FrameLimiterAvailable, Mode=OneWay}" />
                         <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaAccentButton}" Content="Apply" Command="{Binding ApplyFrameLimitCommand}" IsEnabled="{Binding FrameLimiterAvailable, Mode=OneWay}" />
                         <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Menu_ClassicClient_Refresh}" Command="{Binding RefreshFrameLimitCommand}" IsEnabled="{Binding FrameLimiterAvailable, Mode=OneWay}">
                             <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14" />

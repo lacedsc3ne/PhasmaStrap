@@ -335,7 +335,7 @@
                         <CheckBox Margin="0,6,0,0" Content="{x:Static resources:Strings.Menu_Integrations_RunMinimized}" IsChecked="{Binding SelectedCustomIntegration.RunMinimized}" />
 
                         <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Menu_Integrations_LaunchDelayMs}" />
-                        <ui:NumberBox IntegersOnly="True" HorizontalAlignment="Left" Width="140" Min="0" Max="30000" Value="{Binding SelectedCustomIntegration.Delay}" />
+                        <ui:NumberBox ClearButtonEnabled="False" IntegersOnly="True" HorizontalAlignment="Left" Width="140" Min="0" Max="30000" Value="{Binding SelectedCustomIntegration.Delay}" />
                     </StackPanel>
                 </StackPanel>
             </controls:SettingsCard>

@@ -88,7 +88,7 @@
                 <controls:CardColumns>
                     <controls:SettingsCard Header="Game details">
                         <controls:OptionControl Header="{x:Static resources:Strings.Menu_Nvidia_BackgroundFrameRateLimit_Title}" Description="Only while Roblox is unfocused. 0 is uncapped.">
-                            <ui:NumberBox IntegersOnly="True" Width="90" Min="0" Max="1000" Value="{Binding BackgroundFrameRateLimit, Mode=TwoWay}" />
+                            <ui:NumberBox ClearButtonEnabled="False" IntegersOnly="True" Width="140" Min="0" Max="1000" Value="{Binding BackgroundFrameRateLimit, Mode=TwoWay}" />
                         </controls:OptionControl>
 
                         <controls:OptionControl Header="{x:Static resources:Strings.Menu_Nvidia_BenchmarkOverlay_Title}" ToolTip="{x:Static resources:Strings.Menu_Nvidia_BenchmarkOverlay_Description}">

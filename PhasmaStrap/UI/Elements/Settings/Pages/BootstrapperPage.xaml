@@ -324,7 +324,7 @@
                 </controls:OptionControl>
 
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_ServerBrowser_MaxCandidates_Title}" Description="{x:Static resources:Strings.Menu_ServerBrowser_MaxCandidates_Description}">
-                    <ui:NumberBox IntegersOnly="True" Width="110" Min="8" Max="64" Value="{Binding MatchmakerMaxCandidates, Mode=TwoWay}" />
+                    <ui:NumberBox ClearButtonEnabled="False" IntegersOnly="True" Width="140" Min="8" Max="64" Value="{Binding MatchmakerMaxCandidates, Mode=TwoWay}" />
                 </controls:OptionControl>
 
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Behaviour_Matchmaker_JoinApi_Title}" Description="Change only if joins stop working">
@@ -390,11 +390,11 @@
                 </controls:OptionControl>
 
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Behaviour_MaxAttempts}" Description="{x:Static resources:Strings.Menu_Behaviour_HowManyTimesRetryBeforeGiving}" IsEnabled="{Binding InnerContent.IsChecked, ElementName=AutoRejoinOption, Mode=OneWay}">
-                    <ui:NumberBox IntegersOnly="True" Width="110" Min="1" Max="10" Value="{Binding AutoRejoinMaxAttempts, Mode=TwoWay}" />
+                    <ui:NumberBox ClearButtonEnabled="False" IntegersOnly="True" Width="140" Min="1" Max="10" Value="{Binding AutoRejoinMaxAttempts, Mode=TwoWay}" />
                 </controls:OptionControl>
 
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Behaviour_DelayBetweenAttempts}" Description="Seconds" IsEnabled="{Binding InnerContent.IsChecked, ElementName=AutoRejoinOption, Mode=OneWay}">
-                    <ui:NumberBox IntegersOnly="True" Width="110" Min="1" Max="60" Value="{Binding AutoRejoinDelaySeconds, Mode=TwoWay}" />
+                    <ui:NumberBox ClearButtonEnabled="False" IntegersOnly="True" Width="140" Min="1" Max="60" Value="{Binding AutoRejoinDelaySeconds, Mode=TwoWay}" />
                 </controls:OptionControl>
             </controls:SettingsCard>
 

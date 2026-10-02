@@ -210,6 +210,10 @@ namespace PhasmaStrap.Models.Persistable
         public int MatchmakerGamejoinApiVersion { get; set; } = 1;
 
         public bool AutoRejoinOnCrash { get; set; } = false;
+        public bool AutoRejoinOnDisconnect { get; set; } = false;
+        public bool SoftKeyEnabled { get; set; } = false;
+        public string SoftKeyProfile { get; set; } = "WASD";
+        public bool ShowServerUptime { get; set; } = true;
         public int AutoRejoinMaxAttempts { get; set; } = 3;
         public int AutoRejoinDelaySeconds { get; set; } = 5;
 

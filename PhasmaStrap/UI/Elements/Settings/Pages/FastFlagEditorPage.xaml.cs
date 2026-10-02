@@ -1656,6 +1656,46 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
 
         private void DeleteButton_Click(object sender, RoutedEventArgs e) => DeleteSelected();
 
+        private void CleanList_Click(object sender, RoutedEventArgs e)
+        {
+            FlagProfile? profile = Profile;
+            List<string> ignored = PhasmaStrap.Utility.FlagAllowlist.Ignored(profile is null ? App.FastFlags.Prop.Keys : profile.Flags.Keys);
+
+            if (ignored.Count == 0)
+            {
+                Frontend.ShowMessageBox($"Every flag here is on Roblox's allowlist (as of {PhasmaStrap.Utility.FlagAllowlist.AsOf}), so there is nothing to remove.", MessageBoxImage.Information);
+                return;
+            }
+
+            string sample = string.Join("\n", ignored.Take(8)) + (ignored.Count > 8 ? $"\n...and {ignored.Count - 8} more" : "");
+
+            var answer = Frontend.ShowMessageBox(
+                $"{ignored.Count} flag(s) here are not on Roblox's allowlist (as of {PhasmaStrap.Utility.FlagAllowlist.AsOf}), so the Roblox player ignores them:\n\n{sample}\n\nRemove them?",
+                MessageBoxImage.Warning,
+                MessageBoxButton.YesNo);
+
+            if (answer != MessageBoxResult.Yes)
+                return;
+
+            foreach (string name in ignored)
+            {
+                if (profile is null)
+                    App.FastFlags.SetValue(name, null);
+                else
+                    profile.Flags.Remove(name);
+            }
+
+            if (profile is not null)
+                MarkProfilesEdited();
+
+            App.Logger.WriteLine("FastFlagEditorPage", $"Clean list removed {ignored.Count} flag(s) Roblox ignores from {(profile is null ? "your flags" : $"profile {profile.Name}")}");
+
+            ReloadList();
+            RefreshScopes();
+            UpdateScopeUi();
+            UpdateEmptyText(Profile);
+        }
+
         private void DeleteSelected() => DeleteRows(DataGrid.SelectedItems.OfType<FlagRow>().ToList());
 
         private void DeleteRows(List<FlagRow> doomed)

@@ -122,7 +122,9 @@ namespace PhasmaStrap.UI.Elements.ContextMenu
             string where = region.Length > 0 ? region : data.MachineAddressValid ? data.MachineAddress : "address pending";
             int ping = PhasmaStrap.Utility.ServerPingMonitor.LatestMs;
 
-            ServerTextBlock.Text = $"{data.ServerType} · {where}" + (ping >= 0 ? $" · {ping} ms" : "");
+            string uptime = App.Settings.Prop.ShowServerUptime ? data.ServerUptimeText : "";
+
+            ServerTextBlock.Text = $"{data.ServerType} · {where}" + (ping >= 0 ? $" · {ping} ms" : "") + (uptime.Length > 0 ? $" · up {uptime}" : "");
         }
 
         private async Task UpdateCurrentGameAsync(ActivityData data)

@@ -323,6 +323,13 @@
                             <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_ExportJson}" />
                         </StackPanel>
                     </Button>
+                    <Button Margin="6,0,0,6" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="CleanList_Click"
+                            ToolTip="Remove the flags Roblox ignores, keeping only the ones on its allowlist">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Broom24" FontSize="14" Margin="0,0,6,0" />
+                            <TextBlock Text="Clean list" />
+                        </StackPanel>
+                    </Button>
                     <Button x:Name="TurnOffButton" Margin="6,0,0,6" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="TurnOffButton_Click" Visibility="Collapsed"
                             ToolTip="{x:Static resources:Strings.Menu_FastFlagEditor_PickFlagsFromOwnListProfile}">
                         <StackPanel Orientation="Horizontal">

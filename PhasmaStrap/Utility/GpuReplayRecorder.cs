@@ -94,6 +94,7 @@ namespace PhasmaStrap.Utility
         {
             public IMFSinkWriter? Writer;
             public IntPtr ByteStream;
+            public MemoryComStream? Memory;
             public int Stream;
             public int SourceWidth, SourceHeight, Width, Height, Fps, Bitrate;
             public long StartTicks = -1, EndTicks;
@@ -115,6 +116,9 @@ namespace PhasmaStrap.Utility
                     Marshal.Release(ByteStream);
                     ByteStream = IntPtr.Zero;
                 }
+
+                Memory?.Release();
+                Memory = null;
             }
         }
 
@@ -511,7 +515,7 @@ namespace PhasmaStrap.Utility
                 try
                 {
                     step = "memory stream";
-                    segment.ByteStream = MfInterop.CreateMemoryByteStream();
+                    segment.ByteStream = MfInterop.CreateMemoryByteStream(out segment.Memory);
 
                     using IMFAttributes attributes = MediaFactory.MFCreateAttributes(4);
                     MfInterop.SetUInt32(attributes, MfInterop.MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, 1);

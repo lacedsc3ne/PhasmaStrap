@@ -19,6 +19,8 @@ namespace PhasmaStrap.Integrations
         private const string GameJoiningUDMUXPattern         = @"UDMUX Address = ([0-9\.]+), Port = [0-9]+ \| RCC Server Address = ([0-9\.]+), Port = [0-9]+";
         private const string GameJoinedEntryPattern          = @"serverId: ([0-9\.]+)\|[0-9]+";
         private const string GameMessageEntryPattern         = @"\[BloxstrapRPC\] (.*)";
+        private const string GameDisconnectReasonPattern     = @"(?:Sending disconnect with reason|Disconnection Notification\. Reason): (\d+)";
+        private const string GameServerStartPattern          = @"Server Prefix: .+_(\d{8}T\d{6}Z)_RCC_";
 
         private int _logEntriesRead = 0;
         private bool _teleportMarker = false;
@@ -32,6 +34,17 @@ namespace PhasmaStrap.Integrations
         public event EventHandler? OnLogOpen;
         public event EventHandler? OnAppClose;
         public event EventHandler<Message>? OnRPCMessage;
+        public event EventHandler<DroppedConnection>? OnConnectionDropped;
+        public event EventHandler? OnServerStartKnown;
+
+        public sealed class DroppedConnection
+        {
+            public int Reason { get; init; }
+            public ActivityData Game { get; init; } = new();
+        }
+
+        private static readonly int[] DroppedReasons = { 1, 277, 278 };
+        private int _lastDropReported = -1;
 
         private DateTime LastRPCRequest;
 
@@ -127,6 +140,18 @@ namespace PhasmaStrap.Integrations
             }
 
             string logMessage = entry[(logMessageIdx + 1)..];
+
+            if (logMessage.Contains("isconnect") && Regex.Match(logMessage, GameDisconnectReasonPattern) is { Success: true } dropped)
+                ReportDisconnect(int.Parse(dropped.Groups[1].Value));
+
+            if (InGame && logMessage.Contains("Server Prefix:") && Regex.Match(logMessage, GameServerStartPattern) is { Success: true } started
+                && DateTime.TryParseExact(started.Groups[1].Value, "yyyyMMdd'T'HHmmss'Z'", System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out DateTime serverStart))
+            {
+                Data.ServerStartedUtc = serverStart;
+                App.Logger.WriteLine(LOG_IDENT, $"Server has been up since {serverStart:u}");
+                OnServerStartKnown?.Invoke(this, EventArgs.Empty);
+            }
 
             if (logMessage.StartsWith(GameLeavingEntry))
             {
@@ -329,6 +354,27 @@ namespace PhasmaStrap.Integrations
                     LastRPCRequest = DateTime.Now;
                 }
             }
+        }
+
+        private void ReportDisconnect(int reason)
+        {
+            const string LOG_IDENT = "ActivityWatcher::ReportDisconnect";
+
+            ActivityData? game = InGame && Data.PlaceId != 0
+                ? Data
+                : History.FirstOrDefault(past => past.TimeLeft is DateTime left && (DateTime.Now - left).TotalSeconds < 15);
+
+            App.Logger.WriteLine(LOG_IDENT, $"Roblox gave disconnect reason {reason}{(game is null ? "" : $" for {game.PlaceId}/{game.JobId}")}");
+
+            if (game is null || !DroppedReasons.Contains(reason))
+                return;
+
+            int stamp = HashCode.Combine(game.PlaceId, game.JobId, game.TimeJoined);
+            if (stamp == _lastDropReported)
+                return;
+
+            _lastDropReported = stamp;
+            OnConnectionDropped?.Invoke(this, new DroppedConnection { Reason = reason, Game = game });
         }
 
         private void LeaveCurrentGame(string logIdent)

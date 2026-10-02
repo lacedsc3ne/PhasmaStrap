@@ -5,7 +5,15 @@ namespace PhasmaStrap.Utility
 {
     internal sealed class MemoryComStream : IStream
     {
-        private const int BlockSize = 256 * 1024;
+        private const int BlockSize = 64 * 1024;
+        private const int MaxSpareBlocks = 1024;
+
+        private static readonly System.Collections.Concurrent.ConcurrentBag<byte[]> Spare = new();
+        private static long _blocksInUse;
+
+        public static long BytesInUse => Interlocked.Read(ref _blocksInUse) * BlockSize;
+
+        public static long BytesSpare => (long)Spare.Count * BlockSize;
 
         private readonly object _lock = new();
         private readonly List<byte[]> _blocks = new();
@@ -20,7 +28,28 @@ namespace PhasmaStrap.Utility
         private void EnsureCapacity(long size)
         {
             while ((long)_blocks.Count * BlockSize < size)
-                _blocks.Add(new byte[BlockSize]);
+            {
+                _blocks.Add(Spare.TryTake(out byte[]? block) ? block : new byte[BlockSize]);
+                Interlocked.Increment(ref _blocksInUse);
+            }
+        }
+
+        public void Release()
+        {
+            lock (_lock)
+            {
+                foreach (byte[] block in _blocks)
+                {
+                    Interlocked.Decrement(ref _blocksInUse);
+
+                    if (Spare.Count < MaxSpareBlocks)
+                        Spare.Add(block);
+                }
+
+                _blocks.Clear();
+                _length = 0;
+                _position = 0;
+            }
         }
 
         public void Read(byte[] pv, int cb, IntPtr pcbRead)

@@ -165,6 +165,16 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             ReplayStatusChanged();
         }
 
+        public bool RobloxRecordingBlocked
+        {
+            get => PhasmaStrap.Utility.RobloxRecording.Blocked;
+            set
+            {
+                PhasmaStrap.Utility.RobloxRecording.Set(value);
+                OnPropertyChanged(nameof(RobloxRecordingBlocked));
+            }
+        }
+
         public bool InstantReplayEnabled
         {
             get => App.Settings.Prop.InstantReplayEnabled;

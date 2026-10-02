@@ -549,6 +549,8 @@ namespace PhasmaStrap
             const string LOG_IDENT = "LaunchHandler::LaunchWatcher";
 
             Utility.ProcessName.Set("PhasmaStrap Watcher");
+            Utility.MemoryReport.Track("replay buffer", () => Utility.MemoryComStream.BytesInUse);
+            Utility.MemoryReport.Track("replay spare", () => Utility.MemoryComStream.BytesSpare);
             Utility.MemoryReport.Start(trimWhenIdle: false);
 
             var watcher = new Watcher();

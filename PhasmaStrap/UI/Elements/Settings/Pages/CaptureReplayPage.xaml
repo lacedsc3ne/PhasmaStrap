@@ -79,6 +79,10 @@
                     <ui:ToggleSwitch IsChecked="{Binding InstantReplayEnabled, Mode=TwoWay}" />
                 </controls:OptionControl>
 
+                <controls:OptionControl Header="Turn off Roblox's own recorder" Description="Stops Roblox saving its recordings to your Videos folder, so its record hotkey does nothing. Anything already in that folder is kept">
+                    <ui:ToggleSwitch IsChecked="{Binding RobloxRecordingBlocked, Mode=TwoWay}" />
+                </controls:OptionControl>
+
                 <controls:OptionControl Header="Save hotkey" Description="Writes the last few seconds to a clip">
                     <StackPanel Orientation="Horizontal">
                         <!--  Uid="Capture" and Tag are used by the code behind to keep listening when this is clicked  -->

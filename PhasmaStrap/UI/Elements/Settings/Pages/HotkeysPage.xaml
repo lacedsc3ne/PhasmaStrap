@@ -165,6 +165,17 @@
             </controls:SettingsCard>
 
             <controls:SettingsCard controls:CardColumns.FullRow="True"
+                                   Header="Soft Key"
+                                   Description="When you hold two opposite movement keys, the one you pressed last wins instead of cancelling out. Only acts while Roblox is the window in front, and starts with your next launch.">
+                <controls:OptionControl Header="Resolve opposite keys" Description="Also known as SOCD or snap tap. Some games count this as an unfair advantage, so check their rules">
+                    <ui:ToggleSwitch IsChecked="{Binding SoftKeyEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
+                <controls:OptionControl Header="Movement keys" Description="The layout you move with">
+                    <ComboBox Padding="10,5,10,5" MinWidth="140" ItemsSource="{Binding SoftKeyProfiles, Mode=OneTime}" SelectedItem="{Binding SoftKeyProfile, Mode=TwoWay}" />
+                </controls:OptionControl>
+            </controls:SettingsCard>
+
+            <controls:SettingsCard controls:CardColumns.FullRow="True"
                                    Header="Keyboard map"
                                    Description="What your bindings take up. Hover a coloured key to see which hotkey uses it.">
                 <controls:SettingsCard.HeaderContent>

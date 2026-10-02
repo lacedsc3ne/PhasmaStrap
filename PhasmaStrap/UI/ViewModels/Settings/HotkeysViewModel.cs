@@ -184,6 +184,28 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
     public class HotkeysViewModel : NotifyPropertyChangedViewModel
     {
+        public bool SoftKeyEnabled
+        {
+            get => App.Settings.Prop.SoftKeyEnabled;
+            set
+            {
+                App.Settings.Prop.SoftKeyEnabled = value;
+                OnPropertyChanged(nameof(SoftKeyEnabled));
+            }
+        }
+
+        public string[] SoftKeyProfiles { get; } = PhasmaStrap.Integrations.SoftKey.ProfileNames;
+
+        public string SoftKeyProfile
+        {
+            get => App.Settings.Prop.SoftKeyProfile;
+            set
+            {
+                App.Settings.Prop.SoftKeyProfile = value ?? "WASD";
+                OnPropertyChanged(nameof(SoftKeyProfile));
+            }
+        }
+
         public HotkeysViewModel()
         {
             foreach (HotkeyRow row in Hotkeys)

@@ -41,6 +41,26 @@ namespace PhasmaStrap.Models.Entities
 
         public DateTime TimeJoined { get; set; }
 
+        public DateTime? ServerStartedUtc { get; set; }
+
+        public string ServerUptimeText
+        {
+            get
+            {
+                if (ServerStartedUtc is not DateTime started)
+                    return "";
+
+                TimeSpan up = DateTime.UtcNow - started;
+
+                if (up < TimeSpan.Zero)
+                    return "";
+
+                return up.TotalDays >= 1 ? $"{(int)up.TotalDays}d {up.Hours}h"
+                    : up.TotalHours >= 1 ? $"{(int)up.TotalHours}h {up.Minutes}m"
+                    : $"{Math.Max(1, (int)up.TotalMinutes)}m";
+            }
+        }
+
         public DateTime? TimeLeft { get; set; }
 
         public string RPCLaunchData { get; set; } = string.Empty;

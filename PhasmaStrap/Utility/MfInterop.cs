@@ -90,9 +90,10 @@ namespace PhasmaStrap.Utility
         [UnmanagedFunctionPointer(CallingConvention.StdCall)] private delegate int GetLengthFn(IntPtr self, out ulong length);
         [UnmanagedFunctionPointer(CallingConvention.StdCall)] private delegate int SetPositionFn(IntPtr self, ulong position);
 
-        public static IntPtr CreateMemoryByteStream()
+        public static IntPtr CreateMemoryByteStream(out MemoryComStream memory)
         {
-            IntPtr stream = Marshal.GetComInterfaceForObject(new MemoryComStream(), typeof(System.Runtime.InteropServices.ComTypes.IStream));
+            memory = new MemoryComStream();
+            IntPtr stream = Marshal.GetComInterfaceForObject(memory, typeof(System.Runtime.InteropServices.ComTypes.IStream));
 
             try
             {

@@ -372,6 +372,14 @@
                     <ui:ToggleSwitch IsChecked="{Binding AutoRejoinOnCrash, Mode=TwoWay}" />
                 </controls:OptionControl>
 
+                <controls:OptionControl Header="Rejoin after a dropped connection" Description="When Roblox kicks you for being idle or the connection is lost, join the same server again">
+                    <ui:ToggleSwitch IsChecked="{Binding AutoRejoinOnDisconnect, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="Show how long the server has been up" Description="Added to the server region notification and the tray menu">
+                    <ui:ToggleSwitch IsChecked="{Binding ShowServerUptime, Mode=TwoWay}" />
+                </controls:OptionControl>
+
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Behaviour_MaxAttempts}" Description="{x:Static resources:Strings.Menu_Behaviour_HowManyTimesRetryBeforeGiving}" IsEnabled="{Binding InnerContent.IsChecked, ElementName=AutoRejoinOption, Mode=OneWay}">
                     <ui:NumberBox IntegersOnly="True" Width="110" Min="1" Max="10" Value="{Binding AutoRejoinMaxAttempts, Mode=TwoWay}" />
                 </controls:OptionControl>

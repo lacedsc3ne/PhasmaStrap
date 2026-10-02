@@ -96,6 +96,9 @@ namespace PhasmaStrap
                     }
                 };
 
+                ActivityWatcher.OnConnectionDropped += (_, dropped) => _ = RejoinAfterDropAsync(dropped);
+                Utility.ServerRegion.Uptime = () => ActivityWatcher.Data.ServerUptimeText;
+
                 NowPlaying.NameResolved += (_, _) =>
                 {
                     if (!App.Settings.Prop.PartyEnabled || !ActivityWatcher.InGame)
@@ -123,6 +126,12 @@ namespace PhasmaStrap
 
                 if (App.Settings.Prop.GameChatEnabled)
                     GameChat = new(ActivityWatcher, _watcherData.ProcessId);
+
+                if (App.Settings.Prop.SoftKeyEnabled)
+                {
+                    _softKey = new SoftKey(_watcherData.ProcessId, App.Settings.Prop.SoftKeyProfile);
+                    _softKey.Start();
+                }
 
                 if (App.Settings.Prop.CustomIntegrations.Count > 0)
                     IntegrationWatcher = new(ActivityWatcher);
@@ -471,6 +480,45 @@ namespace PhasmaStrap
                 kind: NotificationKindId.OverlayFocusMode);
         }
 
+        private SoftKey? _softKey;
+
+        private bool _rejoiningAfterDrop;
+
+        private async Task RejoinAfterDropAsync(ActivityWatcher.DroppedConnection dropped)
+        {
+            const string LOG_IDENT = "Watcher::RejoinAfterDrop";
+
+            if (!App.Settings.Prop.AutoRejoinOnDisconnect || _rejoiningAfterDrop)
+                return;
+
+            _rejoiningAfterDrop = true;
+
+            string why = dropped.Reason == 278 ? "You were kicked for being idle" : "The connection dropped";
+            string uri = dropped.Game.GetInviteDeeplink(false);
+            int delaySeconds = Math.Max(1, App.Settings.Prop.AutoRejoinDelaySeconds);
+
+            App.Logger.WriteLine(LOG_IDENT, $"Disconnect reason {dropped.Reason}, rejoining {dropped.Game.PlaceId}/{dropped.Game.JobId} in {delaySeconds}s");
+
+            NotificationCenter.Notify(why, "Joining the same server again...", NotificationCategory.General, kind: NotificationKindId.AutoRejoin);
+
+            await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+
+            try
+            {
+                Utility.FlagProfileSession.MarkIntentionalRestart();
+                KillRobloxProcess();
+
+                for (int i = 0; i < 40 && Utility.PartyLauncher.RobloxRunning(); i++)
+                    await Task.Delay(250);
+
+                Utility.RobloxLaunch.Launch(uri);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not rejoin: {ex.Message}");
+            }
+        }
+
         public void KillRobloxProcess()
         {
             _killedOnPurpose = true;
@@ -689,6 +737,7 @@ namespace PhasmaStrap
             Step("tray icon", () => _notifyIcon?.Dispose());
             Step("discord", () => RichPresence?.Dispose());
             Step("game chat", () => GameChat?.Dispose());
+            Step("soft key", () => _softKey?.Dispose());
             Step("integrations", () => IntegrationWatcher?.Dispose());
             Step("playtime", () => PlayTimeWatcher?.Dispose());
             Step("sessions", () => SessionTracker?.Dispose());

@@ -329,6 +329,18 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             set => App.Settings.Prop.AutoRejoinOnCrash = value;
         }
 
+        public bool AutoRejoinOnDisconnect
+        {
+            get => App.Settings.Prop.AutoRejoinOnDisconnect;
+            set => App.Settings.Prop.AutoRejoinOnDisconnect = value;
+        }
+
+        public bool ShowServerUptime
+        {
+            get => App.Settings.Prop.ShowServerUptime;
+            set => App.Settings.Prop.ShowServerUptime = value;
+        }
+
         public int AutoRejoinMaxAttempts
         {
             get => App.Settings.Prop.AutoRejoinMaxAttempts;

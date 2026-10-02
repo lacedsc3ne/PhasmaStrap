@@ -77,6 +77,8 @@ namespace PhasmaStrap.Utility
             Set("");
         }
 
+        public static Func<string>? Uptime;
+
         private static void Announce(string region, RobloxDatacenter? datacenter)
         {
             if (region.Length == 0)
@@ -88,9 +90,16 @@ namespace PhasmaStrap.Utility
 
             int ping = ServerPingMonitor.LatestMs;
 
+            if (ping >= 0)
+                detail += $" - about {ping} ms";
+
+            string uptime = App.Settings.Prop.ShowServerUptime ? Uptime?.Invoke() ?? "" : "";
+            if (uptime.Length > 0)
+                detail += $", server up {uptime}";
+
             NotificationCenter.Notify(
                 "Server region",
-                ping >= 0 ? $"{detail} - about {ping} ms" : detail,
+                detail,
                 NotificationCategory.General,
                 kind: NotificationKindId.ServerRegion);
         }

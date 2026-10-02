@@ -365,6 +365,15 @@
                 </ScrollViewer>
             </controls:SettingsCard>
 
+            <controls:SettingsCard Header="Roblox app" Description="Settings that live inside Roblox itself. PhasmaStrap sets them just before each launch">
+                <controls:OptionControl Header="Let Roblox run in the background" Description="On starts Roblox with Windows and keeps it in the notification area after you close it. Leave keeps whatever Roblox has">
+                    <ComboBox Padding="10,5,10,5" MinWidth="120" ItemsSource="{Binding RobloxBackgroundChoices, Mode=OneTime}" SelectedItem="{Binding RobloxBackgroundApp, Mode=TwoWay}" />
+                </controls:OptionControl>
+                <controls:OptionControl Header="Roblox app theme" Description="The light or dark look of the Roblox app's own menus">
+                    <ComboBox Padding="10,5,10,5" MinWidth="120" ItemsSource="{Binding RobloxThemeChoices, Mode=OneTime}" SelectedItem="{Binding RobloxAppTheme, Mode=TwoWay}" />
+                </controls:OptionControl>
+            </controls:SettingsCard>
+
             <controls:SettingsCard DataContext="{Binding Matchmaker}"
                                    Header="Auto rejoin"
                                    Description="If Roblox vanishes without a clean disconnect in its log, join the same server again">

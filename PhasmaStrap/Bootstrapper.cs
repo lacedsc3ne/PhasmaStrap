@@ -359,6 +359,9 @@ namespace PhasmaStrap
                         ApplyFullscreenOnLaunch();
                 }
 
+                if (!Utility.PartyLauncher.RobloxRunning())
+                    Utility.RobloxAppStorage.Apply();
+
                 StartRoblox();
 
                 if (App.Settings.Prop.DisableRobloxCrashHandler)
@@ -495,12 +498,19 @@ namespace PhasmaStrap
                     if (why is not null)
                         App.Logger.WriteLine(LOG_IDENT, $"Version manager: {why}");
 
+                    if (chosen is not null && !Utility.RobloxVersions.IsUsable(chosen) && !await Utility.RobloxVersions.ExistsOnRobloxAsync(chosen))
+                    {
+                        App.Logger.WriteLine(LOG_IDENT, $"Version manager: Roblox has no version {chosen}, using the latest ({newVersionGuid})");
+                        UI.NotificationCenter.Notify("That Roblox version does not exist", $"{chosen} is not something Roblox hands out, so the newest version is used. Check the hash on the Versions page.", UI.NotificationCategory.General);
+                        chosen = null;
+                    }
+
                     if (chosen is not null)
                     {
                         App.Logger.WriteLine(LOG_IDENT, $"Version manager: using {chosen} instead of the latest ({newVersionGuid})");
                         newVersionGuid = chosen;
-                        newVersion = Utilities.ParseVersionSafe(Utility.RobloxVersions.FileVersionOf(chosen));
-                        _usingKeptVersion = true;
+                        _usingKeptVersion = Utility.RobloxVersions.IsUsable(chosen);
+                        newVersion = _usingKeptVersion ? Utilities.ParseVersionSafe(Utility.RobloxVersions.FileVersionOf(chosen)) : null;
                     }
                 }
             }

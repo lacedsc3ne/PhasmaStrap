@@ -125,6 +125,37 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public List<RobloxVersionRow> PinChoices => OnDisk.Where(r => RobloxVersions.IsUsable(r.Record.Guid)).ToList();
 
+        public string PinnedHash
+        {
+            get => PinChoices.Any(row => row.Record.Guid == App.Settings.Prop.RobloxPinnedVersion) ? "" : App.Settings.Prop.RobloxPinnedVersion;
+            set
+            {
+                string hash = (value ?? "").Trim().ToLowerInvariant();
+
+                if (hash.Length == 16 && !hash.StartsWith("version-"))
+                    hash = "version-" + hash;
+
+                if (hash.Length > 0 && !RobloxVersions.LooksLikeHash(hash))
+                {
+                    PinnedHashNote = "A version hash looks like version-0123456789abcdef.";
+                    OnPropertyChanged(nameof(PinnedHashNote));
+                    return;
+                }
+
+                PinnedHashNote = hash.Length == 0 ? "" : RobloxVersions.IsUsable(hash) ? "Already on this PC." : "Gets downloaded the next time you launch.";
+                OnPropertyChanged(nameof(PinnedHashNote));
+
+                if (hash.Length == 0)
+                    return;
+
+                PinnedVersion = hash;
+                Mode = RobloxVersions.ModePin;
+                OnPropertyChanged(nameof(PinnedHash));
+            }
+        }
+
+        public string PinnedHashNote { get; private set; } = "";
+
         public string PinnedVersion
         {
             get => App.Settings.Prop.RobloxPinnedVersion;

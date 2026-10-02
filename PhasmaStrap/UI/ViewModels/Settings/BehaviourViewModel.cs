@@ -619,6 +619,22 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string LaunchSummaryProcess =>
             $"Roblox will run with the {CurrentEnginePresetName.ToLowerInvariant()} process preset, at {RobloxPriorityLimit.ToLowerInvariant()} priority.";
 
+        public string[] RobloxBackgroundChoices { get; } = PhasmaStrap.Utility.RobloxAppStorage.BackgroundChoices;
+
+        public string RobloxBackgroundApp
+        {
+            get => App.Settings.Prop.RobloxBackgroundApp;
+            set { App.Settings.Prop.RobloxBackgroundApp = value ?? PhasmaStrap.Utility.RobloxAppStorage.Leave; OnPropertyChanged(nameof(RobloxBackgroundApp)); }
+        }
+
+        public string[] RobloxThemeChoices { get; } = PhasmaStrap.Utility.RobloxAppStorage.ThemeChoices;
+
+        public string RobloxAppTheme
+        {
+            get => App.Settings.Prop.RobloxAppTheme;
+            set { App.Settings.Prop.RobloxAppTheme = value ?? PhasmaStrap.Utility.RobloxAppStorage.Leave; OnPropertyChanged(nameof(RobloxAppTheme)); }
+        }
+
         public string LaunchSummaryRejoin => Matchmaker.AutoRejoinOnCrash
             ? $"If Roblox crashes, PhasmaStrap will rejoin up to {Matchmaker.AutoRejoinMaxAttempts} times, {Matchmaker.AutoRejoinDelaySeconds} seconds apart."
             : "If Roblox crashes, PhasmaStrap will not rejoin for you.";

@@ -73,6 +73,8 @@ namespace PhasmaStrap.Models.Persistable
         public string RobloxPinnedVersion { get; set; } = "";
 
         public bool RobloxKeepPreviousVersion { get; set; } = false;
+        public string RobloxBackgroundApp { get; set; } = "Leave";
+        public string RobloxAppTheme { get; set; } = "Leave";
 
         public bool RobloxCheckFlagsAfterUpdate { get; set; } = false;
 

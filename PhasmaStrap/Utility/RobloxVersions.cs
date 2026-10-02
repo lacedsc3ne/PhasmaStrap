@@ -68,6 +68,27 @@
 
         public static string FolderOf(string guid) => Path.Combine(Paths.Versions, guid);
 
+        public static bool LooksLikeHash(string? text) =>
+            text is not null && System.Text.RegularExpressions.Regex.IsMatch(text, "^version-[0-9a-f]{16}$");
+
+        public static async Task<bool> ExistsOnRobloxAsync(string guid)
+        {
+            try
+            {
+                string url = RobloxInterfaces.Deployment.GetLocation($"/{guid}-rbxPkgManifest.txt");
+
+                using var request = new HttpRequestMessage(HttpMethod.Head, url);
+                using HttpResponseMessage response = await App.HttpClient.SendAsync(request);
+
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("RobloxVersions", $"Could not check {guid} with Roblox: {ex.Message}");
+                return false;
+            }
+        }
+
         public static bool IsUsable(string? guid) =>
             !string.IsNullOrEmpty(guid)
             && File.Exists(Path.Combine(FolderOf(guid), "RobloxPlayerBeta.exe"))
@@ -148,6 +169,12 @@
 
                     if (IsUsable(pinned))
                         return pinned;
+
+                    if (LooksLikeHash(pinned))
+                    {
+                        why = $"the pinned version {pinned} isn't on this PC, so it gets downloaded";
+                        return pinned;
+                    }
 
                     why = $"the pinned version {pinned} isn't on this PC any more, so the latest is used";
                     return null;

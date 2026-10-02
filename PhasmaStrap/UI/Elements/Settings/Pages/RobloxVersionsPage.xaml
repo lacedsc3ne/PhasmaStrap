@@ -50,6 +50,12 @@
                             <ComboBox MinWidth="140" MaxWidth="240" Margin="8,0,0,0" Padding="10,5,10,5" IsEnabled="{Binding ModePin}" ItemsSource="{Binding PinChoices}" DisplayMemberPath="Title" SelectedValuePath="Record.Guid" SelectedValue="{Binding PinnedVersion, Mode=TwoWay}" />
                         </StackPanel>
 
+                        <StackPanel Margin="24,8,0,0" Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="or any version hash" />
+                            <ui:TextBox Width="220" Margin="8,0,0,0" PlaceholderText="version-0123456789abcdef" Text="{Binding PinnedHash, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                        </StackPanel>
+                        <TextBlock Margin="24,4,0,0" FontSize="11.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding PinnedHashNote, Mode=OneWay}" />
+
                         <TextBlock Margin="0,12,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource PhasmaWarnBrush}" Visibility="{Binding WarningVisibility}"
                                    Text="Roblox only lets recent versions into games. If an old one stops joining, switch back to Always the newest." />
                     </StackPanel>

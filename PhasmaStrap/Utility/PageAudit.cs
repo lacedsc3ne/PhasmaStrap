@@ -207,6 +207,90 @@ namespace PhasmaStrap.Utility
             return false;
         }
 
+        private const double ClearButtonWidth = 28;
+        private const double SmallestTextRoom = 44;
+        private const int ShortText = 14;
+
+        private static string? TooNarrow(System.Windows.Controls.Control control)
+        {
+            if (control is System.Windows.Controls.TextBox box)
+            {
+                if (box.AcceptsReturn || box.Template?.FindName("PART_ContentHost", box) is not FrameworkElement host || host.ActualWidth <= 0)
+                    return null;
+
+                double room = host.ActualWidth;
+                if (box is Wpf.Ui.Controls.TextBox styled && styled.ClearButtonEnabled && !box.IsReadOnly)
+                    room -= ClearButtonWidth;
+
+                string text = box.Text ?? "";
+                double needed = text.Length is > 0 and <= ShortText ? WidthOf(text, box) : 0;
+
+                if (room >= SmallestTextRoom && room >= needed)
+                    return null;
+
+                return $"{box.GetType().Name}{Described(box, System.Windows.Controls.TextBox.TextProperty)} is {box.ActualWidth:0} wide with {Math.Max(0, room):0} left for its text \"{text}\" (needs {Math.Max(needed, SmallestTextRoom):0})";
+            }
+
+            if (control is System.Windows.Controls.ComboBox combo && !combo.IsEditable && combo.SelectionBoxItem is not null)
+            {
+                System.Windows.Controls.ContentPresenter? shown = FindPresenter(combo, combo.SelectionBoxItem);
+                if (shown is null || shown.ActualWidth <= 0 || VisualTreeHelper.GetChildrenCount(shown) == 0)
+                    return null;
+
+                if (VisualTreeHelper.GetChild(shown, 0) is not System.Windows.Controls.TextBlock label || string.IsNullOrEmpty(label.Text))
+                    return null;
+
+                double needed = WidthOf(label.Text, combo);
+                if (shown.ActualWidth + 1 >= needed)
+                    return null;
+
+                return $"ComboBox{Described(combo, System.Windows.Controls.Primitives.Selector.SelectedItemProperty)} is {combo.ActualWidth:0} wide with {shown.ActualWidth:0} left for \"{label.Text}\" (needs {needed:0})";
+            }
+
+            return null;
+        }
+
+        private static double WidthOf(string text, System.Windows.Controls.Control control) =>
+            new FormattedText(text, System.Globalization.CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
+                new Typeface(control.FontFamily, control.FontStyle, control.FontWeight, control.FontStretch),
+                control.FontSize, Brushes.Black, VisualTreeHelper.GetDpi(control).PixelsPerDip).WidthIncludingTrailingWhitespace;
+
+        private static string Described(System.Windows.Controls.Control control, DependencyProperty property)
+        {
+            if (!string.IsNullOrEmpty(control.Name))
+                return $" \"{control.Name}\"";
+
+            foreach (DependencyProperty candidate in new[] { property, Wpf.Ui.Controls.NumberBox.ValueProperty, System.Windows.Controls.Primitives.Selector.SelectedIndexProperty, System.Windows.Controls.Primitives.Selector.SelectedValueProperty })
+            {
+                string? path = BindingOperations.GetBindingExpression(control, candidate)?.ParentBinding.Path?.Path;
+                if (!string.IsNullOrEmpty(path))
+                    return $" bound to {path}";
+            }
+
+            return "";
+        }
+
+        private static System.Windows.Controls.ContentPresenter? FindPresenter(DependencyObject parent, object content)
+        {
+            int count = VisualTreeHelper.GetChildrenCount(parent);
+
+            for (int i = 0; i < count; i++)
+            {
+                DependencyObject child = VisualTreeHelper.GetChild(parent, i);
+
+                if (child is System.Windows.Controls.ContentPresenter presenter && ReferenceEquals(presenter.Content, content))
+                    return presenter;
+
+                if (child is System.Windows.Controls.Primitives.Popup)
+                    continue;
+
+                if (FindPresenter(child, content) is System.Windows.Controls.ContentPresenter deeper)
+                    return deeper;
+            }
+
+            return null;
+        }
+
         private static void Inspect(DependencyObject node, HashSet<string> found, HashSet<DependencyObject> seen, ref int checkedCount)
         {
             if (!seen.Add(node))
@@ -217,6 +301,9 @@ namespace PhasmaStrap.Utility
                 string label = string.IsNullOrEmpty(control.Name) ? "" : $" \"{control.Name}\"";
                 found.Add($"{control.GetType().Name}{label} is drawn with the plain Windows look");
             }
+
+            if (node is System.Windows.Controls.Control input && input.IsVisible && TooNarrow(input) is string problem)
+                found.Add(problem);
 
             LocalValueEnumerator values = node.GetLocalValueEnumerator();
 

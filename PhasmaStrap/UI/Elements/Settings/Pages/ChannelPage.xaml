@@ -126,7 +126,7 @@
             <controls:SettingsCard x:Name="InstallerCard" Header="{x:Static resources:Strings.Menu_Channel_Installer}"
                                    Description="How PhasmaStrap downloads Roblox's packages">
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Channel_PreferredMirror}" Description="Auto picks whichever answers fastest">
-                    <ComboBox Padding="10,5,10,5" MinWidth="130" MaxWidth="220" ItemsSource="{Binding MirrorChoices, Mode=OneTime}" DisplayMemberPath="Display" SelectedValuePath="Url" SelectedValue="{Binding PreferredMirror, Mode=TwoWay}" />
+                    <ComboBox Padding="10,5,10,5" MinWidth="130" MaxWidth="300" ItemsSource="{Binding MirrorChoices, Mode=OneTime}" DisplayMemberPath="Display" SelectedValuePath="Url" SelectedValue="{Binding PreferredMirror, Mode=TwoWay}" />
                 </controls:OptionControl>
 
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Channel_DownloadBufferSizeKB}" Description="{x:Static resources:Strings.Menu_Channel_LargerBuffersCanSpeedUpDownloads}">

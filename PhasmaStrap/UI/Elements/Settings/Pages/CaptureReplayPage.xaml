@@ -172,7 +172,7 @@
                 </controls:OptionControl>
 
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Capture_Microphone}" IsEnabled="{Binding MicrophonePickerEnabled, Mode=OneWay}">
-                    <ComboBox Width="150" Padding="10,5,10,5" ItemsSource="{Binding MicrophoneOptions, Mode=OneTime}" SelectedItem="{Binding SelectedMicrophone, Mode=TwoWay}" />
+                    <ComboBox MinWidth="150" MaxWidth="340" Padding="10,5,10,5" ItemsSource="{Binding MicrophoneOptions, Mode=OneTime}" SelectedItem="{Binding SelectedMicrophone, Mode=TwoWay}" />
                 </controls:OptionControl>
             </controls:SettingsCard>
 

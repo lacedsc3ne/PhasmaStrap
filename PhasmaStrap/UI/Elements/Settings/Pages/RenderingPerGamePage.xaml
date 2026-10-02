@@ -57,7 +57,7 @@
             <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Performance_EngineAssignments_Title}"
                                    Description="A preset only for the listed places.">
                 <WrapPanel Margin="0,0,0,8">
-                    <ui:TextBox Width="120" Margin="0,0,8,4" PlaceholderText="{x:Static resources:Strings.Menu_Performance_EngineAssignments_PlaceholderText}" Text="{Binding EngineAssignPlaceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <ui:TextBox Width="160" Margin="0,0,8,4" PlaceholderText="{x:Static resources:Strings.Menu_Performance_EngineAssignments_PlaceholderText}" Text="{Binding EngineAssignPlaceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                     <ComboBox Width="130" Margin="0,0,8,4" Padding="10,5,10,5" ItemsSource="{Binding EnginePresetNames, Mode=OneTime}" SelectedItem="{Binding EngineAssignPresetName, Mode=TwoWay}" />
                     <Button Margin="0,0,0,4" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding AddEngineProfileAssignmentCommand, Mode=OneTime}">
                         <StackPanel Orientation="Horizontal">

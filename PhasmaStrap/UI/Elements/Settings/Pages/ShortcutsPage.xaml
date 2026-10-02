@@ -27,7 +27,7 @@
             <controls:SettingsCard controls:CardColumns.FullRow="True" Header="Create a shortcut" Description="A game shortcut uses that game's own icon.">
                 <Grid Margin="0,0,0,10">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="200" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />

@@ -116,7 +116,7 @@
                             </controls:OptionControl>
 
                             <controls:OptionControl Header="{x:Static resources:Strings.Menu_Networking_DisplayNameOverride}" Description="Blank turns it off">
-                                <ui:TextBox Width="120" PlaceholderText="{x:Static resources:Strings.Menu_Networking_RealName}" Text="{Binding UsernameSpoofName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <ui:TextBox Width="180" PlaceholderText="{x:Static resources:Strings.Menu_Networking_RealName}" Text="{Binding UsernameSpoofName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             </controls:OptionControl>
                         </controls:SettingsCard>
 

@@ -99,7 +99,7 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Button Margin="0,0,8,8" Cursor="Hand" ToolTip="{Binding Name}" AutomationProperties.Name="{Binding Name}"
+                                <Button Margin="0,0,8,8" ToolTip="{Binding Name}" AutomationProperties.Name="{Binding Name}"
                                         Command="{Binding DataContext.SelectGameCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
                                     <Button.Template>
                                         <ControlTemplate TargetType="Button">

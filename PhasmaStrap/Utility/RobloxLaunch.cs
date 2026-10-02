@@ -21,6 +21,8 @@ namespace PhasmaStrap.Utility
             return uri.ToString();
         }
 
+        public static string FollowLink(long userId) => $"roblox://experiences/start?userId={userId}";
+
         public static bool Launch(string uri)
         {
             if (string.IsNullOrWhiteSpace(uri))

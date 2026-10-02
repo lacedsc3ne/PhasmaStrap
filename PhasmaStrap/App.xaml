@@ -15,6 +15,16 @@
                 <ResourceDictionary x:Name="Default" Source="UI/Style/Default.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
+            <Style TargetType="{x:Type CheckBox}" BasedOn="{StaticResource {x:Type CheckBox}}">
+                <Setter Property="Cursor" Value="Arrow" />
+            </Style>
+            <Style TargetType="{x:Type RadioButton}" BasedOn="{StaticResource {x:Type RadioButton}}">
+                <Setter Property="Cursor" Value="Arrow" />
+            </Style>
+            <Style TargetType="{x:Type ComboBoxItem}" BasedOn="{StaticResource {x:Type ComboBoxItem}}">
+                <Setter Property="Cursor" Value="Arrow" />
+            </Style>
+
             <FontFamily x:Key="Rubik">pack://application:,,,/Resources/Fonts/#Rubik Light</FontFamily>
 
             <FontFamily x:Key="PhasmaBody">pack://application:,,,/Resources/Fonts/#DM Sans 14pt</FontFamily>
@@ -186,6 +196,7 @@
             <converters:RangeConverter x:Key="RangeConverter" />
             <converters:EnumNameConverter x:Key="EnumNameConverter" />
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <converters:ImageUrlConverter x:Key="ImageUrlConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

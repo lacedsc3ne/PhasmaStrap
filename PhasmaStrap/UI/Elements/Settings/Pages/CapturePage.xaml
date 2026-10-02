@@ -9,7 +9,7 @@
       mc:Ignorable="d"
       Title="CapturePage"
       Scrollable="False">
-    <controls:SectionHost x:Name="Host" Margin="0,4,0,0">
+    <controls:SectionHost x:Name="Host" Header="Capture" Layout="Tabs">
         <controls:SectionItem Label="Screenshots" PageType="{x:Type pages:CaptureScreenshotsPage}" />
         <controls:SectionItem Label="Instant Replay" PageType="{x:Type pages:CaptureReplayPage}" />
         <controls:SectionItem Label="Storage" PageType="{x:Type pages:CaptureStoragePage}" />

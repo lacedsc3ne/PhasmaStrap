@@ -15,6 +15,8 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public ICommand RestartCommand => new RelayCommand(Restart);
 
+        public ICommand DiscardCommand => new RelayCommand(Discard);
+
         public ICommand CloseWindowCommand => new RelayCommand(CloseWindow);
 
         public EventHandler? RequestSaveNoticeEvent;
@@ -84,6 +86,29 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         private void Restart()
         {
             SaveSettings();
+            RestartAfterClose = true;
+            CloseWindow();
+        }
+
+        private void Discard()
+        {
+            const string LOG_IDENT = "MainWindowViewModel::Discard";
+
+            var result = Frontend.ShowMessageBox(
+                "Throw away the changes you have not saved? PhasmaStrap reopens with your last saved settings.",
+                MessageBoxImage.Warning,
+                MessageBoxButton.YesNo);
+
+            if (result != MessageBoxResult.Yes)
+                return;
+
+            App.Logger.WriteLine(LOG_IDENT, "Throwing away unsaved changes and reopening from the saved settings");
+
+            App.Settings.Load(false);
+            App.FastFlags.Load(false);
+            App.FlagProfiles.Load(false);
+            App.PendingSettingTasks.Clear();
+
             RestartAfterClose = true;
             CloseWindow();
         }

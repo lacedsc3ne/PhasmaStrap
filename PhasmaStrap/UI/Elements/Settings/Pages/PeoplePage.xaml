@@ -9,9 +9,10 @@
       mc:Ignorable="d"
       Title="PeoplePage"
       Scrollable="False">
-    <controls:SectionHost x:Name="Host" Margin="0,4,0,0">
-        <controls:SectionItem Label="Accounts" PageType="{x:Type pages:AccountsPage}" />
+    <controls:SectionHost x:Name="Host" Header="Social" Layout="Tabs">
         <controls:SectionItem Label="Friends" PageType="{x:Type pages:FriendsPage}" />
+        <controls:SectionItem Label="Party" PageType="{x:Type pages:PartyPage}" />
+        <controls:SectionItem Label="Accounts" PageType="{x:Type pages:AccountsPage}" />
         <controls:SectionItem Label="Activity" PageType="{x:Type pages:ActivityPage}" />
     </controls:SectionHost>
 </ui:UiPage>

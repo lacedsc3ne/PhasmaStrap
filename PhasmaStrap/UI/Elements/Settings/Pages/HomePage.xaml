@@ -4,349 +4,343 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-      xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
       xmlns:dmodels="clr-namespace:PhasmaStrap.UI.ViewModels.Settings"
+      xmlns:games="clr-namespace:PhasmaStrap.UI.Elements.Settings.Games"
       mc:Ignorable="d"
-      d:DataContext="{d:DesignInstance dmodels:HomeViewModel, IsDesignTimeCreatable=True}"
+      d:DataContext="{d:DesignInstance dmodels:HomeViewModel, IsDesignTimeCreatable=False}"
       Title="HomePage"
       Scrollable="False">
     <ui:UiPage.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <!--  A square game tile: artwork, profile tag, name and a small line under it  -->
+        <DataTemplate x:Key="GameTile" DataType="{x:Type dmodels:GameCard}">
+            <Button
+                Width="148"
+                Margin="0,0,16,18"
+                Padding="0"
+                HorizontalContentAlignment="Stretch"
+                Command="{Binding DataContext.OpenGameCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}"
+                CommandParameter="{Binding}"
+                Style="{DynamicResource PhasmaGhostButton}"
+                ToolTip="{Binding Name}">
+                <StackPanel>
+                    <Grid Height="148">
+                        <Border CornerRadius="{DynamicResource PhasmaCornerRadius}" Background="{DynamicResource PhasmaSelectedBrush}" />
+                        <Border CornerRadius="{DynamicResource PhasmaCornerRadius}">
+                            <Border.Background>
+                                <ImageBrush ImageSource="{Binding IconUrl, Converter={StaticResource ImageUrlConverter}, ConverterParameter=300}" Stretch="UniformToFill" />
+                            </Border.Background>
+                        </Border>
+                        <Border
+                            Margin="8"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Bottom"
+                            Background="#D90B0B0F"
+                            CornerRadius="6"
+                            Padding="7,2"
+                            Visibility="{Binding HasProfile, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Flag24" FontSize="11" Margin="0,0,4,0" Foreground="{DynamicResource PhasmaAccentBrush}" />
+                                <TextBlock Text="{Binding ProfileName}" FontSize="11" FontWeight="SemiBold" Foreground="White" MaxWidth="110" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                    <TextBlock Margin="2,8,2,0" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Margin="2,2,2,0" FontSize="11.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="{Binding Subtitle}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasPlaying}" Value="True">
+                                        <Setter Property="Text" Value="{Binding PlayingText}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Button>
+        </DataTemplate>
 
-        <Style x:Key="FilterChip" TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
-            <Setter Property="Appearance" Value="Secondary" />
-            <Setter Property="Padding" Value="10,5" />
-            <Setter Property="Margin" Value="0,0,6,0" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Command" Value="{Binding FilterCommand, Mode=OneTime}" />
-        </Style>
+        <ItemsPanelTemplate x:Key="TileWrap">
+            <WrapPanel Orientation="Horizontal" />
+        </ItemsPanelTemplate>
 
-        <Style x:Key="SectionLink" TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
-            <Setter Property="Appearance" Value="Transparent" />
-            <Setter Property="Padding" Value="8,4" />
-            <Setter Property="Margin" Value="0,0,4,0" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Command" Value="{Binding ShowSectionCommand, Mode=OneTime}" />
-        </Style>
     </ui:UiPage.Resources>
 
-    <Grid Margin="0,0,14,14">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="0,0,0,12">
+        <!--  Tabs and catalog search  -->
+        <Grid Grid.Row="0" Margin="22,16,22,4">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding WelcomeText, Mode=OneWay}" />
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Margin="0,0,18,0" VerticalAlignment="Center" Text="Games" Style="{DynamicResource PhasmaTitle}" />
+                <RadioButton x:Name="HomeTab" GroupName="GamesTabs" IsChecked="True" Content="Home" Style="{DynamicResource PhasmaTab}"
+                             Command="{Binding ShowTabCommand}" CommandParameter="home" />
+                <RadioButton x:Name="LibraryTab" GroupName="GamesTabs" Content="Library" Style="{DynamicResource PhasmaTab}"
+                             Command="{Binding ShowTabCommand}" CommandParameter="library" />
+                <RadioButton x:Name="PrivateTab" GroupName="GamesTabs" Content="{x:Static resources:Strings.Menu_PrivateServers_PrivateServers}" Style="{DynamicResource PhasmaTab}"
+                             Command="{Binding ShowTabCommand}" CommandParameter="privateservers" />
+                <RadioButton x:Name="HistoryTab" GroupName="GamesTabs" Content="{x:Static resources:Strings.Menu_Notifications_History_Title}" Style="{DynamicResource PhasmaTab}"
+                             Command="{Binding ShowTabCommand}" CommandParameter="history" />
             </StackPanel>
 
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <ui:Button Content="{x:Static resources:Strings.LaunchMenu_LaunchRoblox}" Icon="Play28" IconFilled="True" Appearance="Success" Foreground="White" IconForeground="White"
-                           Command="{Binding LaunchRobloxCommand, Mode=OneTime}" />
-                <ui:Button Margin="8,0,0,0" Content="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" Icon="ArrowClockwise24" Command="{Binding RefreshCommand, Mode=OneTime}" />
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                <ui:TextBox
+                    x:Name="CatalogSearchBox"
+                    Width="400"
+                    Icon="Search24"
+                    ClearButtonEnabled="True"
+                    PlaceholderText="Search the catalog, or paste a link or place ID"
+                    Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    <ui:TextBox.InputBindings>
+                        <KeyBinding Key="Enter" Command="{Binding SearchCommand}" />
+                        <KeyBinding Key="Escape" Command="{Binding ClearSearchCommand}" />
+                    </ui:TextBox.InputBindings>
+                </ui:TextBox>
+                <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaIconButton}" Command="{Binding RefreshCommand}" ToolTip="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}"
+                        AutomationProperties.Name="Refresh">
+                    <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="16" />
+                </Button>
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="320" />
-                <ColumnDefinition Width="14" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+        <!--  HOME  -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="{Binding HomeVisibility}">
+            <StackPanel Margin="22,12,18,22">
 
-            <Grid Grid.Column="0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
+                <!--  Continue where you left off, with friends who are playing  -->
+                <Grid Height="300" Visibility="{Binding HeroVisibility}">
+                    <Border CornerRadius="{DynamicResource PhasmaCornerRadiusLarge}" Background="{DynamicResource PhasmaPanelRaisedBrush}" />
+                    <Border CornerRadius="{DynamicResource PhasmaCornerRadiusLarge}">
+                        <Border.Background>
+                            <ImageBrush ImageSource="{Binding Hero.BannerUrl, Converter={StaticResource ImageUrlConverter}}" Stretch="UniformToFill" />
+                        </Border.Background>
+                    </Border>
+                    <Border CornerRadius="{DynamicResource PhasmaCornerRadiusLarge}">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Offset="0" Color="#F00B0B0F" />
+                                <GradientStop Offset="0.55" Color="#990B0B0F" />
+                                <GradientStop Offset="1" Color="#260B0B0F" />
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
 
-                <StackPanel Grid.Row="0">
-                    <ui:TextBox Icon="Search24" PlaceholderText="Game link, private server link or place ID" ClearButtonEnabled="True"
-                                Text="{Binding LinkInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding LinkNotBusy}" />
+                    <Grid Margin="30,26,18,18">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="300" />
+                        </Grid.ColumnDefinitions>
 
-                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                        <ui:Button Content="{x:Static resources:Strings.Common_Launch}" Icon="Play24" IconFilled="True" Appearance="Success" Foreground="White" IconForeground="White"
-                                   Command="{Binding LaunchLinkCommand, Mode=OneTime}" IsEnabled="{Binding LinkNotBusy}" />
-                        <ui:Button Margin="6,0,0,0" Content="{x:Static resources:Strings.Menu_Home_ShowPlaces}" Icon="AppsList24" Appearance="Secondary"
-                                   Command="{Binding ShowPlacesCommand, Mode=OneTime}" IsEnabled="{Binding LinkNotBusy}" />
-                    </StackPanel>
-
-                    <TextBlock Margin="0,8,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding LinkStatus, Mode=OneWay}" />
-                </StackPanel>
-
-                <StackPanel Grid.Row="1" Margin="0,10,0,0" Visibility="{Binding PlacesVisibility, Mode=OneWay}">
-                    <TextBlock Margin="0,0,0,6" FontSize="13" FontWeight="Medium" TextTrimming="CharacterEllipsis" Text="{Binding PlacesTitle, Mode=OneWay}" />
-                    <ScrollViewer MaxHeight="150" VerticalScrollBarVisibility="Auto" controls:ScrollBubbling.Enabled="True">
-                        <ItemsControl ItemsSource="{Binding Places, Mode=OneWay}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border CornerRadius="8" Padding="10,8" Margin="0,0,0,6" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                                <TextBlock FontSize="13" FontWeight="SemiBold" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-                                                <TextBlock FontSize="11" Opacity="0.7" Text="{Binding Subtitle}" />
-                                            </StackPanel>
-                                            <ui:Button Grid.Column="1" Padding="8,4" Content="{x:Static resources:Strings.Common_Launch}" Icon="Play24" IconFilled="True" Appearance="Success" Foreground="White" IconForeground="White" VerticalAlignment="Center"
-                                                       Command="{Binding DataContext.LaunchPlaceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-                </StackPanel>
-
-                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,14,0,0">
-                    <ui:Button Content="Recent" CommandParameter="recent">
-                        <ui:Button.Style>
-                            <Style TargetType="ui:Button" BasedOn="{StaticResource FilterChip}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding GamesFilter}" Value="recent">
-                                        <Setter Property="Appearance" Value="Primary" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ui:Button.Style>
-                    </ui:Button>
-                    <ui:Button Content="All played" CommandParameter="all">
-                        <ui:Button.Style>
-                            <Style TargetType="ui:Button" BasedOn="{StaticResource FilterChip}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding GamesFilter}" Value="all">
-                                        <Setter Property="Appearance" Value="Primary" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ui:Button.Style>
-                    </ui:Button>
-                    <ui:Button Content="{x:Static resources:Strings.Menu_PrivateServers_PrivateServers}" CommandParameter="private">
-                        <ui:Button.Style>
-                            <Style TargetType="ui:Button" BasedOn="{StaticResource FilterChip}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding GamesFilter}" Value="private">
-                                        <Setter Property="Appearance" Value="Primary" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ui:Button.Style>
-                    </ui:Button>
-                </StackPanel>
-
-                <TextBlock Grid.Row="3" Margin="2,10,0,6" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding StatusText, Mode=OneWay}" />
-
-                <Grid Grid.Row="4">
-                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding IsEmpty, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <ui:SymbolIcon Symbol="History24" FontSize="40" Opacity="0.25" HorizontalAlignment="Center" />
-                        <TextBlock Text="{x:Static resources:Strings.Menu_Home_NoHistoryYet}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="14" Opacity="0.5" Margin="0,10,0,0" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" />
-                    </StackPanel>
-
-                    <ListBox BorderThickness="0" Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                             ItemsSource="{Binding ContinuePlaying, Mode=OneWay}" SelectedItem="{Binding SelectedGame, Mode=TwoWay}">
-                        <ListBox.ItemContainerStyle>
-                            <Style TargetType="ListBoxItem">
-                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="ListBoxItem">
-                                            <Border x:Name="Row" Margin="0,0,6,4" Padding="8,6" CornerRadius="6" BorderThickness="1" BorderBrush="Transparent" Background="Transparent">
-                                                <ContentPresenter />
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="Row" Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
-                                                </Trigger>
-                                                <Trigger Property="IsSelected" Value="True">
-                                                    <Setter TargetName="Row" Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
-                                                    <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource SystemAccentColorSecondaryBrush}" />
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </ListBox.ItemContainerStyle>
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <Border Grid.Column="0" Width="44" Height="44" CornerRadius="6" ClipToBounds="True" Background="{DynamicResource ControlFillColorSecondaryBrush}">
-                                        <Image Source="{Binding IconUrl, IsAsync=True}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
-                                    </Border>
-
-                                    <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock FontSize="13" FontWeight="SemiBold" Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding DisplayName}" />
-                                        <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" TextTrimming="CharacterEllipsis">
-                                            <Run Text="{Binding TotalTimeText, Mode=OneWay}" />
-                                            <Run Text="{x:Static resources:Strings.Menu_Home_Played}" />
-                                            <Run Text="{Binding LastPlayedText, Mode=OneWay}" />
-                                        </TextBlock>
+                        <DockPanel Grid.Column="0" Margin="0,0,20,8" LastChildFill="False">
+                            <StackPanel DockPanel.Dock="Top">
+                                <Border Style="{DynamicResource PhasmaTagNeutral}" Background="#26FFFFFF">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="History24" FontSize="11" Margin="0,0,5,0" Foreground="#E6FFFFFF" />
+                                        <TextBlock Text="Continue where you left off" Foreground="#E6FFFFFF" />
                                     </StackPanel>
-                                </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </Grid>
-
-                <WrapPanel Grid.Row="5" Margin="0,10,0,0">
-                    <ui:Button Content="Catalog" Icon="Search24" CommandParameter="catalog">
-                        <ui:Button.Style>
-                            <Style TargetType="ui:Button" BasedOn="{StaticResource SectionLink}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Section}" Value="catalog">
-                                        <Setter Property="Appearance" Value="Secondary" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ui:Button.Style>
-                    </ui:Button>
-                    <ui:Button Content="{x:Static resources:Strings.Menu_ServerBrowser_BrowseServers}" Icon="Server24" CommandParameter="servers">
-                        <ui:Button.Style>
-                            <Style TargetType="ui:Button" BasedOn="{StaticResource SectionLink}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Section}" Value="servers">
-                                        <Setter Property="Appearance" Value="Secondary" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ui:Button.Style>
-                    </ui:Button>
-                    <ui:Button Content="{x:Static resources:Strings.Menu_PrivateServers_PrivateServers}" Icon="LockClosed24" CommandParameter="privateservers">
-                        <ui:Button.Style>
-                            <Style TargetType="ui:Button" BasedOn="{StaticResource SectionLink}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Section}" Value="privateservers">
-                                        <Setter Property="Appearance" Value="Secondary" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ui:Button.Style>
-                    </ui:Button>
-                    <ui:Button Content="{x:Static resources:Strings.Menu_Notifications_History_Title}" Icon="History24" CommandParameter="history">
-                        <ui:Button.Style>
-                            <Style TargetType="ui:Button" BasedOn="{StaticResource SectionLink}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Section}" Value="history">
-                                        <Setter Property="Appearance" Value="Secondary" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ui:Button.Style>
-                    </ui:Button>
-                </WrapPanel>
-            </Grid>
-
-            <Grid Grid.Column="2">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Visibility="{Binding DetailVisibility, Mode=OneWay}">
-                    <Grid Margin="0,0,4,0">
-                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,60,0,0" Visibility="{Binding NoSelectionVisibility, Mode=OneWay}">
-                            <ui:SymbolIcon Symbol="Games24" FontSize="48" Opacity="0.25" HorizontalAlignment="Center" />
-                            <TextBlock Margin="0,12,0,0" HorizontalAlignment="Center" FontSize="14" Opacity="0.6" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                       Text="Pick a game on the left to see what it starts with." />
-                        </StackPanel>
-
-                        <StackPanel Visibility="{Binding SelectionVisibility, Mode=OneWay}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-
-                                <Border Grid.Column="0" Width="72" Height="72" CornerRadius="8" ClipToBounds="True" Background="{DynamicResource ControlFillColorSecondaryBrush}">
-                                    <Image Source="{Binding SelectedGame.IconUrl, IsAsync=True}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
                                 </Border>
-
-                                <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
-                                    <TextBlock FontSize="20" FontWeight="Medium" TextTrimming="CharacterEllipsis" Text="{Binding SelectedGame.DisplayName, Mode=OneWay}" />
-                                    <TextBlock Margin="0,2,0,0" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
-                                        <Run Text="{Binding SelectedGame.TotalTimeText, Mode=OneWay}" />
-                                        <Run Text="{x:Static resources:Strings.Menu_Home_Played}" />
-                                        <Run Text="{Binding SelectedGame.LastPlayedText, Mode=OneWay}" />
-                                    </TextBlock>
-                                    <TextBlock Margin="0,2,0,0" FontSize="12" FontFamily="Consolas" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding PlaceIdText, Mode=OneWay}" />
+                                <TextBlock Margin="0,14,0,0" FontSize="40" FontWeight="Bold" FontFamily="{DynamicResource PhasmaHeadingFont}" Foreground="White"
+                                           Text="{Binding Hero.Name}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Margin="0,6,0,0" FontSize="14" Foreground="#CCFFFFFF" Text="{Binding HeroDetail}" TextTrimming="CharacterEllipsis" />
+                                <StackPanel Margin="0,12,0,0" Orientation="Horizontal">
+                                    <Border Margin="0,0,8,0" Style="{DynamicResource PhasmaTag}" Visibility="{Binding Hero.HasProfile, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:SymbolIcon Symbol="Flag24" FontSize="11" Margin="0,0,5,0" />
+                                            <TextBlock Text="{Binding Hero.ProfileName}" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{DynamicResource PhasmaTagNeutral}" Background="#26FFFFFF" Visibility="{Binding Hero.HasPlaying, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Ellipse Width="6" Height="6" Margin="0,0,6,0" Fill="{DynamicResource PhasmaGoodBrush}" />
+                                            <TextBlock Text="{Binding Hero.PlayingText}" Foreground="#E6FFFFFF" />
+                                        </StackPanel>
+                                    </Border>
                                 </StackPanel>
-                            </Grid>
-
-                            <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
-                                <ui:Button Content="{x:Static resources:Strings.Common_Launch}" Icon="Play24" IconFilled="True" Appearance="Success" Foreground="White" IconForeground="White"
-                                           Command="{Binding LaunchCommand, Mode=OneTime}" CommandParameter="{Binding SelectedGame}" />
-                                <ui:Button Margin="8,0,0,0" Content="{x:Static resources:Strings.Menu_Home_CopyGameLink}" Icon="Copy24" Appearance="Secondary"
-                                           Command="{Binding CopyLinkCommand, Mode=OneTime}" CommandParameter="{Binding SelectedGame}" />
                             </StackPanel>
 
-                            <controls:OptionControl Margin="0,14,0,0" Header="FastFlag profile" Description="The profile this place starts with on top of your usual flags.">
-                                <TextBlock VerticalAlignment="Center" TextAlignment="Right" TextWrapping="Wrap" MaxWidth="260" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ProfileSummary, Mode=OneWay}" />
-                            </controls:OptionControl>
+                            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal">
+                                <Button Height="42" Padding="20,0" Style="{DynamicResource PhasmaAccentButton}" Command="{Binding PlayCommand}" CommandParameter="{Binding Hero}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Play24" Filled="True" FontSize="15" Margin="0,0,8,0" Foreground="{DynamicResource PhasmaAccentTextBrush}" />
+                                        <TextBlock Text="Play" FontSize="14" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Height="42" Margin="10,0,0,0" Padding="16,0" Style="{DynamicResource PhasmaSoftButton}" Background="#660B0B0F" Foreground="White"
+                                        Command="{Binding OpenHeroServersCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Server24" FontSize="15" Margin="0,0,8,0" Foreground="White" />
+                                        <TextBlock Text="Servers, places and launch setup" FontSize="13.5" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </DockPanel>
 
-                            <controls:OptionControl Header="Overlay override" Description="The HUD and crosshair this place starts with.">
-                                <TextBlock VerticalAlignment="Center" TextAlignment="Right" TextWrapping="Wrap" MaxWidth="260" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding OverlaySummary, Mode=OneWay}" />
-                            </controls:OptionControl>
-
-                            <controls:OptionControl Header="Resolution override" Description="The screen mode this place switches to while you play.">
-                                <TextBlock VerticalAlignment="Center" TextAlignment="Right" TextWrapping="Wrap" MaxWidth="260" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ResolutionSummary, Mode=OneWay}" />
-                            </controls:OptionControl>
-
-                            <Grid Margin="0,20,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="16" FontWeight="Medium" Text="{x:Static resources:Strings.Menu_ServerBrowser_Browser_Title}" />
-                                <ui:Button Grid.Column="1" Content="{x:Static resources:Strings.Menu_ServerBrowser_Search}" Icon="Server24" Appearance="Secondary"
-                                           Command="{Binding FindServersCommand, Mode=OneTime}" IsEnabled="{Binding ServersNotBusy}" />
-                            </Grid>
-
-                            <TextBlock Margin="0,8,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ServerStatus, Mode=OneWay}" />
-
-                            <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding Servers, Mode=OneWay}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <ui:Card Margin="0,0,0,6" Padding="12,10">
-                                            <Grid>
+                        <!--  Friends playing  -->
+                        <Border Grid.Column="1" Padding="16,14" CornerRadius="{DynamicResource PhasmaCornerRadius}" Background="#B30B0B0F" BorderBrush="#26FFFFFF" BorderThickness="1">
+                            <DockPanel>
+                                <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
+                                    <TextBlock Text="Friends playing" FontSize="13.5" Foreground="White" Style="{DynamicResource PhasmaHeading}" />
+                                </Grid>
+                                <TextBlock DockPanel.Dock="Bottom" Margin="0,8,0,0" FontSize="11.5" Foreground="#B3FFFFFF" TextWrapping="Wrap" Text="{Binding FriendsStatus}" />
+                                <ItemsControl ItemsSource="{Binding FriendsPlaying}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type dmodels:FriendPlayingRow}">
+                                            <Grid Margin="0,0,0,10">
                                                 <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
                                                     <ColumnDefinition Width="*" />
                                                     <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{Binding JobId}" FontFamily="Consolas" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
-                                                <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="8,0" Text="{Binding PlayersText}" />
-                                                <TextBlock Grid.Column="2" VerticalAlignment="Center" Margin="8,0" Text="{Binding PingText}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                                <ui:Button Grid.Column="3" Content="{x:Static resources:Strings.Menu_ServerBrowser_Join}" Appearance="Primary"
-                                                           Command="{Binding DataContext.JoinServerCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
+                                                <Border Width="32" Height="32" CornerRadius="16" Background="#33FFFFFF">
+                                                    <Border CornerRadius="16">
+                                                        <Border.Background>
+                                                            <ImageBrush ImageSource="{Binding AvatarUrl, Converter={StaticResource ImageUrlConverter}, ConverterParameter=96}" Stretch="UniformToFill" />
+                                                        </Border.Background>
+                                                    </Border>
+                                                </Border>
+                                                <StackPanel Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12.5" Foreground="White" TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="{Binding Location}" FontSize="11" Foreground="#B3FFFFFF" TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Padding="10,4" Style="{DynamicResource PhasmaSoftButton}" Foreground="White"
+                                                        IsEnabled="{Binding Joinable}"
+                                                        Command="{Binding DataContext.JoinFriendCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}"
+                                                        CommandParameter="{Binding}">
+                                                    <TextBlock Text="Join" FontSize="12" />
+                                                </Button>
                                             </Grid>
-                                        </ui:Card>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </DockPanel>
+                        </Border>
+                    </Grid>
+                </Grid>
+
+                <!--  First run: nothing played yet  -->
+                <Border Padding="26,22" Style="{DynamicResource PhasmaCard}" Visibility="{Binding WelcomeVisibility}">
+                    <StackPanel>
+                        <TextBlock Text="Nothing played yet" Style="{DynamicResource PhasmaTitle}" />
+                        <TextBlock Margin="0,6,0,14" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   Text="Search the catalog above, paste a game link, or just start Roblox. Games you play show up here with their places, servers and launch setup." />
+                        <Button HorizontalAlignment="Left" Height="38" Padding="16,0" Style="{DynamicResource PhasmaAccentButton}" Click="LaunchRoblox_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Play24" Filled="True" FontSize="14" Margin="0,0,8,0" Foreground="{DynamicResource PhasmaAccentTextBrush}" />
+                                <TextBlock Text="{x:Static resources:Strings.LaunchMenu_LaunchRoblox}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <!--  Your library  -->
+                <Grid Margin="0,26,0,12" Visibility="{Binding HeroVisibility}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Your library" FontSize="16" Style="{DynamicResource PhasmaHeading}" VerticalAlignment="Center" />
+                        <TextBlock Margin="12,0,0,0" Text="Recent first" VerticalAlignment="Center" Style="{DynamicResource PhasmaSubtle}" />
+                    </StackPanel>
+                    <Button HorizontalAlignment="Right" Style="{DynamicResource PhasmaGhostButton}" Click="ShowLibrary_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding LibraryCountText}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <ui:SymbolIcon Symbol="ChevronRight24" FontSize="11" Margin="4,0,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+                <ItemsControl ItemsSource="{Binding HomeLibrary}" ItemTemplate="{StaticResource GameTile}" ItemsPanel="{StaticResource TileWrap}" Focusable="False" />
+
+                <!--  Catalog front page  -->
+                <StackPanel Visibility="{Binding SortsVisibility}">
+                    <Grid Margin="0,14,0,12">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="In the catalog" FontSize="16" Style="{DynamicResource PhasmaHeading}" VerticalAlignment="Center" />
+                            <ItemsControl Margin="14,0,0,0" ItemsSource="{Binding Sorts}" Focusable="False">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type dmodels:CatalogSortRow}">
+                                        <ToggleButton Content="{Binding Name}" Style="{DynamicResource PhasmaChip}"
+                                                      IsChecked="{Binding IsSelected, Mode=OneWay}"
+                                                      Command="{Binding DataContext.SelectSortCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}"
+                                                      CommandParameter="{Binding}" />
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </StackPanel>
                     </Grid>
-                </ScrollViewer>
+                    <ItemsControl ItemsSource="{Binding SortGames}" ItemTemplate="{StaticResource GameTile}" ItemsPanel="{StaticResource TileWrap}" Focusable="False" />
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
 
-                <Frame Source="{Binding SectionSource, Mode=OneWay}"
-                       Visibility="{Binding SectionVisibility, Mode=OneWay}"
-                       NavigationUIVisibility="Hidden"
-                       JournalOwnership="OwnsJournal"
-                       Background="Transparent" />
-            </Grid>
+        <!--  LIBRARY  -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="{Binding LibraryVisibility}">
+            <StackPanel Margin="22,12,18,22">
+                <TextBlock Margin="0,0,0,14" Text="{Binding LibraryCountText}" Style="{DynamicResource PhasmaSubtle}" />
+                <TextBlock Visibility="{Binding LibraryEmptyVisibility}" Text="{x:Static resources:Strings.Menu_Home_NoHistoryYet}" Style="{DynamicResource PhasmaSubtle}" />
+                <ItemsControl ItemsSource="{Binding Library}" ItemTemplate="{StaticResource GameTile}" ItemsPanel="{StaticResource TileWrap}" Focusable="False" />
+            </StackPanel>
+        </ScrollViewer>
+
+        <!--  SEARCH  -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="{Binding SearchVisibility}">
+            <StackPanel Margin="22,12,18,22">
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                    <Button Style="{DynamicResource PhasmaGhostButton}" Command="{Binding ClearSearchCommand}" Padding="8,5">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="ArrowLeft24" FontSize="13" Margin="0,0,6,0" />
+                            <TextBlock Text="Back" FontSize="12.5" />
+                        </StackPanel>
+                    </Button>
+                    <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Text="{Binding SearchStatus}" Style="{DynamicResource PhasmaHeading}" />
+                    <ui:ProgressRing Margin="12,0,0,0" Width="18" Height="18" IsIndeterminate="True"
+                                     Visibility="{Binding SearchBusy, Converter={StaticResource BoolToVisibilityConverter}}" />
+                </StackPanel>
+
+                <Border Margin="0,0,0,18" Style="{DynamicResource PhasmaCard}" Visibility="{Binding LinkVisibility}">
+                    <Grid>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Ready to join" Style="{DynamicResource PhasmaHeading}" />
+                            <TextBlock Margin="0,3,0,0" Text="{Binding LinkText}" Style="{DynamicResource PhasmaSubtle}" />
+                        </StackPanel>
+                        <Button HorizontalAlignment="Right" Height="36" Padding="16,0" Style="{DynamicResource PhasmaAccentButton}" Command="{Binding JoinLinkCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Play24" Filled="True" FontSize="13" Margin="0,0,6,0" Foreground="{DynamicResource PhasmaAccentTextBrush}" />
+                                <TextBlock Text="{x:Static resources:Strings.Common_Launch}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <ItemsControl ItemsSource="{Binding SearchResults}" ItemTemplate="{StaticResource GameTile}" ItemsPanel="{StaticResource TileWrap}" Focusable="False" />
+            </StackPanel>
+        </ScrollViewer>
+
+        <!--  GAME PAGE  -->
+        <Grid Grid.Row="1" Visibility="{Binding GameVisibility}">
+            <games:GameView DataContext="{Binding Game}" />
         </Grid>
+
+        <!--  Private servers and history keep their own pages  -->
+        <Frame
+            Grid.Row="1"
+            Margin="22,8,8,0"
+            Background="Transparent"
+            JournalOwnership="OwnsJournal"
+            NavigationUIVisibility="Hidden"
+            Source="{Binding SectionSource, Mode=OneWay}"
+            Visibility="{Binding SectionVisibility, Mode=OneWay}" />
     </Grid>
 </ui:UiPage>

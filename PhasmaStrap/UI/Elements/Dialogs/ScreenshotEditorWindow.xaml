@@ -27,7 +27,6 @@
             <Setter Property="Height" Value="22" />
             <Setter Property="CornerRadius" Value="11" />
             <Setter Property="Margin" Value="0,0,5,0" />
-            <Setter Property="Cursor" Value="Hand" />
             <Setter Property="BorderThickness" Value="2" />
             <Setter Property="BorderBrush" Value="Transparent" />
         </Style>

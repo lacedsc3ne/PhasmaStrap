@@ -16,10 +16,6 @@ namespace PhasmaStrap.UI.Elements.Base
 
         private static string? _appliedThemeKey;
 
-        private static readonly Color PhasmaAccent = Color.FromRgb(0xF4, 0x55, 0x4B);
-
-        private static readonly SolidColorBrush DarkGlassTintBrush = new(Color.FromArgb(232, 0x0E, 0x0E, 0x12));
-        private static readonly SolidColorBrush LightGlassTintBrush = new(Color.FromArgb(225, 0xF6, 0xF6, 0xF9));
 
         private Border? _tintLayer;
         private FrameworkElement? _backgroundImageLayer;
@@ -27,8 +23,15 @@ namespace PhasmaStrap.UI.Elements.Base
         private string _backgroundPath = "";
         private Grid? _rootGrid;
 
-        private static SolidColorBrush CurrentGlassTint =>
-            App.Settings.Prop.Theme.GetFinal() == Enums.Theme.Dark ? DarkGlassTintBrush : LightGlassTintBrush;
+        private static SolidColorBrush CurrentGlassTint
+        {
+            get
+            {
+                var brush = new SolidColorBrush(PhasmaStrap.UI.ThemeTokens.WindowTintColor);
+                brush.Freeze();
+                return brush;
+            }
+        }
 
         protected virtual bool UseDefaultEntranceAnimation => true;
 
@@ -77,13 +80,14 @@ namespace PhasmaStrap.UI.Elements.Base
             _appliedThemeKey = key;
 
             _themeService.SetTheme(App.Settings.Prop.Theme.GetFinal() == Enums.Theme.Dark ? ThemeType.Dark : ThemeType.Light);
-            _themeService.SetAccent(PhasmaAccent);
+            _themeService.SetAccent(PhasmaStrap.UI.ThemeTokens.ResolveAccent());
 
             var dict = new ResourceDictionary { Source = new Uri($"pack://application:,,,/UI/Style/{Enum.GetName(App.Settings.Prop.Theme.GetFinal())}.xaml") };
             Application.Current.Resources.MergedDictionaries[customThemeIndex] = dict;
 
             ApplyAppColorTheme();
             PublishAccentBrushes();
+            PhasmaStrap.UI.ThemeTokens.Apply();
         }
 
         private void ApplyWindowTheme()
@@ -101,9 +105,11 @@ namespace PhasmaStrap.UI.Elements.Base
 
         public static void ApplyAccentFrom(ResourceDictionary? theme)
         {
-            Color accent = PhasmaAccent;
+            Color accent = PhasmaStrap.UI.ThemeTokens.ResolveAccent();
 
-            if (theme is not null && theme.Contains(PhasmaStrap.Utility.AppColorTheme.AccentColorKey)
+            // An accent picked in the theme studio wins over the colour theme file's accent.
+            if (PhasmaStrap.UI.ThemeTokens.UserAccent is null
+                && theme is not null && theme.Contains(PhasmaStrap.Utility.AppColorTheme.AccentColorKey)
                 && theme[PhasmaStrap.Utility.AppColorTheme.AccentColorKey] is Color custom)
             {
                 accent = Color.FromRgb(custom.R, custom.G, custom.B);
@@ -111,6 +117,7 @@ namespace PhasmaStrap.UI.Elements.Base
 
             Wpf.Ui.Appearance.Accent.Apply(accent, Wpf.Ui.Appearance.Theme.GetAppTheme());
             PublishAccentBrushes();
+            PhasmaStrap.UI.ThemeTokens.Apply();
         }
 
         private static readonly string[] AccentColorKeys =
@@ -161,6 +168,21 @@ namespace PhasmaStrap.UI.Elements.Base
         public static void ApplyThemeToAllOpenWindows()
         {
             ApplyAppTheme(force: true);
+
+            foreach (Window window in Application.Current.Windows)
+            {
+                if (window is WpfUiWindow wpfUiWindow)
+                    wpfUiWindow.ApplyWindowTheme();
+            }
+        }
+
+        /// <summary>
+        /// Cheap refresh for the theme studio sliders: republishes the look tokens and window tints
+        /// without reloading the whole theme.
+        /// </summary>
+        public static void RefreshLookOnAllWindows()
+        {
+            PhasmaStrap.UI.ThemeTokens.Apply();
 
             foreach (Window window in Application.Current.Windows)
             {

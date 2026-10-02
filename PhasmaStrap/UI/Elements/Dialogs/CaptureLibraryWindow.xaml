@@ -44,7 +44,7 @@
                     </ContextMenu>
                 </Border.ContextMenu>
                 <StackPanel>
-                    <Border Height="141" CornerRadius="8,8,0,0" ClipToBounds="True" Background="{DynamicResource ControlFillColorSecondaryBrush}" Cursor="Hand" ToolTip="Open">
+                    <Border Height="141" CornerRadius="8,8,0,0" ClipToBounds="True" Background="{DynamicResource ControlFillColorSecondaryBrush}" ToolTip="Open">
                         <Border.InputBindings>
                             <MouseBinding MouseAction="LeftClick" Command="{Binding Tag.OpenCommand, ElementName=Card}" CommandParameter="{Binding}" />
                         </Border.InputBindings>

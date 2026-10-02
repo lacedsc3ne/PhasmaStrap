@@ -90,7 +90,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <Grid Grid.Column="0" Cursor="Hand">
+                            <Grid Grid.Column="0">
                                 <Grid.InputBindings>
                                     <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.OpenReplayCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
                                 </Grid.InputBindings>

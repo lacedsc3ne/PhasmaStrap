@@ -20,15 +20,16 @@ namespace PhasmaStrap.UI.Elements.Settings
                     map[section] = host;
             }
 
-            Add(typeof(PeoplePage), typeof(AccountsPage), typeof(FriendsPage), typeof(ActivityPage));
+            Add(typeof(PeoplePage), typeof(FriendsPage), typeof(PartyPage), typeof(AccountsPage), typeof(ActivityPage));
             Add(typeof(PerformancePage),
                 typeof(RenderingLowEndPage), typeof(RenderingSystemPage), typeof(RenderingFrameRatePage),
                 typeof(RenderingBoostPage), typeof(RenderingResolutionPage), typeof(RenderingPerGamePage),
                 typeof(OverlaysHudPage), typeof(OverlaysCrosshairPage), typeof(OverlaysStreamPage),
                 typeof(RiShadePage), typeof(NvidiaPage), typeof(NetworkingPage), typeof(GBSEditorPage));
-            Add(typeof(LaunchingPage), typeof(BehaviourPage), typeof(ClassicClientPage), typeof(ModsPage));
-            Add(typeof(LookAndFeelPage), typeof(AppearancePage), typeof(NotificationsPage), typeof(HotkeysPage), typeof(ShortcutsPage));
-            Add(typeof(AppPage), typeof(PhasmaStrapPage), typeof(IntegrationsPage), typeof(ReleasesPage), typeof(DeveloperToolsPage));
+            Add(typeof(SettingsPage),
+                typeof(BehaviourPage), typeof(ModsPage), typeof(ClassicClientPage),
+                typeof(AppearancePage), typeof(NotificationsPage), typeof(HotkeysPage), typeof(ShortcutsPage),
+                typeof(PhasmaStrapPage), typeof(IntegrationsPage), typeof(ReleasesPage), typeof(DeveloperToolsPage));
             Add(typeof(FastFlagSettingsPage), typeof(FastFlagsPage), typeof(FastFlagEditorPage), typeof(FastFlagGamesPage), typeof(AssetWarpPage));
             Add(typeof(CapturePage), typeof(CaptureScreenshotsPage), typeof(CaptureReplayPage), typeof(CaptureStoragePage));
 

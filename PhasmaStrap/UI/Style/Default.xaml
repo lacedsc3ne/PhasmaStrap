@@ -4,6 +4,10 @@
     xmlns:avalonedit="http://icsharpcode.net/sharpdevelop/avalonedit"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
 
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/UI/Style/Phasma.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
     <Style x:Key="NoUserExpansionCardExpanderStyle" TargetType="{x:Type ui:CardExpander}">
 
         <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />

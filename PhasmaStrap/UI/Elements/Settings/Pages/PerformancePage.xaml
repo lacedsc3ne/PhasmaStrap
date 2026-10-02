@@ -9,19 +9,19 @@
       mc:Ignorable="d"
       Title="PerformancePage"
       Scrollable="False">
-    <controls:SectionHost x:Name="Host" Margin="0,4,0,0">
-        <controls:SectionItem Label="Low-end mode" PageType="{x:Type pages:RenderingLowEndPage}" />
-        <controls:SectionItem Label="System" PageType="{x:Type pages:RenderingSystemPage}" />
-        <controls:SectionItem Label="Frame rate" PageType="{x:Type pages:RenderingFrameRatePage}" />
-        <controls:SectionItem Label="Boost options" PageType="{x:Type pages:RenderingBoostPage}" />
-        <controls:SectionItem Label="Resolution" PageType="{x:Type pages:RenderingResolutionPage}" />
-        <controls:SectionItem Label="Per-game overrides" PageType="{x:Type pages:RenderingPerGamePage}" />
-        <controls:SectionItem Label="Stats HUD" PageType="{x:Type pages:OverlaysHudPage}" />
-        <controls:SectionItem Label="Crosshair" PageType="{x:Type pages:OverlaysCrosshairPage}" />
-        <controls:SectionItem Label="Stream-safe mode" PageType="{x:Type pages:OverlaysStreamPage}" />
-        <controls:SectionItem Label="RiShade" PageType="{x:Type pages:RiShadePage}" />
-        <controls:SectionItem Label="NVIDIA FFlags" PageType="{x:Type pages:NvidiaPage}" />
-        <controls:SectionItem Label="Networking" PageType="{x:Type pages:NetworkingPage}" />
-        <controls:SectionItem Label="Roblox settings file" PageType="{x:Type pages:GBSEditorPage}" />
+    <controls:SectionHost x:Name="Host" Header="Performance" Layout="Rail">
+        <controls:SectionItem Label="Low-end mode" Group="RENDERING" PageType="{x:Type pages:RenderingLowEndPage}" />
+        <controls:SectionItem Label="System" Group="RENDERING" PageType="{x:Type pages:RenderingSystemPage}" />
+        <controls:SectionItem Label="Frame rate" Group="RENDERING" PageType="{x:Type pages:RenderingFrameRatePage}" />
+        <controls:SectionItem Label="Boost options" Group="RENDERING" PageType="{x:Type pages:RenderingBoostPage}" />
+        <controls:SectionItem Label="Resolution" Group="RENDERING" PageType="{x:Type pages:RenderingResolutionPage}" />
+        <controls:SectionItem Label="Per-game overrides" Group="RENDERING" PageType="{x:Type pages:RenderingPerGamePage}" />
+        <controls:SectionItem Label="Stats HUD" Group="OVERLAYS" PageType="{x:Type pages:OverlaysHudPage}" />
+        <controls:SectionItem Label="Crosshair" Group="OVERLAYS" PageType="{x:Type pages:OverlaysCrosshairPage}" />
+        <controls:SectionItem Label="Stream-safe mode" Group="OVERLAYS" PageType="{x:Type pages:OverlaysStreamPage}" />
+        <controls:SectionItem Label="RiShade" Group="TUNING" PageType="{x:Type pages:RiShadePage}" />
+        <controls:SectionItem Label="NVIDIA FFlags" Group="TUNING" PageType="{x:Type pages:NvidiaPage}" />
+        <controls:SectionItem Label="Networking" Group="TUNING" PageType="{x:Type pages:NetworkingPage}" />
+        <controls:SectionItem Label="Roblox settings file" Group="TUNING" PageType="{x:Type pages:GBSEditorPage}" />
     </controls:SectionHost>
 </ui:UiPage>

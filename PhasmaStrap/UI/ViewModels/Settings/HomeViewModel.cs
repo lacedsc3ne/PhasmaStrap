@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
@@ -8,255 +8,129 @@ using PhasmaStrap.Utility;
 
 namespace PhasmaStrap.UI.ViewModels.Settings
 {
-    public sealed class PlaceRow
+    /// <summary>A game shown as a tile or a row anywhere in the catalog.</summary>
+    public sealed class GameCard : NotifyPropertyChangedViewModel
     {
+        public long UniverseId { get; set; }
+
+        /// <summary>The place Play launches. For played games this is the place last played.</summary>
         public long PlaceId { get; init; }
+
         public string Name { get; init; } = "";
-        public bool IsRootPlace { get; init; }
-        public string Subtitle => IsRootPlace ? $"Start place  ·  {PlaceId}" : PlaceId.ToString();
+
+        public string Subtitle { get; init; } = "";
+
+        private string _iconUrl = "";
+        public string IconUrl
+        {
+            get => _iconUrl;
+            set { _iconUrl = value ?? ""; OnPropertyChanged(nameof(IconUrl)); }
+        }
+
+        private string _bannerUrl = "";
+        public string BannerUrl
+        {
+            get => _bannerUrl;
+            set { _bannerUrl = value ?? ""; OnPropertyChanged(nameof(BannerUrl)); OnPropertyChanged(nameof(HasBanner)); }
+        }
+
+        public bool HasBanner => _bannerUrl.Length > 0;
+
+        private string _playingText = "";
+        public string PlayingText
+        {
+            get => _playingText;
+            set { _playingText = value ?? ""; OnPropertyChanged(nameof(PlayingText)); OnPropertyChanged(nameof(HasPlaying)); }
+        }
+
+        public bool HasPlaying => _playingText.Length > 0;
+
+        public string ProfileName => FlagLayers.ProfileFor(App.FlagProfiles.Prop, PlaceId, UniverseId)?.Name ?? "";
+
+        public bool HasProfile => ProfileName.Length > 0;
+
+        public void RefreshProfile()
+        {
+            OnPropertyChanged(nameof(ProfileName));
+            OnPropertyChanged(nameof(HasProfile));
+        }
+    }
+
+    public sealed class FriendPlayingRow
+    {
+        public string Name { get; init; } = "";
+        public string Location { get; init; } = "";
+        public string? AvatarUrl { get; init; }
+        public FriendPresence? Presence { get; init; }
+        public bool Joinable => Presence?.Joinable ?? false;
+    }
+
+    public sealed class CatalogSortRow : NotifyPropertyChangedViewModel
+    {
+        public string Name { get; init; } = "";
+        public List<GameCard> Games { get; init; } = new();
+
+        private bool _isSelected;
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set { _isSelected = value; OnPropertyChanged(nameof(IsSelected)); }
+        }
     }
 
     public class HomeViewModel : NotifyPropertyChangedViewModel
     {
         private const string LOG_IDENT = "HomeViewModel";
 
-        private const int MaxContinuePlaying = 6;
-
-        public const string FilterRecent = "recent";
-        public const string FilterAll = "all";
-        public const string FilterPrivate = "private";
-
-        public const string SectionCatalog = "catalog";
-        public const string SectionServers = "servers";
+        public const string TabHome = "home";
+        public const string TabLibrary = "library";
         public const string SectionPrivateServers = "privateservers";
         public const string SectionHistory = "history";
 
-        private string _statusText = "";
+        public const string ViewHome = "home";
+        public const string ViewSearch = "search";
+        public const string ViewGame = "game";
+        public const string ViewSection = "section";
 
-        public ObservableCollection<PlayTimeEntry> ContinuePlaying { get; } = new();
+        private const int HomeLibraryCount = 14;
 
-        public string WelcomeText => $"Welcome back, {Environment.UserName}.";
-
-        public string StatusText
+        public HomeViewModel()
         {
-            get => _statusText;
-            private set { _statusText = value; OnPropertyChanged(nameof(StatusText)); }
+            LoadLibrary();
+            _ = LoadFriendsAsync();
+            _ = LoadSortsAsync();
         }
 
-        public bool IsEmpty => ContinuePlaying.Count == 0;
+        #region Navigation between views
 
-        public ICommand RefreshCommand => new RelayCommand(LoadEntries);
-
-        public ICommand LaunchCommand => new RelayCommand<PlayTimeEntry>(Launch);
-
-        public ICommand CopyLinkCommand => new RelayCommand<PlayTimeEntry>(CopyLink);
-
-        public ICommand LaunchRobloxCommand => new RelayCommand(LaunchRoblox);
-
-        private string _linkInput = "";
-        public string LinkInput
+        private string _tab = TabHome;
+        public string Tab
         {
-            get => _linkInput;
-            set { _linkInput = value ?? ""; OnPropertyChanged(nameof(LinkInput)); }
+            get => _tab;
+            private set { _tab = value; OnPropertyChanged(nameof(Tab)); }
         }
 
-        private string _linkStatus = "Paste a game link, a private server link, a share link, or just a place ID.";
-        public string LinkStatus
+        private string _view = ViewHome;
+        public string View
         {
-            get => _linkStatus;
-            private set { _linkStatus = value; OnPropertyChanged(nameof(LinkStatus)); }
-        }
-
-        private string _placesTitle = "";
-        public string PlacesTitle
-        {
-            get => _placesTitle;
-            private set { _placesTitle = value; OnPropertyChanged(nameof(PlacesTitle)); OnPropertyChanged(nameof(PlacesVisibility)); }
-        }
-
-        public ObservableCollection<PlaceRow> Places { get; } = new();
-
-        public Visibility PlacesVisibility => Places.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-
-        private bool _linkBusy;
-        public bool LinkBusy
-        {
-            get => _linkBusy;
-            private set { _linkBusy = value; OnPropertyChanged(nameof(LinkBusy)); OnPropertyChanged(nameof(LinkNotBusy)); }
-        }
-
-        public bool LinkNotBusy => !LinkBusy;
-
-        public ICommand LaunchLinkCommand => new AsyncRelayCommand(LaunchLinkAsync);
-
-        public ICommand ShowPlacesCommand => new AsyncRelayCommand(ShowPlacesAsync);
-
-        public ICommand LaunchPlaceCommand => new RelayCommand<PlaceRow>(LaunchPlace);
-
-        private PlayTimeEntry? _selectedGame;
-        public PlayTimeEntry? SelectedGame
-        {
-            get => _selectedGame;
-            set
-            {
-                if (ReferenceEquals(_selectedGame, value))
-                    return;
-
-                _selectedGame = value;
-
-                if (value is not null)
-                    Section = "";
-
-                Servers.Clear();
-                ServerStatus = value is null
-                    ? "Pick a game on the left to see its servers."
-                    : "Nothing looked up yet. Find servers asks Roblox which public servers are running right now.";
-
-                OnPropertyChanged(nameof(SelectedGame));
-                OnPropertyChanged(nameof(HasSelection));
-                OnPropertyChanged(nameof(SelectionVisibility));
-                OnPropertyChanged(nameof(NoSelectionVisibility));
-                OnPropertyChanged(nameof(PlaceIdText));
-                OnPropertyChanged(nameof(ProfileSummary));
-                OnPropertyChanged(nameof(OverlaySummary));
-                OnPropertyChanged(nameof(ResolutionSummary));
-            }
-        }
-
-        public bool HasSelection => _selectedGame is not null;
-
-        public Visibility SelectionVisibility => HasSelection ? Visibility.Visible : Visibility.Collapsed;
-
-        public Visibility NoSelectionVisibility => HasSelection ? Visibility.Collapsed : Visibility.Visible;
-
-        public string PlaceIdText => _selectedGame is null ? "" : $"Place ID {_selectedGame.PlaceId}";
-
-        public string ProfileSummary
-        {
-            get
-            {
-                if (_selectedGame is null)
-                    return "";
-
-                FlagProfile? profile = FlagLayers.ProfileFor(App.FlagProfiles.Prop, _selectedGame.PlaceId, _selectedGame.UniverseId);
-
-                if (profile is null)
-                    return "None, this place starts with your usual flags.";
-
-                return profile.ChangeCount == 0
-                    ? $"{profile.Name}, empty so far."
-                    : $"{profile.Name}  ·  {profile.ChangeCount} flag(s)";
-            }
-        }
-
-        public string OverlaySummary
-        {
-            get
-            {
-                if (_selectedGame is null)
-                    return "";
-
-                if (!App.Settings.Prop.OverlayPlaceProfiles.TryGetValue(_selectedGame.PlaceId.ToString(), out var profile))
-                    return "None, this place uses your usual overlay settings.";
-
-                return $"HUD {(profile.HudEnabled ? "on" : "off")}  ·  crosshair {(profile.CrosshairEnabled ? "on" : "off")}";
-            }
-        }
-
-        public string ResolutionSummary
-        {
-            get
-            {
-                if (_selectedGame is null)
-                    return "";
-
-                if (!App.Settings.Prop.InGameResolutionPlaceProfiles.TryGetValue(_selectedGame.PlaceId.ToString(), out var profile))
-                    return "None, this place uses your usual resolution.";
-
-                string text = $"{profile.Width} × {profile.Height}";
-
-                if (profile.RefreshRate > 0)
-                    text += $" at {profile.RefreshRate} Hz";
-
-                if (!string.IsNullOrEmpty(profile.Monitor))
-                    text += $" on {profile.Monitor}";
-
-                return text;
-            }
-        }
-
-        private string _gamesFilter = FilterRecent;
-        public string GamesFilter
-        {
-            get => _gamesFilter;
-            private set { _gamesFilter = value; OnPropertyChanged(nameof(GamesFilter)); }
-        }
-
-        public ICommand FilterCommand => new RelayCommand<string>(ApplyFilter);
-
-        private void ApplyFilter(string? filter)
-        {
-            if (string.IsNullOrEmpty(filter))
-                return;
-
-            Section = "";
-
-            if (filter == GamesFilter)
-                return;
-
-            GamesFilter = filter;
-
-            if (filter == FilterPrivate && _privatePlaceIds is null)
-            {
-                _ = LoadPrivatePlacesAsync();
-                return;
-            }
-
-            LoadEntries();
-        }
-
-        private HashSet<long>? _privatePlaceIds;
-        private HashSet<long>? _privateUniverseIds;
-
-        private async Task LoadPrivatePlacesAsync()
-        {
-            StatusText = "Checking which games you have a private server in...";
-
-            try
-            {
-                List<PrivateServerInfo> servers = await PrivateServers.ListAsync();
-
-                _privatePlaceIds = servers.Where(s => s.PlaceId > 0).Select(s => s.PlaceId).ToHashSet();
-                _privateUniverseIds = servers.Where(s => s.UniverseId > 0).Select(s => s.UniverseId).ToHashSet();
-            }
-            catch (Exception ex)
-            {
-                App.Logger.WriteLine(LOG_IDENT, $"Could not list private servers: {ex.Message}");
-
-                _privatePlaceIds = new HashSet<long>();
-                _privateUniverseIds = new HashSet<long>();
-
-                ContinuePlaying.Clear();
-                OnPropertyChanged(nameof(IsEmpty));
-                StatusText = "Couldn't read your private servers. Sign in to Roblox in your browser, then try again.";
-                return;
-            }
-
-            LoadEntries();
-        }
-
-        private string _section = "";
-        public string Section
-        {
-            get => _section;
+            get => _view;
             private set
             {
-                _section = value;
-                OnPropertyChanged(nameof(Section));
+                _view = value;
+                OnPropertyChanged(nameof(View));
+                OnPropertyChanged(nameof(HomeVisibility));
+                OnPropertyChanged(nameof(LibraryVisibility));
+                OnPropertyChanged(nameof(SearchVisibility));
+                OnPropertyChanged(nameof(GameVisibility));
                 OnPropertyChanged(nameof(SectionVisibility));
-                OnPropertyChanged(nameof(DetailVisibility));
             }
         }
+
+        public Visibility HomeVisibility => _view == ViewHome && _tab == TabHome ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility LibraryVisibility => _view == ViewHome && _tab == TabLibrary ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility SearchVisibility => _view == ViewSearch ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility GameVisibility => _view == ViewGame ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility SectionVisibility => _view == ViewSection ? Visibility.Visible : Visibility.Collapsed;
 
         private Uri? _sectionSource;
         public Uri? SectionSource
@@ -265,277 +139,551 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             private set { _sectionSource = value; OnPropertyChanged(nameof(SectionSource)); }
         }
 
-        public Visibility SectionVisibility => _section.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+        public ICommand ShowTabCommand => new RelayCommand<string>(ShowTab);
 
-        public Visibility DetailVisibility => _section.Length > 0 ? Visibility.Collapsed : Visibility.Visible;
-
-        public ICommand ShowSectionCommand => new RelayCommand<string>(ShowSection);
-
-        private void ShowSection(string? section)
+        public void ShowTab(string? tab)
         {
-            if (string.IsNullOrEmpty(section) || section == Section)
+            if (string.IsNullOrEmpty(tab))
+                return;
+
+            _searchCts?.Cancel();
+            CloseGame();
+
+            if (tab == SectionPrivateServers || tab == SectionHistory)
             {
-                Section = "";
+                string page = tab == SectionPrivateServers ? "PrivateServersPage.xaml" : "HistoryPage.xaml";
+                SectionSource = new Uri($"/UI/Elements/Settings/Pages/{page}", UriKind.Relative);
+                Tab = tab;
+                View = ViewSection;
                 return;
             }
 
-            string? page = section switch
+            Tab = tab;
+            View = ViewHome;
+        }
+
+        private string _viewBeforeGame = ViewHome;
+
+        private GameViewModel? _game;
+        public GameViewModel? Game
+        {
+            get => _game;
+            private set { _game = value; OnPropertyChanged(nameof(Game)); }
+        }
+
+        public ICommand OpenGameCommand => new RelayCommand<GameCard>(OpenGame);
+
+        public void OpenGame(GameCard? card)
+        {
+            if (card is null || (card.UniverseId <= 0 && card.PlaceId <= 0))
+                return;
+
+            OpenGame(card.UniverseId, card.PlaceId, card.Name, card.IconUrl);
+        }
+
+        public void OpenGame(long universeId, long placeId, string name, string iconUrl)
+        {
+            Game?.Dispose();
+
+            if (_view != ViewGame)
+                _viewBeforeGame = _view;
+
+            var game = new GameViewModel(universeId, placeId, name, iconUrl);
+            game.ProfileAssigned += (_, _) => RefreshProfiles();
+            Game = game;
+            View = ViewGame;
+        }
+
+        public ICommand BackCommand => new RelayCommand(GoBack);
+
+        private void GoBack()
+        {
+            CloseGame();
+            View = _viewBeforeGame == ViewGame ? ViewHome : _viewBeforeGame;
+        }
+
+        private void CloseGame()
+        {
+            Game?.Dispose();
+            Game = null;
+        }
+
+        private void RefreshProfiles()
+        {
+            foreach (GameCard card in Library.Concat(HomeLibrary).Concat(SearchResults).Concat(SortGames))
+                card.RefreshProfile();
+            Hero?.RefreshProfile();
+        }
+
+        #endregion
+
+        #region Library and hero
+
+        public ObservableCollection<GameCard> Library { get; } = new();
+
+        public ObservableCollection<GameCard> HomeLibrary { get; } = new();
+
+        private GameCard? _hero;
+        public GameCard? Hero
+        {
+            get => _hero;
+            private set
             {
-                SectionCatalog => "FastFlagGamesPage.xaml",
-                SectionServers => "ServerBrowserPage.xaml",
-                SectionPrivateServers => "PrivateServersPage.xaml",
-                SectionHistory => "HistoryPage.xaml",
-                _ => null,
-            };
+                _hero = value;
+                OnPropertyChanged(nameof(Hero));
+                OnPropertyChanged(nameof(HeroVisibility));
+                OnPropertyChanged(nameof(WelcomeVisibility));
+            }
+        }
 
-            if (page is null)
+        public Visibility HeroVisibility => _hero is null ? Visibility.Collapsed : Visibility.Visible;
+
+        public Visibility WelcomeVisibility => _hero is null ? Visibility.Visible : Visibility.Collapsed;
+
+        private string _heroDetail = "";
+        public string HeroDetail
+        {
+            get => _heroDetail;
+            private set { _heroDetail = value; OnPropertyChanged(nameof(HeroDetail)); }
+        }
+
+        public string LibraryCountText => Library.Count == 1 ? "1 game" : $"All {Library.Count} games";
+
+        public Visibility LibraryEmptyVisibility => Library.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        public ICommand RefreshCommand => new RelayCommand(() =>
+        {
+            LoadLibrary();
+            _ = LoadFriendsAsync();
+            if (Sorts.Count == 0)
+                _ = LoadSortsAsync();
+        });
+
+        private void LoadLibrary()
+        {
+            List<PlayTimeEntry> entries = PlayTimeStore.GetAll().OrderByDescending(x => x.LastPlayed).ToList();
+
+            Library.Clear();
+            HomeLibrary.Clear();
+
+            foreach (PlayTimeEntry entry in entries)
+            {
+                var card = new GameCard
+                {
+                    UniverseId = entry.UniverseId,
+                    PlaceId = entry.PlaceId,
+                    Name = entry.DisplayName,
+                    Subtitle = $"{entry.LastPlayedText}  ·  {entry.TotalTimeText}",
+                    IconUrl = entry.IconUrl,
+                };
+
+                Library.Add(card);
+                if (HomeLibrary.Count < HomeLibraryCount)
+                    HomeLibrary.Add(card);
+            }
+
+            PlayTimeEntry? last = entries.FirstOrDefault();
+            if (last is null)
+            {
+                Hero = null;
+            }
+            else
+            {
+                Hero = new GameCard
+                {
+                    UniverseId = last.UniverseId,
+                    PlaceId = last.PlaceId,
+                    Name = last.Name.Length > 0 ? last.Name : last.DisplayName,
+                    IconUrl = last.IconUrl,
+                };
+                string placeName = PlaceNames.NameOf(last.PlaceId);
+                string prefix = placeName.Length > 0 && placeName != last.Name ? placeName + "  ·  " : "";
+                HeroDetail = prefix + "played " + last.LastPlayedText.ToLowerInvariant() + "  ·  " + last.TotalTimeText + " in total";
+                _ = FillHeroBannerAsync(Hero);
+            }
+
+            OnPropertyChanged(nameof(LibraryCountText));
+            OnPropertyChanged(nameof(LibraryEmptyVisibility));
+
+            _ = FillLibraryNamesAsync(entries);
+        }
+
+        private bool _namesFilled;
+
+        private async Task FillLibraryNamesAsync(List<PlayTimeEntry> entries)
+        {
+            if (_namesFilled)
                 return;
 
-            SectionSource = new Uri($"/UI/Elements/Settings/Pages/{page}", UriKind.Relative);
-            Section = section;
-        }
-
-        public ObservableCollection<ServerListItem> Servers { get; } = new();
-
-        private string _serverStatus = "Pick a game on the left to see its servers.";
-        public string ServerStatus
-        {
-            get => _serverStatus;
-            private set { _serverStatus = value; OnPropertyChanged(nameof(ServerStatus)); }
-        }
-
-        private bool _serversBusy;
-        public bool ServersBusy
-        {
-            get => _serversBusy;
-            private set { _serversBusy = value; OnPropertyChanged(nameof(ServersBusy)); OnPropertyChanged(nameof(ServersNotBusy)); }
-        }
-
-        public bool ServersNotBusy => !_serversBusy;
-
-        public ICommand FindServersCommand => new AsyncRelayCommand(FindServersAsync);
-
-        public ICommand JoinServerCommand => new RelayCommand<ServerListItem>(JoinServer);
-
-        private async Task FindServersAsync()
-        {
-            if (ServersBusy || _selectedGame is null || _selectedGame.PlaceId <= 0)
-                return;
-
-            ServersBusy = true;
-            Servers.Clear();
-            ServerStatus = "Looking for servers...";
+            _namesFilled = true;
 
             try
             {
-                List<ServerListItem> servers = await PhasmaStrap.Integrations.ServerBrowser.ListPublicServersAsync(PhasmaStrap.Utility.PlaceNames.StartPlaceOf(_selectedGame.PlaceId));
-
-                foreach (ServerListItem server in servers)
-                    Servers.Add(server);
-
-                ServerStatus = servers.Count == 0
-                    ? "No public servers are running for this place right now."
-                    : $"{servers.Count} public server(s) running right now.";
+                if (await PlaceNames.FillAsync(entries))
+                    LoadLibrary();
             }
             catch (Exception ex)
             {
-                App.Logger.WriteLine(LOG_IDENT, $"Server lookup failed: {ex.Message}");
-                ServerStatus = $"Server lookup failed: {ex.Message}";
+                App.Logger.WriteLine(LOG_IDENT, $"Could not fill game names: {ex.Message}");
+            }
+        }
+
+        private static async Task FillHeroBannerAsync(GameCard card)
+        {
+            try
+            {
+                long universe = card.UniverseId;
+                if (universe <= 0)
+                {
+                    universe = await UniversePlaces.GetUniverseIdAsync(card.PlaceId) ?? 0;
+                    card.UniverseId = universe;
+                }
+
+                if (universe <= 0)
+                    return;
+
+                card.BannerUrl = await GameCatalog.GetBannerUrlAsync(universe) ?? "";
+
+                GameDetails? details = await GameCatalog.GetDetailsAsync(universe);
+                if (details is not null && details.Playing > 0)
+                    card.PlayingText = $"{GameCatalog.Compact(details.Playing)} playing";
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Hero banner failed: {ex.Message}");
+            }
+        }
+
+        public ICommand PlayCommand => new RelayCommand<GameCard>(card =>
+        {
+            if (card is null || card.PlaceId <= 0)
+                return;
+
+            LaunchUri(RobloxLaunch.DeepLink(PlaceNames.StartPlaceOf(card.PlaceId)));
+        });
+
+        public ICommand OpenHeroServersCommand => new RelayCommand(() =>
+        {
+            if (Hero is null)
+                return;
+
+            OpenGame(Hero);
+        });
+
+        #endregion
+
+        #region Friends playing
+
+        public ObservableCollection<FriendPlayingRow> FriendsPlaying { get; } = new();
+
+        private string _friendsStatus = "Looking for friends in a game...";
+        public string FriendsStatus
+        {
+            get => _friendsStatus;
+            private set { _friendsStatus = value; OnPropertyChanged(nameof(FriendsStatus)); }
+        }
+
+        public ICommand JoinFriendCommand => new RelayCommand<FriendPlayingRow>(row =>
+        {
+            if (row?.Presence is null || !row.Presence.Joinable)
+                return;
+
+            LaunchUri(FriendsService.GetJoinDeeplink(row.Presence));
+        });
+
+        private async Task LoadFriendsAsync()
+        {
+            try
+            {
+                RobloxCookie.RobloxAccount? me = await RobloxCookie.GetAccountAsync();
+                if (me is null)
+                {
+                    FriendsPlaying.Clear();
+                    FriendsStatus = "Sign in to Roblox to see which friends are playing.";
+                    return;
+                }
+
+                List<FriendInfo> friends = await FriendsService.GetFriendsAsync(me.UserId);
+                Dictionary<long, FriendPresence> presence = await FriendsService.GetPresenceAsync(friends.Select(f => f.UserId));
+
+                var playing = friends
+                    .Where(f => presence.TryGetValue(f.UserId, out FriendPresence? p) && p.Type == FriendPresenceType.InGame)
+                    .Take(6)
+                    .ToList();
+
+                Dictionary<long, string> avatars = playing.Count == 0
+                    ? new Dictionary<long, string>()
+                    : await FriendsService.GetAvatarsAsync(playing.Select(f => f.UserId));
+
+                FriendsPlaying.Clear();
+                foreach (FriendInfo friend in playing)
+                {
+                    FriendPresence p = presence[friend.UserId];
+                    avatars.TryGetValue(friend.UserId, out string? avatar);
+
+                    FriendsPlaying.Add(new FriendPlayingRow
+                    {
+                        Name = string.IsNullOrWhiteSpace(friend.DisplayName) ? friend.Username : friend.DisplayName,
+                        Location = string.IsNullOrEmpty(p.LastLocation) ? "In a game" : p.LastLocation,
+                        AvatarUrl = avatar,
+                        Presence = p,
+                    });
+                }
+
+                int online = presence.Values.Count(p => p.Type != FriendPresenceType.Offline);
+                FriendsStatus = FriendsPlaying.Count == 0
+                    ? (online == 0 ? "None of your friends are online right now." : $"{online} online, nobody in a game right now.")
+                    : $"{online} of {friends.Count} online";
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Friends playing failed: {ex.Message}");
+                FriendsStatus = "Couldn't load your friends right now.";
+            }
+        }
+
+        #endregion
+
+        #region Catalog front page
+
+        public ObservableCollection<CatalogSortRow> Sorts { get; } = new();
+
+        public ObservableCollection<GameCard> SortGames { get; } = new();
+
+        public Visibility SortsVisibility => Sorts.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        public ICommand SelectSortCommand => new RelayCommand<CatalogSortRow>(SelectSort);
+
+        private void SelectSort(CatalogSortRow? row)
+        {
+            if (row is null)
+                return;
+
+            foreach (CatalogSortRow sort in Sorts)
+                sort.IsSelected = ReferenceEquals(sort, row);
+
+            SortGames.Clear();
+            foreach (GameCard card in row.Games)
+                SortGames.Add(card);
+
+            _ = FillIconsAsync(row.Games);
+        }
+
+        private async Task LoadSortsAsync()
+        {
+            List<CatalogSort> sorts;
+            try
+            {
+                sorts = await GameCatalog.GetSortsAsync();
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Front page sorts failed: {ex.Message}");
+                return;
+            }
+
+            Sorts.Clear();
+            foreach (CatalogSort sort in sorts.Take(5))
+            {
+                Sorts.Add(new CatalogSortRow
+                {
+                    Name = sort.Name,
+                    Games = sort.Games.Select(g => new GameCard
+                    {
+                        UniverseId = g.UniverseId,
+                        PlaceId = g.RootPlaceId,
+                        Name = g.Name,
+                        PlayingText = g.Playing > 0 ? $"{GameCatalog.Compact(g.Playing)} playing" : "",
+                    }).ToList(),
+                });
+            }
+
+            OnPropertyChanged(nameof(SortsVisibility));
+
+            if (Sorts.Count > 0)
+                SelectSort(Sorts[0]);
+        }
+
+        private static async Task FillIconsAsync(List<GameCard> cards)
+        {
+            List<GameCard> missing = cards.Where(c => c.IconUrl.Length == 0 && c.UniverseId > 0).ToList();
+            if (missing.Count == 0)
+                return;
+
+            try
+            {
+                List<GameInfo> withIcons = await GameLookup.WithIconsAsync(missing.Select(c => new GameInfo(c.UniverseId, c.PlaceId, c.Name)).ToList());
+                foreach (GameInfo info in withIcons)
+                {
+                    foreach (GameCard card in missing.Where(c => c.UniverseId == info.UniverseId))
+                        card.IconUrl = info.IconUrl;
+                }
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Icon lookup failed: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region Search, links and place IDs
+
+        private string _searchText = "";
+        public string SearchText
+        {
+            get => _searchText;
+            set { _searchText = value ?? ""; OnPropertyChanged(nameof(SearchText)); }
+        }
+
+        private string _searchStatus = "";
+        public string SearchStatus
+        {
+            get => _searchStatus;
+            private set { _searchStatus = value; OnPropertyChanged(nameof(SearchStatus)); }
+        }
+
+        private bool _searchBusy;
+        public bool SearchBusy
+        {
+            get => _searchBusy;
+            private set { _searchBusy = value; OnPropertyChanged(nameof(SearchBusy)); }
+        }
+
+        public ObservableCollection<GameCard> SearchResults { get; } = new();
+
+        private RobloxLaunchTarget? _linkTarget;
+
+        public Visibility LinkVisibility => _linkTarget is null ? Visibility.Collapsed : Visibility.Visible;
+
+        private string _linkText = "";
+        public string LinkText
+        {
+            get => _linkText;
+            private set { _linkText = value; OnPropertyChanged(nameof(LinkText)); }
+        }
+
+        public ICommand SearchCommand => new AsyncRelayCommand(SearchAsync);
+
+        public ICommand ClearSearchCommand => new RelayCommand(() =>
+        {
+            _searchCts?.Cancel();
+            SearchText = "";
+            SearchResults.Clear();
+            SetLinkTarget(null);
+            if (_view == ViewSearch)
+                View = ViewHome;
+        });
+
+        public ICommand JoinLinkCommand => new RelayCommand(() =>
+        {
+            if (_linkTarget is null)
+                return;
+
+            LaunchUri(_linkTarget.ToDeepLink());
+        });
+
+        private CancellationTokenSource? _searchCts;
+
+        private void SetLinkTarget(RobloxLaunchTarget? target)
+        {
+            _linkTarget = target;
+            LinkText = target is null ? "" : $"This looks like {target.Describe().ToLowerInvariant()}.";
+            OnPropertyChanged(nameof(LinkVisibility));
+        }
+
+        private async Task SearchAsync()
+        {
+            string text = SearchText.Trim();
+            if (text.Length == 0)
+                return;
+
+            _searchCts?.Cancel();
+            _searchCts = new CancellationTokenSource();
+            CancellationToken ct = _searchCts.Token;
+
+            CloseGame();
+            SetLinkTarget(null);
+            SearchResults.Clear();
+            View = ViewSearch;
+            SearchBusy = true;
+            SearchStatus = "Searching...";
+
+            try
+            {
+                // A plain place ID or game link opens the game page straight away.
+                if (RobloxLinkParser.TryParse(text, out RobloxLaunchTarget parsed))
+                {
+                    if (parsed.Kind == RobloxLinkKind.Place && !parsed.IsPrivateServer && parsed.PlaceId > 0)
+                    {
+                        SearchStatus = "";
+                        OpenGame(0, parsed.PlaceId, $"Place {parsed.PlaceId}", "");
+                        _viewBeforeGame = ViewHome;
+                        return;
+                    }
+
+                    RobloxLaunchTarget? resolved = await RobloxLinkParser.ResolveAsync(text, ct);
+                    if (resolved is not null && resolved.Kind != RobloxLinkKind.Unknown)
+                    {
+                        SetLinkTarget(resolved);
+                        SearchStatus = "";
+                        return;
+                    }
+                }
+
+                List<GameInfo> games = await GameLookup.SearchAsync(text, ct);
+                if (ct.IsCancellationRequested)
+                    return;
+
+                foreach (GameInfo game in games)
+                {
+                    SearchResults.Add(new GameCard
+                    {
+                        UniverseId = game.UniverseId,
+                        PlaceId = game.RootPlaceId,
+                        Name = game.Name,
+                        IconUrl = game.IconUrl,
+                    });
+                }
+
+                SearchStatus = games.Count == 0 ? $"Nothing in the catalog matches \"{text}\"." : $"Results for \"{text}\"";
+
+                List<GameDetails> details = await GameCatalog.GetDetailsAsync(games.Select(g => g.UniverseId), ct);
+                foreach (GameDetails detail in details)
+                {
+                    foreach (GameCard card in SearchResults.Where(c => c.UniverseId == detail.UniverseId))
+                        card.PlayingText = detail.Playing > 0 ? $"{GameCatalog.Compact(detail.Playing)} playing" : "";
+                }
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Search failed: {ex.Message}");
+                SearchStatus = $"Search failed: {ex.Message}";
             }
             finally
             {
-                ServersBusy = false;
+                SearchBusy = false;
             }
         }
 
-        private void JoinServer(ServerListItem? server)
-        {
-            if (server is null || _selectedGame is null || _selectedGame.PlaceId <= 0)
-                return;
+        #endregion
 
-            PhasmaStrap.Integrations.ServerBrowser.JoinServer(PhasmaStrap.Utility.PlaceNames.StartPlaceOf(_selectedGame.PlaceId), server.JobId);
-        }
-
-        public HomeViewModel()
-        {
-            LoadEntries();
-        }
-
-        private void LoadEntries()
-        {
-            long previous = _selectedGame?.PlaceId ?? 0;
-
-            List<PlayTimeEntry> entries = PlayTimeStore.GetAll().OrderByDescending(x => x.LastPlayed).ToList();
-
-            if (GamesFilter == FilterRecent)
-                entries = entries.Take(MaxContinuePlaying).ToList();
-            else if (GamesFilter == FilterPrivate)
-                entries = _privatePlaceIds is null
-                    ? new List<PlayTimeEntry>()
-                    : entries.Where(e => _privatePlaceIds.Contains(e.PlaceId) || (e.UniverseId > 0 && _privateUniverseIds!.Contains(e.UniverseId))).ToList();
-
-            ContinuePlaying.Clear();
-
-            foreach (PlayTimeEntry entry in entries)
-                ContinuePlaying.Add(entry);
-
-            _ = FillPlaceNamesAsync();
-
-            StatusText = ContinuePlaying.Count == 0 ? EmptyStatus() : FilledStatus();
-
-            OnPropertyChanged(nameof(IsEmpty));
-
-            SelectedGame = previous == 0 ? null : ContinuePlaying.FirstOrDefault(e => e.PlaceId == previous);
-        }
-
-        private string EmptyStatus() => GamesFilter switch
-        {
-            FilterPrivate => "None of the games you have played have a private server of yours in them.",
-            _ => "No games played yet, games you play will show up here.",
-        };
-
-        private string FilledStatus() => GamesFilter switch
-        {
-            FilterPrivate => $"{ContinuePlaying.Count} played game(s) you have a private server in.",
-            FilterAll => $"All {ContinuePlaying.Count} game(s) you have played.",
-            _ => $"Your {ContinuePlaying.Count} most recently played game(s).",
-        };
-
-        private async Task FillPlaceNamesAsync()
-        {
-            if (await PhasmaStrap.Utility.PlaceNames.FillAsync(ContinuePlaying.ToList()))
-                LoadEntries();
-        }
-
-        private static void Launch(PlayTimeEntry? entry)
-        {
-            if (entry is null || entry.PlaceId <= 0)
-                return;
-
-            LaunchDeepLink(PhasmaStrap.Utility.RobloxLaunch.DeepLink(PhasmaStrap.Utility.PlaceNames.StartPlaceOf(entry.PlaceId)));
-        }
-
-        private static void CopyLink(PlayTimeEntry? entry)
-        {
-            if (entry is null || entry.PlaceId <= 0)
-                return;
-
-            try
-            {
-                Clipboard.SetText($"https://www.roblox.com/games/{entry.PlaceId}");
-            }
-            catch (Exception ex)
-            {
-                App.Logger.WriteLine(LOG_IDENT, $"Failed to copy link: {ex.Message}");
-            }
-        }
-
-        private static void LaunchRoblox()
-        {
-            LaunchDeepLink("roblox://");
-        }
-
-        private static void LaunchDeepLink(string uri)
+        internal static void LaunchUri(string uri)
         {
             if (string.IsNullOrWhiteSpace(uri))
                 return;
 
-            Process.Start(Paths.Process, $"-player \"{uri}\"");
-        }
-
-        private async Task<RobloxLaunchTarget?> ResolveInputAsync()
-        {
-            RobloxLaunchTarget? target = await RobloxLinkParser.ResolveAsync(LinkInput);
-            if (target is null || target.Kind == RobloxLinkKind.Unknown)
-            {
-                LinkStatus = "That doesn't look like a Roblox link or place ID. Try a roblox.com/games/... link, a private server link, a roblox.com/share link, or a numeric place ID.";
-                return null;
-            }
-
-            return target;
-        }
-
-        private async Task LaunchLinkAsync()
-        {
-            if (LinkBusy)
-                return;
-
-            LinkBusy = true;
             try
             {
-                RobloxLaunchTarget? target = await ResolveInputAsync();
-                if (target is null)
-                    return;
-
-                LinkStatus = $"Launching {target.Describe().ToLowerInvariant()}...";
-                LaunchDeepLink(target.ToDeepLink());
-            }
-            finally
-            {
-                LinkBusy = false;
-            }
-        }
-
-        private async Task ShowPlacesAsync()
-        {
-            if (LinkBusy)
-                return;
-
-            LinkBusy = true;
-            try
-            {
-                Places.Clear();
-                PlacesTitle = "";
-
-                RobloxLaunchTarget? target = await ResolveInputAsync();
-                if (target is null)
-                    return;
-
-                if (target.Kind != RobloxLinkKind.Place)
-                {
-                    LinkStatus = "Places can only be listed for a game link or place ID - share links don't say which game they belong to until Roblox opens them.";
-                    return;
-                }
-
-                LinkStatus = "Looking up the experience...";
-
-                long? universeId = await UniversePlaces.GetUniverseIdAsync(target.PlaceId);
-                if (universeId is null)
-                {
-                    LinkStatus = $"Couldn't find an experience for place {target.PlaceId} - the ID may be wrong or the place may be private.";
-                    return;
-                }
-
-                UniverseSummary? summary = await UniversePlaces.GetSummaryAsync(universeId.Value);
-                List<UniversePlace> places = await UniversePlaces.GetPlacesAsync(universeId.Value, summary?.RootPlaceId ?? target.PlaceId);
-
-                foreach (UniversePlace place in places)
-                    Places.Add(new PlaceRow { PlaceId = place.PlaceId, Name = place.Name, IsRootPlace = place.IsRootPlace });
-
-                string name = string.IsNullOrEmpty(summary?.Name) ? $"Experience {universeId}" : summary!.Name;
-                PlacesTitle = Places.Count == 0 ? "" : $"{name}  ·  {Places.Count} place(s)";
-                LinkStatus = Places.Count == 0
-                    ? $"{name} has no places visible to this account."
-                    : $"{name}{(string.IsNullOrEmpty(summary?.Creator) ? "" : $" by {summary!.Creator}")} - pick a place below to launch straight into it.";
-                OnPropertyChanged(nameof(PlacesVisibility));
+                Process.Start(Paths.Process, $"-player \"{uri}\"");
             }
             catch (Exception ex)
             {
-                App.Logger.WriteLine(LOG_IDENT, $"Place lookup failed: {ex.Message}");
-                LinkStatus = $"Place lookup failed: {ex.Message}";
+                App.Logger.WriteLine(LOG_IDENT, $"Launch failed: {ex.Message}");
             }
-            finally
-            {
-                LinkBusy = false;
-            }
-        }
-
-        private static void LaunchPlace(PlaceRow? place)
-        {
-            if (place is null || place.PlaceId <= 0)
-                return;
-
-            LaunchDeepLink(PhasmaStrap.Utility.RobloxLaunch.DeepLink(place.PlaceId));
         }
     }
 }

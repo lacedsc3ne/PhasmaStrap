@@ -10,10 +10,11 @@
              mc:Ignorable="d"
              x:Name="Control"
              d:DesignHeight="450" d:DesignWidth="800">
-    <ui:Card Margin="0,8,0,0">
+    <ui:Card Margin="{DynamicResource PhasmaOptionMargin}">
         <ui:Card.Style>
 
             <Style TargetType="ui:Card" BasedOn="{StaticResource {x:Type ui:Card}}">
+                <Setter Property="Padding" Value="{DynamicResource PhasmaOptionPadding}" />
                 <Style.Triggers>
                     <DataTrigger Binding="{Binding Flat, ElementName=Control}" Value="True">
                         <Setter Property="Background" Value="Transparent" />

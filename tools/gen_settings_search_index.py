@@ -239,8 +239,6 @@ def main() -> int:
     code_hosted = {
         "HistoryPage": "HomePage",
         "PrivateServersPage": "HomePage",
-        "ServerBrowserPage": "HomePage",
-        "FastFlagGamesPage": "HomePage",
         "DiagnosticsPage": "DeveloperToolsPage",
     }
     for orphan, owner in code_hosted.items():

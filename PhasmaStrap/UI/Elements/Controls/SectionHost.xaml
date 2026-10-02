@@ -8,6 +8,7 @@
     mc:Ignorable="d">
 
     <UserControl.Resources>
+        <!--  Side rail item (Settings)  -->
         <Style x:Key="SectionRailItemStyle" TargetType="{x:Type ListBoxItem}">
             <Setter Property="Padding" Value="10,0" />
             <Setter Property="Margin" Value="0,0,0,2" />
@@ -15,13 +16,14 @@
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Setter Property="FocusVisualStyle" Value="{DynamicResource PhasmaFocusVisual}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type ListBoxItem}">
                         <Border
                             x:Name="Fill"
                             Background="Transparent"
-                            CornerRadius="5"
+                            CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}"
                             Padding="{TemplateBinding Padding}"
                             SnapsToDevicePixels="True">
                             <Grid>
@@ -34,10 +36,10 @@
                                     Grid.Column="0"
                                     Width="3"
                                     Height="16"
-                                    Margin="-6,0,9,0"
+                                    Margin="-8,0,9,0"
                                     CornerRadius="2"
-                                    Background="{DynamicResource SystemAccentColorSecondaryBrush}"
-                                    Visibility="Collapsed" />
+                                    Background="{DynamicResource PhasmaAccentBrush}"
+                                    Visibility="Hidden" />
                                 <ContentPresenter
                                     Grid.Column="1"
                                     VerticalAlignment="Center"
@@ -46,11 +48,11 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaHoverBrush}" />
                                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaSelectedBrush}" />
                                 <Setter TargetName="Marker" Property="Visibility" Value="Visible" />
                                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                             </Trigger>
@@ -59,37 +61,124 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!--  Horizontal tab item (Social, Performance, FastFlags, Capture)  -->
+        <Style x:Key="SectionTabItemStyle" TargetType="{x:Type ListBoxItem}">
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="Margin" Value="0,0,4,0" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Setter Property="FocusVisualStyle" Value="{DynamicResource PhasmaFocusVisual}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                        <Border
+                            x:Name="Fill"
+                            Background="Transparent"
+                            CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}"
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaHoverBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaSelectedBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <ItemsPanelTemplate x:Key="HorizontalPanel">
+            <WrapPanel Orientation="Horizontal" />
+        </ItemsPanelTemplate>
+
+        <ItemsPanelTemplate x:Key="VerticalPanel">
+            <StackPanel Orientation="Vertical" />
+        </ItemsPanelTemplate>
+
+        <GroupStyle x:Key="RailGroupStyle">
+            <GroupStyle.HeaderTemplate>
+                <DataTemplate>
+                    <TextBlock
+                        Margin="10,14,0,6"
+                        FontSize="10.5"
+                        FontWeight="SemiBold"
+                        Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                        Text="{Binding Name}" />
+                </DataTemplate>
+            </GroupStyle.HeaderTemplate>
+        </GroupStyle>
     </UserControl.Resources>
 
-    <Grid>
+    <Grid x:Name="LayoutRoot">
+        <Grid.RowDefinitions>
+            <RowDefinition x:Name="HeaderRow" Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition x:Name="RailColumn" Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <StackPanel x:Name="Rail" Grid.Column="0" Width="200" Margin="0,2,18,0">
+        <!--  Tabs layout: title and a row of tabs above the page  -->
+        <Grid x:Name="TabBar" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="22,18,22,12" Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
             <TextBlock
-                Margin="10,4,0,8"
-                FontSize="11"
-                FontWeight="SemiBold"
-                Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                Text="ON THIS PAGE" />
-            <ListBox
-                x:Name="RailItems"
-                Background="Transparent"
-                BorderThickness="0"
-                ItemContainerStyle="{StaticResource SectionRailItemStyle}"
-                SelectionChanged="RailItems_SelectionChanged">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Label}" FontSize="13" TextTrimming="CharacterEllipsis" />
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-        </StackPanel>
+                x:Name="TabTitle"
+                Grid.Column="0"
+                Margin="0,0,18,0"
+                VerticalAlignment="Center"
+                Style="{DynamicResource PhasmaTitle}" />
+            <ContentControl x:Name="TabSlot" Grid.Column="1" VerticalAlignment="Center" Focusable="False" />
+        </Grid>
+
+        <!--  Rail layout: a side menu with group headings  -->
+        <Border
+            x:Name="Rail"
+            Grid.Row="0"
+            Grid.RowSpan="2"
+            Grid.Column="0"
+            Width="214"
+            Padding="10,16,10,12"
+            BorderBrush="{DynamicResource PhasmaStrokeBrush}"
+            BorderThickness="0,0,1,0">
+            <DockPanel>
+                <TextBlock
+                    x:Name="RailTitle"
+                    Margin="10,0,0,4"
+                    DockPanel.Dock="Top"
+                    FontSize="18"
+                    Style="{DynamicResource PhasmaTitle}" />
+                <ContentControl x:Name="RailSlot" Focusable="False">
+                <ListBox
+                    x:Name="RailItems"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                    SelectionChanged="RailItems_SelectionChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Label}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                </ContentControl>
+            </DockPanel>
+        </Border>
+
 
         <Frame
             x:Name="SectionFrame"
+            Grid.Row="1"
             Grid.Column="1"
             Background="Transparent"
             JournalOwnership="OwnsJournal"

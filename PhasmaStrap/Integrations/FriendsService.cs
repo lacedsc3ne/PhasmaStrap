@@ -234,7 +234,7 @@ namespace PhasmaStrap.Integrations
         }
 
         public static string GetJoinDeeplink(FriendPresence presence) =>
-            PhasmaStrap.Utility.RobloxLaunch.DeepLink(presence.RootPlaceId, presence.GameId);
+            PhasmaStrap.Utility.RobloxLaunch.FollowLink(presence.UserId);
 
         private static HttpRequestMessage BuildRequest(HttpMethod method, string url, string? cookie)
         {

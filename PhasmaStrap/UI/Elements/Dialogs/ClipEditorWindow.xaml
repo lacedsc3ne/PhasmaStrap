@@ -58,7 +58,7 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <TextBlock x:Name="PositionText" Grid.Column="0" Text="0:00.00" VerticalAlignment="Center" Width="62" FontFamily="Consolas" />
-            <Grid x:Name="Timeline" Grid.Column="1" Height="58" Background="Transparent" Cursor="Hand" ClipToBounds="True"
+            <Grid x:Name="Timeline" Grid.Column="1" Height="58" Background="Transparent" ClipToBounds="True"
                   SizeChanged="Timeline_SizeChanged"
                   MouseLeftButtonDown="Timeline_MouseLeftButtonDown" MouseMove="Timeline_MouseMove" MouseLeftButtonUp="Timeline_MouseLeftButtonUp">
                 <Border Margin="8,6" CornerRadius="4" Background="{DynamicResource ControlFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" ClipToBounds="True">

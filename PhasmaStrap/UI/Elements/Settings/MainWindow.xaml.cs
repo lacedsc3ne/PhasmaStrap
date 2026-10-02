@@ -34,6 +34,8 @@ namespace PhasmaStrap.UI.Elements.Settings
 
             InitializeComponent();
 
+            RootNavigation.Frame ??= RootFrame;
+
             App.Logger.WriteLine("MainWindow", "Initializing settings window");
 
             if (showAlreadyRunningWarning)
@@ -45,10 +47,205 @@ namespace PhasmaStrap.UI.Elements.Settings
                 ControllerService.Initialize();
 
             InitializeSettingsSearch();
-            InitializePinning();
-            ApplySidebar(App.Settings.Prop.SettingsSidebarCollapsed, false);
             InitializeAccountButton();
+            InitializeTopBar();
+
+            PhasmaStrap.UI.WheelRouter.Attach(this);
         }
+
+        #region Top bar
+
+        private string _savedSettingsSnapshot = "";
+
+        private string? _savedSettingsHash;
+
+        private readonly System.Windows.Threading.DispatcherTimer _unsavedTimer = new() { Interval = TimeSpan.FromSeconds(1) };
+
+        private int _seenNotifications;
+
+        private void InitializeTopBar()
+        {
+            var viewModel = (MainWindowViewModel)DataContext;
+            viewModel.RequestSaveNoticeEvent += (_, _) => TakeSettingsSnapshot();
+
+            TakeSettingsSnapshot();
+            _unsavedTimer.Tick += (_, _) => RefreshUnsavedBar();
+            _unsavedTimer.Start();
+
+            RootFrame.Navigated += (_, _) => RefreshSettingsButton();
+
+            _seenNotifications = PhasmaStrap.UI.NotificationCenter.History.Count;
+            PhasmaStrap.UI.NotificationCenter.HistoryChanged += NotificationCenter_HistoryChanged;
+            RefreshNotificationsBadge();
+        }
+
+        private static string SerializeSettings()
+        {
+            try
+            {
+                return JsonSerializer.Serialize(App.Settings.Prop);
+            }
+            catch (Exception)
+            {
+                return "";
+            }
+        }
+
+        private void TakeSettingsSnapshot()
+        {
+            _savedSettingsSnapshot = SerializeSettings();
+            _savedSettingsHash = App.Settings.LastFileHash;
+        }
+
+        private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            // Keep the top bar on one line: drop the brand name, then the account name, as the window narrows.
+            double width = e.NewSize.Width;
+            BrandText.Visibility = width < 1180 ? Visibility.Collapsed : Visibility.Visible;
+            AccountTextPanel.Visibility = width < 1090 ? Visibility.Collapsed : Visibility.Visible;
+            SettingsSearchBox.Width = width < 1120 ? 170 : 220;
+        }
+
+        private bool HasUnsavedChanges()
+        {
+            if (App.FastFlags.Changed || App.FlagProfiles.Changed || App.PendingSettingTasks.Any(x => x.Value.Changed))
+                return true;
+
+            string now = SerializeSettings();
+            return now.Length > 0 && _savedSettingsSnapshot.Length > 0 && now != _savedSettingsSnapshot;
+        }
+
+        private void RefreshUnsavedBar()
+        {
+            if (!IsVisible || WindowState == System.Windows.WindowState.Minimized)
+                return;
+
+            // Pages that save on their own (deferred saves) move the file on; treat that as the new baseline.
+            if (!string.Equals(App.Settings.LastFileHash, _savedSettingsHash, StringComparison.Ordinal))
+                TakeSettingsSnapshot();
+
+            bool dirty;
+            try
+            {
+                dirty = HasUnsavedChanges();
+            }
+            catch (Exception)
+            {
+                dirty = false;
+            }
+
+            Visibility wanted = dirty ? Visibility.Visible : Visibility.Collapsed;
+            if (UnsavedBar.Visibility == wanted)
+                return;
+
+            UnsavedBar.Visibility = wanted;
+            if (dirty)
+                UnsavedBar.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180)));
+        }
+
+        private void RefreshSettingsButton()
+        {
+            bool onSettings = RootFrame.Content is Pages.SettingsPage;
+
+            if (onSettings)
+                SettingsButton.SetResourceReference(BackgroundProperty, "PhasmaSelectedBrush");
+            else
+                SettingsButton.ClearValue(BackgroundProperty);
+
+            SettingsButtonIcon.Filled = onSettings;
+        }
+
+        private void SettingsButton_Click(object sender, RoutedEventArgs e) => RootNavigation.Navigate("settings");
+
+        private void LaunchButton_Click(object sender, RoutedEventArgs e) => ((MainWindowViewModel)DataContext).SaveAndLaunchCommand.Execute(null);
+
+        private void SaveMenuItem_Click(object sender, RoutedEventArgs e) => ((MainWindowViewModel)DataContext).SaveSettingsCommand.Execute(null);
+
+        private void RestartMenuItem_Click(object sender, RoutedEventArgs e) => ((MainWindowViewModel)DataContext).RestartCommand.Execute(null);
+
+        private void DiscardButton_Click(object sender, RoutedEventArgs e) => ((MainWindowViewModel)DataContext).DiscardCommand.Execute(null);
+
+        private void About_Click(object sender, RoutedEventArgs e) => ((MainWindowViewModel)DataContext).OpenAboutCommand.Execute(null);
+
+        private void LaunchMenuButton_Click(object sender, RoutedEventArgs e)
+        {
+            TestModeMenuItem.IsChecked = ((MainWindowViewModel)DataContext).TestModeEnabled;
+            LaunchMenu.PlacementTarget = LaunchMenuButton;
+            LaunchMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            LaunchMenu.IsOpen = true;
+        }
+
+        private void TestModeMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var viewModel = (MainWindowViewModel)DataContext;
+            viewModel.TestModeEnabled = TestModeMenuItem.IsChecked;
+            TestModeMenuItem.IsChecked = viewModel.TestModeEnabled;
+        }
+
+        private void NotificationCenter_HistoryChanged(object? sender, EventArgs e) =>
+            Dispatcher.BeginInvoke(RefreshNotificationsBadge);
+
+        private void RefreshNotificationsBadge()
+        {
+            int count = PhasmaStrap.UI.NotificationCenter.History.Count;
+            if (count < _seenNotifications)
+                _seenNotifications = count;
+
+            NotificationsBadge.Visibility = count > _seenNotifications ? Visibility.Visible : Visibility.Collapsed;
+
+            if (NotificationsPopup.IsOpen)
+                FillNotifications();
+        }
+
+        private void FillNotifications()
+        {
+            var history = PhasmaStrap.UI.NotificationCenter.History.OrderByDescending(x => x.Timestamp).ToList();
+            NotificationsList.ItemsSource = history;
+            NotificationsList.Visibility = history.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            NotificationsEmpty.Visibility = history.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        private void NotificationsButton_Click(object sender, RoutedEventArgs e)
+        {
+            FillNotifications();
+            NotificationsPopup.IsOpen = !NotificationsPopup.IsOpen;
+
+            _seenNotifications = PhasmaStrap.UI.NotificationCenter.History.Count;
+            NotificationsBadge.Visibility = Visibility.Collapsed;
+        }
+
+        private void ClearNotifications_Click(object sender, RoutedEventArgs e)
+        {
+            PhasmaStrap.UI.NotificationCenter.ClearHistory();
+            _seenNotifications = 0;
+            FillNotifications();
+        }
+
+        private void NotificationsList_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (e.OriginalSource is not DependencyObject source)
+                return;
+
+            DependencyObject? current = source;
+            while (current is not null && current is not ListBoxItem)
+                current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+
+            if (current is ListBoxItem item && item.DataContext is PhasmaStrap.UI.NotificationRecord record && record.OnClick is not null)
+            {
+                NotificationsPopup.IsOpen = false;
+
+                try
+                {
+                    record.OnClick();
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteException("MainWindow::NotificationsList", ex);
+                }
+            }
+        }
+
+        #endregion Top bar
 
         #region Settings search
 
@@ -203,7 +400,7 @@ namespace PhasmaStrap.UI.Elements.Settings
             }
         }
 
-        private void AccountSettings_Click(object sender, RoutedEventArgs e) => RootNavigation.Navigate("phasmastrap");
+        private void AccountSettings_Click(object sender, RoutedEventArgs e) => Navigate(typeof(Pages.PhasmaStrapPage));
 
         private void AccountWebsite_Click(object sender, RoutedEventArgs e) => Utilities.ShellExecute("https://phasmastrap.com/account");
 
@@ -211,108 +408,6 @@ namespace PhasmaStrap.UI.Elements.Settings
         {
             await PhasmaStrap.Utility.PhasmaAccount.SignOutAsync();
             RefreshAccountButton();
-        }
-
-        private const double SidebarExpandedWidth = 206;
-        private const double SidebarCollapsedWidth = 52;
-
-        private readonly Dictionary<NavigationItem, object?> _navigationLabels = new();
-        private bool _sidebarCollapsed;
-
-        private void SidebarToggle_Click(object sender, RoutedEventArgs e) => ApplySidebar(!_sidebarCollapsed, true);
-
-        private void ApplyNavigationLabels(bool collapsed)
-        {
-            foreach (var control in RootNavigation.Items.Concat(RootNavigation.Footer))
-            {
-                if (control is NavigationHeader header)
-                {
-                    if (header != PinnedHeader || PinnedHeader.Visibility != Visibility.Collapsed)
-                        header.Visibility = collapsed ? Visibility.Collapsed : Visibility.Visible;
-
-                    continue;
-                }
-
-                if (control is not NavigationItem item)
-                    continue;
-
-                if (!_navigationLabels.ContainsKey(item))
-                    _navigationLabels[item] = item.Content;
-
-                object? label = _navigationLabels[item];
-
-                item.Content = collapsed ? null : label;
-                item.ToolTip = collapsed ? label : null;
-                item.HorizontalContentAlignment = collapsed ? HorizontalAlignment.Center : HorizontalAlignment.Left;
-            }
-
-            if (RootNavigation.Current is NavigationItem current
-                && _navigationLabels.TryGetValue(current, out object? currentLabel)
-                && currentLabel is string title)
-                RootBreadcrumb.Current = title;
-        }
-
-        private void ApplySidebar(bool collapsed, bool save)
-        {
-            _sidebarCollapsed = collapsed;
-
-            string? openPage = RootNavigation.Current?.PageTag;
-
-            if (!collapsed || !save)
-                ApplyNavigationLabels(collapsed);
-
-            SidebarToggle.Margin = collapsed ? new Thickness(0) : new Thickness(0, 0, 8, 0);
-            SidebarToggle.HorizontalAlignment = collapsed ? HorizontalAlignment.Center : HorizontalAlignment.Left;
-            if (collapsed)
-                SettingsSearchPopup.IsOpen = false;
-
-            double target = collapsed ? SidebarCollapsedWidth : SidebarExpandedWidth;
-
-            if (save)
-            {
-                var slide = new DoubleAnimation(target, TimeSpan.FromMilliseconds(260))
-                {
-                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseInOut }
-                };
-
-                if (collapsed)
-                    slide.Completed += (_, _) =>
-                    {
-                        if (_sidebarCollapsed)
-                            ApplyNavigationLabels(true);
-                    };
-
-                RootNavigation.BeginAnimation(WidthProperty, slide);
-
-                if (collapsed)
-                {
-                    var hide = new DoubleAnimation(0, TimeSpan.FromMilliseconds(110));
-                    hide.Completed += (_, _) => SettingsSearchBox.Visibility = Visibility.Collapsed;
-                    SettingsSearchBox.BeginAnimation(OpacityProperty, hide);
-                }
-                else
-                {
-                    SettingsSearchBox.Visibility = Visibility.Visible;
-                    SettingsSearchBox.BeginAnimation(OpacityProperty, new DoubleAnimation(1, TimeSpan.FromMilliseconds(220)) { BeginTime = TimeSpan.FromMilliseconds(80) });
-                }
-            }
-            else
-            {
-                RootNavigation.Width = target;
-                SettingsSearchBox.Visibility = collapsed ? Visibility.Collapsed : Visibility.Visible;
-                SettingsSearchBox.Opacity = collapsed ? 0 : 1;
-            }
-
-            if (!string.IsNullOrEmpty(openPage) && RootNavigation.Current?.PageTag != openPage)
-                RootNavigation.Navigate(openPage);
-            SidebarToggle.Icon = collapsed ? SymbolRegular.PanelLeftExpand24 : SymbolRegular.PanelLeftContract24;
-            SidebarToggle.ToolTip = collapsed ? "Show the sidebar" : "Collapse the sidebar";
-
-            if (!save)
-                return;
-
-            App.Settings.Prop.SettingsSidebarCollapsed = collapsed;
-            App.Settings.SaveDeferred();
         }
 
         private void SettingsSearchBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -500,94 +595,6 @@ namespace PhasmaStrap.UI.Elements.Settings
 
         #endregion Settings search
 
-        #region Pinned nav items
-
-        private readonly List<NavigationItem> _pinnedNavItems = new();
-
-        private void InitializePinning()
-        {
-            foreach (var control in RootNavigation.Items)
-            {
-                if (control is not NavigationItem navItem || string.IsNullOrEmpty(navItem.PageTag) || navItem.PageTag == "fastflageditor")
-                    continue;
-
-                AttachPinContextMenu(navItem);
-            }
-
-            RebuildPinnedGroup();
-        }
-
-        private void AttachPinContextMenu(NavigationItem navItem)
-        {
-            var pinMenuItem = new MenuItem();
-            var menu = new System.Windows.Controls.ContextMenu();
-
-            menu.Opened += (_, _) =>
-                pinMenuItem.Header = App.Settings.Prop.PinnedNavItems.Contains(navItem.PageTag) ? Strings.Menu_Settings_UnpinFromTop : Strings.Menu_Settings_PinToTop;
-
-            pinMenuItem.Click += (_, _) => TogglePinned(navItem.PageTag);
-
-            menu.Items.Add(pinMenuItem);
-            navItem.ContextMenu = menu;
-        }
-
-        private void TogglePinned(string pageTag)
-        {
-            var pinned = App.Settings.Prop.PinnedNavItems;
-
-            if (!pinned.Remove(pageTag))
-                pinned.Add(pageTag);
-
-            App.Settings.Save();
-
-            RebuildPinnedGroup();
-        }
-
-        private void RebuildPinnedGroup()
-        {
-            foreach (var item in _pinnedNavItems)
-                RootNavigation.Items.Remove(item);
-
-            _pinnedNavItems.Clear();
-
-            var pinnedTags = App.Settings.Prop.PinnedNavItems;
-
-            PinnedHeader.Visibility = pinnedTags.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-
-            int insertAt = RootNavigation.Items.IndexOf(PinnedHeader) + 1;
-
-            foreach (string tag in pinnedTags)
-            {
-                NavigationItem? source = null;
-
-                foreach (var control in RootNavigation.Items)
-                {
-                    if (control is NavigationItem candidate && candidate.PageTag == tag && !_pinnedNavItems.Contains(candidate))
-                    {
-                        source = candidate;
-                        break;
-                    }
-                }
-
-                if (source is null)
-                    continue;
-
-                var pinnedItem = new NavigationItem
-                {
-                    Content = source.Content,
-                    Icon = source.Icon,
-                    PageType = source.PageType,
-                    PageTag = source.PageTag,
-                };
-
-                AttachPinContextMenu(pinnedItem);
-
-                RootNavigation.Items.Insert(insertAt++, pinnedItem);
-                _pinnedNavItems.Add(pinnedItem);
-            }
-        }
-
-        #endregion Pinned nav items
 
         private static string PlacementPath => Path.Combine(Paths.Base, "SettingsWindow.json");
 
@@ -857,6 +864,8 @@ namespace PhasmaStrap.UI.Elements.Settings
 
             try { _mist?.Stop(this); } catch (Exception) { }
             _searchDebounce.Stop();
+            _unsavedTimer.Stop();
+            PhasmaStrap.UI.NotificationCenter.HistoryChanged -= NotificationCenter_HistoryChanged;
             _trayIcon?.Dispose();
 
             ControllerService.Shutdown();

@@ -621,6 +621,235 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
+        #region Theme studio
+
+        public sealed class AccentSwatch
+        {
+            public string Hex { get; init; } = "";
+            public System.Windows.Media.Brush Brush { get; init; } = System.Windows.Media.Brushes.Transparent;
+            public bool IsSelected { get; init; }
+        }
+
+        public sealed class LookPreset
+        {
+            public string Name { get; init; } = "";
+            public string Accent { get; init; } = "";
+            public double PanelOpacity { get; init; }
+            public int CornerRadius { get; init; }
+            public double WindowTint { get; init; }
+            public bool Compact { get; init; }
+            public bool Mist { get; init; }
+            public System.Windows.Media.Brush Brush => new System.Windows.Media.SolidColorBrush(
+                PhasmaStrap.Utility.AppColorTheme.TryParseColor(Accent, out System.Windows.Media.Color c) ? c : PhasmaStrap.UI.ThemeTokens.DefaultAccent);
+        }
+
+        public IReadOnlyList<LookPreset> LookPresets { get; } = new List<LookPreset>
+        {
+            new() { Name = "Phantom", Accent = "", PanelOpacity = 0.6, CornerRadius = 12, WindowTint = 0.91, Compact = false, Mist = true },
+            new() { Name = "Glass", Accent = "#38BDF8", PanelOpacity = 0.25, CornerRadius = 16, WindowTint = 0.72, Compact = false, Mist = true },
+            new() { Name = "Solid", Accent = "#7C8CFF", PanelOpacity = 0.95, CornerRadius = 8, WindowTint = 1.0, Compact = false, Mist = false },
+            new() { Name = "Compact", Accent = "#3DDC97", PanelOpacity = 0.7, CornerRadius = 6, WindowTint = 0.94, Compact = true, Mist = false },
+        };
+
+        public ICommand ApplyLookPresetCommand => new RelayCommand<LookPreset>(preset =>
+        {
+            if (preset is null)
+                return;
+
+            var prop = App.Settings.Prop;
+            prop.ThemePanelOpacity = preset.PanelOpacity;
+            prop.ThemeCornerRadius = preset.CornerRadius;
+            prop.ThemeWindowTintOpacity = preset.WindowTint;
+            prop.ThemeCompact = preset.Compact;
+            prop.ThemeMistEnabled = preset.Mist;
+            prop.ThemePanelColor = "";
+
+            ApplyAccent(preset.Accent);
+            NotifyLookChanged();
+        });
+
+        public IEnumerable<AccentSwatch> AccentSwatches
+        {
+            get
+            {
+                System.Windows.Media.Color current = PhasmaStrap.UI.ThemeTokens.EffectiveAccent;
+                var swatches = new List<AccentSwatch>();
+
+                foreach (string hex in PhasmaStrap.UI.ThemeTokens.AccentPresets)
+                {
+                    if (!PhasmaStrap.Utility.AppColorTheme.TryParseColor(hex, out System.Windows.Media.Color color))
+                        continue;
+
+                    bool selected = color.R == current.R && color.G == current.G && color.B == current.B;
+
+                    swatches.Add(new AccentSwatch { Hex = hex, Brush = new System.Windows.Media.SolidColorBrush(color), IsSelected = selected });
+                }
+
+                return swatches;
+            }
+        }
+
+        public ICommand SelectAccentCommand => new RelayCommand<string>(hex => ApplyAccent(hex ?? ""));
+
+        public string AccentHex
+        {
+            get => PhasmaStrap.UI.ThemeTokens.Hex(PhasmaStrap.UI.ThemeTokens.EffectiveAccent);
+            set
+            {
+                string text = (value ?? "").Trim();
+                if (text.Length > 0 && !text.StartsWith('#'))
+                    text = "#" + text;
+
+                if (text.Length == 0 || PhasmaStrap.Utility.AppColorTheme.TryParseColor(text, out _))
+                    ApplyAccent(text);
+            }
+        }
+
+        private void ApplyAccent(string hex)
+        {
+            App.Settings.Prop.ThemeAccent = hex;
+            WpfUiWindow.ApplyThemeToAllOpenWindows();
+
+            OnPropertyChanged(nameof(AccentSwatches));
+            OnPropertyChanged(nameof(AccentHex));
+        }
+
+        public double PanelOpacityPercent
+        {
+            get => App.Settings.Prop.ThemePanelOpacity * 100;
+            set
+            {
+                App.Settings.Prop.ThemePanelOpacity = Math.Clamp(value, 0, 100) / 100.0;
+                WpfUiWindow.RefreshLookOnAllWindows();
+                OnPropertyChanged(nameof(PanelOpacityPercent));
+            }
+        }
+
+        public IEnumerable<AccentSwatch> PanelSwatches
+        {
+            get
+            {
+                System.Windows.Media.Color current = PhasmaStrap.UI.ThemeTokens.EffectivePanelColor;
+                var swatches = new List<AccentSwatch>();
+
+                foreach (string hex in PhasmaStrap.UI.ThemeTokens.PanelPresets)
+                {
+                    if (!PhasmaStrap.Utility.AppColorTheme.TryParseColor(hex, out System.Windows.Media.Color color))
+                        continue;
+
+                    swatches.Add(new AccentSwatch
+                    {
+                        Hex = hex,
+                        Brush = new System.Windows.Media.SolidColorBrush(color),
+                        IsSelected = color.R == current.R && color.G == current.G && color.B == current.B
+                    });
+                }
+
+                return swatches;
+            }
+        }
+
+        public string PanelColorHex
+        {
+            get => PhasmaStrap.UI.ThemeTokens.Hex(PhasmaStrap.UI.ThemeTokens.EffectivePanelColor);
+            set
+            {
+                string text = (value ?? "").Trim();
+                if (text.Length > 0 && !text.StartsWith('#'))
+                    text = "#" + text;
+
+                if (text.Length == 0 || PhasmaStrap.Utility.AppColorTheme.TryParseColor(text, out _))
+                    ApplyPanelColor(text);
+            }
+        }
+
+        public ICommand SelectPanelColorCommand => new RelayCommand<string>(hex => ApplyPanelColor(hex ?? ""));
+
+        public ICommand FollowThemePanelCommand => new RelayCommand(() => ApplyPanelColor(""));
+
+        public ICommand PickPanelColorCommand => new RelayCommand(() =>
+        {
+            System.Windows.Media.Color current = PhasmaStrap.UI.ThemeTokens.EffectivePanelColor;
+
+            using var dialog = new System.Windows.Forms.ColorDialog
+            {
+                Color = System.Drawing.Color.FromArgb(current.R, current.G, current.B),
+                FullOpen = true,
+            };
+
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                ApplyPanelColor($"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}");
+        });
+
+        private void ApplyPanelColor(string hex)
+        {
+            App.Settings.Prop.ThemePanelColor = hex;
+            WpfUiWindow.RefreshLookOnAllWindows();
+
+            OnPropertyChanged(nameof(PanelSwatches));
+            OnPropertyChanged(nameof(PanelColorHex));
+        }
+
+        public double WindowTintPercent
+        {
+            get => App.Settings.Prop.ThemeWindowTintOpacity * 100;
+            set
+            {
+                App.Settings.Prop.ThemeWindowTintOpacity = Math.Clamp(value, PhasmaStrap.UI.ThemeTokens.MinWindowTint * 100, 100) / 100.0;
+                WpfUiWindow.RefreshLookOnAllWindows();
+                OnPropertyChanged(nameof(WindowTintPercent));
+            }
+        }
+
+        public double CornerRadiusValue
+        {
+            get => App.Settings.Prop.ThemeCornerRadius;
+            set
+            {
+                App.Settings.Prop.ThemeCornerRadius = (int)Math.Round(Math.Clamp(value, 0, 24));
+                WpfUiWindow.RefreshLookOnAllWindows();
+                OnPropertyChanged(nameof(CornerRadiusValue));
+            }
+        }
+
+        public bool CompactDensity
+        {
+            get => App.Settings.Prop.ThemeCompact;
+            set
+            {
+                App.Settings.Prop.ThemeCompact = value;
+                WpfUiWindow.RefreshLookOnAllWindows();
+                OnPropertyChanged(nameof(CompactDensity));
+            }
+        }
+
+        public bool MistEnabled
+        {
+            get => App.Settings.Prop.ThemeMistEnabled;
+            set
+            {
+                App.Settings.Prop.ThemeMistEnabled = value;
+                WpfUiWindow.RefreshLookOnAllWindows();
+                OnPropertyChanged(nameof(MistEnabled));
+            }
+        }
+
+        public ICommand ResetLookCommand => new RelayCommand(() => ApplyLookPresetCommand.Execute(LookPresets[0]));
+
+        private void NotifyLookChanged()
+        {
+            WpfUiWindow.RefreshLookOnAllWindows();
+            OnPropertyChanged(nameof(PanelOpacityPercent));
+            OnPropertyChanged(nameof(PanelSwatches));
+            OnPropertyChanged(nameof(PanelColorHex));
+            OnPropertyChanged(nameof(WindowTintPercent));
+            OnPropertyChanged(nameof(CornerRadiusValue));
+            OnPropertyChanged(nameof(CompactDensity));
+            OnPropertyChanged(nameof(MistEnabled));
+        }
+
+        #endregion
+
         private void EditColorTheme()
         {
             var editor = new AppColorThemeEditor();

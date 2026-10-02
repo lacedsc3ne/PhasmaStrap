@@ -27,6 +27,8 @@
     <Resource Include="Resources\Fonts\ZillaSlab-Medium.ttf" />
     <Resource Include="Resources\Fonts\ZillaSlab-SemiBold.ttf" />
     <Resource Include="Resources\Fonts\ZillaSlab-Bold.ttf" />
+    <Resource Include="Resources\Fonts\Sora-SemiBold.ttf" />
+    <Resource Include="Resources\Fonts\Sora-Bold.ttf" />
     <Resource Include="Resources\BootstrapperStyles\ByfronDialog\ByfronLogoDark.jpg" />
     <Resource Include="Resources\BootstrapperStyles\ByfronDialog\ByfronLogoLight.jpg" />
     <Resource Include="Resources\BootstrapperStyles\ByfronDialog\Matt.png" />

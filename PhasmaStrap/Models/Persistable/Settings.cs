@@ -200,7 +200,6 @@ namespace PhasmaStrap.Models.Persistable
 
         public bool MinimizeToTrayOnClose { get; set; } = false;
 
-        public bool SettingsSidebarCollapsed { get; set; } = false;
 
         public bool AutoBackupEnabled { get; set; } = false;
 
@@ -302,6 +301,14 @@ namespace PhasmaStrap.Models.Persistable
         public bool GlobalBackgroundVideoPauseInactive { get; set; } = true;
 
         public bool SnowEffectEnabled { get; set; } = false;
+
+        public string ThemeAccent { get; set; } = "";
+        public double ThemePanelOpacity { get; set; } = 0.6;
+        public string ThemePanelColor { get; set; } = "";
+        public int ThemeCornerRadius { get; set; } = 12;
+        public double ThemeWindowTintOpacity { get; set; } = 0.91;
+        public bool ThemeCompact { get; set; } = false;
+        public bool ThemeMistEnabled { get; set; } = true;
 
         public bool OptimizeRoblox { get; set; } = false;
         public bool RobloxEfficiencyMode { get; set; } = false;

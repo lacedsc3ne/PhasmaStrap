@@ -36,7 +36,7 @@
 
         <DataTemplate x:Key="ChoiceTemplate">
 
-            <Button Margin="0,0,6,6" Cursor="Hand" ToolTip="{Binding Name}" AutomationProperties.Name="{Binding Name}"
+            <Button Margin="0,0,6,6" ToolTip="{Binding Name}" AutomationProperties.Name="{Binding Name}"
                     Command="{Binding DataContext.UseChoiceCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}">
                 <Button.Template>
                     <ControlTemplate TargetType="Button">
@@ -190,7 +190,7 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Width="20" Height="20" Margin="0,0,4,0" CornerRadius="10" Cursor="Hand" Background="{Binding}" BorderBrush="#66FFFFFF" BorderThickness="1" ToolTip="{Binding}">
+                                    <Border Width="20" Height="20" Margin="0,0,4,0" CornerRadius="10" Background="{Binding}" BorderBrush="#66FFFFFF" BorderThickness="1" ToolTip="{Binding}">
                                         <Border.InputBindings>
                                             <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.PickColorCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
                                         </Border.InputBindings>
@@ -223,7 +223,7 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Width="20" Height="20" Margin="0,0,4,0" CornerRadius="10" Cursor="Hand" Background="{Binding}" BorderBrush="#66FFFFFF" BorderThickness="1" ToolTip="{Binding}">
+                                        <Border Width="20" Height="20" Margin="0,0,4,0" CornerRadius="10" Background="{Binding}" BorderBrush="#66FFFFFF" BorderThickness="1" ToolTip="{Binding}">
                                             <Border.InputBindings>
                                                 <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.PickOutlineColorCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
                                             </Border.InputBindings>

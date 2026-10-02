@@ -140,7 +140,7 @@
                     </ListBox.ItemContainerStyle>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <Border CornerRadius="8" Padding="10" Margin="0,0,0,6" BorderThickness="1" Cursor="Hand">
+                            <Border CornerRadius="8" Padding="10" Margin="0,0,0,6" BorderThickness="1">
                                 <Border.Style>
                                     <Style TargetType="Border">
                                         <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />

@@ -10,7 +10,7 @@
       d:DesignHeight="900" d:DesignWidth="900"
       Title="FastFlagSettingsPage"
       Scrollable="False">
-    <controls:SectionHost x:Name="Host" Margin="0,4,0,0">
+    <controls:SectionHost x:Name="Host" Header="FastFlags" Layout="Tabs">
         <controls:SectionItem Label="Roblox FFlags" PageType="{x:Type pages:FastFlagsPage}" />
         <controls:SectionItem Label="Flag editor" PageType="{x:Type pages:FastFlagEditorPage}" />
         <controls:SectionItem Label="Per-game flags" PageType="{x:Type pages:FastFlagGamesPage}" />

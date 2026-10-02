@@ -4,7 +4,6 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:pages="clr-namespace:PhasmaStrap.UI.Elements.Settings.Pages"
-             xmlns:installerpages="clr-namespace:PhasmaStrap.UI.Elements.Installer.Pages"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:base="clr-namespace:PhasmaStrap.UI.Elements.Base"
              xmlns:resources="clr-namespace:PhasmaStrap.Resources"
@@ -13,132 +12,107 @@
              d:DataContext="{d:DesignInstance dmodels:MainWindowViewModel, IsDesignTimeCreatable=True}"
              Title="{x:Static resources:Strings.Menu_Title}"
              MinWidth="1000"
-             Width="1116"
-             Height="638"
+             MinHeight="620"
+             Width="1240"
+             Height="760"
              ExtendsContentIntoTitleBar="True"
              WindowStartupLocation="CenterScreen"
              Closing="WpfUiWindow_Closing"
              Closed="WpfUiWindow_Closed"
+             SizeChanged="MainWindow_SizeChanged"
              Loaded="MainWindow_MistLoaded">
 
     <Window.Resources>
         <BlurEffect x:Key="MistBlurLarge" Radius="70" />
 
         <Storyboard x:Key="MistDrift" Timeline.DesiredFrameRate="30" RepeatBehavior="Forever">
-            <DoubleAnimation
-                Storyboard.TargetName="MistTranslate1"
-                Storyboard.TargetProperty="X"
-                From="-80" To="100" Duration="0:0:14" AutoReverse="True">
+            <DoubleAnimation Storyboard.TargetName="MistTranslate1" Storyboard.TargetProperty="X" From="-80" To="100" Duration="0:0:14" AutoReverse="True">
                 <DoubleAnimation.EasingFunction>
                     <SineEase EasingMode="EaseInOut" />
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
-            <DoubleAnimation
-                Storyboard.TargetName="MistTranslate1"
-                Storyboard.TargetProperty="Y"
-                From="30" To="-40" Duration="0:0:11" AutoReverse="True">
+            <DoubleAnimation Storyboard.TargetName="MistTranslate1" Storyboard.TargetProperty="Y" From="30" To="-40" Duration="0:0:11" AutoReverse="True">
                 <DoubleAnimation.EasingFunction>
                     <SineEase EasingMode="EaseInOut" />
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
-            <DoubleAnimation
-                Storyboard.TargetName="MistTranslate2"
-                Storyboard.TargetProperty="X"
-                From="90" To="-110" Duration="0:0:16" AutoReverse="True">
+            <DoubleAnimation Storyboard.TargetName="MistTranslate2" Storyboard.TargetProperty="X" From="90" To="-110" Duration="0:0:16" AutoReverse="True">
                 <DoubleAnimation.EasingFunction>
                     <SineEase EasingMode="EaseInOut" />
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
-            <DoubleAnimation
-                Storyboard.TargetName="MistTranslate2"
-                Storyboard.TargetProperty="Y"
-                From="-40" To="35" Duration="0:0:12.5" AutoReverse="True">
+            <DoubleAnimation Storyboard.TargetName="MistTranslate2" Storyboard.TargetProperty="Y" From="-40" To="35" Duration="0:0:12.5" AutoReverse="True">
                 <DoubleAnimation.EasingFunction>
                     <SineEase EasingMode="EaseInOut" />
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
         </Storyboard>
 
-        <ControlTemplate x:Key="NarrowNavigationFluent" TargetType="{x:Type ui:NavigationFluent}">
-            <ui:DynamicScrollViewer Margin="0" Padding="0" HorizontalScrollBarVisibility="Disabled">
-                <ui:DynamicScrollViewer.Resources>
-                    <Style TargetType="{x:Type ui:DynamicScrollBar}" BasedOn="{StaticResource {x:Type ui:DynamicScrollBar}}">
-                        <Setter Property="Opacity" Value="0" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type ScrollViewer}}}" Value="True">
-                                <DataTrigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.18">
-                                                <DoubleAnimation.EasingFunction>
-                                                    <QuadraticEase EasingMode="EaseOut" />
-                                                </DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </DataTrigger.EnterActions>
-                                <DataTrigger.ExitActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" BeginTime="0:0:0.35" Duration="0:0:0.4">
-                                                <DoubleAnimation.EasingFunction>
-                                                    <QuadraticEase EasingMode="EaseIn" />
-                                                </DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </DataTrigger.ExitActions>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </ui:DynamicScrollViewer.Resources>
-
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <ItemsControl
-                        Grid.Row="0"
-                        Focusable="False"
-                        ItemsSource="{TemplateBinding Items}"
-                        KeyboardNavigation.DirectionalNavigation="Contained"
-                        ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                        ScrollViewer.VerticalScrollBarVisibility="Disabled">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Margin="0" IsItemsHost="True" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                    </ItemsControl>
-
-                    <ItemsControl
-                        Grid.Row="1"
-                        Focusable="False"
-                        ItemsSource="{TemplateBinding Footer}"
-                        KeyboardNavigation.DirectionalNavigation="Contained"
-                        ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                        ScrollViewer.VerticalScrollBarVisibility="Disabled">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Margin="0" IsItemsHost="True" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                    </ItemsControl>
-                </Grid>
-            </ui:DynamicScrollViewer>
+        <!--  The navigation control laid out as a row of tabs in the top bar. Footer items stay registered but are not drawn.  -->
+        <ControlTemplate x:Key="TopNavigation" TargetType="{x:Type ui:NavigationFluent}">
+            <Grid>
+                <ItemsControl
+                    Focusable="False"
+                    ItemsSource="{TemplateBinding Items}"
+                    KeyboardNavigation.DirectionalNavigation="Contained">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" IsItemsHost="True" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+                <ItemsControl Focusable="False" ItemsSource="{TemplateBinding Footer}" Visibility="Collapsed" />
+            </Grid>
         </ControlTemplate>
+
+        <Style x:Key="TopTab" TargetType="{x:Type ui:NavigationItem}">
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Height" Value="56" />
+            <Setter Property="Focusable" Value="True" />
+            <Setter Property="FocusVisualStyle" Value="{DynamicResource PhasmaFocusVisual}" />
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ui:NavigationItem}">
+                        <Grid Background="Transparent">
+                            <Border x:Name="Hover" Margin="2,11" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="Transparent" />
+                            <ContentPresenter Margin="14,0" VerticalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}" />
+                            <Border
+                                x:Name="Underline"
+                                Height="2"
+                                Margin="12,0"
+                                VerticalAlignment="Bottom"
+                                CornerRadius="1"
+                                Background="{DynamicResource PhasmaAccentBrush}"
+                                Opacity="0" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Hover" Property="Background" Value="{DynamicResource PhasmaHoverBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsActive" Value="True">
+                                <Setter TargetName="Underline" Property="Opacity" Value="1" />
+                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="56" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Canvas Grid.RowSpan="3" ClipToBounds="True" IsHitTestVisible="False">
+        <!--  Drifting mist behind everything (Look and feel can turn it off)  -->
+        <Canvas Grid.RowSpan="2" ClipToBounds="True" IsHitTestVisible="False" Opacity="{DynamicResource PhasmaMistOpacity}">
             <Ellipse x:Name="Mist1" Width="480" Height="480" Canvas.Left="-160" Canvas.Top="-200" Opacity="0.12" Effect="{StaticResource MistBlurLarge}" Fill="{DynamicResource BackgroundGlowPrimaryBrush}">
                 <Ellipse.RenderTransform>
                     <TranslateTransform x:Name="MistTranslate1" X="-80" Y="30" />
@@ -150,7 +124,7 @@
                     </RadialGradientBrush>
                 </Ellipse.OpacityMask>
             </Ellipse>
-            <Ellipse x:Name="Mist2" Width="420" Height="420" Canvas.Left="620" Canvas.Top="120" Opacity="0.15" Effect="{StaticResource MistBlurLarge}" Fill="{DynamicResource BackgroundGlowSecondaryBrush}">
+            <Ellipse x:Name="Mist2" Width="420" Height="420" Canvas.Left="760" Canvas.Top="260" Opacity="0.15" Effect="{StaticResource MistBlurLarge}" Fill="{DynamicResource BackgroundGlowSecondaryBrush}">
                 <Ellipse.RenderTransform>
                     <TranslateTransform x:Name="MistTranslate2" X="90" Y="-40" />
                 </Ellipse.RenderTransform>
@@ -167,74 +141,66 @@
             x:Name="AlreadyRunningSnackbar"
             Title="{x:Static resources:Strings.Menu_AlreadyRunning_Title}"
             Message="{x:Static resources:Strings.Menu_AlreadyRunning_Caption}"
-            Icon="Info20" Timeout="10000" Margin="200,0,200,20" Grid.RowSpan="10" Panel.ZIndex="10" />
+            Icon="Info20" Timeout="10000" Margin="200,0,200,20" Grid.RowSpan="2" Panel.ZIndex="10" />
 
         <ui:Snackbar
             x:Name="SettingsSavedSnackbar"
             Title="{x:Static resources:Strings.Menu_SettingsSaved_Title}"
             Message="{x:Static resources:Strings.Menu_SettingsSaved_Message}"
-            Appearance="Success" Icon="CheckmarkCircle32" Timeout="3000" Margin="200,0,200,84" Grid.RowSpan="10" Panel.ZIndex="9" />
+            Appearance="Success" Icon="CheckmarkCircle32" Timeout="3000" Margin="200,0,200,84" Grid.RowSpan="2" Panel.ZIndex="9" />
 
-        <ui:TitleBar Padding="8" x:Name="RootTitleBar" Grid.Row="0" ForceShutdown="False" MinimizeToTray="False" UseSnapLayout="True" Title="{x:Static resources:Strings.Menu_Title}" Icon="pack://application:,,,/PhasmaStrap.ico" />
+        <!--  Top bar: brand, page tabs, search, launch, notifications, settings, account  -->
+        <ui:TitleBar
+            x:Name="RootTitleBar"
+            Grid.Row="0"
+            Title=""
+            MinHeight="56"
+            Padding="0"
+            ForceShutdown="False"
+            MinimizeToTray="False"
+            UseSnapLayout="True" />
 
-        <Button x:Name="AccountButton" Grid.Row="0" Panel.ZIndex="11" HorizontalAlignment="Right" VerticalAlignment="Center"
-                Margin="0,0,146,0" Padding="9,5" Background="Transparent" BorderThickness="1"
-                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Cursor="Hand"
-                Click="AccountButton_Click" ToolTip="Sign in to PhasmaStrap">
-            <Button.Resources>
-                <Style TargetType="Border">
-                    <Setter Property="CornerRadius" Value="6" />
-                </Style>
-            </Button.Resources>
-            <StackPanel Orientation="Horizontal">
-                <Border x:Name="AccountAvatar" Width="20" Height="20" CornerRadius="10" Visibility="Collapsed" Margin="0,0,7,0">
-                    <Border.Background>
-                        <ImageBrush x:Name="AccountAvatarBrush" Stretch="UniformToFill" />
-                    </Border.Background>
-                </Border>
-                <ui:SymbolIcon x:Name="AccountIcon" Symbol="Person24" FontSize="15" Margin="0,0,6,0" VerticalAlignment="Center" />
-                <TextBlock x:Name="AccountLabel" VerticalAlignment="Center" FontSize="13" Text="Log in" />
-                <ui:SymbolIcon x:Name="AccountChevron" Symbol="ChevronDown24" FontSize="11" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="Collapsed" />
-            </StackPanel>
-            <Button.ContextMenu>
-                <ContextMenu x:Name="AccountMenu">
-                    <MenuItem x:Name="AccountWhoItem" IsEnabled="False" />
-                    <Separator />
-                    <MenuItem Header="Account settings" Click="AccountSettings_Click" />
-                    <MenuItem Header="Open my profile on the website" Click="AccountWebsite_Click" />
-                    <Separator />
-                    <MenuItem Header="Sign out" Click="AccountSignOut_Click" />
-                </ContextMenu>
-            </Button.ContextMenu>
-        </Button>
-
-        <Grid x:Name="RootGrid" Grid.Row="1" Margin="12,12,0,0" Visibility="Visible">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+        <!--  Sits over the title bar. The grid has no background, so its empty space still drags the window.  -->
+        <Grid x:Name="TopBar" Grid.Row="0" Margin="16,0,140,0" Panel.ZIndex="5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <Border Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Margin="-6,-6,6,8" CornerRadius="10"
-                    Background="{DynamicResource SidebarBackgroundBrush}" IsHitTestVisible="False" />
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0" IsHitTestVisible="False">
+                <Border Width="28" Height="28">
+                    <Image Width="20" Height="20" Source="pack://application:,,,/PhasmaStrap.ico" RenderOptions.BitmapScalingMode="HighQuality" />
+                </Border>
+                <TextBlock x:Name="BrandText" Margin="10,0,4,0" VerticalAlignment="Center" FontSize="14" Text="PhasmaStrap" Style="{DynamicResource PhasmaHeading}" />
+            </StackPanel>
 
-            <Grid Grid.Row="0" Grid.Column="0" Margin="0,0,12,10">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
+            <ui:NavigationFluent
+                x:Name="RootNavigation"
+                Grid.Column="1"
+                VerticalAlignment="Stretch"
+                Template="{StaticResource TopNavigation}"
+                Frame="{Binding ElementName=RootFrame}"
+                SelectedPageIndex="0">
+                <ui:NavigationFluent.Items>
+                    <ui:NavigationItem Style="{StaticResource TopTab}" Content="Games" PageType="{x:Type pages:HomePage}" Icon="Games24" PageTag="games" />
+                    <ui:NavigationItem Style="{StaticResource TopTab}" Content="Social" PageType="{x:Type pages:PeoplePage}" Icon="People24" PageTag="people" />
+                    <ui:NavigationItem Style="{StaticResource TopTab}" Content="Performance" PageType="{x:Type pages:PerformancePage}" Icon="Gauge24" PageTag="performance" />
+                    <ui:NavigationItem Style="{StaticResource TopTab}" Content="FastFlags" PageType="{x:Type pages:FastFlagSettingsPage}" Icon="Flag24" PageTag="fastflagsettings" />
+                    <ui:NavigationItem Style="{StaticResource TopTab}" Content="Capture" PageType="{x:Type pages:CapturePage}" Icon="Camera24" PageTag="capture" />
+                </ui:NavigationFluent.Items>
+                <ui:NavigationFluent.Footer>
+                    <ui:NavigationItem Content="Settings" PageType="{x:Type pages:SettingsPage}" Icon="Settings24" PageTag="settings" />
+                </ui:NavigationFluent.Footer>
+            </ui:NavigationFluent>
 
-                <ui:Button x:Name="SidebarToggle" Grid.Column="0" Width="36" Height="36" Padding="0" Margin="0,0,8,0"
-                           Icon="PanelLeftContract24" Appearance="Transparent" Click="SidebarToggle_Click"
-                           ToolTip="Collapse the sidebar" AutomationProperties.Name="Collapse the sidebar" />
-
+            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
                 <ui:TextBox
-                    Grid.Column="1"
                     x:Name="SettingsSearchBox"
+                    Width="220"
+                    Margin="0,0,8,0"
+                    VerticalAlignment="Center"
                     PlaceholderText="{x:Static resources:Strings.Menu_Settings_SearchPlaceholder}"
                     Icon="Search24"
                     ClearButtonEnabled="True"
@@ -243,142 +209,240 @@
                     GotKeyboardFocus="SettingsSearchBox_GotKeyboardFocus"
                     LostKeyboardFocus="SettingsSearchBox_LostKeyboardFocus" />
 
-                <Popup x:Name="SettingsSearchPopup"
-                       PlacementTarget="{Binding ElementName=SettingsSearchBox}"
-                       Placement="Bottom"
-                       VerticalOffset="6"
-                       StaysOpen="True"
-                       AllowsTransparency="True"
-                       PopupAnimation="Fade"
-                       Focusable="False">
-                    <Border Width="480" MaxHeight="440" Margin="0,0,8,8"
-                            Background="{DynamicResource SolidBackgroundFillColorSecondaryBrush}"
-                            BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
-                            BorderThickness="1" CornerRadius="8" Padding="6">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.35" />
-                        </Border.Effect>
-                        <DockPanel>
-                            <TextBlock x:Name="SettingsSearchFooter" DockPanel.Dock="Bottom" Margin="8,6,8,2" FontSize="11"
-                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                <Border
+                    Height="32"
+                    Margin="2,0,8,0"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource PhasmaAccentSoftBrush}"
+                    BorderBrush="{DynamicResource PhasmaAccentStrokeBrush}"
+                    BorderThickness="1"
+                    CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}">
+                    <StackPanel Orientation="Horizontal">
+                        <Button
+                            x:Name="LaunchButton"
+                            Padding="11,0,10,0"
+                            Click="LaunchButton_Click"
+                            Style="{DynamicResource PhasmaSplitPart}"
+                            ToolTip="Save your settings and start Roblox">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Play24" Filled="True" FontSize="12" Margin="0,0,6,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                <TextBlock Text="Launch" FontSize="13" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Rectangle Width="1" Margin="0,7" Fill="{DynamicResource PhasmaAccentStrokeBrush}" />
+                        <Button
+                            x:Name="LaunchMenuButton"
+                            Width="26"
+                            Padding="0"
+                            Click="LaunchMenuButton_Click"
+                            Style="{DynamicResource PhasmaSplitPart}"
+                            ToolTip="More launch options"
+                            AutomationProperties.Name="More launch options">
+                            <ui:SymbolIcon Symbol="ChevronDown24" FontSize="11" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                            <Button.ContextMenu>
+                            <ContextMenu x:Name="LaunchMenu">
+                                <MenuItem Header="{x:Static resources:Strings.Menu_Settings_SaveAndLaunch}" Click="LaunchButton_Click" />
+                                <MenuItem x:Name="TestModeMenuItem" Header="{x:Static resources:Strings.Menu_TestMode}" IsCheckable="True" Click="TestModeMenuItem_Click" />
+                                <Separator />
+                                <MenuItem Header="{x:Static resources:Strings.Menu_Save}" Click="SaveMenuItem_Click" />
+                                <MenuItem Header="{x:Static resources:Strings.Menu_Settings_Restart}" Click="RestartMenuItem_Click" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                        </Button>
+                    </StackPanel>
+                </Border>
 
-                            <ListBox x:Name="SettingsSearchResults"
-                                     Background="Transparent" BorderThickness="0" Padding="0"
-                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                     VirtualizingPanel.IsVirtualizing="True"
-                                     PreviewMouseLeftButtonUp="SettingsSearchResults_PreviewMouseLeftButtonUp"
-                                     PreviewKeyDown="SettingsSearchBox_PreviewKeyDown">
-                                <ListBox.ItemContainerStyle>
-                                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
-                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                        <Setter Property="Padding" Value="8,5" />
-                                        <Setter Property="Margin" Value="0,1" />
-                                    </Style>
-                                </ListBox.ItemContainerStyle>
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel Grid.Column="0">
-                                                <TextBlock Text="{Binding Header}" FontWeight="SemiBold" FontSize="13" TextTrimming="CharacterEllipsis" />
-                                                <TextBlock Text="{Binding Breadcrumb}" FontSize="11" Margin="0,1,0,0" TextTrimming="CharacterEllipsis"
-                                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                                <TextBlock Text="{Binding Description}" FontSize="11" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
-                                                           Foreground="{DynamicResource TextFillColorTertiaryBrush}">
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="TextBlock">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding HasDescription}" Value="False">
-                                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
-                                            </StackPanel>
-                                            <Border Grid.Column="1" VerticalAlignment="Top" Margin="10,1,0,0" Padding="6,1" CornerRadius="4"
-                                                    Background="{DynamicResource ControlFillColorSecondaryBrush}">
-                                                <TextBlock Text="{Binding KindLabel}" FontSize="10" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                            </Border>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                        </DockPanel>
-                    </Border>
-                </Popup>
-            </Grid>
+                <Button
+                    x:Name="NotificationsButton"
+                    Click="NotificationsButton_Click"
+                    Style="{DynamicResource PhasmaIconButton}"
+                    ToolTip="Notifications"
+                    AutomationProperties.Name="Notifications">
+                    <Grid>
+                        <ui:SymbolIcon Symbol="Alert24" FontSize="18" />
+                        <Ellipse
+                            x:Name="NotificationsBadge"
+                            Width="8"
+                            Height="8"
+                            Margin="0,-2,-3,0"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top"
+                            Fill="{DynamicResource PhasmaAccentBrush}"
+                            Visibility="Collapsed" />
+                    </Grid>
+                </Button>
 
-            <ui:NavigationFluent x:Name="RootNavigation" Grid.Row="1" Grid.Column="0" Width="206" Margin="0,0,10,0" Template="{StaticResource NarrowNavigationFluent}" Frame="{Binding ElementName=RootFrame}" SelectedPageIndex="0">
-                <ui:NavigationFluent.Items>
+                <Button
+                    x:Name="SettingsButton"
+                    Click="SettingsButton_Click"
+                    Style="{DynamicResource PhasmaIconButton}"
+                    ToolTip="Settings"
+                    AutomationProperties.Name="Settings">
+                    <ui:SymbolIcon x:Name="SettingsButtonIcon" Symbol="Settings24" FontSize="18" />
+                </Button>
 
-                    <ui:NavigationHeader x:Name="PinnedHeader" Text="{x:Static resources:Strings.Menu_MainWindow_Pinned}" Icon="Pin24" Visibility="Collapsed" />
+                <Button
+                    x:Name="AccountButton"
+                    Height="34"
+                    Margin="6,0,0,0"
+                    Padding="5,0,10,0"
+                    Click="AccountButton_Click"
+                    Style="{DynamicResource PhasmaSoftButton}"
+                    ToolTip="Sign in to PhasmaStrap">
+                    <StackPanel Orientation="Horizontal">
+                        <Border x:Name="AccountAvatar" Width="22" Height="22" CornerRadius="11" Visibility="Collapsed" Margin="0,0,7,0">
+                            <Border.Background>
+                                <ImageBrush x:Name="AccountAvatarBrush" Stretch="UniformToFill" />
+                            </Border.Background>
+                        </Border>
+                        <ui:SymbolIcon x:Name="AccountIcon" Symbol="Person24" FontSize="15" Margin="4,0,6,0" VerticalAlignment="Center" />
+                        <StackPanel x:Name="AccountTextPanel" Orientation="Horizontal">
+                            <TextBlock x:Name="AccountLabel" VerticalAlignment="Center" FontSize="12.5" MaxWidth="120" TextTrimming="CharacterEllipsis" Text="Log in" />
+                            <ui:SymbolIcon x:Name="AccountChevron" Symbol="ChevronDown24" FontSize="11" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="Collapsed" />
+                        </StackPanel>
+                    </StackPanel>
+                    <Button.ContextMenu>
+                        <ContextMenu x:Name="AccountMenu">
+                            <MenuItem x:Name="AccountWhoItem" IsEnabled="False" />
+                            <Separator />
+                            <MenuItem Header="Account settings" Click="AccountSettings_Click" />
+                            <MenuItem Header="Open my profile on the website" Click="AccountWebsite_Click" />
+                            <MenuItem Header="{x:Static resources:Strings.Menu_About_Title}" Click="About_Click" />
+                            <Separator />
+                            <MenuItem Header="Sign out" Click="AccountSignOut_Click" />
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                </Button>
 
-                    <ui:NavigationItem Content="Games" PageType="{x:Type pages:HomePage}" Icon="Games24" PageTag="games" />
-                    <ui:NavigationItem Content="People" PageType="{x:Type pages:PeoplePage}" Icon="People24" PageTag="people" />
-                    <ui:NavigationItem Content="Party" PageType="{x:Type pages:PartyPage}" Icon="PeopleTeam24" PageTag="party" />
-                    <ui:NavigationItem Content="Performance" PageType="{x:Type pages:PerformancePage}" Icon="Gauge24" PageTag="performance" />
-                    <ui:NavigationItem Content="FastFlags" PageType="{x:Type pages:FastFlagSettingsPage}" Icon="Flag24" PageTag="fastflagsettings" />
-                    <ui:NavigationItem Content="Capture" PageType="{x:Type pages:CapturePage}" Icon="Camera24" PageTag="capture" />
-                    <ui:NavigationItem Content="Launching" PageType="{x:Type pages:LaunchingPage}" Icon="PlaySettings20" PageTag="launching" />
-                    <ui:NavigationItem Content="Look and feel" PageType="{x:Type pages:LookAndFeelPage}" Icon="PaintBrush24" PageTag="lookandfeel" />
-                    <ui:NavigationItem Content="PhasmaStrap" PageType="{x:Type pages:AppPage}" Icon="Settings24" PageTag="phasmastrap" />
-                </ui:NavigationFluent.Items>
-                <ui:NavigationFluent.Footer>
-
-                    <ui:NavigationItem Content="{x:Static resources:Strings.Menu_About_Title}" Icon="QuestionCircle48" Margin="0,0,0,12" Command="{Binding OpenAboutCommand, Mode=OneTime}" />
-                </ui:NavigationFluent.Footer>
-            </ui:NavigationFluent>
-
-            <Grid Grid.Row="0" Grid.RowSpan="3" Grid.Column="1">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-                <ui:Breadcrumb x:Name="RootBreadcrumb" Grid.Row="0" Margin="0,0,0,5" Navigation="{Binding ElementName=RootNavigation}" FontFamily="{DynamicResource PhasmaDisplay}" />
-                <Frame x:Name="RootFrame" Grid.Row="1" />
-            </Grid>
+            </StackPanel>
         </Grid>
 
-        <StatusBar x:Name="RootStatusBar" Grid.Row="2" Padding="14,10" BorderThickness="0,1,0,0">
-            <StatusBar.Background>
-                <SolidColorBrush Color="{ui:ThemeResource ApplicationBackgroundColor}" Opacity="0" />
-            </StatusBar.Background>
-            <StatusBar.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
+        <Border Grid.Row="0" Height="1" VerticalAlignment="Bottom" Background="{DynamicResource PhasmaStrokeBrush}" IsHitTestVisible="False" />
+
+        <!--  Settings search results  -->
+        <Popup x:Name="SettingsSearchPopup"
+               PlacementTarget="{Binding ElementName=SettingsSearchBox}"
+               Placement="Bottom"
+               VerticalOffset="6"
+               StaysOpen="True"
+               AllowsTransparency="True"
+               PopupAnimation="Fade"
+               Focusable="False">
+            <Border Width="480" MaxHeight="440" Margin="0,0,8,8" Style="{DynamicResource PhasmaPopupSurface}">
+                <DockPanel>
+                    <TextBlock x:Name="SettingsSearchFooter" DockPanel.Dock="Bottom" Margin="8,6,8,2" FontSize="11"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+
+                    <ListBox x:Name="SettingsSearchResults"
+                             Background="Transparent" BorderThickness="0" Padding="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             VirtualizingPanel.IsVirtualizing="True"
+                             ItemContainerStyle="{DynamicResource PhasmaListItem}"
+                             PreviewMouseLeftButtonUp="SettingsSearchResults_PreviewMouseLeftButtonUp"
+                             PreviewKeyDown="SettingsSearchBox_PreviewKeyDown">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{Binding Header}" FontWeight="SemiBold" FontSize="13" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding Breadcrumb}" FontSize="11" Margin="0,1,0,0" TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                        <TextBlock Text="{Binding Description}" FontSize="11" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasDescription}" Value="False">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" VerticalAlignment="Top" Margin="10,1,0,0" Style="{DynamicResource PhasmaTagNeutral}">
+                                        <TextBlock Text="{Binding KindLabel}" FontSize="10" />
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+        </Popup>
+
+        <!--  Notification history  -->
+        <Popup x:Name="NotificationsPopup"
+               PlacementTarget="{Binding ElementName=NotificationsButton}"
+               Placement="Bottom"
+               HorizontalOffset="-300"
+               VerticalOffset="8"
+               StaysOpen="False"
+               AllowsTransparency="True"
+               PopupAnimation="Fade">
+            <Border Width="360" MaxHeight="460" Margin="0,0,10,10" Style="{DynamicResource PhasmaPopupSurface}">
+                <DockPanel>
+                    <Grid DockPanel.Dock="Top" Margin="10,6,6,8">
+                        <TextBlock VerticalAlignment="Center" Text="Notifications" Style="{DynamicResource PhasmaHeading}" />
+                        <Button HorizontalAlignment="Right" Padding="8,4" Click="ClearNotifications_Click" Style="{DynamicResource PhasmaGhostButton}">
+                            <TextBlock Text="Clear" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </Button>
                     </Grid>
-                </ItemsPanelTemplate>
-            </StatusBar.ItemsPanel>
-            <StatusBarItem Grid.Column="0">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <ui:ToggleSwitch IsChecked="{Binding TestModeEnabled, Mode=TwoWay}" />
-                    <TextBlock Padding="12,0,0,0" Text="{x:Static resources:Strings.Menu_TestMode}" VerticalAlignment="Center" FontSize="14" />
-                </StackPanel>
-            </StatusBarItem>
-            <StatusBarItem Grid.Column="2" Padding="0,0,4,0">
-                <ui:Button Content="{x:Static resources:Strings.Menu_Settings_SaveAndLaunch}" Appearance="Primary" Command="{Binding SaveAndLaunchCommand, Mode=OneWay}" />
-            </StatusBarItem>
-            <StatusBarItem Grid.Column="3" Padding="4,0,0,0">
-                <ui:Button Content="{x:Static resources:Strings.Menu_Save}" Appearance="Primary" Command="{Binding SaveSettingsCommand, Mode=OneWay}" />
-            </StatusBarItem>
-            <StatusBarItem Grid.Column="4" Padding="4,0,0,0">
-                <ui:Button Content="{x:Static resources:Strings.Menu_Settings_Restart}" Command="{Binding RestartCommand, Mode=OneWay}" />
-            </StatusBarItem>
-            <StatusBarItem Grid.Column="5" Padding="4,0,0,0">
-                <ui:Button Content="{x:Static resources:Strings.Common_Close}" Command="{Binding CloseWindowCommand, Mode=OneWay}" />
-            </StatusBarItem>
-        </StatusBar>
+                    <TextBlock x:Name="NotificationsEmpty" DockPanel.Dock="Top" Margin="10,4,10,14" FontSize="12" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Nothing yet. Alerts about friends, updates and captures will show up here." />
+                    <ListBox x:Name="NotificationsList"
+                             Background="Transparent" BorderThickness="0" Padding="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ItemContainerStyle="{DynamicResource PhasmaListItem}"
+                             PreviewMouseLeftButtonUp="NotificationsList_PreviewMouseLeftButtonUp">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="12.5" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding Message}" FontSize="11.5" Margin="0,2,0,0" TextWrapping="Wrap" MaxHeight="48" TextTrimming="CharacterEllipsis"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    <TextBlock Text="{Binding Timestamp, StringFormat=t}" FontSize="10.5" Margin="0,3,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+        </Popup>
+
+        <!--  Page content on one glass panel  -->
+        <Border Grid.Row="1" Margin="14,12,14,14" Style="{DynamicResource PhasmaPanel}">
+            <Frame x:Name="RootFrame" />
+        </Border>
+
+        <!--  Shown while something has changed that has not been saved yet  -->
+        <Border
+            x:Name="UnsavedBar"
+            Grid.Row="1"
+            Margin="0,0,0,30"
+            Padding="16,8,8,8"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Bottom"
+            Panel.ZIndex="8"
+            Style="{DynamicResource PhasmaPopupSurface}"
+            Visibility="Collapsed">
+            <StackPanel Orientation="Horizontal">
+                <Ellipse Width="8" Height="8" Margin="0,0,10,0" VerticalAlignment="Center" Fill="{DynamicResource PhasmaWarnBrush}" />
+                <TextBlock x:Name="UnsavedText" VerticalAlignment="Center" FontSize="13" Text="You have changes that are not saved yet" />
+                <Button Margin="12,0,0,0" Click="DiscardButton_Click" Style="{DynamicResource PhasmaGhostButton}" ToolTip="Throw away the changes you have not saved">
+                    <TextBlock Text="Reset" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </Button>
+                <Button Margin="6,0,0,0" Click="SaveMenuItem_Click" Style="{DynamicResource PhasmaAccentButton}">
+                    <TextBlock Text="{x:Static resources:Strings.Menu_Save}" />
+                </Button>
+                <Button Margin="6,0,0,0" Click="LaunchButton_Click" Style="{DynamicResource PhasmaSoftButton}">
+                    <TextBlock Text="{x:Static resources:Strings.Menu_Settings_SaveAndLaunch}" />
+                </Button>
+            </StackPanel>
+        </Border>
     </Grid>
 </base:WpfUiWindow>

@@ -15,6 +15,202 @@
         <TextBlock Text="{x:Static resources:Strings.Menu_Appearance_Title}" FontSize="20" FontWeight="Medium" />
         <TextBlock Text="{x:Static resources:Strings.Menu_Appearance_Description}" FontSize="14" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" />
 
+        <!--  Theme studio: look tokens that apply live across the whole app  -->
+        <Border Margin="0,14,0,0" Padding="18" Style="{DynamicResource PhasmaCard}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="24" />
+                    <ColumnDefinition Width="260" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <Grid>
+                        <StackPanel>
+                            <TextBlock Text="Theme studio" Style="{DynamicResource PhasmaHeading}" FontSize="16" />
+                            <TextBlock Margin="0,3,0,0" TextWrapping="Wrap" Style="{DynamicResource PhasmaSubtle}"
+                                       Text="Accent, glass, roundness and spacing. Changes show up straight away everywhere in PhasmaStrap." />
+                        </StackPanel>
+                        <Button HorizontalAlignment="Right" VerticalAlignment="Top" Style="{DynamicResource PhasmaGhostButton}" Command="{Binding ResetLookCommand}">
+                            <TextBlock Text="Reset" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </Button>
+                    </Grid>
+
+                    <TextBlock Margin="0,16,0,8" Text="Start from" Style="{DynamicResource PhasmaCaption}" />
+                    <ItemsControl ItemsSource="{Binding LookPresets}" Focusable="False">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="1" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Margin="0,0,8,0" Padding="8" HorizontalContentAlignment="Stretch" Style="{DynamicResource PhasmaSoftButton}"
+                                        Command="{Binding DataContext.ApplyLookPresetCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}"
+                                        CommandParameter="{Binding}">
+                                    <StackPanel>
+                                        <Border Height="22" CornerRadius="6" Background="{Binding Brush}" />
+                                        <TextBlock Margin="0,6,0,0" HorizontalAlignment="Center" Text="{Binding Name}" FontSize="12" />
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Margin="0,18,0,8" Text="Accent" Style="{DynamicResource PhasmaCaption}" />
+                    <StackPanel Orientation="Horizontal">
+                        <ItemsControl ItemsSource="{Binding AccentSwatches}" Focusable="False" VerticalAlignment="Center">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Width="30" Height="30" Margin="0,0,6,0" Padding="0" Style="{DynamicResource PhasmaGhostButton}" ToolTip="{Binding Hex}"
+                                            Command="{Binding DataContext.SelectAccentCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}"
+                                            CommandParameter="{Binding Hex}">
+                                        <Grid>
+                                            <Ellipse Width="28" Height="28" StrokeThickness="2">
+                                                <Ellipse.Style>
+                                                    <Style TargetType="Ellipse">
+                                                        <Setter Property="Stroke" Value="Transparent" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                <Setter Property="Stroke" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Ellipse.Style>
+                                            </Ellipse>
+                                            <Ellipse Width="20" Height="20" Fill="{Binding Brush}" />
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <ui:TextBox Width="110" Margin="6,0,0,0" VerticalAlignment="Center" PlaceholderText="#RRGGBB"
+                                    Text="{Binding AccentHex, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                    </StackPanel>
+
+                    <Grid Margin="0,18,0,0">
+                        <TextBlock Text="Panel opacity" FontWeight="SemiBold" FontSize="13" />
+                        <TextBlock HorizontalAlignment="Right" Style="{DynamicResource PhasmaSubtle}" Text="{Binding PanelOpacityPercent, StringFormat={}{0:0}%}" />
+                    </Grid>
+                    <Slider Margin="0,6,0,0" Minimum="0" Maximum="100" SmallChange="1" LargeChange="10" IsMoveToPointEnabled="True"
+                            Value="{Binding PanelOpacityPercent, Mode=TwoWay}" />
+
+                    <Grid Margin="0,14,0,0">
+                        <TextBlock VerticalAlignment="Center" Text="Panel colour" FontWeight="SemiBold" FontSize="13" />
+                        <Button HorizontalAlignment="Right" Margin="0,-6,-8,-6" Style="{DynamicResource PhasmaGhostButton}" Command="{Binding FollowThemePanelCommand}" ToolTip="Go back to the colour your theme uses">
+                            <TextBlock Text="Use theme colour" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </Button>
+                    </Grid>
+                    <TextBlock Margin="0,2,0,0" TextWrapping="Wrap" Style="{DynamicResource PhasmaSubtle}" FontSize="11.5"
+                               Text="The card every page sits on. Panel opacity sets how see through it is." />
+                    <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
+                        <ItemsControl ItemsSource="{Binding PanelSwatches}" Focusable="False" VerticalAlignment="Center">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Width="30" Height="30" Margin="0,0,6,0" Padding="0" Style="{DynamicResource PhasmaGhostButton}" ToolTip="{Binding Hex}"
+                                            Command="{Binding DataContext.SelectPanelColorCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}"
+                                            CommandParameter="{Binding Hex}">
+                                        <Grid>
+                                            <Ellipse Width="28" Height="28" StrokeThickness="2">
+                                                <Ellipse.Style>
+                                                    <Style TargetType="Ellipse">
+                                                        <Setter Property="Stroke" Value="Transparent" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                <Setter Property="Stroke" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Ellipse.Style>
+                                            </Ellipse>
+                                            <Ellipse Width="20" Height="20" Fill="{Binding Brush}" Stroke="{DynamicResource PhasmaStrokeStrongBrush}" StrokeThickness="1" />
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <ui:TextBox Width="110" Margin="6,0,0,0" VerticalAlignment="Center" PlaceholderText="#RRGGBB"
+                                    Text="{Binding PanelColorHex, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                        <Button Margin="6,0,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding PickPanelColorCommand}" ToolTip="Choose any colour">
+                            <TextBlock Text="Pick" FontSize="12" />
+                        </Button>
+                    </StackPanel>
+
+                    <Grid Margin="0,14,0,0">
+                        <TextBlock Text="Window tint" FontWeight="SemiBold" FontSize="13" />
+                        <TextBlock HorizontalAlignment="Right" Style="{DynamicResource PhasmaSubtle}" Text="{Binding WindowTintPercent, StringFormat={}{0:0}%}" />
+                    </Grid>
+                    <TextBlock Margin="0,2,0,0" TextWrapping="Wrap" Style="{DynamicResource PhasmaSubtle}" FontSize="11.5"
+                               Text="Lower lets the desktop blur or your background picture show through more." />
+                    <Slider Margin="0,6,0,0" Minimum="40" Maximum="100" SmallChange="1" LargeChange="10" IsMoveToPointEnabled="True"
+                            Value="{Binding WindowTintPercent, Mode=TwoWay}" />
+
+                    <Grid Margin="0,14,0,0">
+                        <TextBlock Text="Roundness" FontWeight="SemiBold" FontSize="13" />
+                        <TextBlock HorizontalAlignment="Right" Style="{DynamicResource PhasmaSubtle}" Text="{Binding CornerRadiusValue, StringFormat={}{0:0} px}" />
+                    </Grid>
+                    <Slider Margin="0,6,0,0" Minimum="0" Maximum="24" SmallChange="1" LargeChange="4" IsSnapToTickEnabled="True" TickFrequency="1" IsMoveToPointEnabled="True"
+                            Value="{Binding CornerRadiusValue, Mode=TwoWay}" />
+
+                    <Grid Margin="0,16,0,0">
+                        <StackPanel>
+                            <TextBlock Text="Compact spacing" FontWeight="SemiBold" FontSize="13" />
+                            <TextBlock Style="{DynamicResource PhasmaSubtle}" FontSize="11.5" Text="Tighter rows and padding to fit more on screen." />
+                        </StackPanel>
+                        <ui:ToggleSwitch HorizontalAlignment="Right" VerticalAlignment="Center" IsChecked="{Binding CompactDensity, Mode=TwoWay}" />
+                    </Grid>
+
+                    <Grid Margin="0,12,0,0">
+                        <StackPanel>
+                            <TextBlock Text="Drifting mist" FontWeight="SemiBold" FontSize="13" />
+                            <TextBlock Style="{DynamicResource PhasmaSubtle}" FontSize="11.5" Text="The soft coloured glow behind the window." />
+                        </StackPanel>
+                        <ui:ToggleSwitch HorizontalAlignment="Right" VerticalAlignment="Center" IsChecked="{Binding MistEnabled, Mode=TwoWay}" />
+                    </Grid>
+
+                    <Button Margin="-8,12,0,0" HorizontalAlignment="Left" Style="{DynamicResource PhasmaGhostButton}" Command="{Binding EditColorThemeCommand}">
+                        <TextBlock Text="Edit every colour in the colour theme editor" FontSize="12" Foreground="{DynamicResource PhasmaAccentBrush}" />
+                    </Button>
+                </StackPanel>
+
+                <!--  Live sample  -->
+                <Border Grid.Column="2" Padding="14" VerticalAlignment="Top" Style="{DynamicResource PhasmaPanel}">
+                    <StackPanel>
+                        <TextBlock Text="PREVIEW" Style="{DynamicResource PhasmaCaption}" />
+                        <Border Margin="0,10,0,0" Style="{DynamicResource PhasmaCard}" Padding="{DynamicResource PhasmaRowPadding}">
+                            <Grid>
+                                <StackPanel>
+                                    <TextBlock Text="Blox Fruits" Style="{DynamicResource PhasmaHeading}" FontSize="14" />
+                                    <TextBlock Text="Second Sea" Style="{DynamicResource PhasmaSubtle}" />
+                                </StackPanel>
+                                <Button HorizontalAlignment="Right" VerticalAlignment="Center" Style="{DynamicResource PhasmaAccentButton}" IsHitTestVisible="False" Focusable="False">
+                                    <TextBlock Text="Play" />
+                                </Button>
+                            </Grid>
+                        </Border>
+                        <WrapPanel Margin="0,10,0,0">
+                            <ToggleButton Content="Lowest ping" IsChecked="True" Style="{DynamicResource PhasmaChip}" IsHitTestVisible="False" Focusable="False" />
+                            <ToggleButton Content="Hide full" Style="{DynamicResource PhasmaChip}" IsHitTestVisible="False" Focusable="False" />
+                        </WrapPanel>
+                        <Border Margin="0,10,0,0" Style="{DynamicResource PhasmaTag}">
+                            <TextBlock Text="Low ping PvP" />
+                        </Border>
+                        <ui:TextBox Margin="0,10,0,0" PlaceholderText="Text box" IsHitTestVisible="False" Focusable="False" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
         <Grid Margin="0,14,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -288,7 +484,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Width="176" Margin="0,0,10,10" Padding="3" CornerRadius="8" Cursor="Hand" Background="{DynamicResource ControlFillColorDefaultBrush}">
+                            <Border Width="176" Margin="0,0,10,10" Padding="3" CornerRadius="8" Background="{DynamicResource ControlFillColorDefaultBrush}">
                                 <Border.Style>
                                     <Style TargetType="Border">
                                         <Setter Property="BorderThickness" Value="2" />

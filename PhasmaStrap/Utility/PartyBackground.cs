@@ -60,6 +60,7 @@ namespace PhasmaStrap.Utility
             App.Logger.WriteLine(LOG_IDENT, "Background party watcher started");
 
             ProcessName.Set("PhasmaStrap Party Watcher");
+            MemoryReport.Start(trimWhenIdle: true);
 
             PartyService.Start();
 

@@ -220,9 +220,16 @@ namespace PhasmaStrap.Networking
 
         private static readonly Dictionary<string, (DateTime WriteTimeUtc, bool Patched)> BundleStateCache = new(StringComparer.OrdinalIgnoreCase);
 
-        private static IEnumerable<string> FindTrustBundles()
+        private static IEnumerable<string> BundlesThatMatter()
         {
-            var roots = new[] { Paths.Versions, Path.Combine(Paths.LocalAppData, "Roblox", "Versions") };
+            List<string> own = FindTrustBundles(Paths.Versions).ToList();
+
+            return own.Count > 0 ? own : FindTrustBundles().ToList();
+        }
+
+        private static IEnumerable<string> FindTrustBundles(params string[] only)
+        {
+            string[] roots = only.Length > 0 ? only : new[] { Paths.Versions, Path.Combine(Paths.LocalAppData, "Roblox", "Versions") };
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (string root in roots)
@@ -337,7 +344,7 @@ namespace PhasmaStrap.Networking
                 string pem = RootPem(root);
                 bool any = false;
 
-                foreach (string bundle in FindTrustBundles())
+                foreach (string bundle in BundlesThatMatter())
                 {
                     any = true;
 

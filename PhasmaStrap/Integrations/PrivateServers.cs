@@ -101,14 +101,19 @@ namespace PhasmaStrap.Integrations
         public static async Task<List<PrivateServerInfo>> ListAsync(CancellationToken ct = default)
         {
             var result = new List<PrivateServerInfo>();
+            var seen = new HashSet<long>();
+            int repeats = 0;
             bool loggedShape = false;
 
             foreach ((string tab, bool owned) in new[] { ("MyPrivateServers", true), ("OtherPrivateServers", false) })
             {
                 string? cursor = null;
+                int pages = 0;
+                int before = result.Count;
 
                 do
                 {
+                    pages++;
                     string url = $"https://games.roblox.com/v1/private-servers/my-private-servers?privateServersTab={tab}&itemsPerPage=100"
                         + (cursor is null ? "" : $"&cursor={Uri.EscapeDataString(cursor)}");
 
@@ -126,9 +131,17 @@ namespace PhasmaStrap.Integrations
 
                             DateTime? expires = DateTime.TryParse(Text(item, "expirationDate"), null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime e) ? e : null;
 
+                            long id = Long(item, "privateServerId", "vipServerId", "id");
+
+                            if (id > 0 && !seen.Add(id))
+                            {
+                                repeats++;
+                                continue;
+                            }
+
                             result.Add(new PrivateServerInfo
                             {
-                                Id = Long(item, "privateServerId", "vipServerId", "id"),
+                                Id = id,
                                 UniverseId = Long(item, "universeId"),
                                 PlaceId = Long(item, "placeId", "rootPlaceId"),
                                 Name = Text(item, "name"),
@@ -145,8 +158,13 @@ namespace PhasmaStrap.Integrations
 
                     cursor = doc.RootElement.TryGetProperty("nextPageCursor", out JsonElement next) && next.ValueKind == JsonValueKind.String ? next.GetString() : null;
                 }
-                while (!string.IsNullOrEmpty(cursor) && result.Count < 500);
+                while (!string.IsNullOrEmpty(cursor) && pages < 100);
+
+                App.Logger.WriteLine(LOG_IDENT, $"{tab}: {result.Count - before} server(s) over {pages} page(s){(string.IsNullOrEmpty(cursor) ? "" : ", stopped with more left")}");
             }
+
+            if (repeats > 0)
+                App.Logger.WriteLine(LOG_IDENT, $"Roblox listed {repeats} server(s) more than once, kept one of each");
 
             App.Logger.WriteLine(LOG_IDENT, $"Found {result.Count(s => s.Owned)} owned and {result.Count(s => !s.Owned)} shared private server(s)");
             return result;

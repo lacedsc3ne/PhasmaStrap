@@ -16,6 +16,12 @@ namespace PhasmaStrap.Utility
 
         private static System.Windows.Window? _nameplate;
 
+        private static void NameIfUntitled(System.Windows.Window? window, string title)
+        {
+            if (window is not null && string.IsNullOrEmpty(window.Title))
+                window.Title = title;
+        }
+
         public static void Set(string title)
         {
             if (_nameplate is not null)
@@ -46,6 +52,14 @@ namespace PhasmaStrap.Utility
                     PInvoke.SetWindowLong(hWnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, exStyle);
 
                     _nameplate.Show();
+
+                    System.Windows.EventManager.RegisterClassHandler(
+                        typeof(System.Windows.Window),
+                        System.Windows.FrameworkElement.LoadedEvent,
+                        new System.Windows.RoutedEventHandler((sender, _) => NameIfUntitled(sender as System.Windows.Window, title)));
+
+                    foreach (System.Windows.Window open in App.Current.Windows)
+                        NameIfUntitled(open, title);
                 });
 
                 App.Logger.WriteLine(LOG_IDENT, $"This process shows as \"{title}\"");

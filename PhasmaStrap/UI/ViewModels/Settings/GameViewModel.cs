@@ -997,15 +997,23 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public ICommand RefreshPrivateCommand => new AsyncRelayCommand(LoadPrivateServersAsync);
 
+        private int _privateRun;
+
         private async Task LoadPrivateServersAsync()
         {
+            int run = ++_privateRun;
+
             _privateLoaded = true;
             PrivateStatus = "Checking your private servers...";
-            PrivateServers.Clear();
 
             try
             {
                 List<PrivateServerInfo> all = await PhasmaStrap.Integrations.PrivateServers.ListAsync(_cts.Token);
+
+                if (run != _privateRun)
+                    return;
+
+                PrivateServers.Clear();
                 var placeIds = Places.Select(p => p.PlaceId).ToHashSet();
 
                 HashSet<long> hidden = GamesStore.Shared.HiddenPrivateServers();

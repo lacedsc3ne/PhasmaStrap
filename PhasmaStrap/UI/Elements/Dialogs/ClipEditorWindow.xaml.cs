@@ -604,6 +604,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
             SetBusy(true);
             UpdateStatus("saving...");
+            App.Logger.WriteLine(LOG_IDENT, $"Saving {(overwrite ? "over the original" : "a copy")}: {_path}");
 
             try
             {
@@ -611,7 +612,9 @@ namespace PhasmaStrap.UI.Elements.Dialogs
                 {
                     _thumbCancel?.Cancel();
                     _stillCancel?.Cancel();
-                    await _thumbTask;
+
+                    if (await Task.WhenAny(_thumbTask, Task.Delay(TimeSpan.FromSeconds(5))) != _thumbTask)
+                        App.Logger.WriteLine(LOG_IDENT, "The thumbnail strip did not stop in time, saving anyway");
 
                     _timer.Stop();
                     _opened = false;

@@ -498,6 +498,7 @@ namespace PhasmaStrap.Utility
             App.Logger.WriteLine(LOG_IDENT, "Background guard started");
 
             ProcessName.Set("PhasmaStrap Account Guard");
+            MemoryReport.Start(trimWhenIdle: true);
 
             var stop = new CancellationTokenSource();
 

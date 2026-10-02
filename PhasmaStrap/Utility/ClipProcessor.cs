@@ -297,6 +297,7 @@ namespace PhasmaStrap.Utility
 
                 audio?.Pump(writer, long.MaxValue, startTicks, endTicks);
 
+                Log?.Invoke($"Export read {written} frame(s), closing the file");
                 writer.Finalize();
                 finished = true;
                 progress?.Invoke(1);
@@ -559,7 +560,7 @@ namespace PhasmaStrap.Utility
                         {
                             _pending?.Dispose();
                             _pending = null;
-                            _done = true;
+                            Finish(writer);
                             return;
                         }
 
@@ -569,7 +570,7 @@ namespace PhasmaStrap.Utility
 
                     if (_pendingTime >= endTicks)
                     {
-                        _done = true;
+                        Finish(writer);
                         return;
                     }
 
@@ -588,6 +589,20 @@ namespace PhasmaStrap.Utility
 
                     _pending.Dispose();
                     _pending = null;
+                }
+            }
+
+            private void Finish(IMFSinkWriter writer)
+            {
+                _done = true;
+
+                try
+                {
+                    writer.NotifyEndOfSegment(_stream);
+                }
+                catch (Exception ex)
+                {
+                    Log?.Invoke($"Could not close the sound stream early: {ex.Message.Trim()}");
                 }
             }
 
@@ -770,11 +785,12 @@ namespace PhasmaStrap.Utility
 
             inputType.Set(MediaTypeAttributeKeys.DefaultStride, (uint)(width * 4));
 
-            using IMFAttributes? attributes = hardware ? MediaFactory.MFCreateAttributes(1) : null;
-            if (attributes is not null)
+            using IMFAttributes attributes = MediaFactory.MFCreateAttributes(2);
+            SetUInt32(attributes, MfInterop.MF_SINK_WRITER_DISABLE_THROTTLING, 1);
+            if (hardware)
                 SetUInt32(attributes, MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, 1);
 
-            int hr = MFCreateSinkWriterFromURL(path, IntPtr.Zero, attributes?.NativePointer ?? IntPtr.Zero, out IntPtr ptr);
+            int hr = MFCreateSinkWriterFromURL(path, IntPtr.Zero, attributes.NativePointer, out IntPtr ptr);
             if (hr < 0)
                 Marshal.ThrowExceptionForHR(hr);
 

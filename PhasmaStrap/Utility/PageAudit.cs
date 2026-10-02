@@ -37,6 +37,7 @@ namespace PhasmaStrap.Utility
                 .ToList();
 
             App.Logger.WriteLine(LOG_IDENT, $"Visiting {pages.Count} page(s)");
+            CheckAppStyles();
 
             int index = -1;
             int broken = 0;
@@ -97,6 +98,93 @@ namespace PhasmaStrap.Utility
             timer.Start();
         }
 
+        private static readonly Type[] StyledTypes =
+        {
+            typeof(System.Windows.Controls.CheckBox), typeof(System.Windows.Controls.RadioButton), typeof(System.Windows.Controls.Button),
+            typeof(System.Windows.Controls.Primitives.ToggleButton), typeof(System.Windows.Controls.ComboBox), typeof(System.Windows.Controls.ComboBoxItem),
+            typeof(System.Windows.Controls.TextBox), typeof(System.Windows.Controls.PasswordBox), typeof(System.Windows.Controls.Slider),
+            typeof(System.Windows.Controls.ListBox), typeof(System.Windows.Controls.ListBoxItem), typeof(System.Windows.Controls.ProgressBar),
+            typeof(System.Windows.Controls.Expander), typeof(System.Windows.Controls.TabControl), typeof(System.Windows.Controls.TabItem),
+            typeof(System.Windows.Controls.DataGrid), typeof(System.Windows.Controls.ListView), typeof(System.Windows.Controls.ListViewItem),
+            typeof(System.Windows.Controls.ContextMenu), typeof(System.Windows.Controls.ToolTip),
+            typeof(System.Windows.Controls.Primitives.ScrollBar), typeof(System.Windows.Controls.ScrollViewer),
+        };
+
+        private static readonly Dictionary<Type, System.Windows.Controls.ControlTemplate?> PlainTemplates = new();
+
+        private static System.Windows.Controls.ControlTemplate? PlainTemplateOf(Type type)
+        {
+            if (PlainTemplates.TryGetValue(type, out System.Windows.Controls.ControlTemplate? known))
+                return known;
+
+            System.Windows.Controls.ControlTemplate? template = null;
+
+            try
+            {
+                if (Activator.CreateInstance(type) is System.Windows.Controls.Control bare)
+                {
+                    bare.BeginInit();
+                    bare.Style = new Style(type);
+                    bare.EndInit();
+                    bare.ApplyTemplate();
+                    template = bare.Template;
+                }
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not read the Windows look of {type.Name}: {ex.Message}");
+            }
+
+            PlainTemplates[type] = template;
+            return template;
+        }
+
+        private static bool LooksLikePlainWindows(System.Windows.Controls.Control control)
+        {
+            if (Array.IndexOf(StyledTypes, control.GetType()) < 0)
+                return false;
+
+            System.Windows.Controls.ControlTemplate? plain = PlainTemplateOf(control.GetType());
+            return plain is not null && ReferenceEquals(control.Template, plain);
+        }
+
+        private static void CheckAppStyles()
+        {
+            var cursorOnly = new Style(typeof(System.Windows.Controls.CheckBox));
+            cursorOnly.Setters.Add(new Setter(FrameworkElement.CursorProperty, System.Windows.Input.Cursors.Arrow));
+
+            var broken = new System.Windows.Controls.CheckBox();
+            broken.BeginInit();
+            broken.Style = cursorOnly;
+            broken.EndInit();
+            broken.ApplyTemplate();
+            App.Logger.WriteLine(LOG_IDENT, $"A check box styled the broken way is caught: {LooksLikePlainWindows(broken)} (has a template: {broken.Template is not null})");
+
+            foreach (Type type in StyledTypes)
+            {
+                try
+                {
+                    if (Activator.CreateInstance(type) is not System.Windows.Controls.Control sample)
+                        continue;
+
+                    sample.BeginInit();
+                    sample.Style = Application.Current.TryFindResource(type) as Style;
+                    sample.EndInit();
+                    sample.ApplyTemplate();
+
+                    if (sample.Template is null)
+                        App.Logger.WriteLine(LOG_IDENT, $"Could not check {type.Name}: it has no template");
+
+                    if (LooksLikePlainWindows(sample))
+                        App.Logger.WriteLine(LOG_IDENT, $"BROKEN everywhere: {type.Name} is drawn with the plain Windows look");
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Could not check {type.Name}: {ex.Message}");
+                }
+            }
+        }
+
         private static bool EndsOnNothing(object? item, string path)
         {
             if (item is null)
@@ -123,6 +211,12 @@ namespace PhasmaStrap.Utility
         {
             if (!seen.Add(node))
                 return;
+
+            if (node is System.Windows.Controls.Control control && control.IsVisible && LooksLikePlainWindows(control))
+            {
+                string label = string.IsNullOrEmpty(control.Name) ? "" : $" \"{control.Name}\"";
+                found.Add($"{control.GetType().Name}{label} is drawn with the plain Windows look");
+            }
 
             LocalValueEnumerator values = node.GetLocalValueEnumerator();
 

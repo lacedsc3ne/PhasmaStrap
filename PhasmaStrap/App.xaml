@@ -15,13 +15,13 @@
                 <ResourceDictionary x:Name="Default" Source="UI/Style/Default.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <Style TargetType="{x:Type CheckBox}" BasedOn="{StaticResource {x:Type CheckBox}}">
+            <Style TargetType="{x:Type CheckBox}" BasedOn="{StaticResource DefaultCheckBoxStyle}">
                 <Setter Property="Cursor" Value="Arrow" />
             </Style>
-            <Style TargetType="{x:Type RadioButton}" BasedOn="{StaticResource {x:Type RadioButton}}">
+            <Style TargetType="{x:Type RadioButton}" BasedOn="{StaticResource DefaultRadioButtonStyle}">
                 <Setter Property="Cursor" Value="Arrow" />
             </Style>
-            <Style TargetType="{x:Type ComboBoxItem}" BasedOn="{StaticResource {x:Type ComboBoxItem}}">
+            <Style TargetType="{x:Type ComboBoxItem}" BasedOn="{StaticResource DefaultComboBoxItemStyle}">
                 <Setter Property="Cursor" Value="Arrow" />
             </Style>
 

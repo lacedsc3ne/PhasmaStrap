@@ -488,7 +488,7 @@ namespace PhasmaStrap
                 App.Terminate(ErrorCode.ERROR_FILE_NOT_FOUND);
             }
 
-            // With "Allow more than one Roblox" a second launch no longer closes the first, so there is nothing to confirm
+            // With "Multi instance" a second launch no longer closes the first, so there is nothing to confirm
             if (App.Settings.Prop.ConfirmLaunches && !App.Settings.Prop.AllowMultipleRoblox && launchMode != LaunchMode.Studio && Mutex.TryOpenExisting("ROBLOX_singletonMutex", out var _))
             {
                 var result = Frontend.ShowMessageBox(Strings.Bootstrapper_ConfirmLaunch, MessageBoxImage.Warning, MessageBoxButton.YesNo);

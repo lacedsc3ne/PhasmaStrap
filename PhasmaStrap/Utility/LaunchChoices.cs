@@ -55,7 +55,7 @@ namespace PhasmaStrap.Utility
         /// <summary>
         /// "Ask which account": shows the saved accounts first and switches the Roblox login to the one picked.
         /// Skipped for website links (their ticket is for the account signed in on the site), with fewer than two saved
-        /// accounts, and while a Roblox is open unless "Allow more than one Roblox" is on.
+        /// accounts, and while a Roblox is open unless "Multi instance" is on.
         /// </summary>
         public static bool AskWhichAccount(string? launchArgs)
         {

@@ -78,7 +78,7 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
             new(SettingsSearchEntryKind.Group, Strings.Menu_Behaviour_Section_Launching_Header, "", typeof(BehaviourPage), "Settings", "", "", "", null, ""),
             new(SettingsSearchEntryKind.Option, Strings.Menu_Behaviour_ConfirmLaunches_Title, "Stops a stray click closing the game you are in", typeof(BehaviourPage), "Settings", "", "", Strings.Menu_Behaviour_Section_Launching_Header, null, ""),
             new(SettingsSearchEntryKind.Option, "Close PhasmaStrap", "", typeof(BehaviourPage), "Settings", "", "", Strings.Menu_Behaviour_Section_Launching_Header, null, ""),
-            new(SettingsSearchEntryKind.Option, "Allow more than one Roblox", "Run alts side by side", typeof(BehaviourPage), "Settings", "", "", Strings.Menu_Behaviour_Section_Launching_Header, null, ""),
+            new(SettingsSearchEntryKind.Option, "Multi instance", "Run more than one Roblox at once, for alts", typeof(BehaviourPage), "Settings", "", "", Strings.Menu_Behaviour_Section_Launching_Header, null, ""),
             new(SettingsSearchEntryKind.Option, "Ask which account", "Shows the account picker first. Needs two saved accounts.", typeof(BehaviourPage), "Settings", "", "", Strings.Menu_Behaviour_Section_Launching_Header, null, ""),
             new(SettingsSearchEntryKind.Option, "Confirm before joining", "When a link opens from the website", typeof(BehaviourPage), "Settings", "", "", Strings.Menu_Behaviour_Section_Launching_Header, null, ""),
             new(SettingsSearchEntryKind.Option, Strings.Menu_Behaviour_DisableRobloxCrashHandler_Title, "Closes it shortly after launch. Roblox does not need it.", typeof(BehaviourPage), "Settings", "", "", Strings.Menu_Behaviour_Section_Launching_Header, null, ""),

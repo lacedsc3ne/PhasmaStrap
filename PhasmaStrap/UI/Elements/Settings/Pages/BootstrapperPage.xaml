@@ -147,7 +147,7 @@
                     <ComboBox Padding="10,5,10,5" MinWidth="150" ItemsSource="{Binding SettingsWindowOnLaunchOptions, Mode=OneTime}" SelectedItem="{Binding SettingsWindowOnLaunch, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="Allow more than one Roblox" Description="Run alts side by side">
+                <controls:OptionControl Header="Multi instance" Description="Run more than one Roblox at once, for alts">
                     <ui:ToggleSwitch IsChecked="{Binding AllowMultipleRoblox, Mode=TwoWay}" />
                 </controls:OptionControl>
 

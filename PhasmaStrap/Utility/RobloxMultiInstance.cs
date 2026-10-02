@@ -1,7 +1,7 @@
 namespace PhasmaStrap.Utility
 {
     /// <summary>
-    /// "Allow more than one Roblox" on the Deployment page. Roblox closes an older copy of itself when it finds it is not the
+    /// "Multi instance" on the Deployment page. Roblox closes an older copy of itself when it finds it is not the
     /// only one, which it decides from the ROBLOX_singletonMutex. Holding that mutex ourselves before Roblox starts (in the
     /// bootstrapper, then in the watcher while Roblox runs) keeps every copy open, so alts can play side by side.
     /// </summary>

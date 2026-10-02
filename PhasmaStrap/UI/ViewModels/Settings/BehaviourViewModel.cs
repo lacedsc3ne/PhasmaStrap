@@ -200,7 +200,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             _ => "Closes when Roblox starts",
         };
 
-        /// <summary>"Allow more than one Roblox": holds Roblox's singleton mutex so a new launch does not close the one running.</summary>
+        /// <summary>"Multi instance": holds Roblox's singleton mutex so a new launch does not close the one running.</summary>
         public bool AllowMultipleRoblox
         {
             get => App.Settings.Prop.AllowMultipleRoblox;

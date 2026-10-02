@@ -595,7 +595,7 @@ namespace PhasmaStrap
 
             ActivityWatcher?.Start();
 
-            // "Allow more than one Roblox": keep Roblox's singleton mutex while this Roblox runs
+            // "Multi instance": keep Roblox's singleton mutex while this Roblox runs
             RobloxMultiInstance.Hold();
 
             await WaitForRobloxExitAsync();

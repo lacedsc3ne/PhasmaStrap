@@ -178,6 +178,19 @@
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
+            <MenuItem x:Name="JoinRegionMenuItem" Visibility="Collapsed" SubmenuOpened="JoinRegionMenuItem_SubmenuOpened">
+                <MenuItem.Header>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="22" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Globe24" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Text="Join a server in" Style="{StaticResource TrayText}" />
+                    </Grid>
+                </MenuItem.Header>
+                <MenuItem Header="Looking for servers..." IsEnabled="False" />
+            </MenuItem>
             <MenuItem x:Name="InviteDeeplinkMenuItem" Visibility="Collapsed" Click="InviteDeeplinkMenuItem_Click">
                 <MenuItem.Header>
                     <Grid>

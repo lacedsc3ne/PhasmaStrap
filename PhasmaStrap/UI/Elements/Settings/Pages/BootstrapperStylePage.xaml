@@ -146,6 +146,13 @@
                         </TextBlock.Style>
                     </TextBlock>
                 </StackPanel>
+
+                <controls:OptionControl Header="Rotate through my custom themes" Description="Moves to the next custom theme in the list. Needs the Custom style and at least two themes">
+                    <StackPanel Orientation="Horizontal">
+                        <ComboBox Padding="10,5,10,5" MinWidth="130" Margin="0,0,10,0" VerticalAlignment="Center" ItemsSource="{Binding ThemeCycleChoices, Mode=OneTime}" SelectedItem="{Binding ThemeCycleEvery, Mode=TwoWay}" />
+                        <ui:ToggleSwitch VerticalAlignment="Center" IsChecked="{Binding ThemeCycleEnabled, Mode=TwoWay}" />
+                    </StackPanel>
+                </controls:OptionControl>
             </controls:SettingsCard>
 
             <controls:SettingsCard x:Name="IconSelector" Header="Icon and title">

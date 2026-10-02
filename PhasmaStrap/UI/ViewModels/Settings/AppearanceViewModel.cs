@@ -621,6 +621,20 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
+        public bool ThemeCycleEnabled
+        {
+            get => App.Settings.Prop.ThemeCycleEnabled;
+            set { App.Settings.Prop.ThemeCycleEnabled = value; OnPropertyChanged(nameof(ThemeCycleEnabled)); }
+        }
+
+        public string[] ThemeCycleChoices { get; } = PhasmaStrap.Utility.ThemeCycler.Choices;
+
+        public string ThemeCycleEvery
+        {
+            get => App.Settings.Prop.ThemeCycleEvery;
+            set { App.Settings.Prop.ThemeCycleEvery = value ?? PhasmaStrap.Utility.ThemeCycler.Choices[0]; OnPropertyChanged(nameof(ThemeCycleEvery)); }
+        }
+
         #region Theme studio
 
         public sealed class AccentSwatch

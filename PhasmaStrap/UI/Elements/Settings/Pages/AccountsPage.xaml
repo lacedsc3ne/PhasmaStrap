@@ -42,6 +42,13 @@
                     <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.Menu_Accounts_LogBrowser}" />
                 </StackPanel>
             </Button>
+            <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding QuickSignInCommand, Mode=OneTime}"
+                    ToolTip="Add an account by typing a short code on a device where it is already signed in">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon Symbol="NumberSymbol24" FontSize="14" VerticalAlignment="Center" />
+                    <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="Sign in with a code" />
+                </StackPanel>
+            </Button>
             <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding ToggleImportCommand}">
                 <StackPanel Orientation="Horizontal">
                     <ui:SymbolIcon Symbol="Key24" FontSize="14" VerticalAlignment="Center" />

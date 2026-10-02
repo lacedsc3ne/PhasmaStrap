@@ -22,6 +22,9 @@ namespace PhasmaStrap.Models.Persistable
         public bool BackgroundUpdatesEnabled { get; set; } = false;
         public bool DebugDisableVersionPackageCleanup { get; set; } = false;
         public string? SelectedCustomTheme { get; set; } = null;
+        public bool ThemeCycleEnabled { get; set; } = false;
+        public string ThemeCycleEvery { get; set; } = "Every launch";
+        public DateTime ThemeCycleLastUtc { get; set; } = DateTime.MinValue;
         public WebEnvironment WebEnvironment { get; set; } = WebEnvironment.Production;
 
         public string RobloxChannel { get; set; } = "";

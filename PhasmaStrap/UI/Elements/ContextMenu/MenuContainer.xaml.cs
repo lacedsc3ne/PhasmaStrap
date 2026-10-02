@@ -252,6 +252,7 @@ namespace PhasmaStrap.UI.Elements.ContextMenu
                 {
                     InviteDeeplinkMenuItem.Visibility = Visibility.Visible;
                     JoinClosestServerMenuItem.Visibility = Visibility.Visible;
+                    JoinRegionMenuItem.Visibility = Visibility.Visible;
                     JoinClosestServerHint.Text = "Checking...";
                 }
 
@@ -274,6 +275,7 @@ namespace PhasmaStrap.UI.Elements.ContextMenu
                 InviteDeeplinkMenuItem.Visibility = Visibility.Collapsed;
                 ServerDetailsMenuItem.Visibility = Visibility.Collapsed;
                 JoinClosestServerMenuItem.Visibility = Visibility.Collapsed;
+                JoinRegionMenuItem.Visibility = Visibility.Collapsed;
                 SessionInfoMenuItem.Visibility = Visibility.Collapsed;
                 MeasurePerformanceMenuItem.Visibility = Visibility.Collapsed;
                 CurrentGameMenuItem.Visibility = Visibility.Collapsed;
@@ -320,6 +322,81 @@ namespace PhasmaStrap.UI.Elements.ContextMenu
             {
                 JoinClosestServerMenuItem.IsEnabled = true;
                 Interlocked.Exchange(ref _joinClosestActive, 0);
+            }
+        }
+
+        private long _regionsPlaceId;
+        private DateTime _regionsLoadedUtc = DateTime.MinValue;
+
+        private async void JoinRegionMenuItem_SubmenuOpened(object sender, RoutedEventArgs e)
+        {
+            if (!ReferenceEquals(e.OriginalSource, JoinRegionMenuItem))
+                return;
+
+            ActivityData? data = _activityWatcher?.Data;
+            if (data is null || data.PlaceId == 0)
+                return;
+
+            if (_regionsPlaceId == data.PlaceId && (DateTime.UtcNow - _regionsLoadedUtc).TotalSeconds < 60)
+                return;
+
+            long placeId = data.PlaceId;
+            string currentJob = data.JobId;
+
+            JoinRegionMenuItem.Items.Clear();
+            JoinRegionMenuItem.Items.Add(new MenuItem { Header = "Looking for servers...", IsEnabled = false });
+
+            try
+            {
+                List<MatchmakerCandidate> servers = await Matchmaker.ListCandidatesAsync(placeId, 40, CancellationToken.None);
+
+                var regions = servers
+                    .Where(server => server.Datacenter is not null && server.JobId != currentJob && server.Playing < server.MaxPlayers)
+                    .GroupBy(server => Matchmaker.DatacenterKey(server.Datacenter))
+                    .Select(group => new
+                    {
+                        Place = group.First().Datacenter!,
+                        Count = group.Count(),
+                        Best = group.OrderBy(server => server.Ping > 0 ? server.Ping : server.EstimatedPingMs).ThenBy(server => server.Playing).First(),
+                    })
+                    .OrderBy(region => region.Best.Ping > 0 ? region.Best.Ping : region.Best.EstimatedPingMs)
+                    .ToList();
+
+                JoinRegionMenuItem.Items.Clear();
+
+                if (regions.Count == 0)
+                {
+                    JoinRegionMenuItem.Items.Add(new MenuItem { Header = "No other servers with space right now", IsEnabled = false });
+                    return;
+                }
+
+                foreach (var region in regions)
+                {
+                    int ping = region.Best.Ping > 0 ? region.Best.Ping : region.Best.EstimatedPingMs;
+                    string jobId = region.Best.JobId;
+
+                    var item = new MenuItem
+                    {
+                        Header = $"{region.Place.City}, {region.Place.Country}  ·  about {ping} ms  ·  {region.Count} server{(region.Count == 1 ? "" : "s")}",
+                    };
+
+                    item.Click += (_, _) =>
+                    {
+                        App.Logger.WriteLine("MenuContainer::JoinRegion", $"Joining {placeId}/{jobId} in {region.Place.City}");
+                        PhasmaStrap.Utility.RobloxLaunch.Join(placeId, jobId);
+                    };
+
+                    JoinRegionMenuItem.Items.Add(item);
+                }
+
+                _regionsPlaceId = placeId;
+                _regionsLoadedUtc = DateTime.UtcNow;
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteException("MenuContainer::JoinRegion", ex);
+                JoinRegionMenuItem.Items.Clear();
+                JoinRegionMenuItem.Items.Add(new MenuItem { Header = "Could not load the server list", IsEnabled = false });
             }
         }
 

@@ -214,6 +214,25 @@
                     </Button>
                 </controls:OptionControl>
 
+                <controls:OptionControl Header="Bring settings from another launcher" Description="Found on this PC. Copies the settings PhasmaStrap shares with it, and its FastFlags"
+                                        Visibility="{Binding OtherLaunchersVisibility}">
+                    <ItemsControl ItemsSource="{Binding OtherLaunchers, Mode=OneTime}" Focusable="False">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaSoftButton}" ToolTip="{Binding Summary}"
+                                        Command="{Binding DataContext.ImportLauncherCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}">
+                                    <TextBlock Text="{Binding Name}" />
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </controls:OptionControl>
+
                 <controls:OptionControl x:Name="HistoryOption" Header="{x:Static resources:Strings.Menu_PhasmaStrap_SettingsHistory}" Description="A copy from before each round of changes">
                     <!--  HistoryExpander: checking it loads the list (handler in code behind) and shows the card below  -->
                     <ToggleButton Checked="HistoryExpander_Expanded">

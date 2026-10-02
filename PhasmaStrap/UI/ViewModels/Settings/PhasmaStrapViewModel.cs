@@ -341,6 +341,33 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
+        public List<PhasmaStrap.Utility.LauncherImport.Found> OtherLaunchers { get; } = PhasmaStrap.Utility.LauncherImport.Look();
+
+        public Visibility OtherLaunchersVisibility => OtherLaunchers.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        public ICommand ImportLauncherCommand => new RelayCommand<PhasmaStrap.Utility.LauncherImport.Found>(source =>
+        {
+            if (source is null)
+                return;
+
+            MessageBoxResult confirm = Frontend.ShowMessageBox(
+                $"Copy your settings and FastFlags from {source.Name}?\n\nOnly settings PhasmaStrap also has are taken, and anything they set replaces what you have now. Nothing in {source.Name} is changed.",
+                MessageBoxImage.Question,
+                MessageBoxButton.YesNo,
+                MessageBoxResult.No);
+
+            if (confirm != MessageBoxResult.Yes)
+                return;
+
+            PhasmaStrap.Utility.LauncherImport.Result result = PhasmaStrap.Utility.LauncherImport.Import(source);
+
+            Frontend.ShowMessageBox(
+                result.Settings + result.Flags == 0
+                    ? $"Nothing in {source.Name} differs from what you already have."
+                    : $"Took {result.Settings} setting(s) and {result.Flags} FastFlag(s) from {source.Name}. Press Save to keep them, or Reset to go back.",
+                MessageBoxImage.Information);
+        });
+
         public ICommand ImportDataCommand => new RelayCommand(ImportData);
 
         private void ImportData()

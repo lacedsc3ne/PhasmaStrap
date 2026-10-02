@@ -907,6 +907,33 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
             throw new IOException("Could not write the Roblox cookie file. Make sure Roblox is fully closed.");
         }
 
+        public ICommand QuickSignInCommand => new AsyncRelayCommand(QuickSignInAsync);
+
+        private async Task QuickSignInAsync()
+        {
+            if (_busy)
+                return;
+
+            if (string.IsNullOrEmpty(ResolveTemplate()))
+            {
+                Frontend.ShowMessageBox("Sign into any Roblox account once (or add the current account) before adding another one this way.", MessageBoxImage.Warning);
+                return;
+            }
+
+            var dialog = new PhasmaStrap.UI.Elements.Dialogs.QuickSignInDialog
+            {
+                Owner = System.Windows.Application.Current.Windows.OfType<PhasmaStrap.UI.Elements.Settings.MainWindow>().FirstOrDefault(),
+            };
+
+            dialog.ShowDialog();
+
+            if (string.IsNullOrEmpty(dialog.Cookie))
+                return;
+
+            NewCookieText = dialog.Cookie;
+            await ImportByCookieAsync();
+        }
+
         public ICommand LoginWithBrowserCommand => new AsyncRelayCommand(LoginWithBrowserAsync);
 
         private async Task LoginWithBrowserAsync()

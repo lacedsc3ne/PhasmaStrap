@@ -15,200 +15,172 @@
       Scrollable="True">
 
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Text="{x:Static resources:Strings.Common_Shortcuts}" FontSize="20" FontWeight="Medium" />
-        <TextBlock Margin="0,2,0,0" Text="{x:Static resources:Strings.Menu_Shortcuts_Description}" FontSize="14" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+            <TextBlock Style="{DynamicResource PhasmaPageTitle}" VerticalAlignment="Center" Text="{x:Static resources:Strings.Common_Shortcuts}" />
+            <Border Style="{DynamicResource PhasmaTagNeutral}" Margin="12,0,0,0">
+                <TextBlock FontSize="11" Text="Look and feel" />
+            </Border>
+        </StackPanel>
 
-        <ui:Card Margin="0,14,0,0">
-            <StackPanel>
-                <TextBlock FontSize="14" FontWeight="Medium" Text="Create a shortcut" />
-                <TextBlock FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                           Text="Pick what it should launch and where the file goes. A game shortcut uses that game's own icon." />
-
-                <Grid Margin="0,14,0,0">
+        <controls:CardColumns>
+            <!--  Create a shortcut: one row of fields  -->
+            <controls:SettingsCard controls:CardColumns.FullRow="True" Header="Create a shortcut" Description="A game shortcut uses that game's own icon.">
+                <Grid Margin="0,0,0,10">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="170" />
+                        <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="What it launches" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <ComboBox Grid.Column="1" Padding="10,5,10,5" HorizontalAlignment="Stretch"
-                              ItemsSource="{Binding ShortcutTargets, Mode=OneTime}"
-                              DisplayMemberPath="Name"
-                              SelectedItem="{Binding SelectedShortcutTarget, Mode=TwoWay}" />
-                </Grid>
-
-                <Grid Margin="0,10,0,0" Visibility="{Binding IsGameTargetSelected, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="170" />
-                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Place ID or game link" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <ui:TextBox Grid.Row="0" Grid.Column="1" PlaceholderText="{x:Static resources:Strings.Menu_Shortcuts_PlaceIDGameLink}" Text="{Binding GameShortcutInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,4,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                               Text="{x:Static resources:Strings.Menu_Shortcuts_GameShortcuts_Description}" />
-                </Grid>
 
-                <Grid Margin="0,10,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="170" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Where to put it" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <ComboBox Grid.Column="1" Padding="10,5,10,5" HorizontalAlignment="Stretch"
+                    <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,0,0,5" FontSize="11.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="What it launches" />
+                    <ComboBox Grid.Row="1" Grid.Column="0" Padding="10,5,10,5" HorizontalAlignment="Stretch"
+                              ItemsSource="{Binding ShortcutTargets, Mode=OneTime}"
+                              DisplayMemberPath="Name"
+                              SelectedItem="{Binding SelectedShortcutTarget, Mode=TwoWay}" />
+
+                    <StackPanel Grid.Row="0" Grid.RowSpan="3" Grid.Column="1" Margin="10,0,0,0" MaxWidth="360" HorizontalAlignment="Stretch"
+                                Visibility="{Binding IsGameTargetSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock Margin="0,0,0,5" FontSize="11.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Place ID or game link" />
+                        <ui:TextBox PlaceholderText="{x:Static resources:Strings.Menu_Shortcuts_PlaceIDGameLink}" Text="{Binding GameShortcutInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBlock Margin="0,5,0,0" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                   Text="{x:Static resources:Strings.Menu_Shortcuts_GameShortcuts_Description}" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="0" Grid.Column="2" Margin="10,0,0,5" FontSize="11.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Where to put it" />
+                    <ComboBox Grid.Row="1" Grid.Column="2" Margin="10,0,0,0" MinWidth="120" Padding="10,5,10,5"
                               ItemsSource="{Binding ShortcutLocations, Mode=OneTime}"
                               SelectedItem="{Binding SelectedShortcutLocation, Mode=TwoWay}" />
+
+                    <Button Grid.Row="1" Grid.Column="3" Margin="10,0,0,0" Style="{DynamicResource PhasmaAccentButton}"
+                            IsEnabled="{Binding NotBusy, Mode=OneWay}" Command="{Binding CreateShortcutCommand, Mode=OneTime}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Add24" FontSize="14" Margin="0,0,6,0" />
+                            <TextBlock Text="{x:Static resources:Strings.Menu_Shortcuts_CreateShortcut}" />
+                        </StackPanel>
+                    </Button>
+
+                    <TextBlock Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="2" Margin="10,6,0,0" HorizontalAlignment="Right" FontSize="11.5" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding GameShortcutStatus, Mode=OneWay}" />
                 </Grid>
+            </controls:SettingsCard>
 
-                <Grid Margin="0,14,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding GameShortcutStatus, Mode=OneWay}" />
-                    <ui:Button Grid.Column="1" Margin="12,0,0,0" Icon="Add28" Appearance="Primary" Content="{x:Static resources:Strings.Menu_Shortcuts_CreateShortcut}"
-                               IsEnabled="{Binding NotBusy, Mode=OneWay}" Command="{Binding CreateShortcutCommand, Mode=OneTime}" />
-                </Grid>
-            </StackPanel>
-        </ui:Card>
+            <!--  Shortcuts that already exist  -->
+            <controls:SettingsCard Header="Your shortcuts">
+                <controls:SettingsCard.HeaderContent>
+                    <Button Style="{DynamicResource PhasmaIconButton}" ToolTip="Refresh" Command="{Binding RefreshShortcutsCommand, Mode=OneTime}">
+                        <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14" />
+                    </Button>
+                </controls:SettingsCard.HeaderContent>
 
-        <Grid Margin="0,20,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                <TextBlock Text="Your shortcuts" FontSize="20" FontWeight="Medium" />
-                <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Every shortcut on your desktop or start menu that opens PhasmaStrap." />
-            </StackPanel>
-            <ui:Button Grid.Column="1" Margin="12,0,0,0" Icon="ArrowClockwise24" Appearance="Secondary" Content="Refresh" Command="{Binding RefreshShortcutsCommand, Mode=OneTime}" />
-        </Grid>
+                <StackPanel Margin="0,0,0,8">
+                    <TextBlock Margin="0,10,0,10" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="No shortcuts yet. Make one above, or turn on a quick shortcut.">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasExistingShortcuts}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
 
-        <TextBlock Margin="0,10,0,0" FontSize="13" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="No shortcuts yet. Create one above, or turn on a quick shortcut below.">
-            <TextBlock.Style>
-                <Style TargetType="TextBlock">
-                    <Setter Property="Visibility" Value="Collapsed" />
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding HasExistingShortcuts}" Value="False">
-                            <Setter Property="Visibility" Value="Visible" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </TextBlock.Style>
-        </TextBlock>
+                    <!--  ShortcutsList: the code behind attaches the right click menu to it  -->
+                    <ItemsControl x:Name="ShortcutsList" ItemsSource="{Binding ExistingShortcuts, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Background="Transparent">
+                                    <Border Style="{DynamicResource PhasmaDivider}" />
+                                    <Grid Margin="0,9,0,9">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
 
-        <ItemsControl Margin="0,10,0,0" ItemsSource="{Binding ExistingShortcuts, Mode=OneWay}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Border Margin="0,0,0,6" Padding="12,8" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource ControlElevationBorderBrush}" Background="{DynamicResource ControlFillColorSecondaryBrush}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
+                                        <Border Grid.Column="0" Width="28" Height="28" Margin="0,0,10,0" CornerRadius="6" Background="{DynamicResource PhasmaSelectedBrush}">
+                                            <Grid>
+                                                <ui:SymbolIcon Symbol="Link24" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                                <Image Source="{Binding Icon, Mode=OneTime}" Stretch="Uniform" Margin="2" RenderOptions.BitmapScalingMode="HighQuality" />
+                                            </Grid>
+                                        </Border>
 
-                            <Border Grid.Column="0" Width="32" Height="32" Margin="0,0,12,0" CornerRadius="6" Background="{DynamicResource ControlFillColorDefaultBrush}">
-                                <Grid>
-                                    <ui:SymbolIcon Symbol="Link24" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    <Image Source="{Binding Icon, Mode=OneTime}" Stretch="Uniform" Margin="2" RenderOptions.BitmapScalingMode="HighQuality" />
-                                </Grid>
-                            </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding Name, Mode=OneTime}" ToolTip="{Binding Path, Mode=OneTime}" />
+                                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                <TextBlock FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Launches, Mode=OneTime}" />
+                                                <TextBlock FontSize="12" Margin="5,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="&#183;" />
+                                                <TextBlock FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Location, Mode=OneTime}" />
+                                            </StackPanel>
+                                        </StackPanel>
 
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding Name, Mode=OneTime}" ToolTip="{Binding Path, Mode=OneTime}" />
-                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                                    <TextBlock FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Launches, Mode=OneTime}" />
-                                    <TextBlock FontSize="12" Margin="6,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="&#183;" />
-                                    <TextBlock FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Location, Mode=OneTime}" />
+                                        <StackPanel Grid.Column="2" Margin="10,0,0,0" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Button Style="{DynamicResource PhasmaIconButton}" ToolTip="Rename" AutomationProperties.Name="Rename shortcut"
+                                                    Command="{Binding DataContext.RenameShortcutCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}"
+                                                    CommandParameter="{Binding}">
+                                                <ui:SymbolIcon Symbol="Rename24" FontSize="14" />
+                                            </Button>
+                                            <Button Margin="4,0,0,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Content="Remove"
+                                                    Command="{Binding DataContext.RemoveShortcutCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}"
+                                                    CommandParameter="{Binding}" />
+                                        </StackPanel>
+                                    </Grid>
                                 </StackPanel>
-                            </StackPanel>
-
-                            <ui:Button Grid.Column="2" Margin="12,0,0,0" Icon="Delete24" Appearance="Secondary" Content="Remove"
-                                       Command="{Binding DataContext.RemoveShortcutCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                       CommandParameter="{Binding}" />
-                        </Grid>
-                    </Border>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-
-        <ui:CardExpander Margin="0,14,0,0">
-            <ui:CardExpander.Header>
-                <StackPanel>
-                    <TextBlock FontSize="14" Text="{x:Static resources:Strings.Menu_Shortcuts_General_Title}" />
-                    <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Shortcuts_General_Description}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
-            </ui:CardExpander.Header>
-            <StackPanel>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+            </controls:SettingsCard>
 
-                    <controls:OptionControl Grid.Column="0" Margin="0,0,4,0" Header="{x:Static resources:Strings.Common_Shortcuts_Desktop}">
-                        <ui:ToggleSwitch IsChecked="{Binding DesktopIconTask.NewState, Mode=TwoWay}" />
-                    </controls:OptionControl>
+            <!--  Quick shortcuts: fixed icons PhasmaStrap can make for you  -->
+            <controls:SettingsCard Header="Quick shortcuts" Description="Desktop and Start menu icons">
+                <controls:OptionControl Header="{x:Static resources:Strings.Common_Shortcuts_Desktop}" Description="Opens the launch menu">
+                    <ui:ToggleSwitch IsChecked="{Binding DesktopIconTask.NewState, Mode=TwoWay}" />
+                </controls:OptionControl>
 
-                    <controls:OptionControl Grid.Column="1" Margin="4,0,0,0" Header="{x:Static resources:Strings.Common_Shortcuts_StartMenu}">
-                        <ui:ToggleSwitch IsChecked="{Binding StartMenuIconTask.NewState, Mode=TwoWay}" />
-                    </controls:OptionControl>
-                </Grid>
+                <controls:OptionControl Header="{x:Static resources:Strings.Common_Shortcuts_StartMenu}">
+                    <ui:ToggleSwitch IsChecked="{Binding StartMenuIconTask.NewState, Mode=TwoWay}" />
+                </controls:OptionControl>
 
-                <TextBlock Margin="0,12,0,0" Text="{x:Static resources:Strings.Menu_Shortcuts_Function_Description}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <controls:OptionControl Header="{x:Static resources:Strings.LaunchMenu_LaunchRoblox}" ToolTip="{x:Static resources:Strings.Menu_Shortcuts_Function_Description}">
+                    <ui:ToggleSwitch IsChecked="{Binding PlayerIconTask.NewState, Mode=TwoWay}" />
+                </controls:OptionControl>
 
-                <Grid Margin="0,4,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
+                <controls:OptionControl Header="{x:Static resources:Strings.LaunchMenu_LaunchRobloxStudio}" ToolTip="{x:Static resources:Strings.Menu_Shortcuts_Function_Description}"
+                                        Visibility="{Binding IsStudioOptionVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <ui:ToggleSwitch IsChecked="{Binding StudioIconTask.NewState, Mode=TwoWay}" />
+                </controls:OptionControl>
 
-                        <ColumnDefinition>
-                            <ColumnDefinition.Style>
-                                <Style TargetType="ColumnDefinition">
-                                    <Setter Property="Width" Value="*" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsStudioOptionVisible}" Value="False">
-                                            <Setter Property="Width" Value="0" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </ColumnDefinition.Style>
-                        </ColumnDefinition>
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-
-                    <controls:OptionControl Grid.Column="0" Margin="0,0,2,0" Header="{x:Static resources:Strings.LaunchMenu_LaunchRoblox}">
-                        <ui:ToggleSwitch IsChecked="{Binding PlayerIconTask.NewState, Mode=TwoWay}" />
-                    </controls:OptionControl>
-
-                    <controls:OptionControl Grid.Column="1" Margin="2,0,2,0" Header="{x:Static resources:Strings.LaunchMenu_LaunchRobloxStudio}">
-                        <ui:ToggleSwitch IsChecked="{Binding StudioIconTask.NewState, Mode=TwoWay}" />
-                    </controls:OptionControl>
-
-                    <controls:OptionControl Grid.Column="2" Margin="2,0,0,0" Header="{x:Static resources:Strings.Menu_Title}">
-                        <ui:ToggleSwitch IsChecked="{Binding SettingsIconTask.NewState, Mode=TwoWay}" />
-                    </controls:OptionControl>
-                </Grid>
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Title}" ToolTip="{x:Static resources:Strings.Menu_Shortcuts_Function_Description}">
+                    <ui:ToggleSwitch IsChecked="{Binding SettingsIconTask.NewState, Mode=TwoWay}" />
+                </controls:OptionControl>
 
                 <controls:OptionControl
-                    Margin="0,12,0,0"
                     Header="{x:Static resources:Strings.Menu_Shortcuts_ExtractIcons_Title}"
                     Description="{Binding Source={x:Static resources:Strings.Menu_Shortcuts_ExtractIcons_Description}, Converter={StaticResource StringFormatConverter},ConverterParameter='https://bloxstraplabs.com/wiki/info/using-roblox-icons-for-shortcuts/'}">
                     <ui:ToggleSwitch IsChecked="{Binding ExtractIconsTask.NewState, Mode=TwoWay}" />
                 </controls:OptionControl>
-            </StackPanel>
-        </ui:CardExpander>
+            </controls:SettingsCard>
 
-        <TextBlock Text="{x:Static resources:Strings.Menu_Shortcuts_StudioCompanion_Title}" FontSize="20" FontWeight="Medium" Margin="0,20,0,0" />
-        <TextBlock Text="{x:Static resources:Strings.Menu_Shortcuts_StudioCompanion_Description}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-
-        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Shortcuts_EnableStudioCompanion}" Description="{Binding StudioPluginStatus, Mode=OneWay}">
-            <StackPanel Orientation="Horizontal">
-                <ui:Button Content="{x:Static resources:Strings.Menu_Shortcuts_Reinstall}" Icon="ArrowClockwise24" Margin="0,0,8,0" IsEnabled="{Binding StudioPluginEnabled}" Command="{Binding ReinstallStudioPluginCommand, Mode=OneTime}" />
-                <ui:ToggleSwitch IsChecked="{Binding StudioPluginEnabled, Mode=TwoWay}" />
-            </StackPanel>
-        </controls:OptionControl>
+            <!--  Studio companion plugin  -->
+            <controls:SettingsCard controls:CardColumns.FullRow="True"
+                                   Header="{x:Static resources:Strings.Menu_Shortcuts_StudioCompanion_Title}"
+                                   Description="A Studio plugin that tells PhasmaStrap what you are working on">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Shortcuts_EnableStudioCompanion}" Description="{Binding StudioPluginStatus, Mode=OneWay}">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Margin="0,0,10,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Content="{x:Static resources:Strings.Menu_Shortcuts_Reinstall}"
+                                IsEnabled="{Binding StudioPluginEnabled}" Command="{Binding ReinstallStudioPluginCommand, Mode=OneTime}" />
+                        <ui:ToggleSwitch IsChecked="{Binding StudioPluginEnabled, Mode=TwoWay}" />
+                    </StackPanel>
+                </controls:OptionControl>
+            </controls:SettingsCard>
+        </controls:CardColumns>
     </StackPanel>
 </ui:UiPage>

@@ -198,7 +198,7 @@
             <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
                 <ui:TextBox
                     x:Name="SettingsSearchBox"
-                    Width="220"
+                    Width="250"
                     Margin="0,0,8,0"
                     VerticalAlignment="Center"
                     PlaceholderText="{x:Static resources:Strings.Menu_Settings_SearchPlaceholder}"
@@ -319,7 +319,7 @@
 
         <Border Grid.Row="0" Height="1" VerticalAlignment="Bottom" Background="{DynamicResource PhasmaStrokeBrush}" IsHitTestVisible="False" />
 
-        <!--  Settings search results  -->
+        <!--  Search everything: settings, pages, your flags and games you've played  -->
         <Popup x:Name="SettingsSearchPopup"
                PlacementTarget="{Binding ElementName=SettingsSearchBox}"
                Placement="Bottom"
@@ -328,49 +328,127 @@
                AllowsTransparency="True"
                PopupAnimation="Fade"
                Focusable="False">
-            <Border Width="480" MaxHeight="440" Margin="0,0,8,8" Style="{DynamicResource PhasmaPopupSurface}">
+            <Border Width="780" Height="470" Margin="0,0,8,8" Padding="0" Style="{DynamicResource PhasmaPopupSurface}">
                 <DockPanel>
-                    <TextBlock x:Name="SettingsSearchFooter" DockPanel.Dock="Bottom" Margin="8,6,8,2" FontSize="11"
-                               Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    <StackPanel x:Name="SearchChips" DockPanel.Dock="Top" Orientation="Horizontal" Margin="12,10,12,8">
+                        <ToggleButton x:Name="SearchChipAll" Style="{DynamicResource PhasmaChip}" Focusable="False" Tag="All" Click="SearchChip_Click" IsChecked="True" Content="All" />
+                        <ToggleButton x:Name="SearchChipSettings" Style="{DynamicResource PhasmaChip}" Focusable="False" Tag="Settings" Click="SearchChip_Click" Content="Settings" />
+                        <ToggleButton x:Name="SearchChipFlags" Style="{DynamicResource PhasmaChip}" Focusable="False" Tag="Flags" Click="SearchChip_Click" Content="Your flags" />
+                        <ToggleButton x:Name="SearchChipGames" Style="{DynamicResource PhasmaChip}" Focusable="False" Tag="Games" Click="SearchChip_Click" Content="Games" />
+                    </StackPanel>
 
-                    <ListBox x:Name="SettingsSearchResults"
-                             Background="Transparent" BorderThickness="0" Padding="0"
-                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                             VirtualizingPanel.IsVirtualizing="True"
-                             ItemContainerStyle="{DynamicResource PhasmaListItem}"
-                             PreviewMouseLeftButtonUp="SettingsSearchResults_PreviewMouseLeftButtonUp"
-                             PreviewKeyDown="SettingsSearchBox_PreviewKeyDown">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="{Binding Header}" FontWeight="SemiBold" FontSize="13" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Text="{Binding Breadcrumb}" FontSize="11" Margin="0,1,0,0" TextTrimming="CharacterEllipsis"
-                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                        <TextBlock Text="{Binding Description}" FontSize="11" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
-                                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding HasDescription}" Value="False">
-                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                    </StackPanel>
-                                    <Border Grid.Column="1" VerticalAlignment="Top" Margin="10,1,0,0" Style="{DynamicResource PhasmaTagNeutral}">
-                                        <TextBlock Text="{Binding KindLabel}" FontSize="10" />
-                                    </Border>
-                                </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
+                    <Border DockPanel.Dock="Bottom" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}" Padding="12,7">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="SettingsSearchFooter" Grid.Column="0" FontSize="11" TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                            <TextBlock Grid.Column="1" Margin="12,0,0,0" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                       Text="↑↓ move    Enter open    Tab filter    Esc close" />
+                        </Grid>
+                    </Border>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="1" />
+                            <ColumnDefinition Width="270" />
+                        </Grid.ColumnDefinitions>
+
+                        <ListBox x:Name="SettingsSearchResults"
+                                 Grid.Column="0"
+                                 Margin="6,0,6,6"
+                                 Background="Transparent" BorderThickness="0" Padding="0"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 VirtualizingPanel.IsVirtualizing="True"
+                                 VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                                 VirtualizingPanel.ScrollUnit="Pixel"
+                                 ItemContainerStyle="{DynamicResource PhasmaListItem}"
+                                 MouseMove="SettingsSearchResults_MouseMove"
+                                 PreviewMouseLeftButtonUp="SettingsSearchResults_PreviewMouseLeftButtonUp"
+                                 PreviewKeyDown="SettingsSearchBox_PreviewKeyDown">
+                            <ListBox.GroupStyle>
+                                <GroupStyle>
+                                    <GroupStyle.HeaderTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Margin="8,10,8,4">
+                                                <TextBlock Text="{Binding Name}" Style="{DynamicResource PhasmaCaption}" />
+                                                <TextBlock Text="{Binding ItemCount}" Margin="6,0,0,0" Style="{DynamicResource PhasmaCaption}" Opacity="0.6" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </GroupStyle.HeaderTemplate>
+                                </GroupStyle>
+                            </ListBox.GroupStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Grid.Column="0" Width="28" Height="28" Margin="0,0,10,0" VerticalAlignment="Center"
+                                                CornerRadius="7" Background="{DynamicResource PhasmaSelectedBrush}">
+                                            <ui:SymbolIcon Symbol="{Binding Icon}" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Header}" FontWeight="SemiBold" FontSize="13" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding Subtitle}" FontSize="11" Margin="0,1,0,0" TextTrimming="CharacterEllipsis"
+                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding HasSubtitle}" Value="False">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <Border Grid.Column="2" VerticalAlignment="Center" Margin="10,0,0,0" Style="{DynamicResource PhasmaTagNeutral}">
+                                            <Border.Visibility>
+                                                <Binding Path="HasBadge">
+                                                    <Binding.Converter>
+                                                        <BooleanToVisibilityConverter />
+                                                    </Binding.Converter>
+                                                </Binding>
+                                            </Border.Visibility>
+                                            <TextBlock Text="{Binding Badge}" FontSize="10" />
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <TextBlock x:Name="SettingsSearchEmpty" Grid.Column="0" Margin="24" Visibility="Collapsed" TextWrapping="Wrap"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"
+                                   Style="{DynamicResource PhasmaSubtle}" />
+
+                        <Border Grid.Column="1" Background="{DynamicResource PhasmaStrokeBrush}" />
+
+                        <DockPanel x:Name="SearchDetail" Grid.Column="2" Margin="16,8,16,12"
+                                   DataContext="{Binding SelectedItem, ElementName=SettingsSearchResults}">
+                            <Button x:Name="SearchDetailOpen" DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" Focusable="False"
+                                    Style="{DynamicResource PhasmaAccentButton}" Content="{Binding OpenLabel}" Click="SearchDetailOpen_Click" />
+                            <StackPanel>
+                                <Border Width="40" Height="40" HorizontalAlignment="Left" CornerRadius="10" Background="{DynamicResource PhasmaAccentSoftBrush}">
+                                    <ui:SymbolIcon Symbol="{Binding Icon}" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Text="{Binding Header}" Margin="0,12,0,0" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                <Border Margin="0,8,0,0" Style="{DynamicResource PhasmaTagNeutral}">
+                                    <TextBlock Text="{Binding KindLabel}" FontSize="10" />
+                                </Border>
+                                <TextBlock Text="Where" Margin="0,16,0,4" Style="{DynamicResource PhasmaCaption}" />
+                                <TextBlock Text="{Binding Subtitle}" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Text="{Binding Description}" Margin="0,14,0,0" FontSize="12" TextWrapping="Wrap" MaxHeight="150" TextTrimming="CharacterEllipsis"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+                        </DockPanel>
+                    </Grid>
                 </DockPanel>
             </Border>
         </Popup>
@@ -379,34 +457,86 @@
         <Popup x:Name="NotificationsPopup"
                PlacementTarget="{Binding ElementName=NotificationsButton}"
                Placement="Bottom"
-               HorizontalOffset="-300"
+               HorizontalOffset="-310"
                VerticalOffset="8"
                StaysOpen="False"
                AllowsTransparency="True"
                PopupAnimation="Fade">
-            <Border Width="360" MaxHeight="460" Margin="0,0,10,10" Style="{DynamicResource PhasmaPopupSurface}">
+            <Border Width="370" MaxHeight="480" Margin="0,0,10,10" Padding="0" Style="{DynamicResource PhasmaPopupSurface}">
                 <DockPanel>
-                    <Grid DockPanel.Dock="Top" Margin="10,6,6,8">
-                        <TextBlock VerticalAlignment="Center" Text="Notifications" Style="{DynamicResource PhasmaHeading}" />
-                        <Button HorizontalAlignment="Right" Padding="8,4" Click="ClearNotifications_Click" Style="{DynamicResource PhasmaGhostButton}">
-                            <TextBlock Text="Clear" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <!--  Title, unread count, do not disturb and a shortcut to the notification settings  -->
+                    <Grid DockPanel.Dock="Top" Margin="14,10,10,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock VerticalAlignment="Center" FontSize="14" Text="Notifications" Style="{DynamicResource PhasmaHeading}" />
+                            <Border x:Name="NotificationsNewTag" Margin="8,0,0,0" Style="{DynamicResource PhasmaTag}" Visibility="Collapsed">
+                                <TextBlock x:Name="NotificationsNewText" FontSize="11" Text="0 new" />
+                            </Border>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock VerticalAlignment="Center" Margin="0,0,6,0" FontSize="11.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                       Text="{x:Static resources:Strings.Menu_Notifications_DoNotDisturb}" />
+                            <ui:ToggleSwitch x:Name="DoNotDisturbToggle" VerticalAlignment="Center" Click="DoNotDisturbToggle_Click"
+                                             ToolTip="Keep alerts in this list without showing them on screen"
+                                             AutomationProperties.Name="Do not disturb" />
+                            <Button Width="30" Height="30" Margin="6,0,0,0" Click="NotificationSettings_Click" Style="{DynamicResource PhasmaIconButton}"
+                                    ToolTip="Notification settings" AutomationProperties.Name="Notification settings">
+                                <ui:SymbolIcon Symbol="Settings24" FontSize="15" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                    <Border DockPanel.Dock="Top" Style="{DynamicResource PhasmaDivider}" />
+
+                    <!--  Footer actions  -->
+                    <Grid DockPanel.Dock="Bottom" Margin="8,6,8,8">
+                        <Button HorizontalAlignment="Left" Click="ClearNotifications_Click" Style="{DynamicResource PhasmaGhostButton}">
+                            <TextBlock Text="Clear history" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </Button>
+                        <Button HorizontalAlignment="Right" Click="SendTestNotification_Click" Style="{DynamicResource PhasmaGhostButton}" ToolTip="Show a test alert">
+                            <TextBlock Text="Send test" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         </Button>
                     </Grid>
-                    <TextBlock x:Name="NotificationsEmpty" DockPanel.Dock="Top" Margin="10,4,10,14" FontSize="12" TextWrapping="Wrap"
-                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Nothing yet. Alerts about friends, updates and captures will show up here." />
+                    <Border DockPanel.Dock="Bottom" Style="{DynamicResource PhasmaDivider}" />
+
+                    <!--  Empty state  -->
+                    <StackPanel x:Name="NotificationsEmpty" DockPanel.Dock="Top" Margin="24,28,24,28" HorizontalAlignment="Center">
+                        <Border Width="40" Height="40" HorizontalAlignment="Center" CornerRadius="12" Background="{DynamicResource PhasmaSelectedBrush}">
+                            <ui:SymbolIcon Symbol="Alert24" FontSize="18" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </Border>
+                        <TextBlock Margin="0,10,0,0" HorizontalAlignment="Center" FontSize="13" FontWeight="SemiBold" Text="You're all caught up" />
+                        <TextBlock Margin="0,4,0,0" MaxWidth="280" HorizontalAlignment="Center" TextAlignment="Center" FontSize="12" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Alerts about friends, servers, updates and captures will show up here." />
+                    </StackPanel>
+
                     <ListBox x:Name="NotificationsList"
+                             Margin="6,6,6,4"
                              Background="Transparent" BorderThickness="0" Padding="0"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                              ItemContainerStyle="{DynamicResource PhasmaListItem}"
                              PreviewMouseLeftButtonUp="NotificationsList_PreviewMouseLeftButtonUp">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="12.5" TextTrimming="CharacterEllipsis" />
-                                    <TextBlock Text="{Binding Message}" FontSize="11.5" Margin="0,2,0,0" TextWrapping="Wrap" MaxHeight="48" TextTrimming="CharacterEllipsis"
-                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                    <TextBlock Text="{Binding Timestamp, StringFormat=t}" FontSize="10.5" Margin="0,3,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                                </StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="30" Height="30" VerticalAlignment="Top" CornerRadius="8" Background="{DynamicResource PhasmaSelectedBrush}">
+                                        <ui:SymbolIcon Symbol="Alert24" FontSize="14" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="12.5" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding Detail}" FontSize="11.5" Margin="0,2,0,0" TextWrapping="Wrap" MaxHeight="48" TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" ToolTip="{Binding Timestamp}" />
+                                    </StackPanel>
+                                    <Ellipse Grid.Column="2" Width="7" Height="7" Margin="10,0,2,0" VerticalAlignment="Center" Fill="{DynamicResource PhasmaAccentBrush}"
+                                             Visibility="{Binding NewVisibility}" />
+                                </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>

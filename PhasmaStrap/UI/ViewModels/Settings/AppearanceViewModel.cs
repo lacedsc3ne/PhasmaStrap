@@ -836,6 +836,86 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public ICommand ResetLookCommand => new RelayCommand(() => ApplyLookPresetCommand.Execute(LookPresets[0]));
 
+        /// <summary>A .phtheme file: every theme token in one small JSON file that can be shared.</summary>
+        private sealed class PhthemeFile
+        {
+            [JsonPropertyName("format")] public string Format { get; set; } = "phtheme";
+            [JsonPropertyName("version")] public int Version { get; set; } = 1;
+            [JsonPropertyName("accent")] public string Accent { get; set; } = "";
+            [JsonPropertyName("panel_color")] public string PanelColor { get; set; } = "";
+            [JsonPropertyName("panel_opacity")] public double PanelOpacity { get; set; }
+            [JsonPropertyName("window_tint")] public double WindowTint { get; set; }
+            [JsonPropertyName("corner_radius")] public int CornerRadius { get; set; }
+            [JsonPropertyName("compact")] public bool Compact { get; set; }
+            [JsonPropertyName("mist")] public bool Mist { get; set; }
+        }
+
+        public ICommand ExportLookCommand => new RelayCommand(() =>
+        {
+            var dialog = new SaveFileDialog { FileName = "My theme.phtheme", Filter = "PhasmaStrap theme|*.phtheme" };
+            if (dialog.ShowDialog() != true)
+                return;
+
+            var prop = App.Settings.Prop;
+            var file = new PhthemeFile
+            {
+                Accent = prop.ThemeAccent ?? "",
+                PanelColor = prop.ThemePanelColor ?? "",
+                PanelOpacity = prop.ThemePanelOpacity,
+                WindowTint = prop.ThemeWindowTintOpacity,
+                CornerRadius = prop.ThemeCornerRadius,
+                Compact = prop.ThemeCompact,
+                Mist = prop.ThemeMistEnabled,
+            };
+
+            try
+            {
+                File.WriteAllText(dialog.FileName, JsonSerializer.Serialize(file, new JsonSerializerOptions { WriteIndented = true }));
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteException("AppearanceViewModel::ExportLook", ex);
+                Frontend.ShowMessageBox($"Could not save the theme: {ex.Message}", MessageBoxImage.Error);
+            }
+        });
+
+        public ICommand ImportLookCommand => new RelayCommand(() =>
+        {
+            var dialog = new OpenFileDialog { Filter = "PhasmaStrap theme|*.phtheme|JSON|*.json" };
+            if (dialog.ShowDialog() != true)
+                return;
+
+            PhthemeFile? file = null;
+            try
+            {
+                if (new FileInfo(dialog.FileName).Length <= 64 * 1024)
+                    file = JsonSerializer.Deserialize<PhthemeFile>(File.ReadAllText(dialog.FileName));
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("AppearanceViewModel::ImportLook", $"Not a theme file: {ex.Message}");
+            }
+
+            if (file is null || !string.Equals(file.Format, "phtheme", StringComparison.OrdinalIgnoreCase))
+            {
+                Frontend.ShowMessageBox("That file is not a PhasmaStrap theme.", MessageBoxImage.Warning);
+                return;
+            }
+
+            static string Colour(string hex) => hex.Length > 0 && PhasmaStrap.Utility.AppColorTheme.TryParseColor(hex, out _) ? hex : "";
+
+            var prop = App.Settings.Prop;
+            prop.ThemePanelOpacity = Math.Clamp(file.PanelOpacity, 0, 1);
+            prop.ThemeWindowTintOpacity = Math.Clamp(file.WindowTint, PhasmaStrap.UI.ThemeTokens.MinWindowTint, 1);
+            prop.ThemeCornerRadius = Math.Clamp(file.CornerRadius, 0, 24);
+            prop.ThemeCompact = file.Compact;
+            prop.ThemeMistEnabled = file.Mist;
+            prop.ThemePanelColor = Colour(file.PanelColor);
+
+            ApplyAccent(Colour(file.Accent));
+            NotifyLookChanged();
+        });
+
         private void NotifyLookChanged()
         {
             WpfUiWindow.RefreshLookOnAllWindows();

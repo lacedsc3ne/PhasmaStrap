@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -66,6 +66,13 @@ namespace PhasmaStrap.UI.Elements.Controls
 
         private bool _flatExplicitlySet;
 
+        static OptionControl()
+        {
+            // One right click menu for every setting row in the app.
+            EventManager.RegisterClassHandler(typeof(OptionControl), MouseRightButtonUpEvent,
+                new MouseButtonEventHandler(global::PhasmaStrap.UI.Elements.Settings.SettingRowMenu.OnRowRightClick));
+        }
+
         public OptionControl()
         {
             InitializeComponent();
@@ -83,7 +90,7 @@ namespace PhasmaStrap.UI.Elements.Controls
             DependencyObject? parent = VisualTreeHelper.GetParent(this);
             while (parent is not null)
             {
-                if (parent is Wpf.Ui.Controls.CardExpander || parent is Wpf.Ui.Controls.Card || parent is Expander)
+                if (parent is Wpf.Ui.Controls.CardExpander || parent is Wpf.Ui.Controls.Card || parent is Expander || parent is SettingsCard)
                 {
                     Flat = true;
                     return;

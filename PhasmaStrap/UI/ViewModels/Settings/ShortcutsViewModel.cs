@@ -180,6 +180,8 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public ICommand RemoveShortcutCommand => new RelayCommand<ShortcutEntry>(RemoveShortcut);
 
+        public ICommand RenameShortcutCommand => new RelayCommand<ShortcutEntry>(RenameShortcut);
+
         public ICommand CreateGameShortcutCommand => new AsyncRelayCommand(async () =>
         {
             if (string.IsNullOrWhiteSpace(GameShortcutInput))
@@ -273,6 +275,63 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
 
             GameShortcutStatus = $"Removed \"{entry.Name}\".";
+
+            SyncTasks();
+            RefreshShortcuts();
+        }
+
+        /// <summary>Renames the .lnk file itself, so the new name shows on the desktop or in the Start menu.</summary>
+        private void RenameShortcut(ShortcutEntry? entry)
+        {
+            if (entry is null || !File.Exists(entry.Path))
+                return;
+
+            var dialog = new PhasmaStrap.UI.Elements.Dialogs.TextInputDialog("Rename shortcut", "New name:", entry.Name);
+            dialog.ShowDialog();
+
+            if (!dialog.Confirmed)
+                return;
+
+            string name = string.Concat(dialog.Value.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c)).Trim().TrimEnd('.');
+
+            if (name.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase))
+                name = name[..^4].TrimEnd();
+
+            if (name.Length == 0 || string.Equals(name, entry.Name, StringComparison.Ordinal))
+                return;
+
+            string folder = Path.GetDirectoryName(entry.Path) ?? "";
+            string destination = Path.Combine(folder, name + ".lnk");
+            bool caseOnly = string.Equals(destination, entry.Path, StringComparison.OrdinalIgnoreCase);
+
+            if (!caseOnly && File.Exists(destination))
+            {
+                GameShortcutStatus = $"There is already a shortcut called \"{name}\" there.";
+                return;
+            }
+
+            try
+            {
+                if (caseOnly)
+                {
+                    // Windows ignores a rename that only changes letter case, so go through a temporary name.
+                    string temporary = Path.Combine(folder, Guid.NewGuid().ToString("N") + ".lnk");
+                    File.Move(entry.Path, temporary);
+                    File.Move(temporary, destination);
+                }
+                else
+                {
+                    File.Move(entry.Path, destination);
+                }
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteException($"{LOG_IDENT}::RenameShortcut", ex);
+                GameShortcutStatus = $"Could not rename that shortcut: {ex.Message}";
+                return;
+            }
+
+            GameShortcutStatus = $"Renamed \"{entry.Name}\" to \"{name}\".";
 
             SyncTasks();
             RefreshShortcuts();

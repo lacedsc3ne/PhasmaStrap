@@ -138,6 +138,14 @@ def walk(el: ET.Element, page: PageInfo, tab: str | None, section: str | None, g
         if name == "TabItem.Header" or name == "CardExpander.Header":
             continue
 
+        if name == "SettingsCard":
+            header_expr = to_expr(attr(child, "Header"))
+            desc_expr = to_expr(attr(child, "Description"))
+            if header_expr:
+                page.entries.append(Entry("Group", header_expr, desc_expr, tab, section, None))
+            walk(child, page, tab, section, header_expr or group, in_option, depth + 1)
+            continue
+
         if name == "CardExpander":
             header_expr = to_expr(attr(child, "Header"))
             desc_expr = None
@@ -159,6 +167,14 @@ def walk(el: ET.Element, page: PageInfo, tab: str | None, section: str | None, g
 
         if name == "TextBlock" and not in_option:
             text_expr = to_expr(attr(child, "Text"))
+            style = attr(child, "Style") or ""
+            if "PhasmaPageTitle" in style:
+                page.title_seen = True
+                continue
+            if "PhasmaSectionLabel" in style and text_expr:
+                section = text_expr
+                page.entries.append(Entry("Section", text_expr, None, tab, None, None))
+                continue
             size = font_size(child)
             if text_expr and size is not None and size >= 20 and not page.title_seen and tab is None:
                 page.title_seen = True
@@ -175,6 +191,10 @@ def walk(el: ET.Element, page: PageInfo, tab: str | None, section: str | None, g
 
         if name == "Button" and not in_option:
             content_expr = to_expr(attr(child, "Content"))
+            if content_expr is None and attr(child, "Content") is None:
+                # Buttons with an icon next to their text keep the text in a TextBlock.
+                inner = next((t for t in child.iter() if local(t.tag) == "TextBlock" and to_expr(attr(t, "Text"))), None)
+                content_expr = to_expr(attr(inner, "Text")) if inner is not None else None
             if content_expr and is_meaningful_action(content_expr):
                 page.entries.append(Entry("Action", content_expr, None, tab, section, group))
 

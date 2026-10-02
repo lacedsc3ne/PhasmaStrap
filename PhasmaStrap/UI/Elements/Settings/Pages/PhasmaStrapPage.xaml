@@ -13,114 +13,172 @@
       d:DesignHeight="600" d:DesignWidth="800"
       Title="BehaviourPage"
       Scrollable="True">
+    <ui:UiPage.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </ui:UiPage.Resources>
 
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Text="{x:Static resources:Strings.Menu_PhasmaStrap_PhasmaStrap}" FontSize="20" FontWeight="Medium" />
-        <TextBlock Margin="0,0,0,8" Text="{x:Static resources:Strings.Menu_PhasmaStrap_Description}" FontSize="14" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-
-        <StackPanel x:Name="PhasmaAccountSection" Margin="0,8,0,0">
-            <TextBlock Text="PhasmaStrap account" FontSize="20" FontWeight="Medium" />
-            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Sign in to link a Roblox account and keep a copy of your settings." />
-
-            <ui:CardControl Margin="0,8,0,0" Icon="Person24">
-                <ui:CardControl.Header>
-                    <StackPanel>
-                        <TextBlock FontSize="14" Text="{Binding AccountHeader}" />
-                        <TextBlock FontSize="12" Text="{Binding AccountDetail}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" />
-                    </StackPanel>
-                </ui:CardControl.Header>
-                <StackPanel Orientation="Horizontal">
-                    <ui:Button MinWidth="100" Margin="0,0,8,0" Icon="Link24" Content="Link Roblox" Command="{Binding LinkRobloxCommand}" />
-                    <ui:Button MinWidth="100" Icon="Open24" Content="{Binding AccountActionText}" Command="{Binding AccountActionCommand}" IsEnabled="{Binding AccountActionEnabled}" />
-                </StackPanel>
-            </ui:CardControl>
-
-            <ui:CardControl Margin="0,8,0,0" Icon="CloudArrowUp24" Visibility="{Binding BackupVisibility}">
-                <ui:CardControl.Header>
-                    <StackPanel>
-                        <TextBlock FontSize="14" Text="Settings backup" />
-                        <TextBlock FontSize="12" Text="{Binding BackupDetail}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" />
-                    </StackPanel>
-                </ui:CardControl.Header>
-                <StackPanel Orientation="Horizontal">
-                    <ui:Button MinWidth="90" Margin="0,0,8,0" Icon="CloudArrowUp24" Content="Back up" Command="{Binding BackUpCommand}" IsEnabled="{Binding BackupEnabled}" />
-                    <ui:Button MinWidth="90" Icon="CloudArrowDown24" Content="Restore" Command="{Binding RestoreCommand}" IsEnabled="{Binding BackupEnabled}" />
-                </StackPanel>
-            </ui:CardControl>
-
-            <controls:OptionControl Margin="0,8,0,0" Visibility="{Binding BackupVisibility}"
-                                    Header="Back up on its own"
-                                    Description="Once a day, when you close this window, your settings go up without you asking.">
-                <ui:ToggleSwitch IsChecked="{Binding AutoBackupEnabled, Mode=TwoWay}" />
-            </controls:OptionControl>
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+            <TextBlock Style="{DynamicResource PhasmaPageTitle}" VerticalAlignment="Center" Text="Account and backup" />
+            <Border Style="{DynamicResource PhasmaTagNeutral}" Margin="12,0,0,0">
+                <TextBlock FontSize="11" Text="PhasmaStrap" />
+            </Border>
         </StackPanel>
 
-        <TextBlock Text="{x:Static resources:Strings.Menu_PhasmaStrap_Section_General_Header}" FontSize="20" FontWeight="Medium" Margin="0,24,0,0" />
-        <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_PhasmaStrap_Section_General_Description}" />
+        <!--  Account: its DataContext is a PhasmaAccountViewModel, set in the code behind  -->
+        <Border x:Name="PhasmaAccountSection" Style="{DynamicResource PhasmaCard}" Padding="16" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-        <controls:OptionControl
-            Header="{x:Static resources:Strings.Menu_Behaviour_AutoUpdate_Title}"
-            Description="{x:Static resources:Strings.Menu_Behaviour_AutoUpdate_Description}">
-            <ui:ToggleSwitch IsChecked="{Binding UpdateCheckingEnabled, Mode=TwoWay}" />
-        </controls:OptionControl>
+                <Border Grid.Column="0" Width="48" Height="48" CornerRadius="24" Margin="0,0,14,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaAccentSoftBrush}">
+                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="19" FontWeight="SemiBold" Text="{Binding AccountInitial}" />
+                </Border>
 
-        <controls:OptionControl
-            Header="{x:Static resources:Strings.Menu_Behaviour_LaunchAtStartup_Title}"
-            Description="{x:Static resources:Strings.Menu_Behaviour_LaunchAtStartup_Description}">
-            <ui:ToggleSwitch IsChecked="{Binding LaunchAtStartupEnabled, Mode=TwoWay}" />
-        </controls:OptionControl>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,16,0">
+                    <TextBlock Style="{DynamicResource PhasmaHeading}" Text="{Binding AccountHeader}" />
+                    <TextBlock Margin="0,3,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding AccountDetail}" ToolTip="{Binding AccountIdTip}" />
+                </StackPanel>
 
-        <controls:OptionControl
-            Header="{x:Static resources:Strings.Menu_Behaviour_MinimizeToTrayOnClose_Title}"
-            Description="{x:Static resources:Strings.Menu_Behaviour_MinimizeToTrayOnClose_Description}">
-            <ui:ToggleSwitch IsChecked="{Binding MinimizeToTrayOnCloseEnabled, Mode=TwoWay}" />
-        </controls:OptionControl>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Margin="0,0,8,0" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding OpenProfileCommand}" Visibility="{Binding ProfileVisibility}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Open24" FontSize="14" Margin="0,0,6,0" />
+                            <TextBlock Text="Profile on phasmastrap.com" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{DynamicResource PhasmaSoftButton}" Command="{Binding LinkRobloxCommand}" Visibility="{Binding LinkRobloxVisibility}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Link24" FontSize="14" Margin="0,0,6,0" />
+                            <TextBlock Text="Link Roblox" />
+                        </StackPanel>
+                    </Button>
+                    <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Command="{Binding AccountActionCommand}" IsEnabled="{Binding AccountActionEnabled}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Open24" FontSize="14" Margin="0,0,6,0" />
+                            <TextBlock Text="{Binding AccountActionText}" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
 
-        <controls:OptionControl
-            Header="{x:Static resources:Strings.Menu_PhasmaStrap_DoubleClickTrayIcon}"
-            Description="{x:Static resources:Strings.Menu_PhasmaStrap_WhatDoubleClickingPhasmaStrapSIcon}">
-            <ComboBox Width="220" Padding="10,5,10,5" ItemsSource="{Binding TrayDoubleClickActions, Mode=OneTime}" SelectedItem="{Binding TrayDoubleClickAction, Mode=TwoWay}">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Path=., Converter={StaticResource EnumNameConverter}}" />
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
-            </ComboBox>
-        </controls:OptionControl>
+        <controls:CardColumns>
+            <!--  Settings backup (needs an account, so it uses the account view model too)  -->
+            <controls:SettingsCard Header="Settings backup"
+                                   DataContext="{Binding DataContext, ElementName=PhasmaAccountSection}"
+                                   Description="{Binding BackupDetail}"
+                                   Visibility="{Binding BackupVisibility}">
+                <controls:OptionControl Header="Back up on its own" Description="After you change something, at most hourly">
+                    <ui:ToggleSwitch IsChecked="{Binding AutoBackupEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
 
-        <TextBlock Text="{x:Static resources:Strings.Menu_PhasmaStrap_Section_Privacy_Header}" FontSize="20" FontWeight="Medium" Margin="0,24,0,0" />
-        <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_PhasmaStrap_Section_Privacy_Description}" />
+                <controls:OptionControl Header="What to include" Description="Everything adds friend notes and your games library">
+                    <ComboBox MinWidth="170" Padding="10,5,10,5" ItemsSource="{Binding BackupScopes, Mode=OneTime}" SelectedItem="{Binding BackupScope, Mode=TwoWay}" />
+                </controls:OptionControl>
 
-        <controls:OptionControl
-            Header="{x:Static resources:Strings.Menu_PhasmaStrap_Analytics_Title}"
-            Description="{Binding Source={x:Static resources:Strings.Menu_PhasmaStrap_Analytics_Description}, Converter={StaticResource StringFormatConverter}, ConverterParameter='https://phasmastrap.com/privacy'}">
-            <ui:ToggleSwitch IsChecked="{Binding AnalyticsEnabled, Mode=TwoWay}" />
-        </controls:OptionControl>
+                <StackPanel Orientation="Horizontal" Margin="0,4,0,12">
+                    <Button Style="{DynamicResource PhasmaSoftButton}" Command="{Binding BackUpCommand}" IsEnabled="{Binding BackupEnabled}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="CloudArrowUp24" FontSize="14" Margin="0,0,6,0" />
+                            <TextBlock Text="Back up now" />
+                        </StackPanel>
+                    </Button>
+                    <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding RestoreCommand}" IsEnabled="{Binding BackupEnabled}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="CloudArrowDown24" FontSize="14" Margin="0,0,6,0" />
+                            <TextBlock Text="Restore" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </controls:SettingsCard>
 
-        <controls:OptionControl
-            Visibility="{Binding Path=WebEnvironmentVisibility}"
-            Header="{x:Static resources:Strings.Menu_PhasmaStrap_WebEnvironment}"
-            Description="{x:Static resources:Strings.Menu_PhasmaStrap_SiteUseMetrics}">
-            <ComboBox Width="200" Padding="10,5,10,5" ItemsSource="{Binding WebEnvironments, Mode=OneWay}" SelectedValue="{Binding WebEnvironment, Mode=TwoWay}" />
-        </controls:OptionControl>
+            <!--  Startup and updates  -->
+            <controls:SettingsCard Header="Startup and updates">
+                <controls:SettingsCard.HeaderContent>
+                    <Border Style="{DynamicResource PhasmaTagNeutral}">
+                        <TextBlock FontSize="11" Text="{Binding VersionTag, Mode=OneTime}" />
+                    </Border>
+                </controls:SettingsCard.HeaderContent>
 
-        <TextBlock Text="{x:Static resources:Strings.Menu_PhasmaStrap_Section_Diagnostics_Header}" FontSize="20" FontWeight="Medium" Margin="0,24,0,0" />
-        <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_PhasmaStrap_Section_Diagnostics_Description}" />
+                <!--  Which version is installed and whether a newer one is out  -->
+                <controls:OptionControl Header="{Binding UpdateHeadline, Mode=OneWay}" Description="{Binding UpdateDetail, Mode=OneWay}">
+                    <Button Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Visibility="{Binding ReleaseNotesVisibility, Mode=OneWay}" Command="{Binding OpenReleaseNotesCommand, Mode=OneTime}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Open24" FontSize="14" Margin="0,0,6,0" />
+                            <TextBlock Text="What changed" />
+                        </StackPanel>
+                    </Button>
+                </controls:OptionControl>
 
-        <ui:CardExpander Margin="0,8,0,0" Icon="CopySelect20" IsExpanded="True">
-            <ui:CardExpander.Header>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0">
-                        <TextBlock FontSize="14" Text="{x:Static resources:Strings.Menu_PhasmaStrap_ExportData_Title}" />
-                        <TextBlock FontSize="12" Text="{x:Static resources:Strings.Menu_PhasmaStrap_ExportData_Description}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" />
-                    </StackPanel>
-                    <ui:Button Grid.Column="1" MinWidth="100" Margin="0,0,16,0" Icon="CopySelect20" Content="{x:Static resources:Strings.Common_Export}" Command="{Binding ExportDataCommand}">
-                        <ui:Button.Style>
-                            <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+                <!--  Stable or Beta: App.GetLatestRelease follows it, so the updater does too  -->
+                <controls:OptionControl Header="Update channel" Description="Beta gets features a week early">
+                    <ComboBox MinWidth="120" Padding="10,5,10,5" ItemsSource="{Binding UpdateChannels, Mode=OneTime}" SelectedItem="{Binding UpdateChannel, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl
+                    Header="{x:Static resources:Strings.Menu_Behaviour_AutoUpdate_Title}"
+                    Description="{x:Static resources:Strings.Menu_Behaviour_AutoUpdate_Description}">
+                    <ui:ToggleSwitch IsChecked="{Binding UpdateCheckingEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl
+                    Header="{x:Static resources:Strings.Menu_Behaviour_LaunchAtStartup_Title}"
+                    Description="{x:Static resources:Strings.Menu_Behaviour_LaunchAtStartup_Description}">
+                    <ui:ToggleSwitch IsChecked="{Binding LaunchAtStartupEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl
+                    Header="{x:Static resources:Strings.Menu_Behaviour_MinimizeToTrayOnClose_Title}"
+                    Description="{x:Static resources:Strings.Menu_Behaviour_MinimizeToTrayOnClose_Description}">
+                    <ui:ToggleSwitch IsChecked="{Binding MinimizeToTrayOnCloseEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl
+                    Header="{x:Static resources:Strings.Menu_PhasmaStrap_DoubleClickTrayIcon}"
+                    Description="{x:Static resources:Strings.Menu_PhasmaStrap_WhatDoubleClickingPhasmaStrapSIcon}">
+                    <ComboBox MinWidth="140" Padding="10,5,10,5" ItemsSource="{Binding TrayDoubleClickActions, Mode=OneTime}" SelectedItem="{Binding TrayDoubleClickAction, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Path=., Converter={StaticResource EnumNameConverter}}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </controls:OptionControl>
+            </controls:SettingsCard>
+
+            <!--  Privacy  -->
+            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_PhasmaStrap_Section_Privacy_Header}"
+                                   Description="What PhasmaStrap sends back, if anything">
+                <controls:OptionControl
+                    Header="{x:Static resources:Strings.Menu_PhasmaStrap_Analytics_Title}"
+                    Description="{Binding Source={x:Static resources:Strings.Menu_PhasmaStrap_Analytics_Description}, Converter={StaticResource StringFormatConverter}, ConverterParameter='https://phasmastrap.com/privacy'}">
+                    <ui:ToggleSwitch IsChecked="{Binding AnalyticsEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="Send crash reports" Description="Helps fix crashes faster. Sends the error, your Windows and PhasmaStrap version, and the last lines of the log.">
+                    <ui:ToggleSwitch IsChecked="{Binding SendCrashReports, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl
+                    Visibility="{Binding Path=WebEnvironmentVisibility}"
+                    Header="{x:Static resources:Strings.Menu_PhasmaStrap_WebEnvironment}"
+                    Description="{x:Static resources:Strings.Menu_PhasmaStrap_SiteUseMetrics}">
+                    <ComboBox MinWidth="140" Padding="10,5,10,5" ItemsSource="{Binding WebEnvironments, Mode=OneWay}" SelectedValue="{Binding WebEnvironment, Mode=TwoWay}" />
+                </controls:OptionControl>
+            </controls:SettingsCard>
+
+            <!--  Diagnostics: export, import, settings history  -->
+            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_PhasmaStrap_Section_Diagnostics_Header}"
+                                   Description="Package up information for troubleshooting">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_PhasmaStrap_ExportData_Title}" Description="{x:Static resources:Strings.Menu_PhasmaStrap_ExportData_Description}">
+                    <Button Command="{Binding ExportDataCommand}">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource PhasmaSoftButton}">
+                                <Setter Property="IsEnabled" Value="True" />
                                 <Style.Triggers>
                                     <MultiDataTrigger>
                                         <MultiDataTrigger.Conditions>
@@ -131,79 +189,105 @@
                                         <Setter Property="IsEnabled" Value="False" />
                                     </MultiDataTrigger>
                                 </Style.Triggers>
-                                <Setter Property="IsEnabled" Value="True" />
                             </Style>
-                        </ui:Button.Style>
-                    </ui:Button>
-                </Grid>
-            </ui:CardExpander.Header>
-            <WrapPanel>
-                <CheckBox Margin="0,0,20,0" Name="ShouldExportConfig" Content="{x:Static resources:Strings.Menu_PhasmaStrap_ExportData_ExportConfig}" IsChecked="{Binding ShouldExportConfig}" />
-                <CheckBox Margin="0,0,20,0" Name="ShouldExportLogs" Content="{x:Static resources:Strings.Menu_PhasmaStrap_ExportData_ExportLogs}" IsChecked="{Binding ShouldExportLogs}" />
-                <CheckBox Name="ShouldExportSystemInfo" Content="{x:Static resources:Strings.Menu_PhasmaStrap_SystemInfo}" IsChecked="{Binding ShouldExportSystemInfo}" />
-            </WrapPanel>
-        </ui:CardExpander>
+                        </Button.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="ArrowExportLtr24" FontSize="14" Margin="0,0,6,0" />
+                            <TextBlock Text="{x:Static resources:Strings.Common_Export}" />
+                        </StackPanel>
+                    </Button>
+                </controls:OptionControl>
 
-        <ui:Card Margin="0,8,0,0">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
-                    <TextBlock FontSize="14" Text="{x:Static resources:Strings.Menu_PhasmaStrap_ImportConfig}" />
-                    <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_PhasmaStrap_RestoreSettingsSavedStateFastFlagsFrom}" />
+                <!--  What goes into the export  -->
+                <WrapPanel Margin="0,0,0,10">
+                    <CheckBox Margin="0,0,16,0" Name="ShouldExportConfig" Content="{x:Static resources:Strings.Menu_PhasmaStrap_ExportData_ExportConfig}" IsChecked="{Binding ShouldExportConfig}" />
+                    <CheckBox Margin="0,0,16,0" Name="ShouldExportLogs" Content="{x:Static resources:Strings.Menu_PhasmaStrap_ExportData_ExportLogs}" IsChecked="{Binding ShouldExportLogs}" />
+                    <CheckBox Name="ShouldExportSystemInfo" Content="{x:Static resources:Strings.Menu_PhasmaStrap_SystemInfo}" IsChecked="{Binding ShouldExportSystemInfo}" />
+                </WrapPanel>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_PhasmaStrap_ImportConfig}" Description="{x:Static resources:Strings.Menu_PhasmaStrap_RestoreSettingsSavedStateFastFlagsFrom}">
+                    <Button Style="{DynamicResource PhasmaSoftButton}" Command="{Binding ImportDataCommand, Mode=OneTime}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="ArrowImport24" FontSize="14" Margin="0,0,6,0" />
+                            <TextBlock Text="{x:Static resources:Strings.Common_Import}" />
+                        </StackPanel>
+                    </Button>
+                </controls:OptionControl>
+
+                <controls:OptionControl x:Name="HistoryOption" Header="{x:Static resources:Strings.Menu_PhasmaStrap_SettingsHistory}" Description="A copy from before each round of changes">
+                    <!--  HistoryExpander: checking it loads the list (handler in code behind) and shows the card below  -->
+                    <ToggleButton Checked="HistoryExpander_Expanded">
+                        <ToggleButton.Style>
+                            <Style TargetType="ToggleButton" BasedOn="{StaticResource PhasmaChip}">
+                                <Setter Property="Content" Value="Show" />
+                                <Style.Triggers>
+                                    <Trigger Property="IsChecked" Value="True">
+                                        <Setter Property="Content" Value="Hide" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ToggleButton.Style>
+                    </ToggleButton>
+                </controls:OptionControl>
+            </controls:SettingsCard>
+
+            <!--  Settings history list, shown from the Diagnostics card  -->
+            <controls:SettingsCard controls:CardColumns.FullRow="True"
+                                   Header="{x:Static resources:Strings.Menu_PhasmaStrap_SettingsHistory}"
+                                   Description="{x:Static resources:Strings.Menu_PhasmaStrap_PhasmaStrapKeepsCopySettingsFastFlagsFrom}"
+                                   Visibility="{Binding InnerContent.IsChecked, ElementName=HistoryOption, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <controls:SettingsCard.HeaderContent>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" Command="{Binding RefreshBackupsCommand, Mode=OneTime}">
+                            <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14" />
+                        </Button>
+                        <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Menu_Capture_OpenFolder}" Command="{Binding OpenBackupsFolderCommand, Mode=OneTime}">
+                            <ui:SymbolIcon Symbol="Folder24" FontSize="14" />
+                        </Button>
+                    </StackPanel>
+                </controls:SettingsCard.HeaderContent>
+
+                <StackPanel Margin="0,0,0,10">
+                    <TextBlock Margin="0,6,0,6" HorizontalAlignment="Center" FontSize="12.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Visibility="{Binding NoBackupsVisibility, Mode=OneWay}" Text="{x:Static resources:Strings.Menu_PhasmaStrap_NothingHereYetFirstCopyMade}" />
+
+                    <ItemsControl ItemsSource="{Binding Backups, Mode=OneWay}" MaxHeight="360">
+                        <ItemsControl.Template>
+                            <ControlTemplate TargetType="ItemsControl">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" controls:ScrollBubbling.Enabled="True">
+                                    <ItemsPresenter />
+                                </ScrollViewer>
+                            </ControlTemplate>
+                        </ItemsControl.Template>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <Border Style="{DynamicResource PhasmaDivider}" />
+                                    <Grid Margin="0,8,8,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <ui:SymbolIcon Grid.Column="0" Symbol="{Binding Symbol}" FontSize="16" Margin="0,0,10,0" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock FontSize="12.5" FontWeight="SemiBold" Text="{Binding Title}" />
+                                            <TextBlock FontSize="11.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Detail}" />
+                                        </StackPanel>
+                                        <Button Grid.Column="2" Style="{DynamicResource PhasmaGhostButton}"
+                                                Command="{Binding DataContext.RestoreBackupCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}"
+                                                CommandParameter="{Binding}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="ArrowUndo24" FontSize="14" Margin="0,0,6,0" />
+                                                <TextBlock FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_PhasmaStrap_Restore}" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
-                <ui:Button Grid.Column="1" MinWidth="100" Icon="ArrowImport20" Content="{x:Static resources:Strings.Common_Import}" Command="{Binding ImportDataCommand, Mode=OneTime}" />
-            </Grid>
-        </ui:Card>
-
-        <ui:CardExpander Margin="0,8,0,0" x:Name="HistoryExpander" Expanded="HistoryExpander_Expanded">
-            <ui:CardExpander.Header>
-                <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
-                    <TextBlock FontSize="14" Text="{x:Static resources:Strings.Menu_PhasmaStrap_SettingsHistory}" />
-                    <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_PhasmaStrap_PhasmaStrapKeepsCopySettingsFastFlagsFrom}" />
-                </StackPanel>
-            </ui:CardExpander.Header>
-            <StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                    <ui:Button Content="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" Icon="ArrowClockwise24" Appearance="Secondary" Command="{Binding RefreshBackupsCommand, Mode=OneTime}" />
-                    <ui:Button Margin="8,0,0,0" Content="{x:Static resources:Strings.Menu_Capture_OpenFolder}" Icon="Folder24" Appearance="Secondary" Command="{Binding OpenBackupsFolderCommand, Mode=OneTime}" />
-                </StackPanel>
-
-                <TextBlock Margin="2,6,0,6" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Visibility="{Binding NoBackupsVisibility, Mode=OneWay}" Text="{x:Static resources:Strings.Menu_PhasmaStrap_NothingHereYetFirstCopyMade}" />
-
-                <ItemsControl ItemsSource="{Binding Backups, Mode=OneWay}" MaxHeight="360">
-                    <ItemsControl.Template>
-                        <ControlTemplate TargetType="ItemsControl">
-                            <ScrollViewer VerticalScrollBarVisibility="Auto" controls:ScrollBubbling.Enabled="True">
-                                <ItemsPresenter />
-                            </ScrollViewer>
-                        </ControlTemplate>
-                    </ItemsControl.Template>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Margin="0,0,8,6" Padding="12,8" CornerRadius="6" Background="{DynamicResource ControlFillColorDefaultBrush}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <ui:SymbolIcon Grid.Column="0" Symbol="{Binding Symbol}" Margin="0,0,10,0" VerticalAlignment="Center" />
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                        <TextBlock FontSize="13" Text="{Binding Title}" />
-                                        <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Detail}" />
-                                    </StackPanel>
-                                    <ui:Button Grid.Column="2" Padding="8,4" Appearance="Secondary" Icon="ArrowUndo24" Content="{x:Static resources:Strings.Menu_PhasmaStrap_Restore}"
-                                               Command="{Binding DataContext.RestoreBackupCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                               CommandParameter="{Binding}" />
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
-        </ui:CardExpander>
+            </controls:SettingsCard>
+        </controls:CardColumns>
     </StackPanel>
 </ui:UiPage>

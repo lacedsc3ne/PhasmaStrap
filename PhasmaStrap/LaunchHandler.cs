@@ -72,6 +72,11 @@ namespace PhasmaStrap
                 App.Logger.WriteLine(LOG_IDENT, "Opening clip editor");
                 LaunchClipEditor(App.LaunchSettings.EditClipFlag.Data);
             }
+            else if (App.LaunchSettings.LinkFlag.Active)
+            {
+                App.Logger.WriteLine(LOG_IDENT, "Opening settings from a link");
+                LaunchSettings(App.LaunchSettings.LinkFlag.Data);
+            }
             else if (App.LaunchSettings.MenuFlag.Active)
             {
                 App.Logger.WriteLine(LOG_IDENT, "Opening settings");
@@ -207,7 +212,7 @@ namespace PhasmaStrap
             }
         }
 
-        public static void LaunchSettings()
+        public static void LaunchSettings(string? link = null)
         {
             const string LOG_IDENT = "LaunchHandler::LaunchSettings";
 
@@ -299,11 +304,26 @@ namespace PhasmaStrap
                     };
                 }
 
+                if (interlock.IsAcquired)
+                    Utility.SettingsLinkPipe.Listen(received => window.Dispatcher.BeginInvoke(new Action(() => window.OpenSettingLink(received))));
+
+                if (!string.IsNullOrWhiteSpace(link))
+                    window.OpenSettingLink(link);
+
                 window.ShowDialog();
             }
             else
             {
                 App.Logger.WriteLine(LOG_IDENT, "Found an already existing menu window");
+
+                if (!string.IsNullOrWhiteSpace(link))
+                {
+                    // The open window brings itself forward when it gets the link, which it may only do with our permission.
+                    AllowSetForegroundWindow(ASFW_ANY);
+
+                    if (Utility.SettingsLinkPipe.Send(link))
+                        App.Logger.WriteLine(LOG_IDENT, "Passed the link to the open settings window");
+                }
 
                 var process = Utilities.GetProcessesSafe().Where(x => x.MainWindowTitle == Strings.Menu_Title).FirstOrDefault();
 
@@ -313,6 +333,11 @@ namespace PhasmaStrap
                 App.Terminate();
             }
         }
+
+        private const int ASFW_ANY = -1;
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool AllowSetForegroundWindow(int processId);
 
         [System.Runtime.InteropServices.DllImport("user32.dll")]
         private static extern bool SetWindowPos(IntPtr hwnd, IntPtr insertAfter, int x, int y, int cx, int cy, uint flags);
@@ -460,11 +485,27 @@ namespace PhasmaStrap
                 App.Terminate(ErrorCode.ERROR_FILE_NOT_FOUND);
             }
 
-            if (App.Settings.Prop.ConfirmLaunches && launchMode != LaunchMode.Studio && Mutex.TryOpenExisting("ROBLOX_singletonMutex", out var _))
+            // With "Allow more than one Roblox" a second launch no longer closes the first, so there is nothing to confirm
+            if (App.Settings.Prop.ConfirmLaunches && !App.Settings.Prop.AllowMultipleRoblox && launchMode != LaunchMode.Studio && Mutex.TryOpenExisting("ROBLOX_singletonMutex", out var _))
             {
                 var result = Frontend.ShowMessageBox(Strings.Bootstrapper_ConfirmLaunch, MessageBoxImage.Warning, MessageBoxButton.YesNo);
 
                 if (result != MessageBoxResult.Yes)
+                {
+                    App.Terminate();
+                    return;
+                }
+            }
+
+            if (launchMode == LaunchMode.Player && !App.LaunchSettings.QuietFlag.Active)
+            {
+                if (!Utility.LaunchChoices.ConfirmWebsiteJoin(App.LaunchSettings.RobloxLaunchArgs))
+                {
+                    App.Terminate();
+                    return;
+                }
+
+                if (!Utility.LaunchChoices.AskWhichAccount(App.LaunchSettings.RobloxLaunchArgs))
                 {
                     App.Terminate();
                     return;

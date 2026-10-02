@@ -27,10 +27,83 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string StatusText
         {
             get => _statusText;
-            private set { _statusText = value; OnPropertyChanged(nameof(StatusText)); }
+            private set { _statusText = value; OnPropertyChanged(nameof(StatusText)); OnPropertyChanged(nameof(HeaderDetail)); }
         }
 
         public ObservableCollection<ServerListItem> Servers { get; } = new();
+
+        private string _gameTitle = "";
+        /// <summary>"Game · Place" for the place last searched, empty until it is known.</summary>
+        public string GameTitle
+        {
+            get => _gameTitle;
+            private set { _gameTitle = value; OnPropertyChanged(nameof(GameTitle)); OnPropertyChanged(nameof(HeaderTitle)); }
+        }
+
+        private string _gameIconUrl = "";
+        public string GameIconUrl
+        {
+            get => _gameIconUrl;
+            private set { _gameIconUrl = value ?? ""; OnPropertyChanged(nameof(GameIconUrl)); OnPropertyChanged(nameof(HasGameIcon)); }
+        }
+
+        public bool HasGameIcon => _gameIconUrl.Length > 0;
+
+        public string HeaderTitle => _gameTitle.Length > 0 ? _gameTitle : Strings.Menu_ServerBrowser_Browser_Title;
+
+        private long _searchedPlaceId;
+
+        /// <summary>The place the list below belongs to, which may differ from what is typed in the box.</summary>
+        public long SearchedPlaceId => _searchedPlaceId;
+
+        /// <summary>Place ID and how many servers, or the status while searching.</summary>
+        public string HeaderDetail => _searchedPlaceId > 0 && !_isSearching && Servers.Count > 0
+            ? $"Place ID {_searchedPlaceId}  ·  {GameCatalog.Compact(Servers.Count)} public servers"
+            : _statusText;
+
+        public bool HasRegions => Servers.Any(s => s.Region.Length > 0);
+
+        private async Task FillGameAsync(long placeId)
+        {
+            try
+            {
+                PhasmaStrap.Utility.GameInfo? game = await PhasmaStrap.Utility.GameLookup.FromPlaceAsync(placeId);
+                if (game is null || placeId != _searchedPlaceId)
+                    return;
+
+                GameTitle = PhasmaStrap.Utility.PlaceNames.Display(game.Name, placeId);
+                GameIconUrl = game.IconUrl;
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("ServerBrowserViewModel", $"Game lookup failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>Adds region, uptime and FPS to the listed servers as they become known.</summary>
+        private async Task FillFactsAsync(long placeId)
+        {
+            try
+            {
+                List<ServerListItem> listed = Servers.ToList();
+                Dictionary<string, PhasmaStrap.Utility.Backend.ServerStats> facts = await PhasmaStrap.Utility.Backend.GamesApi.FactsAsync(placeId, listed);
+                if (placeId != _searchedPlaceId || facts.Count == 0)
+                    return;
+
+                for (int i = 0; i < Servers.Count; i++)
+                {
+                    ServerListItem server = Servers[i];
+                    if (facts.TryGetValue(server.JobId, out PhasmaStrap.Utility.Backend.ServerStats? stats))
+                        Servers[i] = server.WithFacts(stats.Region, stats.FirstSeenUtc, stats.ServerFps ?? 0);
+                }
+
+                OnPropertyChanged(nameof(HasRegions));
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("ServerBrowserViewModel", $"Server facts failed: {ex.Message}");
+            }
+        }
 
         public ServerBrowserViewModel()
         {
@@ -280,6 +353,15 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             StatusText = Strings.Menu_ServerBrowser_Status_Searching;
             Servers.Clear();
 
+            if (placeId != _searchedPlaceId)
+            {
+                GameTitle = "";
+                GameIconUrl = "";
+            }
+
+            _searchedPlaceId = placeId;
+            _ = FillGameAsync(placeId);
+
             try
             {
                 List<ServerListItem> servers = await ServerBrowser.ListPublicServersAsync(placeId);
@@ -299,7 +381,11 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             {
                 IsSearching = false;
                 OnPropertyChanged(nameof(HasPingedServers));
+                OnPropertyChanged(nameof(HeaderDetail));
             }
+
+            if (Servers.Count > 0)
+                await FillFactsAsync(placeId);
         }
     }
 }

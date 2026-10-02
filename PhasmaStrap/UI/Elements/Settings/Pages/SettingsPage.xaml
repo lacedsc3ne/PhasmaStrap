@@ -11,15 +11,21 @@
       Scrollable="False">
     <controls:SectionHost x:Name="Host" Header="Settings" Layout="Rail">
         <controls:SectionItem Label="Deployment" Group="LAUNCHING" PageType="{x:Type pages:BehaviourPage}" />
-        <controls:SectionItem Label="Mods" Group="LAUNCHING" PageType="{x:Type pages:ModsPage}" />
+        <controls:SectionItem Label="Roblox version" Group="LAUNCHING" PageType="{x:Type pages:RobloxVersionsPage}" />
+        <controls:SectionItem Label="Channel and downloads" Group="LAUNCHING" PageType="{x:Type pages:ChannelPage}" />
         <controls:SectionItem Label="Classic client" Group="LAUNCHING" PageType="{x:Type pages:ClassicClientPage}" />
+        <controls:SectionItem Label="Mods" Group="LAUNCHING" PageType="{x:Type pages:ModsPage}" />
+        <controls:SectionItem Label="Extensions" Group="LAUNCHING" PageType="{x:Type pages:ExtensionsPage}" />
         <controls:SectionItem Label="Appearance" Group="LOOK AND FEEL" PageType="{x:Type pages:AppearancePage}" />
+        <controls:SectionItem Label="Bootstrapper" Group="LOOK AND FEEL" PageType="{x:Type pages:BootstrapperStylePage}" />
         <controls:SectionItem Label="Notifications" Group="LOOK AND FEEL" PageType="{x:Type pages:NotificationsPage}" />
         <controls:SectionItem Label="Hotkeys" Group="LOOK AND FEEL" PageType="{x:Type pages:HotkeysPage}" />
-        <controls:SectionItem Label="Desktop shortcuts" Group="LOOK AND FEEL" PageType="{x:Type pages:ShortcutsPage}" />
-        <controls:SectionItem Label="Account and app" Group="PHASMASTRAP" PageType="{x:Type pages:PhasmaStrapPage}" />
+        <controls:SectionItem Label="Shortcuts" Group="LOOK AND FEEL" PageType="{x:Type pages:ShortcutsPage}" />
+        <controls:SectionItem Label="Account and backup" Group="PHASMASTRAP" PageType="{x:Type pages:PhasmaStrapPage}" />
         <controls:SectionItem Label="Integrations" Group="PHASMASTRAP" PageType="{x:Type pages:IntegrationsPage}" />
+        <controls:SectionItem Label="Game chat" Group="PHASMASTRAP" PageType="{x:Type pages:GameChatPage}" />
         <controls:SectionItem Label="News" Group="PHASMASTRAP" PageType="{x:Type pages:ReleasesPage}" />
         <controls:SectionItem Label="Developer tools" Group="PHASMASTRAP" PageType="{x:Type pages:DeveloperToolsPage}" />
+        <controls:SectionItem Label="Diagnostics" Group="PHASMASTRAP" PageType="{x:Type pages:DiagnosticsPage}" />
     </controls:SectionHost>
 </ui:UiPage>

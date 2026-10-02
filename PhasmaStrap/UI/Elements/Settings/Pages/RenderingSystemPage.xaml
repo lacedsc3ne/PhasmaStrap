@@ -11,27 +11,34 @@
       Scrollable="True">
 
     <StackPanel Margin="0,0,14,14">
-        <TextBlock FontSize="20" FontWeight="Medium" Text="{x:Static resources:Strings.Menu_Rendering_System}" />
-        <TextBlock Margin="0,2,0,8" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                   Text="{x:Static resources:Strings.Menu_Rendering_BootstrapperLevelTweaksDonTTouch}" />
+        <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="{x:Static resources:Strings.Menu_Rendering_System}" />
+        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="Window, sound and launcher tweaks that do not touch the game's own settings." />
 
-        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_CPUCoreLimit}" Description="{x:Static resources:Strings.Menu_Rendering_RestrictsHowManyLogicalProcessorsPhasmaStrap}">
-            <StackPanel Orientation="Horizontal">
-                <Slider Width="200" Minimum="0" Maximum="{Binding MaxCpuCores, Mode=OneTime}" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding CpuCoreLimit, Mode=TwoWay}" />
-                <TextBlock VerticalAlignment="Center" Margin="8,0,0,0" Text="{Binding CpuCoreLimitDisplay, Mode=OneWay}" />
-            </StackPanel>
-        </controls:OptionControl>
+        <controls:CardColumns>
+            <controls:SettingsCard Header="Window">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_FakeExclusiveFullscreen}" Description="Borderless and sized to the monitor, for lower input latency">
+                    <ui:ToggleSwitch IsChecked="{Binding FakeExclusiveFullscreen, Mode=TwoWay}" />
+                </controls:OptionControl>
+            </controls:SettingsCard>
 
-        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_FakeExclusiveFullscreen}" Description="{x:Static resources:Strings.Menu_Rendering_StripsRobloxWindowSBorderResizes}">
-            <ui:ToggleSwitch IsChecked="{Binding FakeExclusiveFullscreen, Mode=TwoWay}" />
-        </controls:OptionControl>
+            <controls:SettingsCard Header="Sound">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_DuckRobloxAudioWhenUnfocused}" Description="Quieter while you are tabbed away">
+                    <ui:ToggleSwitch IsChecked="{Binding DuckRobloxAudioOnUnfocus, Mode=TwoWay}" />
+                </controls:OptionControl>
 
-        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_DuckRobloxAudioWhenUnfocused}" Description="{x:Static resources:Strings.Menu_Rendering_AutomaticallyLowersRobloxSVolumeWhile}">
-            <ui:ToggleSwitch IsChecked="{Binding DuckRobloxAudioOnUnfocus, Mode=TwoWay}" />
-        </controls:OptionControl>
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_HeadsetLoudness}" Description="Boosts quiet sounds like footsteps without loud blowouts">
+                    <ui:ToggleSwitch IsChecked="{Binding HeadsetAudioEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
+            </controls:SettingsCard>
 
-        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_HeadsetLoudness}" Description="{x:Static resources:Strings.Menu_Rendering_BoostsQuietSoundsFootstepsDistantCues}">
-            <ui:ToggleSwitch IsChecked="{Binding HeadsetAudioEnabled, Mode=TwoWay}" />
-        </controls:OptionControl>
+            <controls:SettingsCard controls:CardColumns.FullRow="True" Header="PhasmaStrap itself">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_CPUCoreLimit}" Description="How many logical processors the launcher may use. Not the game.">
+                    <StackPanel Orientation="Horizontal">
+                        <Slider Width="130" Minimum="0" Maximum="{Binding MaxCpuCores, Mode=OneTime}" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding CpuCoreLimit, Mode=TwoWay}" />
+                        <TextBlock VerticalAlignment="Center" Margin="8,0,0,0" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding CpuCoreLimitDisplay, Mode=OneWay}" />
+                    </StackPanel>
+                </controls:OptionControl>
+            </controls:SettingsCard>
+        </controls:CardColumns>
     </StackPanel>
 </ui:UiPage>

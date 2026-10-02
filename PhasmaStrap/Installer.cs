@@ -79,6 +79,7 @@ namespace PhasmaStrap
             }
 
             WindowsRegistry.RegisterPlayer();
+            WindowsRegistry.RegisterLinks();
 
             if (App.IsStudioInstalled)
                 WindowsRegistry.RegisterStudio();
@@ -306,6 +307,7 @@ namespace PhasmaStrap
                 cleanupSequence.Add(() => Directory.Delete(robloxFolder, true));
 
             cleanupSequence.Add(() => Registry.CurrentUser.DeleteSubKey(App.UninstallKey));
+            cleanupSequence.Add(WindowsRegistry.UnregisterLinks);
 
             foreach (var process in cleanupSequence)
             {

@@ -2394,7 +2394,7 @@ Defaulting to {1}.</value>
     <value>RiShade</value>
   </data>
   <data name="Menu.Settings.SearchPlaceholder" xml:space="preserve">
-    <value>Search settings</value>
+    <value>Search everything</value>
   </data>
   <data name="Menu.Settings.SaveAndLaunch" xml:space="preserve">
     <value>Save &amp; Launch</value>

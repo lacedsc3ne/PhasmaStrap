@@ -8,105 +8,65 @@
       xmlns:models="clr-namespace:PhasmaStrap.UI.ViewModels"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
+      xmlns:converters="clr-namespace:PhasmaStrap.UI.Converters"
       mc:Ignorable="d"
       d:DesignHeight="1080" d:DesignWidth="800"
       Title="IntegrationsPage"
       Scrollable="True">
     <ui:UiPage.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <converters:CustomIntegrationSummaryConverter x:Key="CustomIntegrationSummary" />
+
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="Margin" Value="0,10,0,4" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        </Style>
     </ui:UiPage.Resources>
+
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Text="{x:Static resources:Strings.Menu_Integrations_Title}" FontSize="20" FontWeight="Medium" />
-        <TextBlock Text="{x:Static resources:Strings.Menu_Integrations_Description}" FontSize="14" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+            <TextBlock Style="{DynamicResource PhasmaPageTitle}" VerticalAlignment="Center" Text="{x:Static resources:Strings.Menu_Integrations_Title}" />
+            <Border Style="{DynamicResource PhasmaTagNeutral}" Margin="12,0,0,0">
+                <TextBlock FontSize="11" Text="PhasmaStrap" />
+            </Border>
+        </StackPanel>
 
-        <TextBlock Margin="0,20,0,0" Text="{x:Static resources:Strings.Common_DiscordRichPresence}" FontSize="20" FontWeight="Medium" />
-
-        <Border Margin="0,8,0,8" Padding="12,10" CornerRadius="6" Background="{DynamicResource SystemFillColorNeutralBackgroundBrush}">
-            <StackPanel Orientation="Horizontal">
-                <ui:SymbolIcon Symbol="Info24" Filled="True" Foreground="{DynamicResource PaletteBlueBrush}" Margin="0,2,10,0" VerticalAlignment="Top" />
-                <controls:MarkdownTextBlock MarkdownText="{Binding Source={x:Static resources:Strings.Menu_Integrations_RequiresActivityTracking}, Converter={StaticResource StringFormatConverter}, ConverterParameter='https://bloxstraplabs.com/wiki/features/discord-rich-presence/'}" TextWrapping="Wrap" VerticalAlignment="Center" />
-            </StackPanel>
-        </Border>
-
-        <controls:OptionControl
-            Header="{x:Static resources:Strings.Menu_Integrations_ShowGameActivity_Title}"
-            Description="{Binding Source={x:Static resources:Strings.Menu_Integrations_ShowGameActivity_Description}, Converter={StaticResource StringFormatConverter}, ConverterParameter='https://bloxstraplabs.com/wiki/help/discord-rich-presence-not-working/'}"
-            IsEnabled="{Binding InnerContent.IsChecked, ElementName=ActivityTrackingOption, Mode=OneWay}"
-            x:Name="DiscordActivityOption">
-            <ui:ToggleSwitch IsChecked="{Binding DiscordActivityEnabled, Mode=TwoWay}" />
-        </controls:OptionControl>
-
-        <controls:OptionControl
-            Header="{x:Static resources:Strings.Menu_Integrations_ShowAccountOnProfile_Title}"
-            Description="{x:Static resources:Strings.Menu_Integrations_ShowAccountOnProfile_Description}"
-            IsEnabled="{Binding InnerContent.IsChecked, ElementName=DiscordActivityOption, Mode=OneWay}">
-            <ui:ToggleSwitch IsChecked="{Binding DiscordAccountOnProfile, Mode=TwoWay}" />
-        </controls:OptionControl>
-
-        <controls:OptionControl
-            Header="{x:Static resources:Strings.Menu_Integrations_AllowActivityJoining_Title}"
-            Description="{x:Static resources:Strings.Menu_Integrations_AllowActivityJoining_Description}"
-            IsEnabled="{Binding InnerContent.IsChecked, ElementName=DiscordActivityOption, Mode=OneWay}">
-            <ui:ToggleSwitch IsChecked="{Binding DiscordActivityJoinEnabled, Mode=TwoWay}" />
-        </controls:OptionControl>
-
-        <Border Margin="0,12,0,0" Padding="18,16" CornerRadius="8" BorderThickness="1"
-                BorderBrush="{DynamicResource AccentFillColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
-            <StackPanel>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
-                        <TextBlock FontSize="16" FontWeight="SemiBold" Text="Live preview" />
-                        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Integrations_PlayingRoblox}" />
-                    </StackPanel>
-                    <ui:Button Grid.Column="1" VerticalAlignment="Center" Icon="ArrowSync24" Content="{x:Static resources:Strings.Menu_Appearance_Preview}" Appearance="Secondary" Command="{Binding CyclePreviewCommand, Mode=OneTime}" />
-                </Grid>
-
-                <Border Margin="0,14,0,0" Padding="14" CornerRadius="8" Background="{DynamicResource ControlFillColorSecondaryBrush}"
-                        Visibility="{Binding HasPreviewData, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <StackPanel Orientation="Horizontal">
-                        <Border Width="72" Height="72" CornerRadius="10" Background="{DynamicResource ControlFillColorDefaultBrush}">
-                            <Image Source="{Binding PreviewIconUrl, IsAsync=True}" Width="72" Height="72" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
-                        </Border>
-                        <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="{x:Static resources:Strings.Menu_Integrations_Tabs_Roblox}" FontSize="15" FontWeight="SemiBold" />
-                            <TextBlock Margin="0,2,0,0" Text="{Binding PreviewGame, Mode=OneWay}" FontSize="13" TextWrapping="Wrap" />
-                            <TextBlock Text="{Binding PreviewStateText, Mode=OneWay}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
-                        </StackPanel>
-                    </StackPanel>
+        <controls:CardColumns>
+            <!--  Discord Rich Presence  -->
+            <controls:SettingsCard Header="{x:Static resources:Strings.Common_DiscordRichPresence}">
+                <Border Margin="0,0,0,10" Padding="10,8" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="{DynamicResource PhasmaHoverBrush}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Info24" FontSize="14" Margin="0,1,8,0" VerticalAlignment="Top" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <controls:MarkdownTextBlock Grid.Column="1" FontSize="11.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" VerticalAlignment="Center"
+                                                    MarkdownText="{Binding Source={x:Static resources:Strings.Menu_Integrations_RequiresActivityTracking}, Converter={StaticResource StringFormatConverter}, ConverterParameter='https://bloxstraplabs.com/wiki/features/discord-rich-presence/'}" />
+                    </Grid>
                 </Border>
 
-                <TextBlock Margin="0,12,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Integrations_NoGamesPlayedYetPlaySomething}">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding HasPreviewData}" Value="False">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-            </StackPanel>
-        </Border>
-
-        <ui:CardExpander Margin="0,12,0,0" Icon="Settings24">
-            <ui:CardExpander.Header>
-                <StackPanel>
-                    <TextBlock FontSize="14" Text="{x:Static resources:Strings.Menu_Integrations_RPCAdvanced}" />
-                    <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Integrations_JoinButtonTypeCustomTextPer}" />
-                </StackPanel>
-            </ui:CardExpander.Header>
-            <StackPanel>
                 <controls:OptionControl
-                    Header="{x:Static resources:Strings.Menu_Integrations_ShowAsPlayingPhasmaStrap}"
-                    Description="{x:Static resources:Strings.Menu_Integrations_NamesActivityPhasmaStrapShowsFromMoment}"
+                    x:Name="DiscordActivityOption"
+                    Header="{x:Static resources:Strings.Menu_Integrations_ShowGameActivity_Title}"
+                    Description="{Binding Source={x:Static resources:Strings.Menu_Integrations_ShowGameActivity_Description}, Converter={StaticResource StringFormatConverter}, ConverterParameter='https://bloxstraplabs.com/wiki/help/discord-rich-presence-not-working/'}"
+                    IsEnabled="{Binding InnerContent.IsChecked, ElementName=ActivityTrackingOption, Mode=OneWay}">
+                    <ui:ToggleSwitch IsChecked="{Binding DiscordActivityEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl
+                    Header="{x:Static resources:Strings.Menu_Integrations_ShowAccountOnProfile_Title}"
+                    Description="{x:Static resources:Strings.Menu_Integrations_ShowAccountOnProfile_Description}"
                     IsEnabled="{Binding InnerContent.IsChecked, ElementName=DiscordActivityOption, Mode=OneWay}">
-                    <ui:ToggleSwitch IsChecked="{Binding DiscordShowAsPhasmaStrap, Mode=TwoWay}" />
+                    <ui:ToggleSwitch IsChecked="{Binding DiscordAccountOnProfile, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl
+                    Header="{x:Static resources:Strings.Menu_Integrations_AllowActivityJoining_Title}"
+                    Description="{x:Static resources:Strings.Menu_Integrations_AllowActivityJoining_Description}"
+                    IsEnabled="{Binding InnerContent.IsChecked, ElementName=DiscordActivityOption, Mode=OneWay}">
+                    <ui:ToggleSwitch IsChecked="{Binding DiscordActivityJoinEnabled, Mode=TwoWay}" />
                 </controls:OptionControl>
 
                 <controls:OptionControl
@@ -119,7 +79,7 @@
                 <controls:OptionControl
                     Header="{x:Static resources:Strings.Menu_Integrations_RPCTemplates_Title}"
                     Description="{x:Static resources:Strings.Menu_Integrations_RPCTemplates_Description}">
-                    <ui:Button Content="{x:Static resources:Strings.Menu_Integrations_View}" Command="{Binding OpenCustomRPCCommand, Mode=OneTime}" />
+                    <Button Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Menu_Integrations_View}" Command="{Binding OpenCustomRPCCommand, Mode=OneTime}" />
                 </controls:OptionControl>
 
                 <controls:OptionControl
@@ -129,32 +89,115 @@
                 </controls:OptionControl>
 
                 <controls:OptionControl
+                    Header="{x:Static resources:Strings.Menu_Integrations_ShowAsPlayingPhasmaStrap}"
+                    Description="{x:Static resources:Strings.Menu_Integrations_NamesActivityPhasmaStrapShowsFromMoment}"
+                    IsEnabled="{Binding InnerContent.IsChecked, ElementName=DiscordActivityOption, Mode=OneWay}">
+                    <ui:ToggleSwitch IsChecked="{Binding DiscordShowAsPhasmaStrap, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl
                     Header="{x:Static resources:Strings.Menu_Integrations_TranslateGameSStatusText}"
                     Description="{x:Static resources:Strings.Menu_Integrations_GameNamesStatusLinesOtherLanguages}"
                     IsEnabled="{Binding InnerContent.IsChecked, ElementName=DiscordActivityOption, Mode=OneWay}">
                     <ui:ToggleSwitch IsChecked="{Binding RpcAutoTranslate, Mode=TwoWay}" />
                 </controls:OptionControl>
+            </controls:SettingsCard>
 
-                <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" Text="{x:Static resources:Strings.Menu_Integrations_CardAboveAlwaysShowsSampleSettings}" />
-            </StackPanel>
-        </ui:CardExpander>
+            <!--  Live preview: a sample of what Discord shows, from your recent games  -->
+            <controls:SettingsCard Header="Live preview">
+                <StackPanel Margin="0,0,0,12">
+                    <Border Padding="14" CornerRadius="{DynamicResource PhasmaCornerRadius}" Background="{DynamicResource PhasmaHoverBrush}"
+                            Visibility="{Binding HasPreviewData, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Width="64" Height="64" Style="{DynamicResource PhasmaThumb}">
+                                <Image Source="{Binding PreviewIconUrl, IsAsync=True}" Width="64" Height="64" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
+                                <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Integrations_PlayingRoblox}" />
+                                <TextBlock Margin="0,1,0,0" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding PreviewGame, Mode=OneWay}" />
+                                <TextBlock Margin="0,1,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding PreviewStateText, Mode=OneWay}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
 
-        <TextBlock Margin="0,24,0,0" Text="Other integrations" FontSize="20" FontWeight="Medium" />
-        <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Everything else PhasmaStrap can run alongside Roblox." />
+                    <TextBlock Margin="0,4,0,4" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Integrations_NoGamesPlayedYetPlaySomething}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasPreviewData}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
 
-        <ui:CardExpander Margin="0,8,0,0" Icon="Play24" IsExpanded="True">
-            <ui:CardExpander.Header>
-                <StackPanel>
-                    <TextBlock FontSize="14" Text="{x:Static resources:Strings.Menu_Integrations_ActivityTracking}" />
-                    <TextBlock FontSize="12" Text="{x:Static resources:Strings.Menu_Integrations_ControlsWhatPhasmaStrapCanDetectShare}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    <Grid Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <!--  Stands in for the Join button friends see. It follows the joining settings and explains itself on hover;
+                              it is a preview, so pressing it does nothing.  -->
+                        <Border Grid.Column="0" Padding="10,6" Margin="0,0,10,0" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}"
+                                BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1" Cursor="Help"
+                                ToolTip="{Binding JoinPreviewTooltip, Mode=OneWay}" ToolTipService.ShowDuration="60000"
+                                AutomationProperties.Name="{Binding JoinPreviewTooltip, Mode=OneWay}">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="{DynamicResource PhasmaSelectedBrush}" />
+                                    <Setter Property="Opacity" Value="1" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding JoinPreviewActive, Mode=OneWay}" Value="False">
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="Opacity" Value="0.45" />
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="BorderBrush" Value="{DynamicResource PhasmaStrokeStrongBrush}" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                                <TextBlock FontSize="12" FontWeight="SemiBold" Text="{Binding JoinPreviewText, Mode=OneWay}" />
+                                <TextBlock Margin="6,0,0,0" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="off">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding JoinPreviewActive, Mode=OneWay}" Value="False">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+                        <Button Grid.Column="1" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Command="{Binding CyclePreviewCommand, Mode=OneTime}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Eye24" FontSize="14" Margin="0,0,6,0" />
+                                <TextBlock Text="{x:Static resources:Strings.Menu_Appearance_Preview}" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <TextBlock Margin="0,10,0,0" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Integrations_CardAboveAlwaysShowsSampleSettings}" />
                 </StackPanel>
-            </ui:CardExpander.Header>
-            <StackPanel>
+            </controls:SettingsCard>
+
+            <!--  Activity tracking  -->
+            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Integrations_ActivityTracking}" Description="What PhasmaStrap can detect about your session">
                 <controls:OptionControl
+                    x:Name="ActivityTrackingOption"
                     Header="{x:Static resources:Strings.Menu_Integrations_EnableActivityTracking_Title}"
                     Description="{x:Static resources:Strings.Menu_Integrations_EnableActivityTracking_Description}"
-                    HelpLink="https://bloxstraplabs.com/wiki/features/activity-tracking/"
-                    x:Name="ActivityTrackingOption">
+                    HelpLink="https://bloxstraplabs.com/wiki/features/activity-tracking/">
                     <ui:ToggleSwitch IsChecked="{Binding ActivityTrackingEnabled, Mode=TwoWay}" />
                 </controls:OptionControl>
 
@@ -180,95 +223,122 @@
                     IsEnabled="{Binding InnerContent.IsChecked, ElementName=ActivityTrackingOption, Mode=OneWay}">
                     <ui:ToggleSwitch IsChecked="{Binding DisableAppPatchEnabled, Mode=TwoWay}" />
                 </controls:OptionControl>
-            </StackPanel>
-        </ui:CardExpander>
+            </controls:SettingsCard>
 
-        <ui:CardExpander Margin="0,8,0,0" Icon="Apps24">
-            <ui:CardExpander.Header>
-                <StackPanel>
-                    <TextBlock FontSize="14" Text="Custom programs" />
-                    <TextBlock FontSize="12" Text="{x:Static resources:Strings.Menu_Integrations_Custom_Description}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+            <!--  Custom programs that launch with Roblox  -->
+            <controls:SettingsCard Header="Custom programs" Description="Other programs that launch with Roblox">
+                <StackPanel Margin="0,0,0,12">
+                    <Border Style="{DynamicResource PhasmaDivider}" Margin="0,0,0,6" />
+
+                    <ListBox x:Name="CustomIntegrationsListBox" MaxHeight="240" Background="Transparent" BorderThickness="0" Padding="0"
+                             ItemContainerStyle="{DynamicResource PhasmaListItem}"
+                             ItemsSource="{Binding CustomIntegrations, Mode=OneWay}"
+                             SelectionChanged="CustomIntegrationSelection"
+                             SelectedIndex="{Binding SelectedCustomIntegrationIndex, Mode=TwoWay}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,10,0" VerticalAlignment="Center" ToolTip="{Binding Location}">
+                                        <TextBlock FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding Name}" />
+                                        <!--  What the program does with Roblox, from its own settings  -->
+                                        <TextBlock Margin="0,1,0,0" FontSize="11.5" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{StaticResource CustomIntegrationSummary}" Mode="OneWay">
+                                                    <Binding Path="AutoClose" />
+                                                    <Binding Path="AutoCloseOnGame" />
+                                                    <Binding Path="SpecifyGame" />
+                                                    <Binding Path="GameID" />
+                                                    <Binding Path="RunMinimized" />
+                                                    <Binding Path="RunAsAdmin" />
+                                                    <Binding Path="Delay" />
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <Button Grid.Column="1" VerticalAlignment="Center" Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Common_Edit}" Click="EditIntegration_Click" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Style="{DynamicResource PhasmaSoftButton}" Command="{Binding AddIntegrationCommand, Mode=OneTime}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Add24" FontSize="14" Margin="0,0,6,0" />
+                                <TextBlock Text="{x:Static resources:Strings.Common_New}" />
+                            </StackPanel>
+                        </Button>
+                        <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaGhostButton}" Foreground="{DynamicResource PhasmaBadBrush}" FontWeight="SemiBold"
+                                IsEnabled="{Binding IsCustomIntegrationSelected, Mode=OneWay}" Command="{Binding DeleteIntegrationCommand, Mode=OneTime}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Delete24" FontSize="14" Margin="0,0,6,0" />
+                                <TextBlock Text="{x:Static resources:Strings.Common_Delete}" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <TextBlock Margin="0,12,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Integrations_Custom_NoneSelected}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsCustomIntegrationSelected}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <!--  Editor for the selected program  -->
+                    <StackPanel Margin="0,6,0,0">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsCustomIntegrationSelected}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <Border Style="{DynamicResource PhasmaDivider}" Margin="0,4,0,0" />
+
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Common_Name}" />
+                        <ui:TextBox Text="{Binding SelectedCustomIntegration.Name, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Menu_Integrations_Custom_AppLocation}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBox Grid.Column="0" PlaceholderText="{x:Static resources:Strings.Menu_Integrations_CWindowsSystem32CmdExe}" Text="{Binding SelectedCustomIntegration.Location}" />
+                            <Button Grid.Column="1" Margin="8,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding BrowseIntegrationLocationCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Folder24" FontSize="14" Margin="0,0,6,0" />
+                                    <TextBlock Text="{x:Static resources:Strings.Common_Browse}" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Menu_Integrations_Custom_LaunchArgs}" />
+                        <ui:TextBox PlaceholderText="{Binding Source='/k echo {0}', Converter={StaticResource StringFormatConverter}, ConverterParameter={x:Static resources:Strings.Menu_Integrations_Custom_LaunchArgs_Placeholder}}" Text="{Binding SelectedCustomIntegration.LaunchArgs}" TextWrapping="Wrap" AcceptsReturn="True" AcceptsTab="True" />
+
+                        <CheckBox Margin="0,10,0,0" Content="{x:Static resources:Strings.Menu_Integrations_Custom_AutoClose}" IsChecked="{Binding SelectedCustomIntegration.AutoClose}" />
+                        <CheckBox Margin="0,6,0,0" Content="{x:Static resources:Strings.Menu_Integrations_OnlySpecificGame}" IsChecked="{Binding SelectedCustomIntegration.SpecifyGame}" />
+                        <ui:TextBox Margin="0,4,0,0" PlaceholderText="{x:Static resources:Strings.Menu_ServerBrowser_PlaceId_Title}" Text="{Binding SelectedCustomIntegration.GameID}" IsEnabled="{Binding SelectedCustomIntegration.SpecifyGame}" />
+                        <CheckBox Margin="0,6,0,0" Content="{x:Static resources:Strings.Menu_Integrations_CloseWhenLeavingGame}" IsChecked="{Binding SelectedCustomIntegration.AutoCloseOnGame}" />
+                        <CheckBox Margin="0,6,0,0" Content="{x:Static resources:Strings.Menu_Integrations_RunAsAdministrator}" IsChecked="{Binding SelectedCustomIntegration.RunAsAdmin}" />
+                        <CheckBox Margin="0,6,0,0" Content="{x:Static resources:Strings.Menu_Integrations_RunMinimized}" IsChecked="{Binding SelectedCustomIntegration.RunMinimized}" />
+
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Menu_Integrations_LaunchDelayMs}" />
+                        <ui:NumberBox IntegersOnly="True" HorizontalAlignment="Left" Width="140" Min="0" Max="30000" Value="{Binding SelectedCustomIntegration.Delay}" />
+                    </StackPanel>
                 </StackPanel>
-            </ui:CardExpander.Header>
-            <Grid Margin="0,4,0,0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="250" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <ListBox x:Name="CustomIntegrationsListBox" Grid.Row="0" Grid.Column="0" Height="265" Margin="0,0,4,0" ItemsSource="{Binding CustomIntegrations, Mode=OneWay}" DisplayMemberPath="Name" SelectionChanged="CustomIntegrationSelection" SelectedIndex="{Binding SelectedCustomIntegrationIndex, Mode=TwoWay}" />
-                <Grid Grid.Row="1" Grid.Column="0" Margin="0,8,4,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <ui:Button Grid.Column="0" Margin="0,0,4,0" Icon="Add28" Content="{x:Static resources:Strings.Common_New}" HorizontalAlignment="Stretch" Command="{Binding AddIntegrationCommand, Mode=OneTime}" />
-                    <ui:Button Grid.Column="1" Margin="4,0,0,0" Icon="Delete28" Content="{x:Static resources:Strings.Common_Delete}" HorizontalAlignment="Stretch" Appearance="Danger" IsEnabled="{Binding IsCustomIntegrationSelected, Mode=OneWay}" Command="{Binding DeleteIntegrationCommand, Mode=OneTime}" />
-                </Grid>
-                <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Margin="4,0,0,0">
-                    <StackPanel.Style>
-                        <Style>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsCustomIntegrationSelected}" Value="False">
-                                    <Setter Property="StackPanel.Visibility" Value="Collapsed"></Setter>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </StackPanel.Style>
-                    <TextBlock Text="{x:Static resources:Strings.Common_Name}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <ui:TextBox Margin="0,4,0,0" Text="{Binding SelectedCustomIntegration.Name, UpdateSourceTrigger=PropertyChanged}" />
-                    <TextBlock Margin="0,8,0,0" Text="{x:Static resources:Strings.Menu_Integrations_Custom_AppLocation}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <Grid Margin="0,4,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <ui:TextBox Grid.Column="0" Margin="0,0,0,0" PlaceholderText="{x:Static resources:Strings.Menu_Integrations_CWindowsSystem32CmdExe}" Text="{Binding SelectedCustomIntegration.Location}" />
-                        <ui:Button Grid.Column="1" Margin="8,0,0,0" Icon="Folder24" Content="{x:Static resources:Strings.Common_Browse}" Command="{Binding BrowseIntegrationLocationCommand}" />
-                    </Grid>
-                    <TextBlock Margin="0,8,0,0" Text="{x:Static resources:Strings.Menu_Integrations_Custom_LaunchArgs}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <ui:TextBox Margin="0,4,0,0" PlaceholderText="{Binding Source='/k echo {0}', Converter={StaticResource StringFormatConverter}, ConverterParameter={x:Static resources:Strings.Menu_Integrations_Custom_LaunchArgs_Placeholder}}" Text="{Binding SelectedCustomIntegration.LaunchArgs}" TextWrapping="Wrap" AcceptsReturn="True" AcceptsTab="True" />
-                    <CheckBox Margin="0,8,0,0" Content="{x:Static resources:Strings.Menu_Integrations_Custom_AutoClose}" IsChecked="{Binding SelectedCustomIntegration.AutoClose}" />
-
-                    <CheckBox Margin="0,8,0,0" Content="{x:Static resources:Strings.Menu_Integrations_OnlySpecificGame}" IsChecked="{Binding SelectedCustomIntegration.SpecifyGame}" />
-                    <ui:TextBox Margin="0,4,0,0" PlaceholderText="{x:Static resources:Strings.Menu_ServerBrowser_PlaceId_Title}" Text="{Binding SelectedCustomIntegration.GameID}" IsEnabled="{Binding SelectedCustomIntegration.SpecifyGame}" />
-
-                    <CheckBox Margin="0,8,0,0" Content="{x:Static resources:Strings.Menu_Integrations_CloseWhenLeavingGame}" IsChecked="{Binding SelectedCustomIntegration.AutoCloseOnGame}" />
-                    <CheckBox Margin="0,8,0,0" Content="{x:Static resources:Strings.Menu_Integrations_RunAsAdministrator}" IsChecked="{Binding SelectedCustomIntegration.RunAsAdmin}" />
-                    <CheckBox Margin="0,8,0,0" Content="{x:Static resources:Strings.Menu_Integrations_RunMinimized}" IsChecked="{Binding SelectedCustomIntegration.RunMinimized}" />
-
-                    <TextBlock Margin="0,8,0,0" Text="{x:Static resources:Strings.Menu_Integrations_LaunchDelayMs}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <ui:NumberBox IntegersOnly="True" Margin="0,4,0,0" Min="0" Max="30000" Value="{Binding SelectedCustomIntegration.Delay}" />
-                </StackPanel>
-                <TextBlock Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Text="{x:Static resources:Strings.Menu_Integrations_Custom_NoneSelected}" TextWrapping="Wrap" VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <TextBlock.Style>
-                        <Style>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsCustomIntegrationSelected}" Value="True">
-                                    <Setter Property="TextBlock.Visibility" Value="Collapsed"></Setter>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-            </Grid>
-        </ui:CardExpander>
-
-        <ui:CardExpander Margin="0,8,0,0" Icon="Chat24">
-            <ui:CardExpander.Header>
-                <StackPanel>
-                    <TextBlock FontSize="14" Text="{x:Static resources:Strings.Menu_GameChat_Title}" />
-                    <TextBlock FontSize="12" Text="{x:Static resources:Strings.Menu_GameChat_Description}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                </StackPanel>
-            </ui:CardExpander.Header>
-            <Frame Margin="0,4,0,0"
-                   Source="GameChatPage.xaml"
-                   NavigationUIVisibility="Hidden"
-                   JournalOwnership="OwnsJournal"
-                   Background="Transparent" />
-        </ui:CardExpander>
+            </controls:SettingsCard>
+        </controls:CardColumns>
     </StackPanel>
 </ui:UiPage>

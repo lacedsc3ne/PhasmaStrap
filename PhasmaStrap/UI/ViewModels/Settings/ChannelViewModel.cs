@@ -168,6 +168,11 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             public string Label { get; init; } = "";
             public int Count { get; init; }
             public double BarHeight { get; init; } = 6;
+
+            /// <summary>How strongly the day's tile is coloured: 0 for no updates, up to 1 for the busiest day.</summary>
+            public double TileOpacity { get; init; }
+
+            public string Tip => Count == 1 ? $"{Label}: 1 update" : $"{Label}: {Count} updates";
         }
 
         private static readonly (DayOfWeek Day, string Label)[] WeekOrder =
@@ -243,7 +248,8 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 {
                     int count = result.DayCounts.TryGetValue(day, out int c) ? c : 0;
                     double height = max > 0 ? 6 + (count / (double)max) * 74 : 6;
-                    HeatmapDays.Add(new DayBarItem { Label = label, Count = count, BarHeight = height });
+                    double tile = count == 0 || max == 0 ? 0 : 0.18 + 0.82 * (count / (double)max);
+                    HeatmapDays.Add(new DayBarItem { Label = label, Count = count, BarHeight = height, TileOpacity = tile });
                 }
 
                 DayOfWeek topDay = result.DayCounts.OrderByDescending(kv => kv.Value).First().Key;

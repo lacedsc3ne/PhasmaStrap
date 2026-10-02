@@ -14,64 +14,169 @@
       Title="BehaviourPage"
       Scrollable="True">
 
+    <ui:UiPage.Resources>
+        <!--  One line of the "press Play" summary: icon plus text  -->
+        <Style x:Key="DeploySummaryIcon" TargetType="ui:SymbolIcon" BasedOn="{StaticResource {x:Type ui:SymbolIcon}}">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Margin" Value="0,1,10,0" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Foreground" Value="{DynamicResource PhasmaAccentBrush}" />
+        </Style>
+        <Style x:Key="DeploySummaryText" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        </Style>
+    </ui:UiPage.Resources>
+
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Text="{x:Static resources:Strings.Menu_Behaviour_Title}" FontSize="20" FontWeight="Medium" />
-        <TextBlock Margin="0,4,0,0" Text="{x:Static resources:Strings.Menu_Behaviour_Description}" FontSize="14" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="{x:Static resources:Strings.Menu_Behaviour_Title}" />
+            <Border Margin="10,2,0,0" Style="{DynamicResource PhasmaTagNeutral}">
+                <TextBlock Text="Launching" />
+            </Border>
+        </StackPanel>
+        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="What PhasmaStrap does every time you press Play." />
 
-        <ui:Card Margin="0,14,0,0" Padding="16">
-            <StackPanel>
-                <TextBlock FontSize="14" FontWeight="Medium" Text="What happens when you press Play" />
-                <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding LaunchSummaryConfirm, Mode=OneWay}" />
-                <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding LaunchSummaryUpdates, Mode=OneWay}" />
-                <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding LaunchSummaryMatchmaker, Mode=OneWay}" />
-                <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding LaunchSummaryProcess, Mode=OneWay}" />
-                <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding LaunchSummaryRejoin, Mode=OneWay}" />
-            </StackPanel>
-        </ui:Card>
+        <!--  Roblox status: installed build, channel, newer build check  -->
+        <Border Margin="0,0,0,12" Padding="16,14,16,14" Style="{DynamicResource PhasmaCard}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-        <ui:CardExpander Margin="0,14,0,0" Icon="Play24" IsExpanded="True">
-            <ui:CardExpander.Header>
-                <StackPanel>
-                    <TextBlock FontSize="14" Text="{x:Static resources:Strings.Menu_Behaviour_Section_Launching_Header}" />
-                    <TextBlock FontSize="12" Text="{Binding LaunchingGroupSummary, Mode=OneWay}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                <Border Grid.Column="0" Width="44" Height="44" Margin="0,0,14,0" VerticalAlignment="Center" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="{DynamicResource PhasmaAccentSoftBrush}">
+                    <ui:SymbolIcon HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20" Symbol="Play24">
+                        <ui:SymbolIcon.Style>
+                            <Style TargetType="ui:SymbolIcon" BasedOn="{StaticResource {x:Type ui:SymbolIcon}}">
+                                <Setter Property="Foreground" Value="{DynamicResource PhasmaAccentBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding RobloxStatusTone}" Value="good">
+                                        <Setter Property="Foreground" Value="{DynamicResource PhasmaGoodBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding RobloxStatusTone}" Value="warn">
+                                        <Setter Property="Foreground" Value="{DynamicResource PhasmaWarnBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ui:SymbolIcon.Style>
+                    </ui:SymbolIcon>
+                </Border>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock FontSize="14" FontWeight="SemiBold" Text="{Binding RobloxStatusTitle, Mode=OneWay}" />
+                    <TextBlock Margin="0,2,0,0" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" TextWrapping="Wrap" Text="{Binding RobloxStatusDetail, Mode=OneWay}" />
                 </StackPanel>
-            </ui:CardExpander.Header>
-            <StackPanel>
-                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Behaviour_Section_Launching_Description}" />
 
+                <WrapPanel Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <Button Margin="0,0,8,0" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding OpenChannelCommand}" ToolTip="Change it on Channel and downloads">
+                        <TextBlock Text="{Binding ChannelButtonText, Mode=OneWay}" />
+                    </Button>
+                    <Button Margin="0,0,8,0" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding CheckRobloxCommand}" IsEnabled="{Binding CanCheckRoblox, Mode=OneWay}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14" Margin="0,0,6,0" />
+                            <TextBlock Text="Check now" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{DynamicResource PhasmaGhostButton}" Command="{Binding OpenVersionsCommand}">
+                        <TextBlock Text="Older versions" />
+                    </Button>
+                </WrapPanel>
+            </Grid>
+        </Border>
+
+        <!--  Summary of what a launch will do right now  -->
+        <Border Margin="0,0,0,12" Padding="16,14,16,14" Style="{DynamicResource PhasmaCard}">
+            <StackPanel>
+                <TextBlock FontSize="13" FontWeight="SemiBold" Text="What happens when you press Play" />
+                <Grid Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ui:SymbolIcon Style="{StaticResource DeploySummaryIcon}" Symbol="Checkmark24" />
+                    <TextBlock Grid.Column="1" Style="{StaticResource DeploySummaryText}" Text="{Binding LaunchSummaryConfirm, Mode=OneWay}" />
+                </Grid>
+                <Grid Margin="0,7,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ui:SymbolIcon Style="{StaticResource DeploySummaryIcon}" Symbol="ArrowDownload24" />
+                    <TextBlock Grid.Column="1" Style="{StaticResource DeploySummaryText}" Text="{Binding LaunchSummaryUpdates, Mode=OneWay}" />
+                </Grid>
+                <Grid Margin="0,7,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ui:SymbolIcon Style="{StaticResource DeploySummaryIcon}" Symbol="Globe24" />
+                    <TextBlock Grid.Column="1" Style="{StaticResource DeploySummaryText}" Text="{Binding LaunchSummaryMatchmaker, Mode=OneWay}" />
+                </Grid>
+                <Grid Margin="0,7,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ui:SymbolIcon Style="{StaticResource DeploySummaryIcon}" Symbol="Gauge24" />
+                    <TextBlock Grid.Column="1" Style="{StaticResource DeploySummaryText}" Text="{Binding LaunchSummaryProcess, Mode=OneWay}" />
+                </Grid>
+                <Grid Margin="0,7,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ui:SymbolIcon Style="{StaticResource DeploySummaryIcon}" Symbol="ArrowClockwise24" />
+                    <TextBlock Grid.Column="1" Style="{StaticResource DeploySummaryText}" Text="{Binding LaunchSummaryRejoin, Mode=OneWay}" />
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <controls:CardColumns>
+            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Behaviour_Section_Launching_Header}"
+                                   Description="{Binding LaunchingGroupSummary, Mode=OneWay}">
                 <controls:OptionControl
                     Header="{x:Static resources:Strings.Menu_Behaviour_ConfirmLaunches_Title}"
-                    Description="{x:Static resources:Strings.Menu_Behaviour_ConfirmLaunches_Description}">
+                    Description="Stops a stray click closing the game you are in">
                     <ui:ToggleSwitch IsChecked="{Binding ConfirmLaunches, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="Close PhasmaStrap" Description="{Binding SettingsWindowOnLaunchDescription, Mode=OneWay}">
+                    <ComboBox Padding="10,5,10,5" MinWidth="150" ItemsSource="{Binding SettingsWindowOnLaunchOptions, Mode=OneTime}" SelectedItem="{Binding SettingsWindowOnLaunch, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="Allow more than one Roblox" Description="Run alts side by side">
+                    <ui:ToggleSwitch IsChecked="{Binding AllowMultipleRoblox, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="Ask which account" Description="Shows the account picker first. Needs two saved accounts.">
+                    <ui:ToggleSwitch IsChecked="{Binding AskAccountOnLaunch, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="Confirm before joining" Description="When a link opens from the website">
+                    <ui:ToggleSwitch IsChecked="{Binding ConfirmWebsiteJoins, Mode=TwoWay}" />
                 </controls:OptionControl>
 
                 <controls:OptionControl
                     Header="{x:Static resources:Strings.Menu_Behaviour_DisableRobloxCrashHandler_Title}"
-                    Description="{x:Static resources:Strings.Menu_Behaviour_DisableRobloxCrashHandler_Description}">
+                    Description="Closes it shortly after launch. Roblox does not need it.">
                     <ui:ToggleSwitch IsChecked="{Binding DisableRobloxCrashHandler, Mode=TwoWay}" />
                 </controls:OptionControl>
-            </StackPanel>
-        </ui:CardExpander>
+            </controls:SettingsCard>
 
-        <ui:CardExpander Margin="0,8,0,0" Icon="ArrowDownload24">
-            <ui:CardExpander.Header>
-                <StackPanel>
-                    <TextBlock FontSize="14" Text="Roblox updates and versions" />
-                    <TextBlock FontSize="12" Text="{Binding UpdatesGroupSummary, Mode=OneWay}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                </StackPanel>
-            </ui:CardExpander.Header>
-            <StackPanel>
-                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Behaviour_Section_Updates_Description}" />
-
+            <controls:SettingsCard Header="Roblox updates"
+                                   Description="{Binding UpdatesGroupSummary, Mode=OneWay}">
                 <controls:OptionControl
                     Header="{x:Static resources:Strings.Menu_Behaviour_BackgroundUpdates_Title}"
-                    Description="{x:Static resources:Strings.Menu_Behaviour_BackgroundUpdates_Description}">
+                    Description="Update in the background instead of blocking launch. Needs 5 GB free.">
                     <ui:ToggleSwitch IsChecked="{Binding BackgroundUpdates, Mode=TwoWay}" />
                 </controls:OptionControl>
 
                 <controls:OptionControl
                     Header="{x:Static resources:Strings.Menu_Behaviour_ForceRobloxReinstall_Title}"
-                    Description="{x:Static resources:Strings.Menu_Behaviour_ForceRobloxReinstall_Description}">
+                    Description="Installed fresh on next launch">
                     <controls:OptionControl.Style>
                         <Style TargetType="controls:OptionControl">
                             <Style.Triggers>
@@ -83,37 +188,12 @@
                     </controls:OptionControl.Style>
                     <ui:ToggleSwitch IsChecked="{Binding ForceRobloxReinstallation, Mode=TwoWay}" />
                 </controls:OptionControl>
+            </controls:SettingsCard>
 
-                <Frame Margin="0,14,0,0"
-                       Source="../../Installer/Pages/ManagerPage.xaml"
-                       NavigationUIVisibility="Hidden"
-                       JournalOwnership="OwnsJournal"
-                       Background="Transparent" />
-                <Frame Margin="0,18,0,0"
-                       Source="RobloxVersionsPage.xaml"
-                       NavigationUIVisibility="Hidden"
-                       JournalOwnership="OwnsJournal"
-                       Background="Transparent" />
-                <Frame Margin="0,18,0,0"
-                       Source="ChannelPage.xaml"
-                       NavigationUIVisibility="Hidden"
-                       JournalOwnership="OwnsJournal"
-                       Background="Transparent" />
-            </StackPanel>
-        </ui:CardExpander>
-
-        <ui:CardExpander Margin="0,8,0,0" Icon="Broom24">
-            <ui:CardExpander.Header>
-                <StackPanel>
-                    <TextBlock FontSize="14" Text="{x:Static resources:Strings.Menu_Behaviour_Cleanup}" />
-                    <TextBlock FontSize="12" Text="{Binding CleanupGroupSummary, Mode=OneWay}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                </StackPanel>
-            </ui:CardExpander.Header>
-            <StackPanel>
-                <TextBlock Text="{x:Static resources:Strings.Menu_Behaviour_AutomaticallyDeletesOldFilesAfterRoblox}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-
+            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Behaviour_Cleanup}"
+                                   Description="{Binding CleanupGroupSummary, Mode=OneWay}">
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Behaviour_Schedule}">
-                    <ComboBox Width="160" ItemsSource="{Binding CleanerScheduleOptions, Mode=OneTime}" SelectedItem="{Binding CleanerSchedule, Mode=TwoWay}" />
+                    <ComboBox Padding="10,5,10,5" MinWidth="140" ItemsSource="{Binding CleanerScheduleOptions, Mode=OneTime}" SelectedItem="{Binding CleanerSchedule, Mode=TwoWay}" />
                 </controls:OptionControl>
 
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Behaviour_PhasmaStrapLogs}">
@@ -131,66 +211,102 @@
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Behaviour_RobloxCache}">
                     <ui:ToggleSwitch IsChecked="{Binding CleanerRobloxCacheEnabled, Mode=TwoWay}" />
                 </controls:OptionControl>
-            </StackPanel>
-        </ui:CardExpander>
+            </controls:SettingsCard>
 
-        <ui:CardExpander Margin="0,8,0,0" Icon="Gauge24">
-            <ui:CardExpander.Header>
-                <StackPanel>
-                    <TextBlock FontSize="14" Text="{x:Static resources:Strings.Menu_Behaviour_EngineProcess}" />
-                    <TextBlock FontSize="12" Text="{Binding ProcessGroupSummary, Mode=OneWay}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                </StackPanel>
-            </ui:CardExpander.Header>
-            <StackPanel>
-                <TextBlock Text="{x:Static resources:Strings.Menu_Performance_RuntimeOptimizer_Description}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+            <controls:SettingsCard Header="Engine and process"
+                                   Description="{Binding ProcessGroupSummary, Mode=OneWay}">
+                <controls:OptionControl Header="Process preset" Description="Priority, cores and memory together. Not the FastFlag engine presets.">
+                    <ComboBox Padding="10,5,10,5" MinWidth="140" ItemsSource="{Binding EnginePresetNames, Mode=OneTime}" Text="{Binding SelectedEnginePreset, Mode=TwoWay}" />
+                </controls:OptionControl>
 
-                <controls:OptionControl Header="Process preset" Description="How Windows runs the Roblox process: priority, cores and memory. Nothing to do with the engine presets on the FastFlag page, which change graphics flags.">
-                    <ComboBox Padding="10,5,10,5" MinWidth="160" ItemsSource="{Binding EnginePresetNames, Mode=OneTime}" Text="{Binding SelectedEnginePreset, Mode=TwoWay}" />
+                <controls:OptionControl Header="Fullscreen on launch" Description="Uses your resolution override">
+                    <ui:ToggleSwitch IsChecked="{Binding FullscreenOnLaunch, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="Remove the 60 Hz cap on menus" Description="{Binding FrameRateCapDescription, Mode=OneWay}"
+                                        ToolTip="Sets the frame rate limit (Performance) to your display's refresh rate, up to 240">
+                    <ui:ToggleSwitch IsChecked="{Binding RemoveFrameRateCap, Mode=TwoWay}" />
                 </controls:OptionControl>
 
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_OptimizeRoblox_Title}" Description="{x:Static resources:Strings.Menu_Performance_OptimizeRoblox_Description}">
                     <ui:ToggleSwitch IsChecked="{Binding OptimizeRoblox, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_RobloxEfficiencyMode_Title}" Description="{x:Static resources:Strings.Menu_Performance_RobloxEfficiencyMode_Description}">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_RobloxEfficiencyMode_Title}" Description="Idle priority while tabbed away">
                     <ui:ToggleSwitch IsChecked="{Binding RobloxEfficiencyMode, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_ReduceMemoryOutOfFocus_Title}" Description="{x:Static resources:Strings.Menu_Performance_ReduceMemoryOutOfFocus_Description}">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_ReduceMemoryOutOfFocus_Title}" Description="Trims Roblox's memory while tabbed away">
                     <ui:ToggleSwitch IsChecked="{Binding ReduceMemoryOutOfFocus, Mode=TwoWay}" />
-                </controls:OptionControl>
-
-                <TextBlock Margin="0,14,0,0" FontSize="14" FontWeight="Medium" Text="{x:Static resources:Strings.Menu_Behaviour_PriorityMemory}" />
-                <TextBlock FontSize="12" Text="{x:Static resources:Strings.Menu_Behaviour_HowCPUPriorityMemoryUsageAre}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_CpuPriority_Title}" Description="{x:Static resources:Strings.Menu_Performance_CpuPriority_Description}">
-                    <ComboBox Padding="10,5,10,5" MinWidth="140" ItemsSource="{Binding CpuPriorityOptions, Mode=OneTime}" SelectedItem="{Binding SelectedCpuPriority, Mode=TwoWay}" />
                 </controls:OptionControl>
 
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_RobloxPriorityLimit_Title}" Description="{x:Static resources:Strings.Menu_Performance_RobloxPriorityLimit_Description}">
                     <ComboBox Padding="10,5,10,5" MinWidth="140" ItemsSource="{Binding RobloxPriorityLimitOptions, Mode=OneTime}" SelectedItem="{Binding RobloxPriorityLimit, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_LauncherMemoryManager_Title}" Description="{x:Static resources:Strings.Menu_Performance_LauncherMemoryManager_Description}">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_CpuPriority_Title}" Description="Automatic uses every processor">
+                    <ComboBox Padding="10,5,10,5" MinWidth="140" ItemsSource="{Binding CpuPriorityOptions, Mode=OneTime}" SelectedItem="{Binding SelectedCpuPriority, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_LauncherMemoryManager_Title}" Description="Only PhasmaStrap itself, not Roblox">
                     <ui:ToggleSwitch IsChecked="{Binding LauncherMemoryManagerEnabled, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_SoftwareRendering_Title}" Description="{x:Static resources:Strings.Menu_Performance_SoftwareRendering_Description}">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_SoftwareRendering_Title}" Description="For PhasmaStrap's own windows. Try it if your graphics driver causes glitches.">
                     <ui:ToggleSwitch IsChecked="{Binding SoftwareRenderingEnabled, Mode=TwoWay}" />
                 </controls:OptionControl>
-            </StackPanel>
-        </ui:CardExpander>
+            </controls:SettingsCard>
 
-        <ui:CardExpander Margin="0,8,0,0" Icon="Globe24">
-            <ui:CardExpander.Header>
-                <StackPanel>
-                    <TextBlock FontSize="14" Text="{x:Static resources:Strings.Menu_Behaviour_Tab_Matchmaker}" />
-                    <TextBlock FontSize="12" Text="{Binding MatchmakerGroupSummary, Mode=OneWay}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                </StackPanel>
-            </ui:CardExpander.Header>
-            <StackPanel DataContext="{Binding Matchmaker}">
-                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_ServerBrowser_Matchmaker_Description}" />
+            <!--  Mods summary: what is swapped in at every launch; the Mods page changes them  -->
+            <controls:SettingsCard controls:CardColumns.FullRow="True" Header="Mods" Description="Swapped in every time Roblox starts">
+                <controls:SettingsCard.HeaderContent>
+                    <Button Style="{DynamicResource PhasmaGhostButton}" Command="{Binding OpenModsFolderCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Folder24" FontSize="14" Margin="0,0,6,0" />
+                            <TextBlock Text="Open mods folder" />
+                        </StackPanel>
+                    </Button>
+                </controls:SettingsCard.HeaderContent>
 
+                <UniformGrid Margin="0,4,0,12" Columns="4">
+                    <Border Margin="0,0,10,0" Padding="14,12" Style="{DynamicResource PhasmaCard}">
+                        <StackPanel>
+                            <TextBlock FontSize="20" FontFamily="Georgia" Text="Aa Bb" />
+                            <TextBlock Margin="0,8,0,0" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="Interface font" />
+                            <TextBlock Margin="0,2,0,0" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding ModFontText, Mode=OneTime}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Margin="0,0,10,0" Padding="14,12" Style="{DynamicResource PhasmaCard}">
+                        <StackPanel>
+                            <ui:SymbolIcon HorizontalAlignment="Left" FontSize="22" Symbol="Target24" Foreground="{DynamicResource PhasmaAccentBrush}" />
+                            <TextBlock Margin="0,8,0,0" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="Cursor" />
+                            <TextBlock Margin="0,2,0,0" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding ModCursorText, Mode=OneTime}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Margin="0,0,10,0" Padding="14,12" Style="{DynamicResource PhasmaCard}">
+                        <StackPanel>
+                            <ui:SymbolIcon HorizontalAlignment="Left" FontSize="22" Symbol="Alert24" Foreground="{DynamicResource PhasmaAccentBrush}" />
+                            <TextBlock Margin="0,8,0,0" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="Death sound" />
+                            <TextBlock Margin="0,2,0,0" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding ModDeathSoundText, Mode=OneTime}" />
+                        </StackPanel>
+                    </Border>
+                    <Button Padding="14,12" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Style="{DynamicResource PhasmaGhostButton}"
+                            BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" BorderThickness="1" Command="{Binding OpenModsCommand}">
+                        <StackPanel HorizontalAlignment="Center">
+                            <ui:SymbolIcon HorizontalAlignment="Center" FontSize="20" Symbol="Add24" />
+                            <TextBlock Margin="0,6,0,0" HorizontalAlignment="Center" Text="Add a mod" />
+                        </StackPanel>
+                    </Button>
+                </UniformGrid>
+            </controls:SettingsCard>
+        </controls:CardColumns>
+
+        <TextBlock Style="{DynamicResource PhasmaSectionLabel}" Text="MATCHMAKER AND WINDOW" />
+
+        <controls:CardColumns>
+            <controls:SettingsCard DataContext="{Binding Matchmaker}"
+                                   Header="{x:Static resources:Strings.Menu_Behaviour_Tab_Matchmaker}"
+                                   Description="{Binding DataContext.MatchmakerGroupSummary, Mode=OneWay, RelativeSource={RelativeSource AncestorType=ui:UiPage}}">
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_ServerBrowser_EnableMatchmaker_Title}">
                     <ui:ToggleSwitch IsChecked="{Binding MatchmakerEnabled, Mode=TwoWay}" />
                 </controls:OptionControl>
@@ -199,124 +315,134 @@
                     <ui:ToggleSwitch IsChecked="{Binding MatchmakerPreferEmpty, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_ServerBrowser_PreferredDatacenter_Title}" Description="{x:Static resources:Strings.Menu_ServerBrowser_PreferredDatacenter_Description}">
-                    <ComboBox Width="220" ItemsSource="{Binding DatacenterChoices, Mode=OneTime}" DisplayMemberPath="Display" SelectedValuePath="Key" SelectedValue="{Binding PreferredDatacenter, Mode=TwoWay}" />
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_ServerBrowser_PreferredDatacenter_Title}" Description="Sticks to it when it has servers">
+                    <ComboBox Padding="10,5,10,5" MinWidth="150" ItemsSource="{Binding DatacenterChoices, Mode=OneTime}" DisplayMemberPath="Display" SelectedValuePath="Key" SelectedValue="{Binding PreferredDatacenter, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_ServerBrowser_AutoCandidateCount_Title}" Description="{x:Static resources:Strings.Menu_ServerBrowser_AutoCandidateCount_Description}">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_ServerBrowser_AutoCandidateCount_Title}" Description="Off lets you set a fixed number to try">
                     <ui:ToggleSwitch IsChecked="{Binding MatchmakerAutoCandidates, Mode=TwoWay}" />
                 </controls:OptionControl>
 
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_ServerBrowser_MaxCandidates_Title}" Description="{x:Static resources:Strings.Menu_ServerBrowser_MaxCandidates_Description}">
-                    <ui:NumberBox IntegersOnly="True" Width="120" Min="8" Max="64" Value="{Binding MatchmakerMaxCandidates, Mode=TwoWay}" />
+                    <ui:NumberBox IntegersOnly="True" Width="110" Min="8" Max="64" Value="{Binding MatchmakerMaxCandidates, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Behaviour_Matchmaker_JoinApi_Title}" Description="{x:Static resources:Strings.Menu_Behaviour_Matchmaker_JoinApi_Description}">
-                    <ComboBox Width="200" ItemsSource="{Binding GamejoinApiOptions, Mode=OneTime}" DisplayMemberPath="Display" SelectedValuePath="Value" SelectedValue="{Binding MatchmakerGamejoinApiVersion, Mode=TwoWay}" />
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Behaviour_Matchmaker_JoinApi_Title}" Description="Change only if joins stop working">
+                    <ComboBox Padding="10,5,10,5" MinWidth="130" ItemsSource="{Binding GamejoinApiOptions, Mode=OneTime}" DisplayMemberPath="Display" SelectedValuePath="Value" SelectedValue="{Binding MatchmakerGamejoinApiVersion, Mode=TwoWay}" />
                 </controls:OptionControl>
+            </controls:SettingsCard>
 
-                <ui:CardExpander Margin="0,12,0,0">
-                    <ui:CardExpander.Header>
-                        <StackPanel>
-                            <TextBlock FontSize="14" Text="{x:Static resources:Strings.Menu_ServerBrowser_ExcludedDatacenters_Title}" />
-                            <TextBlock FontSize="12" Text="{Binding ExcludedDatacenterSummary, Mode=OneWay}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                        </StackPanel>
-                    </ui:CardExpander.Header>
-                    <StackPanel>
-                        <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_ServerBrowser_ExcludedDatacenters_Description}" />
-                        <Border Margin="0,8,0,0" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" MaxHeight="360">
-                            <DataGrid AutoGenerateColumns="False" HeadersVisibility="Column" CanUserAddRows="False" CanUserDeleteRows="False" CanUserResizeRows="False" GridLinesVisibility="None" IsReadOnly="True" RowHeaderWidth="0" Background="#00FFFFFF" BorderThickness="0" RowHeight="40" AlternatingRowBackground="{DynamicResource SubtleFillColorTertiaryBrush}" ItemsSource="{Binding DatacenterExclusions, Mode=OneTime}">
-                                <DataGrid.Columns>
-                                    <DataGridTemplateColumn Header="{x:Static resources:Strings.Menu_Behaviour_Matchmaker_Datacenters_AllowColumn}" Width="70" CanUserSort="False">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <ui:ToggleSwitch HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="{Binding IsAllowed, Mode=TwoWay}" />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.Menu_Behaviour_Matchmaker_Datacenters_DatacenterColumn}" Width="*" MinWidth="160" Binding="{Binding Display}" />
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.Menu_Behaviour_Matchmaker_Datacenters_LatencyColumn}" Width="110" Binding="{Binding PingDisplay}" />
-                                </DataGrid.Columns>
-                            </DataGrid>
-                        </Border>
-                    </StackPanel>
-                </ui:CardExpander>
+            <controls:SettingsCard DataContext="{Binding Matchmaker}"
+                                   Header="{x:Static resources:Strings.Menu_ServerBrowser_ExcludedDatacenters_Title}"
+                                   Description="The matchmaker never picks a server in one you switch off">
+                <controls:SettingsCard.HeaderContent>
+                    <Border Style="{DynamicResource PhasmaTagNeutral}">
+                        <TextBlock Text="{Binding ExcludedDatacenterSummary, Mode=OneWay}" />
+                    </Border>
+                </controls:SettingsCard.HeaderContent>
 
-                <TextBlock Text="{x:Static resources:Strings.Menu_ServerBrowser_ExcludedPlaces_Title}" FontSize="14" FontWeight="Medium" Margin="0,16,0,0" />
-                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_ServerBrowser_ExcludedPlaces_Description}" />
-                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                    <ui:TextBox Width="200" PlaceholderText="{x:Static resources:Strings.Menu_ServerBrowser_ExcludedPlaces_PlaceholderText}" Text="{Binding ExcludePlaceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <ui:Button Margin="8,0,0,0" Content="{x:Static resources:Strings.Common_AddSingle}" Command="{Binding AddExcludedPlaceCommand, Mode=OneTime}" />
-                </StackPanel>
-                <ItemsControl Margin="0,4,0,0" ItemsSource="{Binding ExcludedPlaces, Mode=OneWay}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel Orientation="Horizontal" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Margin="0,0,8,6" Padding="8,4" Background="{DynamicResource ControlFillColorDefaultBrush}" CornerRadius="6">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock VerticalAlignment="Center" Text="{Binding}" FontFamily="Consolas" FontSize="12" />
-                                    <ui:Button Margin="8,0,0,0" Padding="4" Appearance="Transparent" Icon="Delete16" Command="{Binding DataContext.RemoveExcludedPlaceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
-                                </StackPanel>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <Border Style="{DynamicResource PhasmaDivider}" />
+                <ScrollViewer MaxHeight="360" Margin="0,4,0,8" VerticalScrollBarVisibility="Auto" controls:ScrollBubbling.Enabled="True">
+                    <ItemsControl ItemsSource="{Binding DatacenterExclusions, Mode=OneTime}" Focusable="False">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,4,0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <ui:ToggleSwitch VerticalAlignment="Center" IsChecked="{Binding IsAllowed, Mode=TwoWay}"
+                                                     ToolTip="{x:Static resources:Strings.Menu_Behaviour_Matchmaker_Datacenters_AllowColumn}" />
+                                    <TextBlock Grid.Column="1" Margin="10,0,10,0" VerticalAlignment="Center" FontSize="12.5" FontWeight="SemiBold"
+                                               TextTrimming="CharacterEllipsis" Text="{Binding Display}" />
+                                    <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                               ToolTip="{x:Static resources:Strings.Menu_Behaviour_Matchmaker_Datacenters_LatencyColumn}" Text="{Binding PingDisplay}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </controls:SettingsCard>
 
-                <TextBlock Text="{x:Static resources:Strings.Menu_Behaviour_AutoRejoin}" FontSize="14" FontWeight="Medium" Margin="0,16,0,0" />
-                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Behaviour_IfRobloxSProcessDisappearsWithout}" />
-
+            <controls:SettingsCard DataContext="{Binding Matchmaker}"
+                                   Header="Auto rejoin"
+                                   Description="If Roblox vanishes without a clean disconnect in its log, join the same server again">
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Behaviour_RejoinAfterCrash}" x:Name="AutoRejoinOption">
                     <ui:ToggleSwitch IsChecked="{Binding AutoRejoinOnCrash, Mode=TwoWay}" />
                 </controls:OptionControl>
 
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Behaviour_MaxAttempts}" Description="{x:Static resources:Strings.Menu_Behaviour_HowManyTimesRetryBeforeGiving}" IsEnabled="{Binding InnerContent.IsChecked, ElementName=AutoRejoinOption, Mode=OneWay}">
-                    <ui:NumberBox IntegersOnly="True" Width="120" Min="1" Max="10" Value="{Binding AutoRejoinMaxAttempts, Mode=TwoWay}" />
+                    <ui:NumberBox IntegersOnly="True" Width="110" Min="1" Max="10" Value="{Binding AutoRejoinMaxAttempts, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Behaviour_DelayBetweenAttempts}" Description="{x:Static resources:Strings.Menu_Behaviour_SecondsWaitBeforeEachRejoinAttempt}" IsEnabled="{Binding InnerContent.IsChecked, ElementName=AutoRejoinOption, Mode=OneWay}">
-                    <ui:NumberBox IntegersOnly="True" Width="120" Min="1" Max="60" Value="{Binding AutoRejoinDelaySeconds, Mode=TwoWay}" />
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Behaviour_DelayBetweenAttempts}" Description="Seconds" IsEnabled="{Binding InnerContent.IsChecked, ElementName=AutoRejoinOption, Mode=OneWay}">
+                    <ui:NumberBox IntegersOnly="True" Width="110" Min="1" Max="60" Value="{Binding AutoRejoinDelaySeconds, Mode=TwoWay}" />
                 </controls:OptionControl>
-            </StackPanel>
-        </ui:CardExpander>
+            </controls:SettingsCard>
 
-        <ui:CardExpander Margin="0,8,0,0" Icon="WindowWrench24">
-            <ui:CardExpander.Header>
-                <StackPanel>
-                    <TextBlock FontSize="14" Text="Window title" />
-                    <TextBlock FontSize="12" Text="{Binding WindowTitleGroupSummary, Mode=OneWay}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                </StackPanel>
-            </ui:CardExpander.Header>
-            <StackPanel>
-                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Behaviour_Roblox_Description}" />
-
+            <controls:SettingsCard Header="Window title"
+                                   Description="{Binding WindowTitleGroupSummary, Mode=OneWay}">
                 <controls:OptionControl
                     Header="{x:Static resources:Strings.Menu_Behaviour_RobloxTitle_Title}"
-                    Description="{x:Static resources:Strings.Menu_Behaviour_RobloxTitle_Description}">
-                    <ui:TextBox Width="220" PlaceholderText="{x:Static resources:Strings.Menu_Integrations_Tabs_Roblox}" Text="{Binding RobloxTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    Description="Blank keeps the title Roblox sets">
+                    <ui:TextBox Width="160" PlaceholderText="{x:Static resources:Strings.Menu_Integrations_Tabs_Roblox}" Text="{Binding RobloxTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl
-                    Header="{x:Static resources:Strings.Menu_Behaviour_CycleTitleWithGameName_Title}"
-                    Description="{x:Static resources:Strings.Menu_Behaviour_CycleTitleWithGameName_Description}">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Behaviour_CycleTitleWithGameName_Title}">
                     <ui:ToggleSwitch IsChecked="{Binding CycleTitleWithGameName, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl
-                    Header="{x:Static resources:Strings.Menu_Behaviour_ShowServerInfoInTitle_Title}"
-                    Description="{x:Static resources:Strings.Menu_Behaviour_ShowServerInfoInTitle_Description}">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Behaviour_ShowServerInfoInTitle_Title}">
                     <ui:ToggleSwitch IsChecked="{Binding ShowServerInfoInTitle, Mode=TwoWay}" />
                 </controls:OptionControl>
 
                 <controls:OptionControl
                     Header="{x:Static resources:Strings.Menu_Behaviour_UseGameIconForRobloxWindow_Title}"
-                    Description="{x:Static resources:Strings.Menu_Behaviour_UseGameIconForRobloxWindow_Description}">
+                    Description="On the window and taskbar">
                     <ui:ToggleSwitch IsChecked="{Binding UseGameIconForRobloxWindow, Mode=TwoWay}" />
                 </controls:OptionControl>
-            </StackPanel>
-        </ui:CardExpander>
+            </controls:SettingsCard>
+
+            <controls:SettingsCard controls:CardColumns.FullRow="True" DataContext="{Binding Matchmaker}"
+                                   Header="{x:Static resources:Strings.Menu_ServerBrowser_ExcludedPlaces_Title}"
+                                   Description="The matchmaker is skipped for these places, even while it is on">
+                <Border Style="{DynamicResource PhasmaDivider}" />
+                <StackPanel Margin="0,10,0,10">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:TextBox Width="200" PlaceholderText="{x:Static resources:Strings.Menu_ServerBrowser_ExcludedPlaces_PlaceholderText}" Text="{Binding ExcludePlaceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Common_AddSingle}" Command="{Binding AddExcludedPlaceCommand, Mode=OneTime}" />
+                    </StackPanel>
+                    <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding ExcludedPlaces, Mode=OneWay}" Focusable="False">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,0,8,6" Padding="8,2,2,2" Style="{DynamicResource PhasmaTagNeutral}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock VerticalAlignment="Center" Text="{Binding}" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" />
+                                        <Button Margin="6,0,0,0" Padding="4" Style="{DynamicResource PhasmaGhostButton}" ToolTip="{x:Static resources:Strings.Common_Delete}"
+                                                Command="{Binding DataContext.RemoveExcludedPlaceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                            <ui:SymbolIcon Symbol="Dismiss12" FontSize="11" />
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </controls:SettingsCard>
+        </controls:CardColumns>
+
+        <!--  Roblox version and Channel and downloads have their own places in the settings rail now  -->
+        <TextBlock Style="{DynamicResource PhasmaSectionLabel}" Text="INSTALLATION" />
+
+        <Frame Source="../../Installer/Pages/ManagerPage.xaml"
+               NavigationUIVisibility="Hidden"
+               JournalOwnership="OwnsJournal"
+               Background="Transparent" />
     </StackPanel>
 </ui:UiPage>

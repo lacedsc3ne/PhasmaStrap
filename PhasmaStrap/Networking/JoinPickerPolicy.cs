@@ -105,7 +105,7 @@ namespace PhasmaStrap.Networking
 
                 await application.Dispatcher.InvokeAsync(() =>
                 {
-                    var window = new UI.Elements.Dialogs.ServerPickerWindow(placeId, search, MaxHold);
+                    var window = new UI.Elements.Dialogs.ServerPickerWindow(placeId, search, MaxHold, UI.Elements.Dialogs.ServerPickerWindow.LocalTitle(placeId));
                     window.Closed += (_, _) => picked.TrySetResult(window.ChosenJobId);
                     window.Show();
                 });

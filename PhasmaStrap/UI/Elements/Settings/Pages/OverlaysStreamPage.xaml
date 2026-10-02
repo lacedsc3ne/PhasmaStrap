@@ -10,39 +10,66 @@
       Title="OverlaysStreamPage"
       Scrollable="True">
 
+    <ui:UiPage.Resources>
+        <!--  Numbered step in the OBS guide  -->
+        <Style x:Key="StepNumber" TargetType="{x:Type Border}" BasedOn="{StaticResource PhasmaTagNeutral}">
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="MinWidth" Value="20" />
+            <Setter Property="Margin" Value="0,1,10,0" />
+        </Style>
+    </ui:UiPage.Resources>
+
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Text="{x:Static resources:Strings.Menu_Rendering_StreamSafeMode}" FontSize="20" FontWeight="Medium" />
+        <controls:CardColumns>
+            <controls:SettingsCard Header="Stream safe mode">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_HideChatNamesStream}" Description="OBS gets its own copy of the game with your marked areas pixelated">
+                    <ui:ToggleSwitch IsChecked="{Binding StreamSafeEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
 
-        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_HideChatNamesStream}" Description="{x:Static resources:Strings.Menu_Rendering_GivesOBSItsOwnCopyGame}">
-            <ui:ToggleSwitch IsChecked="{Binding StreamSafeEnabled, Mode=TwoWay}" />
-        </controls:OptionControl>
+                <controls:OptionControl IsEnabled="{Binding StreamSafeEnabled}" Header="{x:Static resources:Strings.Menu_Rendering_HiddenAreas}" Description="{Binding StreamSafeSummary}">
+                    <Button Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Menu_Rendering_EditAreas}" Command="{Binding OpenStreamSafeEditorCommand, Mode=OneTime}" />
+                </controls:OptionControl>
 
-        <StackPanel IsEnabled="{Binding StreamSafeEnabled}">
-            <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_HiddenAreas}" Description="{Binding StreamSafeSummary}">
-                <ui:Button Content="{x:Static resources:Strings.Menu_Rendering_EditAreas}" Icon="SelectObject24" Command="{Binding OpenStreamSafeEditorCommand, Mode=OneTime}" />
-            </controls:OptionControl>
+                <controls:OptionControl IsEnabled="{Binding StreamSafeEnabled}" Header="{x:Static resources:Strings.Menu_Rendering_HowHiddenAreasLook}">
+                    <ComboBox Width="120" Padding="10,5,10,5" SelectedIndex="{Binding StreamSafeStyleIndex, Mode=TwoWay}">
+                        <ComboBoxItem Content="{x:Static resources:Strings.Menu_Rendering_Pixelated}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.Menu_Rendering_Black}" />
+                    </ComboBox>
+                </controls:OptionControl>
 
-            <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_HowHiddenAreasLook}" Description="{x:Static resources:Strings.Menu_Rendering_PixelatedKeepsColoursButMakesText}">
-                <ComboBox Width="160" Padding="10,5,10,5" SelectedIndex="{Binding StreamSafeStyleIndex, Mode=TwoWay}">
-                    <ComboBoxItem Content="{x:Static resources:Strings.Menu_Rendering_Pixelated}" />
-                    <ComboBoxItem Content="{x:Static resources:Strings.Menu_Rendering_Black}" />
-                </ComboBox>
-            </controls:OptionControl>
+                <controls:OptionControl IsEnabled="{Binding StreamSafeEnabled}" Header="{x:Static resources:Strings.Menu_Rendering_ShowCrosshairStream}">
+                    <ui:ToggleSwitch IsChecked="{Binding StreamSafeCrosshair, Mode=TwoWay}" />
+                </controls:OptionControl>
+            </controls:SettingsCard>
 
-            <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_ShowCrosshairStream}" Description="{x:Static resources:Strings.Menu_Rendering_DrawsCrosshairIntoStreamPictureAs}">
-                <ui:ToggleSwitch IsChecked="{Binding StreamSafeCrosshair, Mode=TwoWay}" />
-            </controls:OptionControl>
-
-            <Border Margin="0,8,0,0" Padding="14,12" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
+            <Border IsEnabled="{Binding StreamSafeEnabled}" Style="{DynamicResource PhasmaCard}" Padding="16,14,16,14">
                 <StackPanel>
-                    <TextBlock FontSize="14" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_Rendering_SettingUpOBS}" />
-                    <TextBlock Margin="0,6,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Rendering_N1JoinGameSwitchedSaved}" />
-                    <TextBlock Margin="0,2,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Rendering_N2OBSAddWindowCaptureSource}" />
-                    <TextBlock Margin="0,2,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Rendering_N3SetItsCaptureMethodWindows}" />
-                    <TextBlock Margin="0,6,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Rendering_StreamViewSitsBehindOtherWindows}" />
-                    <ui:Button Margin="0,10,0,0" Content="{x:Static resources:Strings.Menu_Rendering_CopyWindowName}" Icon="Copy24" Appearance="Secondary" Command="{Binding CopyStreamViewNameCommand, Mode=OneTime}" />
+                    <TextBlock Style="{DynamicResource PhasmaHeading}" FontSize="13.5" Text="{x:Static resources:Strings.Menu_Rendering_SettingUpOBS}" />
+
+                    <DockPanel Margin="0,10,0,0">
+                        <Border Style="{StaticResource StepNumber}"><TextBlock Text="1" HorizontalAlignment="Center" /></Border>
+                        <TextBlock FontSize="12.5" TextWrapping="Wrap" Text="Join a game with this switched on and saved." />
+                    </DockPanel>
+                    <DockPanel Margin="0,8,0,0">
+                        <Border Style="{StaticResource StepNumber}"><TextBlock Text="2" HorizontalAlignment="Center" /></Border>
+                        <TextBlock FontSize="12.5" TextWrapping="Wrap" Text="In OBS, add a Window Capture source and pick PhasmaStrap Stream View." />
+                    </DockPanel>
+                    <DockPanel Margin="0,8,0,0">
+                        <Border Style="{StaticResource StepNumber}"><TextBlock Text="3" HorizontalAlignment="Center" /></Border>
+                        <TextBlock FontSize="12.5" TextWrapping="Wrap" Text="Set its capture method to Windows 10 (1903 and up), then hide your old capture." />
+                    </DockPanel>
+
+                    <TextBlock Margin="0,12,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                               Text="The stream view only updates while Roblox is in front. When you tab out, the stream keeps the last game picture." />
+
+                    <Button Margin="0,10,0,0" HorizontalAlignment="Left" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding CopyStreamViewNameCommand, Mode=OneTime}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Copy24" FontSize="14" Margin="0,0,6,0" />
+                            <TextBlock Text="{x:Static resources:Strings.Menu_Rendering_CopyWindowName}" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </Border>
-        </StackPanel>
+        </controls:CardColumns>
     </StackPanel>
 </ui:UiPage>

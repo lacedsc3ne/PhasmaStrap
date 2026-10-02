@@ -46,11 +46,63 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         private string? _icon;
         public string? IconUrl { get => _icon; set { _icon = value; OnPropertyChanged(nameof(IconUrl)); } }
 
+        private bool _isFriend;
+        /// <summary>The owner is one of your Roblox friends.</summary>
+        public bool IsFriend
+        {
+            get => _isFriend;
+            set { if (_isFriend == value) return; _isFriend = value; OnPropertyChanged(nameof(IsFriend)); OnPropertyChanged(nameof(FriendVisibility)); }
+        }
+
+        public Visibility FriendVisibility => _isFriend && !Server.Owned ? Visibility.Visible : Visibility.Collapsed;
+
+        private bool _isHidden;
+        /// <summary>Hidden from the list on this PC. Only shown while "Show hidden" is on.</summary>
+        public bool IsHidden
+        {
+            get => _isHidden;
+            set { if (_isHidden == value) return; _isHidden = value; OnPropertyChanged(nameof(IsHidden)); OnPropertyChanged(nameof(HiddenVisibility)); }
+        }
+
+        public Visibility HiddenVisibility => _isHidden ? Visibility.Visible : Visibility.Collapsed;
+
         public Visibility OwnerVisibility => Server.Owned ? Visibility.Visible : Visibility.Collapsed;
 
         public bool CanJoin => Server.Active && Server.PlaceId > 0;
 
         public DateTime? EndsAt => Server.Expires is DateTime e && e < DateTime.UtcNow.AddYears(20) ? e : null;
+
+        /// <summary>The server's own name, shown as the row title.</summary>
+        public string ServerName => Server.Name.Length > 0 ? Server.Name : "Private server";
+
+        /// <summary>The game and whose server it is, under the title.</summary>
+        public string GameLine
+        {
+            get
+            {
+                string owner = Server.Owned ? "You" : Server.OwnerName;
+                return owner.Length > 0 ? $"{Title}  ·  {owner}" : Title;
+            }
+        }
+
+        /// <summary>Short state for the tag: inactive, ending soon, or open.</summary>
+        public string TagText
+        {
+            get
+            {
+                if (!Server.Active)
+                    return "Inactive";
+
+                if (EndsAt is DateTime ends && !Server.WillRenew)
+                {
+                    int days = (int)Math.Ceiling((ends - DateTime.UtcNow).TotalDays);
+                    if (days >= 0 && days <= 30)
+                        return days == 1 ? "Ends in 1 day" : $"Ends in {days} days";
+                }
+
+                return CanJoin ? "Can join now" : "";
+            }
+        }
     }
 
     public sealed record PrivateServerFilterOption(string Label, long Id)
@@ -73,11 +125,60 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         private bool _loaded;
         public Visibility ListsVisibility => _loaded ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility NotLoadedVisibility => _loaded ? Visibility.Collapsed : Visibility.Visible;
         public Visibility NoOwnedVisibility => _loaded && !_all.Any(r => r.Server.Owned) ? Visibility.Visible : Visibility.Collapsed;
         public Visibility NoSharedVisibility => _loaded && !_all.Any(r => !r.Server.Owned) ? Visibility.Visible : Visibility.Collapsed;
 
         private List<PrivateServerRow> _all = new();
         private HashSet<long> _friendIds = new();
+        private HashSet<long> _hidden = PhasmaStrap.Utility.GamesStore.Shared.HiddenPrivateServers();
+
+        private bool _showHidden;
+        /// <summary>Also lists the servers you hid, marked as hidden.</summary>
+        public bool ShowHidden
+        {
+            get => _showHidden;
+            set { if (_showHidden == value) return; _showHidden = value; OnPropertyChanged(nameof(ShowHidden)); ApplyFilters(); }
+        }
+
+        public int HiddenCount => _all.Count(r => r.IsHidden);
+
+        public string HiddenText => HiddenCount == 1 ? "1 hidden" : $"{HiddenCount} hidden";
+
+        public Visibility HiddenToggleVisibility => _loaded && (HiddenCount > 0 || _showHidden) ? Visibility.Visible : Visibility.Collapsed;
+
+        /// <summary>Hides a server from this list on this PC, or brings it back.</summary>
+        public void SetHidden(PrivateServerRow? row, bool hidden)
+        {
+            if (row is null)
+                return;
+
+            PhasmaStrap.Utility.GamesStore.Shared.SetPrivateServerHidden(row.Server.Id, hidden);
+            _hidden = PhasmaStrap.Utility.GamesStore.Shared.HiddenPrivateServers();
+            row.IsHidden = hidden;
+
+            if (!hidden && HiddenCount == 0)
+                _showHidden = false;
+
+            OnPropertyChanged(nameof(ShowHidden));
+            ApplyFilters();
+        }
+
+        public ICommand HideCommand => new RelayCommand<PrivateServerRow>(row => SetHidden(row, true));
+
+        public ICommand UnhideCommand => new RelayCommand<PrivateServerRow>(row => SetHidden(row, false));
+
+        public ICommand ShowAllHiddenCommand => new RelayCommand(() =>
+        {
+            PhasmaStrap.Utility.GamesStore.Shared.ShowAllPrivateServers();
+            _hidden = new HashSet<long>();
+            foreach (PrivateServerRow row in _all)
+                row.IsHidden = false;
+
+            _showHidden = false;
+            OnPropertyChanged(nameof(ShowHidden));
+            ApplyFilters();
+        });
 
         public const long AnyOwner = 0;
         public const long FriendsOnly = -1;
@@ -129,6 +230,9 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         {
             PrivateServerInfo s = row.Server;
 
+            if (row.IsHidden && !_showHidden)
+                return false;
+
             string search = _search.Trim();
             if (search.Length > 0
                 && !s.GameName.Contains(search, StringComparison.OrdinalIgnoreCase)
@@ -177,6 +281,10 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             int shown = Owned.Count + Shared.Count;
             FilterSummary = shown == _all.Count ? $"Showing all {_all.Count}." : $"Showing {shown} of {_all.Count}.";
+
+            OnPropertyChanged(nameof(HiddenCount));
+            OnPropertyChanged(nameof(HiddenText));
+            OnPropertyChanged(nameof(HiddenToggleVisibility));
 
             OnPropertyChanged(nameof(YoursVisibility));
             OnPropertyChanged(nameof(SharedVisibility));
@@ -227,6 +335,8 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
                 List<FriendInfo> friends = await FriendsService.GetFriendsAsync(me.UserId);
                 _friendIds = friends.Select(f => f.UserId).ToHashSet();
+                foreach (PrivateServerRow row in _all)
+                    row.IsFriend = !row.Server.Owned && _friendIds.Contains(row.Server.OwnerId);
                 BuildFilterOptions();
                 ApplyFilters();
             }
@@ -247,7 +357,13 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             {
                 List<PrivateServerInfo> servers = await PrivateServers.ListAsync();
 
-                var rows = servers.Select(s => new PrivateServerRow { Server = s }).ToList();
+                _hidden = PhasmaStrap.Utility.GamesStore.Shared.HiddenPrivateServers();
+                var rows = servers.Select(s => new PrivateServerRow
+                {
+                    Server = s,
+                    IsHidden = _hidden.Contains(s.Id),
+                    IsFriend = !s.Owned && _friendIds.Contains(s.OwnerId),
+                }).ToList();
                 _all = rows;
                 _loaded = true;
                 BuildFilterOptions();
@@ -273,8 +389,10 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             {
                 IsBusy = false;
                 OnPropertyChanged(nameof(ListsVisibility));
+                OnPropertyChanged(nameof(NotLoadedVisibility));
                 OnPropertyChanged(nameof(NoOwnedVisibility));
                 OnPropertyChanged(nameof(NoSharedVisibility));
+                OnPropertyChanged(nameof(HiddenToggleVisibility));
             }
         }
 

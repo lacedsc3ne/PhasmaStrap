@@ -15,6 +15,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             public string Detail { get; init; } = "";
             public string Players { get; init; } = "";
             public string Ping { get; init; } = "";
+            public string PingTone { get; init; } = "";
         }
 
         private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(100) };
@@ -23,9 +24,14 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
         public string? ChosenJobId { get; private set; }
 
-        public ServerPickerWindow(long placeId, Task<List<MatchmakerCandidate>> search, TimeSpan limit)
+        /// <param name="gameTitle">"Game · Place" for the headline. Looked up from the place when left empty.</param>
+        public ServerPickerWindow(long placeId, Task<List<MatchmakerCandidate>> search, TimeSpan limit, string gameTitle = "")
         {
             InitializeComponent();
+
+            ShowGame(gameTitle.Length > 0 ? gameTitle : LocalTitle(placeId));
+            if (gameTitle.Length == 0)
+                _ = LookUpGameAsync(placeId);
 
             _limit = limit - TimeSpan.FromSeconds(3);
 
@@ -42,6 +48,49 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             Closed += (_, _) => _timer.Stop();
 
             _ = FillAsync(placeId, search);
+        }
+
+        /// <summary>"Game · Place" from what is already on this PC (your library and the place name cache), or empty.</summary>
+        public static string LocalTitle(long placeId)
+        {
+            if (placeId <= 0)
+                return "";
+
+            try
+            {
+                PlayTimeEntry? played = PhasmaStrap.Integrations.PlayTimeStore.GetAll().FirstOrDefault(e => e.PlaceId == placeId);
+                if (played is not null && played.Name.Length > 0)
+                    return played.DisplayName;
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("ServerPickerWindow", $"Library lookup failed: {ex.Message}");
+            }
+
+            return PlaceNames.NameOf(placeId);
+        }
+
+        private void ShowGame(string title)
+        {
+            GameText.Text = title;
+            GameText.Visibility = title.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private async Task LookUpGameAsync(long placeId)
+        {
+            if (placeId <= 1)
+                return;
+
+            try
+            {
+                GameInfo? game = await GameLookup.FromPlaceAsync(placeId);
+                if (game is not null && IsVisible)
+                    ShowGame(PlaceNames.Display(game.Name, placeId));
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("ServerPickerWindow", $"Game lookup failed: {ex.Message}");
+            }
         }
 
         private async Task FillAsync(long placeId, Task<List<MatchmakerCandidate>> search)
@@ -66,7 +115,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             if (servers.Count == 0)
             {
                 HeadlineText.Text = "No servers could be listed";
-                DetailText.Text = "Roblox will choose one. (The picker needs you to be signed in, and the game to have public servers.)";
+                DetailText.Text = "Roblox will choose one. The picker needs you to be signed in, and the game needs public servers.";
                 await Task.Delay(1800);
                 Close();
                 return;
@@ -78,7 +127,8 @@ namespace PhasmaStrap.UI.Elements.Dialogs
                 Region = server.DatacenterName,
                 Detail = $"{server.DistanceKm:0} km away",
                 Players = server.MaxPlayers > 0 ? $"{server.Playing} / {server.MaxPlayers}" : $"{server.Playing} playing",
-                Ping = $"~{server.EstimatedPingMs} ms",
+                Ping = $"{server.EstimatedPingMs} ms",
+                PingTone = server.EstimatedPingMs < 60 ? "good" : server.EstimatedPingMs < 120 ? "warn" : "bad",
             }).ToList();
 
             ServerList.Visibility = Visibility.Visible;

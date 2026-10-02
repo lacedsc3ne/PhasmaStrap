@@ -35,6 +35,70 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
     {
         public const int DefaultMaxResults = 40;
 
+        // Plain words people type, and the words settings actually use for the same thing.
+        private static readonly Dictionary<string, string[]> Synonyms = new(StringComparer.Ordinal)
+        {
+            ["fps"] = new[] { "frame rate", "framerate", "frames per second", "frame" },
+            ["framerate"] = new[] { "frame rate", "fps" },
+            ["ping"] = new[] { "latency", "network", "server", "datacenter" },
+            ["latency"] = new[] { "ping", "low latency", "input" },
+            ["lag"] = new[] { "latency", "ping", "stutter", "performance", "low end" },
+            ["laggy"] = new[] { "latency", "ping", "stutter", "performance", "low end" },
+            ["slow"] = new[] { "performance", "low end", "boost", "stutter" },
+            ["stutter"] = new[] { "frame pacing", "stutter", "frame time" },
+            ["blurry"] = new[] { "resolution", "anti aliasing", "sharpen", "texture", "quality" },
+            ["blur"] = new[] { "resolution", "anti aliasing", "sharpen", "texture" },
+            ["sharp"] = new[] { "sharpen", "anti aliasing", "resolution", "texture" },
+            ["vsync"] = new[] { "vertical sync", "frame rate", "frame rate limit" },
+            ["hud"] = new[] { "overlay", "stats" },
+            ["overlay"] = new[] { "hud", "crosshair", "stats" },
+            ["record"] = new[] { "replay", "clip", "capture" },
+            ["recording"] = new[] { "replay", "clip", "capture" },
+            ["clip"] = new[] { "replay", "capture" },
+            ["video"] = new[] { "replay", "clip", "capture" },
+            ["picture"] = new[] { "screenshot", "image", "background" },
+            ["screenshot"] = new[] { "capture", "picture" },
+            ["sound"] = new[] { "audio", "volume", "death sound" },
+            ["audio"] = new[] { "sound", "volume" },
+            ["volume"] = new[] { "audio", "sound" },
+            ["mouse"] = new[] { "cursor", "sensitivity" },
+            ["cursor"] = new[] { "mouse" },
+            ["discord"] = new[] { "rich presence", "rpc" },
+            ["rpc"] = new[] { "rich presence", "discord" },
+            ["graphics"] = new[] { "rendering", "quality", "texture", "lighting" },
+            ["gpu"] = new[] { "graphics card", "nvidia", "rendering" },
+            ["ram"] = new[] { "memory" },
+            ["memory"] = new[] { "ram" },
+            ["account"] = new[] { "login", "sign in", "cookie" },
+            ["login"] = new[] { "account", "sign in" },
+            ["theme"] = new[] { "appearance", "colour", "color", "accent" },
+            ["color"] = new[] { "colour", "accent", "theme" },
+            ["colour"] = new[] { "color", "accent", "theme" },
+            ["update"] = new[] { "version", "channel", "news" },
+            ["key"] = new[] { "hotkey", "shortcut", "keybind" },
+            ["keybind"] = new[] { "hotkey", "shortcut" },
+            ["shortcut"] = new[] { "hotkey", "desktop" },
+            ["friend"] = new[] { "friends", "social", "party" },
+            ["server"] = new[] { "matchmaker", "region", "datacenter", "private server" },
+            ["region"] = new[] { "datacenter", "server location" },
+            ["stream"] = new[] { "stream safe", "obs" },
+            ["flags"] = new[] { "fastflag", "fflag" },
+            ["fflag"] = new[] { "fastflag", "flag" },
+        };
+
+        /// <summary>The other words a query was widened to, for the "also matching" hint.</summary>
+        public static IReadOnlyList<string> AlsoMatching(string query)
+        {
+            var words = new List<string>();
+            foreach (string token in SettingsSearchEntry.Normalize(query ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (Synonyms.TryGetValue(token, out string[]? alternatives))
+                    words.AddRange(alternatives.Take(3));
+            }
+
+            return words.Distinct(StringComparer.Ordinal).Take(4).ToList();
+        }
+
         public static List<SettingsSearchResult> Search(string query, int maxResults = DefaultMaxResults)
         {
             var results = new List<SettingsSearchResult>();
@@ -52,7 +116,7 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
 
                 foreach (string token in tokens)
                 {
-                    int score = ScoreToken(entry, token);
+                    int score = ScoreWithSynonyms(entry, token);
                     if (score == 0)
                     {
                         allMatched = false;
@@ -101,6 +165,38 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
                 results.RemoveRange(maxResults, results.Count - maxResults);
 
             return results;
+        }
+
+        private static int ScoreWithSynonyms(SettingsSearchEntry entry, string token)
+        {
+            int direct = ScoreToken(entry, token);
+            if (direct >= 85 || !Synonyms.TryGetValue(token, out string[]? alternatives))
+                return direct;
+
+            int best = direct;
+            foreach (string alternative in alternatives)
+            {
+                int score = alternative.Contains(' ') ? ScorePhrase(entry, alternative) : ScoreToken(entry, alternative);
+
+                // A synonym hit ranks a little below the word the person actually typed.
+                best = Math.Max(best, score * 4 / 5);
+            }
+
+            return best;
+        }
+
+        private static int ScorePhrase(SettingsSearchEntry entry, string phrase)
+        {
+            if (entry.NormalizedHeader.Contains(phrase, StringComparison.Ordinal))
+                return 70;
+
+            if (entry.NormalizedBreadcrumb.Contains(phrase, StringComparison.Ordinal))
+                return 35;
+
+            if (entry.NormalizedDescription.Contains(phrase, StringComparison.Ordinal))
+                return 22;
+
+            return 0;
         }
 
         private static int ScoreToken(SettingsSearchEntry entry, string token)

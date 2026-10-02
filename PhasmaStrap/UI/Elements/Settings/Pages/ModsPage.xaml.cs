@@ -3,6 +3,9 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 
+using Wpf.Ui.Common;
+
+using PhasmaStrap.UI.Elements.Controls;
 using PhasmaStrap.UI.ViewModels.Settings;
 using PhasmaStrap.Utility;
 
@@ -21,6 +24,38 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
         {
             DataContext = new ModsViewModel();
             InitializeComponent();
+
+            ItemMenu.Attach<ManagedModItem>(ManagedModsList, (mod, menu) =>
+            {
+                int index = ViewModel.ManagedMods.IndexOf(mod);
+                ManagedModItem? above = index > 0 ? ViewModel.ManagedMods[index - 1] : null;
+                ManagedModItem? below = index >= 0 && index < ViewModel.ManagedMods.Count - 1 ? ViewModel.ManagedMods[index + 1] : null;
+
+                menu.Add(mod.Enabled ? "Turn off" : "Turn on", SymbolRegular.Power24, () => ViewModel.ToggleManagedModCommand.Execute(mod), bold: true)
+                    .Add("Open its folder", SymbolRegular.FolderOpen24, () => ViewModel.OpenManagedModCommand.Execute(mod))
+                    .Add(mod.ShowConflicts ? "Hide conflicts" : "Show conflicts", SymbolRegular.Warning24, () => ViewModel.ToggleManagedModConflictsCommand.Execute(mod), enabled: mod.HasConflicts)
+                    .Separator()
+                    .Add("Move up", SymbolRegular.ArrowUp24, () => _ = ViewModel.ReorderManagedModAsync(mod, above!, false), enabled: above is not null)
+                    .Add("Move down", SymbolRegular.ArrowDown24, () => _ = ViewModel.ReorderManagedModAsync(mod, below!, true), enabled: below is not null)
+                    .Separator()
+                    .Add("Rename", SymbolRegular.Rename24, () => ViewModel.RenameManagedModCommand.Execute(mod))
+                    .Add("Export as .zip", SymbolRegular.FolderZip24, () => ViewModel.ExportManagedModCommand.Execute(mod))
+                    .Separator()
+                    .Add("Delete", SymbolRegular.Delete24, () => ViewModel.RemoveManagedModCommand.Execute(mod), "Del", danger: true);
+            });
+
+            // Del on a focused row removes that mod, like the menu says. Removing still asks first.
+            ManagedModsList.PreviewKeyDown += (_, e) =>
+            {
+                if (e.Key != Key.Delete || e.OriginalSource is TextBox)
+                    return;
+
+                if (ItemMenu.ItemAt<ManagedModItem>(e.OriginalSource) is ManagedModItem mod)
+                {
+                    ViewModel.RemoveManagedModCommand.Execute(mod);
+                    e.Handled = true;
+                }
+            };
         }
 
         #region Mod Management - drag handle reordering

@@ -219,13 +219,46 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             private set { _cleaningRam = value; OnPropertyChanged(nameof(CleaningRam)); }
         }
 
-        private string _cleanRamStatus = "";
+        private DateTime _lastCleanAt;
+        private double _lastFreedMb;
+        private bool _lastPurged;
+        private int _lastTrimmed;
 
+        /// <summary>"Freed 1.4 GB · 3 minutes ago" after a clean this session, empty before the first one.</summary>
         public string CleanRamStatus
         {
-            get => _cleanRamStatus;
-            private set { _cleanRamStatus = value; OnPropertyChanged(nameof(CleanRamStatus)); }
+            get
+            {
+                if (CleaningRam)
+                    return "Cleaning...";
+                if (_lastCleanAt == default)
+                    return "";
+
+                string freed = _lastFreedMb >= 1024 ? $"{_lastFreedMb / 1024:0.0} GB" : $"{_lastFreedMb:0} MB";
+                string text = $"Freed {freed} · {Ago(_lastCleanAt)}";
+                if (!_lastPurged)
+                    text += ". Standby memory is only purged with administrator rights.";
+                return text;
+            }
         }
+
+        /// <summary>Longer detail for the status line's tooltip.</summary>
+        public string CleanRamDetail => _lastCleanAt == default ? "" : $"Trimmed {_lastTrimmed} processes{(_lastPurged ? " and purged the standby list" : "")}.";
+
+        private static string Ago(DateTime when)
+        {
+            TimeSpan elapsed = DateTime.Now - when;
+            if (elapsed.TotalMinutes < 1)
+                return "just now";
+            if (elapsed.TotalHours < 1)
+                return (int)elapsed.TotalMinutes == 1 ? "1 minute ago" : $"{(int)elapsed.TotalMinutes} minutes ago";
+            if (elapsed.TotalDays < 1)
+                return (int)elapsed.TotalHours == 1 ? "1 hour ago" : $"{(int)elapsed.TotalHours} hours ago";
+            return when.ToString("d MMM, HH:mm", CultureInfo.CurrentCulture);
+        }
+
+        /// <summary>Re-reads the "minutes ago" part; called when the Boost page is shown again.</summary>
+        public void RefreshCleanRamStatus() => OnPropertyChanged(nameof(CleanRamStatus));
 
         public ICommand CleanRamCommand => new AsyncRelayCommand(async () =>
         {
@@ -233,17 +266,19 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 return;
 
             CleaningRam = true;
-            CleanRamStatus = "Cleaning...";
+            OnPropertyChanged(nameof(CleanRamStatus));
 
             PhasmaStrap.Utility.SystemMemoryCleaner.TrimResult trim = await Task.Run(PhasmaStrap.Utility.SystemMemoryCleaner.TrimAllProcessWorkingSets);
             bool purged = await Task.Run(PhasmaStrap.Utility.SystemMemoryCleaner.PurgeStandbyListElevated);
 
-            double freedMb = trim.BytesFreed / 1048576.0;
-            CleanRamStatus = purged
-                ? $"Trimmed {trim.ProcessesTrimmed} processes and purged the standby list (~{freedMb:0.#} MB reclaimed)."
-                : $"Trimmed {trim.ProcessesTrimmed} processes (~{freedMb:0.#} MB reclaimed). Standby list purge needs administrator rights - it was declined or failed.";
+            _lastFreedMb = trim.BytesFreed / 1048576.0;
+            _lastTrimmed = trim.ProcessesTrimmed;
+            _lastPurged = purged;
+            _lastCleanAt = DateTime.Now;
 
             CleaningRam = false;
+            OnPropertyChanged(nameof(CleanRamStatus));
+            OnPropertyChanged(nameof(CleanRamDetail));
         });
 
         public bool AutoCleanRam
@@ -295,7 +330,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public sealed record EnginePlaceAssignment(string PlaceId, string PresetName)
         {
-            public string Display => $"{PlaceId} → {PresetName}";
+            public string Display => $"{GameNameFor(PlaceId)} · {PresetName}";
         }
 
         public ObservableCollection<EnginePlaceAssignment> EngineProfileAssignments { get; } = new(
@@ -396,15 +431,79 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        public sealed record ResolutionGameChoice(string PlaceId, string Name)
+        /// <summary>A game row with its icon, or its initials on a coloured tile until (or unless) the icon is known.</summary>
+        public class GameIconRow : NotifyPropertyChangedViewModel
         {
+            private static readonly System.Windows.Media.Color[] TileColors =
+            {
+                System.Windows.Media.Color.FromRgb(0xD9, 0x4F, 0x3D), System.Windows.Media.Color.FromRgb(0x8E, 0x44, 0xC9),
+                System.Windows.Media.Color.FromRgb(0x2F, 0x80, 0xED), System.Windows.Media.Color.FromRgb(0x1F, 0x9D, 0x74),
+                System.Windows.Media.Color.FromRgb(0xE0, 0x8A, 0x1E), System.Windows.Media.Color.FromRgb(0xC2, 0x3B, 0x80),
+                System.Windows.Media.Color.FromRgb(0x4C, 0x5B, 0xD4), System.Windows.Media.Color.FromRgb(0x5E, 0x7D, 0x2A),
+            };
+
+            public GameIconRow(string placeId, string title)
+            {
+                PlaceId = placeId;
+                Title = title;
+                Initials = MakeInitials(title);
+
+                int hash = 0;
+                foreach (char c in placeId)
+                    hash = unchecked(hash * 31 + c);
+                var brush = new System.Windows.Media.SolidColorBrush(TileColors[(hash & 0x7FFFFFFF) % TileColors.Length]);
+                brush.Freeze();
+                InitialsBrush = brush;
+            }
+
+            public string PlaceId { get; }
+
+            /// <summary>Game name without the place ID.</summary>
+            public string Title { get; }
+
+            public string Initials { get; }
+
+            public System.Windows.Media.Brush InitialsBrush { get; }
+
+            private string _iconUrl = "";
+            public string IconUrl
+            {
+                get => _iconUrl;
+                set { _iconUrl = value ?? ""; OnPropertyChanged(nameof(IconUrl)); }
+            }
+
+            private static string MakeInitials(string title)
+            {
+                string[] words = title.Split(new[] { ' ', '-', '_', ':', '[', ']', '(', ')', '|' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Where(w => char.IsLetterOrDigit(w[0])).ToArray();
+                if (words.Length == 0)
+                    return "?";
+                if (words.Length == 1)
+                    return new string(words[0].Where(char.IsLetterOrDigit).Take(2).ToArray()).ToUpperInvariant();
+                return (words[0][..1] + words[1][..1]).ToUpperInvariant();
+            }
+        }
+
+        public sealed class ResolutionGameChoice : GameIconRow
+        {
+            public ResolutionGameChoice(string placeId, string name, string title = "") : base(placeId, title.Length > 0 ? title : name)
+            {
+                Name = name;
+            }
+
+            public string Name { get; }
+
             public override string ToString() => Name;
         }
 
         public List<ResolutionGameChoice> ResolutionRecentGames { get; } = Integrations.PlayTimeStore.GetAll()
             .Where(e => e.PlaceId > 0)
             .Take(30)
-            .Select(e => new ResolutionGameChoice(e.PlaceId.ToString(), $"{(e.Name.Length > 0 ? e.DisplayName : "Place")}  ({e.PlaceId})"))
+            .Select(e =>
+            {
+                string title = e.Name.Length > 0 ? e.DisplayName : "Place";
+                return new ResolutionGameChoice(e.PlaceId.ToString(), $"{title}  ({e.PlaceId})", title) { IconUrl = e.IconUrl };
+            })
             .ToList();
 
         public ResolutionGameChoice? ResolutionPickedGame
@@ -418,9 +517,74 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        public sealed record ResolutionPlaceAssignment(string PlaceId, string Game, InGameResolutionProfile Profile)
+        public sealed class ResolutionPlaceAssignment : GameIconRow
         {
-            public string Display => $"{Game} → {Profile.Width}x{Profile.Height} @ {Profile.RefreshRate}Hz";
+            public ResolutionPlaceAssignment(string placeId, string game, InGameResolutionProfile profile) : base(placeId, game)
+            {
+                Game = game;
+                Profile = profile;
+                IconUrl = IconFor(placeId);
+            }
+
+            public string Game { get; }
+
+            public InGameResolutionProfile Profile { get; }
+
+            public string Display => $"{Game} · {Profile.Width} × {Profile.Height} at {Profile.RefreshRate} Hz";
+        }
+
+        private static string IconFor(string placeId) =>
+            Integrations.PlayTimeStore.GetAll().FirstOrDefault(e => e.PlaceId.ToString() == placeId)?.IconUrl ?? "";
+
+        private bool _resolutionIconsRequested;
+
+        /// <summary>
+        /// Fills in game icons for the per game rows and the recent games list. Uses the icon saved in play time
+        /// history first, then the Roblox thumbnails API (the same lookup the Games page uses).
+        /// </summary>
+        public async void LoadResolutionIcons()
+        {
+            if (_resolutionIconsRequested)
+                return;
+            _resolutionIconsRequested = true;
+
+            try
+            {
+                var rows = ResolutionRecentGames.Cast<GameIconRow>().Concat(ResolutionPlaceAssignments).Where(r => r.IconUrl.Length == 0).ToList();
+                if (rows.Count == 0)
+                    return;
+
+                var universes = new Dictionary<string, long>();
+                foreach (string placeId in rows.Select(r => r.PlaceId).Distinct().Take(60))
+                {
+                    if (!long.TryParse(placeId, out long place) || place <= 0)
+                        continue;
+                    try
+                    {
+                        long? universe = await GameLookup.UniverseOfAsync(place, TimeSpan.FromSeconds(6));
+                        if (universe is > 0)
+                            universes[placeId] = universe.Value;
+                    }
+                    catch (Exception ex)
+                    {
+                        App.Logger.WriteLine("PerformanceViewModel", $"Universe lookup for {placeId} failed: {ex.Message}");
+                    }
+                }
+
+                if (universes.Count == 0)
+                    return;
+
+                List<GameInfo> games = await GameLookup.WithIconsAsync(universes.Select(kv => new GameInfo(kv.Value, long.Parse(kv.Key), "")).ToList());
+                foreach (GameInfo game in games.Where(g => !string.IsNullOrEmpty(g.IconUrl)))
+                {
+                    foreach (GameIconRow row in rows.Where(r => universes.TryGetValue(r.PlaceId, out long u) && u == game.UniverseId))
+                        row.IconUrl = game.IconUrl;
+                }
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("PerformanceViewModel", $"Game icon lookup failed: {ex.Message}");
+            }
         }
 
         private static string GameNameFor(string placeId) =>
@@ -455,7 +619,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             DisplayMode? mode = SelectedMode;
             if (mode is null)
             {
-                ResolutionAssignStatus = "Pick a resolution above first - the game gets that monitor and resolution.";
+                ResolutionAssignStatus = "Pick a resolution above first. The game gets that monitor and resolution.";
                 return;
             }
 
@@ -471,7 +635,10 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             if (existing is not null)
                 ResolutionPlaceAssignments.Remove(existing);
 
-            ResolutionPlaceAssignments.Add(new ResolutionPlaceAssignment(id, GameNameFor(id), profile));
+            var added = new ResolutionPlaceAssignment(id, GameNameFor(id), profile);
+            if (added.IconUrl.Length == 0)
+                added.IconUrl = ResolutionRecentGames.FirstOrDefault(g => g.PlaceId == id)?.IconUrl ?? "";
+            ResolutionPlaceAssignments.Add(added);
             App.Settings.Prop.InGameResolutionPlaceProfiles[id] = profile;
             ResolutionAssignPlaceId = "";
             ResolutionAssignStatus = $"{GameNameFor(id)} will use {mode}. Press Save to keep it.";
@@ -486,5 +653,109 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         });
 
         public ICommand IdentifyDisplaysCommand => new RelayCommand(() => DisplaySystem.IdentifyDisplays());
+
+        #region Last session tiles
+
+        /// <summary>One stat tile above the frame rate settings: a number, a caption and a row of small bars.</summary>
+        public sealed class SessionStatTile
+        {
+            public string Label { get; init; } = "";
+            public string Value { get; init; } = "";
+            public string Unit { get; init; } = "";
+            public string Caption { get; init; } = "";
+            public List<double> Bars { get; init; } = new();
+        }
+
+        public ObservableCollection<SessionStatTile> SessionTiles { get; } = new();
+
+        public Visibility SessionTilesVisibility => SessionTiles.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        /// <summary>
+        /// Reads the summary the watcher writes when you leave a game (PerformanceSessionRecorder, stored locally).
+        /// Tiles without data are left out, and the row hides when there is no session yet.
+        /// </summary>
+        public void LoadLastSession()
+        {
+            SessionTiles.Clear();
+
+            PerformanceSessionSummary? last = PerformanceSessionRecorder.LoadLast();
+            if (last is not null)
+            {
+                string game = last.GameName.Length > 0 ? last.GameName : last.PlaceId > 0 ? $"Place {last.PlaceId}" : "";
+
+                List<int> fps = last.Fps.Where(f => f > 0).ToList();
+                if (fps.Count > 0)
+                {
+                    List<int> sorted = fps.OrderBy(f => f).ToList();
+                    int low = sorted[Math.Min(sorted.Count - 1, (int)(sorted.Count * 0.01))];
+
+                    SessionTiles.Add(new SessionStatTile
+                    {
+                        Label = "Average FPS",
+                        Value = Math.Round(fps.Average()).ToString(CultureInfo.CurrentCulture),
+                        Caption = game.Length > 0 ? $"Last session, {game}" : "Last session",
+                        Bars = Bars(fps, average: true),
+                    });
+                    SessionTiles.Add(new SessionStatTile
+                    {
+                        Label = "1% low",
+                        Value = low.ToString(CultureInfo.CurrentCulture),
+                        Unit = "fps",
+                        Caption = "Stutter floor",
+                        Bars = Bars(fps, average: false),
+                    });
+                }
+
+                List<int> ping = last.PingMs.Where(p => p >= 0).ToList();
+                if (ping.Count > 0)
+                {
+                    SessionTiles.Add(new SessionStatTile
+                    {
+                        Label = "Ping",
+                        Value = Math.Round(ping.Average()).ToString(CultureInfo.CurrentCulture),
+                        Unit = "ms",
+                        Caption = last.Region.Length > 0 ? $"{last.Region} server" : "Average while playing",
+                        Bars = Bars(ping, average: true),
+                    });
+                }
+
+                List<int> memory = last.MemoryMb.Where(m => m > 0).ToList();
+                if (memory.Count > 0)
+                {
+                    int peak = memory.Max();
+                    SessionTiles.Add(new SessionStatTile
+                    {
+                        Label = "Memory",
+                        Value = peak >= 1024 ? (peak / 1024.0).ToString("0.0", CultureInfo.CurrentCulture) : peak.ToString(CultureInfo.CurrentCulture),
+                        Unit = peak >= 1024 ? "GB" : "MB",
+                        Caption = "Peak while playing",
+                        Bars = Bars(memory, average: true),
+                    });
+                }
+            }
+
+            OnPropertyChanged(nameof(SessionTilesVisibility));
+        }
+
+        /// <summary>Squeezes the samples into 18 bars between 4 and 22 pixels high (bucket average, or bucket minimum for the lows).</summary>
+        private static List<double> Bars(List<int> samples, bool average)
+        {
+            const int count = 18;
+            var buckets = new List<double>(count);
+            for (int i = 0; i < count; i++)
+            {
+                int start = i * samples.Count / count;
+                int end = Math.Max(start + 1, (i + 1) * samples.Count / count);
+                IEnumerable<int> slice = samples.Skip(start).Take(end - start);
+                if (!slice.Any())
+                    slice = new[] { samples[^1] };
+                buckets.Add(average ? slice.Average() : slice.Min());
+            }
+
+            double max = Math.Max(1, buckets.Max());
+            return buckets.Select(v => 4 + 18 * (v / max)).ToList();
+        }
+
+        #endregion
     }
 }

@@ -10,58 +10,139 @@
       Title="RenderingLowEndPage"
       Scrollable="True">
 
+    <ui:UiPage.Resources>
+        <!--  A level tile: outlined in the accent colour while that level is on  -->
+        <Style x:Key="LevelTileLight" TargetType="{x:Type Border}" BasedOn="{StaticResource PhasmaCard}">
+            <Setter Property="Padding" Value="16,14,16,16" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ActiveLevel}" Value="Light">
+                    <Setter Property="BorderBrush" Value="{DynamicResource PhasmaAccentStrokeBrush}" />
+                    <Setter Property="BorderThickness" Value="1.5" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="LevelTileStrong" TargetType="{x:Type Border}" BasedOn="{StaticResource PhasmaCard}">
+            <Setter Property="Padding" Value="16,14,16,16" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ActiveLevel}" Value="Strong">
+                    <Setter Property="BorderBrush" Value="{DynamicResource PhasmaAccentStrokeBrush}" />
+                    <Setter Property="BorderThickness" Value="1.5" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="LevelTilePlain" TargetType="{x:Type Border}" BasedOn="{StaticResource PhasmaCard}">
+            <Setter Property="Padding" Value="16,14,16,16" />
+        </Style>
+
+        <!--  Soft button that turns accent while its level is on  -->
+        <Style x:Key="LevelButtonLight" TargetType="{x:Type ButtonBase}" BasedOn="{StaticResource PhasmaSoftButton}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ActiveLevel}" Value="Light">
+                    <Setter Property="Background" Value="{DynamicResource PhasmaAccentBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource PhasmaAccentTextBrush}" />
+                    <Setter Property="BorderBrush" Value="Transparent" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="LevelButtonStrong" TargetType="{x:Type ButtonBase}" BasedOn="{StaticResource PhasmaSoftButton}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ActiveLevel}" Value="Strong">
+                    <Setter Property="Background" Value="{DynamicResource PhasmaAccentBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource PhasmaAccentTextBrush}" />
+                    <Setter Property="BorderBrush" Value="Transparent" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </ui:UiPage.Resources>
+
     <StackPanel Margin="0,0,14,14">
-        <TextBlock FontSize="20" FontWeight="Medium" Text="{x:Static resources:Strings.Menu_Rendering_LowEndMode}" />
-        <TextBlock Margin="0,2,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                   Text="{x:Static resources:Strings.Menu_Rendering_OneClickMakeRobloxRunWeak}" />
+        <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="{x:Static resources:Strings.Menu_Rendering_LowEndMode}" />
+        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" MaxWidth="760" HorizontalAlignment="Left"
+                   Text="One click to make Roblox run on a weak PC: lower graphics, a tuned Roblox process, and PhasmaStrap's own heavy extras off. Turning it off puts back exactly what you had before." />
 
-        <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" Text="{Binding HardwareText}" />
-        <TextBlock TextWrapping="Wrap" FontWeight="SemiBold" Text="{Binding RecommendationText}" />
+        <!--  This PC  -->
+        <Border Style="{DynamicResource PhasmaCard}" Padding="16,14,16,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Width="46" Height="46" CornerRadius="{DynamicResource PhasmaCornerRadius}" Background="{DynamicResource PhasmaSelectedBrush}" VerticalAlignment="Center">
+                    <ui:SymbolIcon Symbol="Desktop24" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                    <TextBlock TextWrapping="Wrap" FontWeight="SemiBold" FontSize="13" Text="{Binding HardwareText}" />
+                    <TextBlock Margin="0,3,0,0" TextWrapping="Wrap" FontSize="11.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding RecommendationText}" />
+                </StackPanel>
+            </Grid>
+        </Border>
 
-        <WrapPanel Margin="0,10,0,0">
-            <ui:Button Icon="TopSpeed24" Content="{x:Static resources:Strings.Enums_Theme_Light}" Command="{Binding ApplyCommand, Mode=OneTime}" CommandParameter="Light">
-                <ui:Button.Style>
-                    <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
-                        <Setter Property="Appearance" Value="Secondary" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding ActiveLevel}" Value="Light">
-                                <Setter Property="Appearance" Value="Primary" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </ui:Button.Style>
-            </ui:Button>
-            <ui:Button Margin="8,0,0,0" Icon="TopSpeed24" Content="{x:Static resources:Strings.Menu_Rendering_Strong}" Command="{Binding ApplyCommand, Mode=OneTime}" CommandParameter="Strong">
-                <ui:Button.Style>
-                    <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
-                        <Setter Property="Appearance" Value="Secondary" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding ActiveLevel}" Value="Strong">
-                                <Setter Property="Appearance" Value="Primary" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </ui:Button.Style>
-            </ui:Button>
-            <ui:Button Margin="8,0,0,0" Icon="ArrowUndo24" Content="{x:Static resources:Strings.Menu_Rendering_TurnOff}" Appearance="Transparent" Visibility="{Binding TurnOffVisibility}" Command="{Binding TurnOffCommand, Mode=OneTime}" />
-            <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding StatusText}" />
-        </WrapPanel>
+        <!--  Levels  -->
+        <controls:CardColumns Margin="0,14,0,0" Columns="3" MinColumnWidth="220">
+            <Border Style="{StaticResource LevelTileLight}">
+                <DockPanel LastChildFill="False">
+                    <TextBlock DockPanel.Dock="Top" Style="{DynamicResource PhasmaHeading}" FontSize="16" Text="{x:Static resources:Strings.Enums_Theme_Light}" />
+                    <TextBlock DockPanel.Dock="Top" Margin="0,8,0,14" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               Text="Lower graphics and a tuned process. Most games still look normal." />
+                    <Button DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" Style="{StaticResource LevelButtonLight}" Content="Use Light"
+                            Command="{Binding ApplyCommand, Mode=OneTime}" CommandParameter="Light" />
+                </DockPanel>
+            </Border>
 
-        <StackPanel Margin="0,12,0,0" Orientation="Horizontal">
-            <TextBlock VerticalAlignment="Center" FontWeight="SemiBold" Text="{Binding ChangesHeader}" />
-            <ui:Button Margin="10,0,0,0" Padding="8,2" FontSize="12" Appearance="Transparent" Content="{x:Static resources:Strings.Menu_Rendering_ShowLight}" Command="{Binding ShowCommand, Mode=OneTime}" CommandParameter="Light" />
-            <ui:Button Padding="8,2" FontSize="12" Appearance="Transparent" Content="{x:Static resources:Strings.Menu_Rendering_ShowStrong}" Command="{Binding ShowCommand, Mode=OneTime}" CommandParameter="Strong" />
-        </StackPanel>
-        <ItemsControl Margin="0,4,0,0" ItemsSource="{Binding Changes}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <TextBlock Margin="0,1,0,1" TextWrapping="Wrap" FontSize="13">
-                        <Run Text="{Binding Area, Mode=OneWay}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                        <Run Text="  " />
-                        <Run Text="{Binding What, Mode=OneWay}" />
-                    </TextBlock>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+            <Border Style="{StaticResource LevelTileStrong}">
+                <DockPanel LastChildFill="False">
+                    <TextBlock DockPanel.Dock="Top" Style="{DynamicResource PhasmaHeading}" FontSize="16" Text="{x:Static resources:Strings.Menu_Rendering_Strong}" />
+                    <TextBlock DockPanel.Dock="Top" Margin="0,8,0,14" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               Text="Everything Light does, plus textures, shadows and effects cut hard." />
+                    <Button DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" Style="{StaticResource LevelButtonStrong}" Content="Use Strong"
+                            Command="{Binding ApplyCommand, Mode=OneTime}" CommandParameter="Strong" />
+                </DockPanel>
+            </Border>
+
+            <Border Style="{StaticResource LevelTilePlain}">
+                <DockPanel LastChildFill="False">
+                    <TextBlock DockPanel.Dock="Top" Style="{DynamicResource PhasmaHeading}" FontSize="16" Text="{x:Static resources:Strings.Menu_Rendering_TurnOff}" />
+                    <TextBlock DockPanel.Dock="Top" Margin="0,8,0,6" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               Text="Puts back exactly what you had before." />
+                    <TextBlock DockPanel.Dock="Top" Margin="0,0,0,14" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding StatusText}" />
+                    <Button DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Menu_Rendering_TurnOff}"
+                            Visibility="{Binding TurnOffVisibility}" Command="{Binding TurnOffCommand, Mode=OneTime}" />
+                </DockPanel>
+            </Border>
+        </controls:CardColumns>
+
+        <!--  What the previewed level changes  -->
+        <controls:SettingsCard Margin="0,14,0,0" Header="{Binding ChangesHeader}">
+            <controls:SettingsCard.HeaderContent>
+                <StackPanel Orientation="Horizontal">
+                    <ToggleButton Style="{DynamicResource PhasmaChip}" Content="{x:Static resources:Strings.Menu_Rendering_ShowLight}"
+                                  IsChecked="{Binding PreviewIsLight, Mode=OneWay}" Command="{Binding ShowCommand, Mode=OneTime}" CommandParameter="Light" />
+                    <ToggleButton Style="{DynamicResource PhasmaChip}" Margin="0" Content="{x:Static resources:Strings.Menu_Rendering_ShowStrong}"
+                                  IsChecked="{Binding PreviewIsStrong, Mode=OneWay}" Command="{Binding ShowCommand, Mode=OneTime}" CommandParameter="Strong" />
+                </StackPanel>
+            </controls:SettingsCard.HeaderContent>
+
+            <ItemsControl Margin="0,0,0,8" ItemsSource="{Binding Changes}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <Border Style="{DynamicResource PhasmaDivider}" />
+                            <Grid Margin="0,7,0,7">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <ui:SymbolIcon Symbol="Checkmark24" FontSize="12" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Grid.Column="1" Margin="10,0,0,0" TextWrapping="Wrap" FontSize="12.5" VerticalAlignment="Center">
+                                    <Run Text="{Binding What, Mode=OneWay}" />
+                                    <Run Text="  " />
+                                    <Run Text="{Binding Area, Mode=OneWay}" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                </TextBlock>
+                            </Grid>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </controls:SettingsCard>
     </StackPanel>
 </ui:UiPage>

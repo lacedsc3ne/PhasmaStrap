@@ -46,6 +46,8 @@ namespace PhasmaStrap.Utility
                         {
                             friends = await FriendsService.GetFriendsAsync(me.UserId, token).ConfigureAwait(false);
                             pollsSinceFriendRefresh = 0;
+
+                            NoteNewFriends(me.UserId, friends);
                         }
                         else
                         {
@@ -55,6 +57,7 @@ namespace PhasmaStrap.Utility
                         if (friends.Count > 0)
                         {
                             Dictionary<long, FriendPresence> presence = await FriendsService.GetPresenceAsync(friends.Select(f => f.UserId), token).ConfigureAwait(false);
+                            FriendPlaySessions.Observe(presence);
 
                             if (!firstPoll)
                                 RaiseAlerts(friends, lastPresence, presence);
@@ -81,16 +84,42 @@ namespace PhasmaStrap.Utility
             }
         }
 
+        private static void NoteNewFriends(long accountId, List<FriendInfo> friends)
+        {
+            if (friends.Count == 0)
+                return;
+
+            try
+            {
+                List<(long UserId, DateTime FirstSeenUtc)> added = FriendHistoryStore.Shared.Observe(accountId, friends.Select(f => f.UserId));
+
+                if (added.Count > 0)
+                    _ = Backend.SocialApi.ReportNewFriendsAsync(accountId, added);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not note new friends: {ex.Message}");
+            }
+        }
+
         private static void RaiseAlerts(List<FriendInfo> friends, Dictionary<long, FriendPresence> before, Dictionary<long, FriendPresence> after)
         {
             if (!App.Settings.Prop.FriendActivityAlertsEnabled)
                 return;
 
             HashSet<long>? favourites = App.Settings.Prop.FriendActivityFavouritesOnly ? FriendNotesStore.Shared.Favourites() : null;
+            Dictionary<long, string> overrides = FriendNotesStore.Shared.AlertOverrides();
 
             foreach (FriendInfo friend in friends)
             {
-                if (favourites is not null && !favourites.Contains(friend.UserId))
+                // A friend's own alert choice wins over the "favourites only" setting
+                overrides.TryGetValue(friend.UserId, out string? mode);
+                mode ??= FriendNotesStore.AlertMode.Usual;
+
+                if (mode == FriendNotesStore.AlertMode.Never)
+                    continue;
+
+                if (mode == FriendNotesStore.AlertMode.Usual && favourites is not null && !favourites.Contains(friend.UserId))
                     continue;
 
                 if (!after.TryGetValue(friend.UserId, out FriendPresence? now))
@@ -104,15 +133,43 @@ namespace PhasmaStrap.Utility
 
                 string name = string.IsNullOrWhiteSpace(friend.DisplayName) ? friend.Username : friend.DisplayName;
 
+                if (mode == FriendNotesStore.AlertMode.Game)
+                {
+                    // Only told when they start playing, never just for coming online
+                    if (wasType != FriendPresenceType.InGame && now.Type == FriendPresenceType.InGame)
+                    {
+                        NotificationCenter.Notify(
+                            $"{name} started playing",
+                            string.IsNullOrEmpty(now.LastLocation) ? "In a game" : now.LastLocation,
+                            NotificationCategory.General,
+                            kind: NotificationKindId.FriendPlaying);
+                    }
+
+                    continue;
+                }
+
                 if (wasType == FriendPresenceType.Offline && now.Type != FriendPresenceType.Offline)
                 {
+                    // Friends page > Friend alerts > "When anyone comes online"
+                    if (!App.Settings.Prop.FriendAlertOnline)
+                    {
+                        if (App.Settings.Prop.FriendAlertGame && now.Type == FriendPresenceType.InGame)
+                            NotificationCenter.Notify(
+                                $"{name} started playing",
+                                string.IsNullOrEmpty(now.LastLocation) ? "In a game" : now.LastLocation,
+                                NotificationCategory.General,
+                                kind: NotificationKindId.FriendPlaying);
+
+                        continue;
+                    }
+
                     NotificationCenter.Notify(
                         $"{name} is now online",
                         string.IsNullOrEmpty(now.LastLocation) ? "Online" : now.LastLocation,
                         NotificationCategory.General,
                         kind: NotificationKindId.FriendOnline);
                 }
-                else if (wasType != FriendPresenceType.InGame && now.Type == FriendPresenceType.InGame)
+                else if (wasType != FriendPresenceType.InGame && now.Type == FriendPresenceType.InGame && App.Settings.Prop.FriendAlertGame)
                 {
                     NotificationCenter.Notify(
                         $"{name} started playing",

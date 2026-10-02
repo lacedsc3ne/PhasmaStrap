@@ -63,6 +63,9 @@ namespace PhasmaStrap
 
         public LaunchFlag PurgeStandbyFlag          { get; } = new("purgestandby");
 
+        /// <summary>A PhasmaStrap link, like phasmastrap://settings/&lt;key&gt;, to open in the settings window.</summary>
+        public LaunchFlag LinkFlag                  { get; } = new("link");
+
 #if DEBUG
         public bool BypassUpdateCheck => true;
 #else
@@ -111,6 +114,13 @@ namespace PhasmaStrap
                     App.Logger.WriteLine(LOG_IDENT, "Got Roblox player argument");
                     RobloxLaunchMode = LaunchMode.Player;
                     RobloxLaunchArgs = arg;
+                    startIdx = 1;
+                }
+                else if (arg.StartsWith(Utility.WindowsRegistry.LinkScheme + ":", StringComparison.OrdinalIgnoreCase))
+                {
+                    App.Logger.WriteLine(LOG_IDENT, "Got PhasmaStrap link argument");
+                    LinkFlag.Active = true;
+                    LinkFlag.Data = arg;
                     startIdx = 1;
                 }
                 else if (arg.StartsWith("version-"))

@@ -38,6 +38,13 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public string InstalledVersionText => RojoManager.InstalledVersion is string v ? $"Installed ({v})" : "Not installed";
 
+        /// <summary>Shorter wording for the settings page card.</summary>
+        public string VersionText => RojoManager.InstalledVersion is string v ? $"Version {v}" : "Not installed";
+
+        public string Initials => InitialsTile.Initials("Rojo");
+
+        public System.Windows.Media.Brush TileBrush => InitialsTile.BrushFor("Rojo");
+
         public string ProjectPath
         {
             get => App.Settings.Prop.RojoLastProjectPath;
@@ -150,6 +157,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             OnPropertyChanged(nameof(IsInstalled));
             OnPropertyChanged(nameof(IsServing));
             OnPropertyChanged(nameof(InstalledVersionText));
+            OnPropertyChanged(nameof(VersionText));
             OnPropertyChanged(nameof(CanServe));
             OnPropertyChanged(nameof(InstallOrUpdateButtonText));
             OnPropertyChanged(nameof(ServeButtonText));
@@ -168,16 +176,30 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string DisplayName => Extension.DisplayName;
         public string Description => Extension.Description;
 
+        public string Initials => InitialsTile.Initials(Extension.DisplayName);
+
+        public System.Windows.Media.Brush TileBrush => InitialsTile.BrushFor(Extension.DisplayName);
+
         public bool IsInstalled => ExtensionManager.IsInstalled(Extension.Id);
 
         public string StatusText => IsInstalled
             ? ExtensionManager.GetSavedPath(Extension.Id)!
-            : "Not located - browse to the executable to enable this";
+            : "Not located, browse to the executable to enable this";
+
+        /// <summary>Found or Not located, for the settings page card. The full path is in <see cref="PathText"/>.</summary>
+        public string ShortStatusText => IsInstalled ? "Found" : "Not located";
+
+        /// <summary>Where the tool was found, or how to point PhasmaStrap at it. Shown on hover.</summary>
+        public string PathText => IsInstalled
+            ? ExtensionManager.GetSavedPath(Extension.Id) ?? ""
+            : "Browse to the program to use it from here";
 
         public void Refresh()
         {
             OnPropertyChanged(nameof(IsInstalled));
             OnPropertyChanged(nameof(StatusText));
+            OnPropertyChanged(nameof(ShortStatusText));
+            OnPropertyChanged(nameof(PathText));
         }
     }
 

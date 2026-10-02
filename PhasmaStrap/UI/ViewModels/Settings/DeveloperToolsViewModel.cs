@@ -17,6 +17,24 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public int FlagCount => Snapshot.Flags.Count;
     }
 
+    public enum LogRowLevel
+    {
+        Info,
+        Warning,
+        Error,
+        Header,
+    }
+
+    /// <summary>One line of the log viewer, split into time, source and message.</summary>
+    public sealed class LogRow
+    {
+        public string Time { get; init; } = "";
+        public string Source { get; init; } = "";
+        public string Message { get; init; } = "";
+        public LogRowLevel Level { get; init; }
+        public System.Windows.Media.Brush SourceBrush { get; init; } = System.Windows.Media.Brushes.Gray;
+    }
+
     public sealed class DeveloperToolItem
     {
         public string Key { get; init; } = "";
@@ -32,7 +50,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             new DeveloperToolItem { Key = "proxy", Label = Strings.Menu_DeveloperTools_LiveProxyTraffic, Symbol = Wpf.Ui.Common.SymbolRegular.ArrowSwap24 },
             new DeveloperToolItem { Key = "logs", Label = Strings.Menu_DeveloperTools_LogViewer, Symbol = Wpf.Ui.Common.SymbolRegular.DocumentText24 },
             new DeveloperToolItem { Key = "plugins", Label = Strings.Menu_DeveloperTools_StudioPluginInstaller, Symbol = Wpf.Ui.Common.SymbolRegular.PuzzleCube24 },
-            new DeveloperToolItem { Key = "diagnostics", Label = Strings.Menu_PhasmaStrap_Section_Diagnostics_Header, Symbol = Wpf.Ui.Common.SymbolRegular.Stethoscope24 },
         };
 
         private DeveloperToolItem? _selectedTool;
@@ -382,7 +399,66 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string LogText
         {
             get => _logText;
-            private set { _logText = value; OnPropertyChanged(nameof(LogText)); }
+            private set
+            {
+                _logText = value;
+                OnPropertyChanged(nameof(LogText));
+                RebuildLogRows();
+            }
+        }
+
+        /// <summary>The log text split into coloured rows. Only the newest lines are shown, Copy still copies everything.</summary>
+        public ObservableCollection<LogRow> LogRows { get; } = new();
+
+        private const int MaxLogRows = 3000;
+
+        private string _logSubtitle = "The newest PhasmaStrap logs and the newest Roblox log";
+        public string LogSubtitle
+        {
+            get => _logSubtitle;
+            private set { _logSubtitle = value; OnPropertyChanged(nameof(LogSubtitle)); }
+        }
+
+        private int _logErrors, _logWarnings;
+        public string LogErrorCountText => _logErrors == 0 ? "" : _logErrors == 1 ? "1 error" : $"{_logErrors} errors";
+        public string LogWarningCountText => _logWarnings == 0 ? "" : _logWarnings == 1 ? "1 warning" : $"{_logWarnings} warnings";
+
+        private void RebuildLogRows()
+        {
+            LogRows.Clear();
+            _logErrors = 0;
+            _logWarnings = 0;
+
+            string[] lines = (_logText ?? "").Replace("\r", "").Split('\n');
+            int start = Math.Max(0, lines.Length - MaxLogRows);
+
+            for (int i = start; i < lines.Length; i++)
+            {
+                if (string.IsNullOrWhiteSpace(lines[i]))
+                    continue;
+
+                LogRow row = LogLines.Parse(lines[i]);
+
+                if (row.Level == LogRowLevel.Error)
+                    _logErrors++;
+                else if (row.Level == LogRowLevel.Warning)
+                    _logWarnings++;
+
+                LogRows.Add(row);
+            }
+
+            try
+            {
+                FileInfo latest = new(App.Logger.FileLocation ?? "");
+                if (latest.Exists)
+                    LogSubtitle = $"The latest PhasmaStrap log · {latest.LastWriteTime:d MMM HH:mm}";
+            }
+            catch
+            {
+            }
+
+            OnPropertyChanged(nameof(LogErrorCountText));
+            OnPropertyChanged(nameof(LogWarningCountText));
         }
 
         public string LogDescription => "The tail of the four newest PhasmaStrap logs and of the newest Roblox log, joined together.";

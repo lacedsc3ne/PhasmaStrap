@@ -605,6 +605,15 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
             }
         }
 
+        public async Task SwitchAndLaunchAsync(SwitcherAccount account, long placeId)
+        {
+            if (!account.IsCurrent)
+                await SwitchAsync(account).ConfigureAwait(true);
+
+            if (account.IsCurrent)
+                RobloxLaunch.Join(placeId);
+        }
+
         private void Delete(SwitcherAccount? account)
         {
             if (account == null)

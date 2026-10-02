@@ -1,6 +1,8 @@
 using System.Windows;
 using System.Windows.Threading;
 
+using PhasmaStrap.RobloxInterfaces;
+
 namespace PhasmaStrap.UI.ViewModels.Settings
 {
     public class BehaviourViewModel : NotifyPropertyChangedViewModel
@@ -8,6 +10,303 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public BehaviourViewModel()
         {
             Matchmaker.PropertyChanged += (_, _) => RefreshSummaries();
+
+            OpenChannelCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(() => Go(typeof(PhasmaStrap.UI.Elements.Settings.Pages.ChannelPage)));
+            OpenVersionsCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(() => Go(typeof(PhasmaStrap.UI.Elements.Settings.Pages.RobloxVersionsPage)));
+            OpenModsCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(() => Go(typeof(PhasmaStrap.UI.Elements.Settings.Pages.ModsPage)));
+            OpenModsFolderCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(() =>
+            {
+                try
+                {
+                    Directory.CreateDirectory(Paths.Modifications);
+                    Process.Start("explorer.exe", Paths.Modifications);
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine("BehaviourViewModel", $"Could not open the mods folder: {ex.Message}");
+                }
+            });
+            CheckRobloxCommand = new CommunityToolkit.Mvvm.Input.AsyncRelayCommand(() => CheckRobloxAsync(force: true));
+
+            LoadModSummary();
+            _ = CheckRobloxAsync(force: false);
+        }
+
+        private static void Go(Type page) =>
+            Application.Current?.Windows.OfType<PhasmaStrap.UI.Elements.Settings.MainWindow>().FirstOrDefault()?.Navigate(page);
+
+        // ---- Roblox status: installed version, channel, and whether a newer one is out
+
+        public System.Windows.Input.ICommand OpenChannelCommand { get; }
+        public System.Windows.Input.ICommand OpenVersionsCommand { get; }
+        public System.Windows.Input.ICommand CheckRobloxCommand { get; }
+
+        private static DateTime? _lastCheckUtc;
+        private static string _lastLatestGuid = "";
+        private static string _lastCheckChannel = "";
+
+        private static string ChannelName
+        {
+            get
+            {
+                string channel = App.Settings.Prop.RobloxChannel?.Trim() ?? "";
+                return channel.Length == 0 ? Deployment.DefaultChannel : channel.ToLowerInvariant();
+            }
+        }
+
+        /// <summary>production shows as LIVE, as Roblox calls it.</summary>
+        private static string ChannelLabel => ChannelName.Equals(Deployment.DefaultChannel, StringComparison.OrdinalIgnoreCase) ? "LIVE" : ChannelName;
+
+        public string ChannelButtonText => $"Channel: {ChannelLabel}";
+
+        private bool _checking;
+        public bool IsCheckingRoblox { get => _checking; private set { _checking = value; OnPropertyChanged(nameof(IsCheckingRoblox)); OnPropertyChanged(nameof(CanCheckRoblox)); } }
+        public bool CanCheckRoblox => !_checking;
+
+        private string _robloxStatusTitle = "Roblox";
+        public string RobloxStatusTitle { get => _robloxStatusTitle; private set { _robloxStatusTitle = value; OnPropertyChanged(nameof(RobloxStatusTitle)); } }
+
+        private string _robloxStatusDetail = "";
+        public string RobloxStatusDetail { get => _robloxStatusDetail; private set { _robloxStatusDetail = value; OnPropertyChanged(nameof(RobloxStatusDetail)); } }
+
+        /// <summary>good when up to date, warn when a newer one is out or nothing is installed, none while unknown.</summary>
+        private string _robloxStatusTone = "none";
+        public string RobloxStatusTone { get => _robloxStatusTone; private set { _robloxStatusTone = value; OnPropertyChanged(nameof(RobloxStatusTone)); } }
+
+        private static string Ago(DateTime utc)
+        {
+            TimeSpan ago = DateTime.UtcNow - utc;
+            if (ago.TotalMinutes < 1)
+                return "just now";
+            if (ago.TotalHours < 1)
+                return (int)ago.TotalMinutes == 1 ? "1 minute ago" : $"{(int)ago.TotalMinutes} minutes ago";
+            return (int)ago.TotalHours == 1 ? "1 hour ago" : $"{(int)ago.TotalHours} hours ago";
+        }
+
+        private void ShowRobloxStatus()
+        {
+            string installed = App.PlayerState.Prop.VersionGuid ?? "";
+            string channel = ChannelLabel;
+            string checkedText = _lastCheckUtc is DateTime at ? $" · checked {Ago(at)}" : "";
+            bool sameChannel = _lastCheckChannel == ChannelName;
+
+            OnPropertyChanged(nameof(ChannelButtonText));
+
+            if (installed.Length == 0)
+            {
+                RobloxStatusTitle = "Roblox is not installed yet";
+                RobloxStatusDetail = $"It installs from the {channel} channel the first time you press Play";
+                RobloxStatusTone = "warn";
+                return;
+            }
+
+            string mode = App.Settings.Prop.RobloxVersionMode;
+            if (mode == RobloxVersions.ModePin || mode == RobloxVersions.ModeHold)
+            {
+                RobloxStatusTitle = mode == RobloxVersions.ModePin ? "Roblox is pinned to a version" : "Roblox is held on this version";
+                RobloxStatusDetail = $"{installed} on the {channel} channel{checkedText}";
+                RobloxStatusTone = "none";
+                return;
+            }
+
+            if (!sameChannel || _lastLatestGuid.Length == 0)
+            {
+                RobloxStatusTitle = "Roblox is installed";
+                RobloxStatusDetail = $"{installed} on the {channel} channel";
+                RobloxStatusTone = "none";
+                return;
+            }
+
+            if (_lastLatestGuid == installed)
+            {
+                RobloxStatusTitle = "Roblox is up to date";
+                RobloxStatusDetail = $"{installed} on the {channel} channel{checkedText}";
+                RobloxStatusTone = "good";
+            }
+            else
+            {
+                RobloxStatusTitle = "A newer Roblox is out";
+                RobloxStatusDetail = $"{_lastLatestGuid} on the {channel} channel. It installs the next time you press Play{checkedText}";
+                RobloxStatusTone = "warn";
+            }
+        }
+
+        /// <summary>Asks Roblox's client settings service for the newest build on your channel (at most every 10 minutes unless forced).</summary>
+        private async Task CheckRobloxAsync(bool force)
+        {
+            ShowRobloxStatus();
+
+            if (_checking)
+                return;
+
+            if (!force && _lastCheckUtc is DateTime at && DateTime.UtcNow - at < TimeSpan.FromMinutes(10) && _lastCheckChannel == ChannelName)
+                return;
+
+            IsCheckingRoblox = true;
+
+            try
+            {
+                string channel = ChannelName;
+                string path = channel.Equals(Deployment.DefaultChannel, StringComparison.OrdinalIgnoreCase)
+                    ? "/v2/client-version/WindowsPlayer"
+                    : $"/v2/client-version/WindowsPlayer/channel/{Uri.EscapeDataString(channel)}";
+
+                ClientVersion latest = await Http.GetJson<ClientVersion>("https://clientsettingscdn.roblox.com" + path);
+
+                _lastLatestGuid = latest?.VersionGuid ?? "";
+                _lastCheckChannel = channel;
+                _lastCheckUtc = DateTime.UtcNow;
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("BehaviourViewModel", $"Could not check the latest Roblox: {ex.Message}");
+                RobloxStatusDetail = $"{(App.PlayerState.Prop.VersionGuid ?? "")} on the {ChannelLabel} channel · could not check right now".TrimStart();
+                return;
+            }
+            finally
+            {
+                IsCheckingRoblox = false;
+            }
+
+            ShowRobloxStatus();
+        }
+
+        // ---- When you press Play
+
+        public string[] SettingsWindowOnLaunchOptions { get; } = { "Close it", "Minimise to tray", "Keep it open" };
+
+        private static readonly string[] SettingsWindowOnLaunchKeys = { "Close", "Tray", "KeepOpen" };
+
+        /// <summary>"Close PhasmaStrap": what this window does when you press Launch. Close it is how it always worked.</summary>
+        public string SettingsWindowOnLaunch
+        {
+            get => SettingsWindowOnLaunchOptions[Math.Max(0, Array.IndexOf(SettingsWindowOnLaunchKeys, App.Settings.Prop.SettingsWindowOnLaunch))];
+            set
+            {
+                int index = Array.IndexOf(SettingsWindowOnLaunchOptions, value);
+                if (index < 0)
+                    return;
+
+                App.Settings.Prop.SettingsWindowOnLaunch = SettingsWindowOnLaunchKeys[index];
+                OnPropertyChanged(nameof(SettingsWindowOnLaunch));
+                OnPropertyChanged(nameof(SettingsWindowOnLaunchDescription));
+            }
+        }
+
+        public string SettingsWindowOnLaunchDescription => App.Settings.Prop.SettingsWindowOnLaunch switch
+        {
+            "Tray" => "Stays in the tray while you play",
+            "KeepOpen" => "Stays open next to the game",
+            _ => "Closes when Roblox starts",
+        };
+
+        /// <summary>"Allow more than one Roblox": holds Roblox's singleton mutex so a new launch does not close the one running.</summary>
+        public bool AllowMultipleRoblox
+        {
+            get => App.Settings.Prop.AllowMultipleRoblox;
+            set { App.Settings.Prop.AllowMultipleRoblox = value; OnPropertyChanged(nameof(AllowMultipleRoblox)); RefreshSummaries(); }
+        }
+
+        /// <summary>"Ask which account": the saved accounts picker before each launch from PhasmaStrap.</summary>
+        public bool AskAccountOnLaunch
+        {
+            get => App.Settings.Prop.AskAccountOnLaunch;
+            set { App.Settings.Prop.AskAccountOnLaunch = value; OnPropertyChanged(nameof(AskAccountOnLaunch)); }
+        }
+
+        /// <summary>"Confirm before joining": asks before a link from the Roblox website starts a game.</summary>
+        public bool ConfirmWebsiteJoins
+        {
+            get => App.Settings.Prop.ConfirmWebsiteJoins;
+            set { App.Settings.Prop.ConfirmWebsiteJoins = value; OnPropertyChanged(nameof(ConfirmWebsiteJoins)); }
+        }
+
+        /// <summary>"Fullscreen on launch": turns on Roblox's Fullscreen setting before it starts.</summary>
+        public bool FullscreenOnLaunch
+        {
+            get => App.Settings.Prop.FullscreenOnLaunch;
+            set { App.Settings.Prop.FullscreenOnLaunch = value; OnPropertyChanged(nameof(FullscreenOnLaunch)); }
+        }
+
+        /// <summary>
+        /// "Remove the 60 Hz cap on menus": the same FastFlag preset as the frame rate limit on Performance (Rendering.Framerate,
+        /// DFIntTaskSchedulerTargetFps). On sets it to this display's refresh rate (at least 120, at most 240); off clears it.
+        /// </summary>
+        public bool RemoveFrameRateCap
+        {
+            get => int.TryParse(App.FastFlags.GetPreset("Rendering.Framerate"), out int fps) && fps > 60;
+            set
+            {
+                if (value == RemoveFrameRateCap)
+                    return;
+
+                if (value)
+                {
+                    int refresh = 0;
+                    try { refresh = DisplaySystem.GetCurrentMode(null)?.RefreshRate ?? 0; } catch { }
+
+                    int target = Math.Clamp(refresh, 120, 240);
+                    App.FastFlags.SetPreset("Rendering.Framerate", target.ToString());
+                    App.FastFlags.SetPreset("Rendering.LimitFramerate", null);
+                }
+                else
+                {
+                    App.FastFlags.SetPreset("Rendering.Framerate", null);
+                    App.FastFlags.SetPreset("Rendering.LimitFramerate", null);
+                }
+
+                OnPropertyChanged(nameof(RemoveFrameRateCap));
+                OnPropertyChanged(nameof(FrameRateCapDescription));
+            }
+        }
+
+        public string FrameRateCapDescription => int.TryParse(App.FastFlags.GetPreset("Rendering.Framerate"), out int fps) && fps > 0
+            ? $"Smoother loading screens. Capped at {fps} FPS now."
+            : "Smoother loading screens";
+
+        // ---- Mods summary: what is swapped in every time Roblox starts (read only, the Mods page changes them)
+
+        public System.Windows.Input.ICommand OpenModsCommand { get; }
+        public System.Windows.Input.ICommand OpenModsFolderCommand { get; }
+
+        public string ModFontText { get; private set; } = "Roblox default";
+        public string ModCursorText { get; private set; } = "Roblox default";
+        public string ModDeathSoundText { get; private set; } = "Roblox default";
+
+        private void LoadModSummary()
+        {
+            try
+            {
+                if (File.Exists(Paths.CustomFont))
+                {
+                    string family = "";
+                    try
+                    {
+                        family = System.Windows.Media.Fonts.GetFontFamilies(new Uri(Paths.CustomFont)).FirstOrDefault()?.FamilyNames.Values.FirstOrDefault() ?? "";
+                    }
+                    catch { }
+
+                    ModFontText = family.Length > 0 ? family : "Custom font";
+                }
+
+                string cursorFolder = Path.Combine(Paths.Modifications, @"content\textures\Cursors\KeyboardMouse");
+                if (File.Exists(Path.Combine(cursorFolder, "ArrowCursor.png")))
+                {
+                    if (new Models.Entities.ModPresetFileData(@"content\textures\Cursors\KeyboardMouse\ArrowCursor.png", "Cursor.From2013.ArrowCursor.png").HashMatches())
+                        ModCursorText = "2013 classic";
+                    else if (new Models.Entities.ModPresetFileData(@"content\textures\Cursors\KeyboardMouse\ArrowCursor.png", "Cursor.From2006.ArrowCursor.png").HashMatches())
+                        ModCursorText = "2006 classic";
+                    else
+                        ModCursorText = "Custom cursor";
+                }
+
+                if (File.Exists(Paths.CustomDeathSound))
+                    ModDeathSoundText = "Custom sound";
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("BehaviourViewModel", $"Could not read the mods summary: {ex.Message}");
+            }
         }
 
         public bool ConfirmLaunches
@@ -276,9 +575,11 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        public string LaunchSummaryConfirm => ConfirmLaunches
-            ? "You will be asked to confirm before each launch."
-            : "Launches start straight away, with no confirmation prompt.";
+        public string LaunchSummaryConfirm => AllowMultipleRoblox
+            ? "A new launch opens another Roblox next to the one already running."
+            : ConfirmLaunches
+                ? "You will be asked to confirm before each launch."
+                : "Launches start straight away, with no confirmation prompt.";
 
         public string LaunchSummaryUpdates
         {

@@ -73,6 +73,33 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 StatusMessage = "Reading the NVIDIA driver profile...";
                 _ = LoadFromDriverAsync();
             }
+
+            _ = LoadGpuInfoAsync();
+        }
+
+        private string _gpuBannerTitle = "Roblox driver profile";
+
+        /// <summary>Banner title: the card name and NVIDIA driver version when Windows reports them.</summary>
+        public string GpuBannerTitle
+        {
+            get => _gpuBannerTitle;
+            private set { _gpuBannerTitle = value; OnPropertyChanged(nameof(GpuBannerTitle)); }
+        }
+
+        private async Task LoadGpuInfoAsync()
+        {
+            try
+            {
+                NvidiaDriverInfo.Info? info = await NvidiaDriverInfo.GetAsync();
+                if (info is null)
+                    return;
+
+                GpuBannerTitle = info.DriverVersion.Length > 0 ? $"{info.GpuName} · driver {info.DriverVersion}" : info.GpuName;
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("NvidiaViewModel", $"GPU info failed: {ex.Message}");
+            }
         }
 
         private async Task LoadFromDriverAsync()

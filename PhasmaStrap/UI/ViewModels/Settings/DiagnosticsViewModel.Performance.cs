@@ -20,6 +20,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public Visibility FindingsVisibility => Findings.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         public PointCollection Graph { get; init; } = new();
         public string GraphScale { get; init; } = "";
+        public List<DiagnosticsBar> Bars { get; init; } = new();
     }
 
     public sealed class TunerCandidate
@@ -181,6 +182,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                     Findings = report.Findings,
                     Graph = FrameGraph(report, out string scale),
                     GraphScale = scale,
+                    Bars = DiagnosticsCharts.FrameBars(report),
                 });
             }
 

@@ -129,6 +129,22 @@ namespace PhasmaStrap.Integrations
             SaveNow();
         }
 
+        public static bool Remove(long placeId)
+        {
+            EnsureLoaded();
+
+            bool removed;
+            lock (_lock)
+            {
+                removed = _data.Places.Remove(placeId);
+            }
+
+            if (removed)
+                SaveNow();
+
+            return removed;
+        }
+
         public static void SaveNow()
         {
             string contents;

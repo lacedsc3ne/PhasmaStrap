@@ -6,14 +6,25 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       xmlns:pages="clr-namespace:PhasmaStrap.UI.Elements.Settings.Pages"
+      xmlns:resources="clr-namespace:PhasmaStrap.Resources"
       mc:Ignorable="d"
       d:DesignHeight="900" d:DesignWidth="900"
       Title="FastFlagSettingsPage"
       Scrollable="False">
     <controls:SectionHost x:Name="Host" Header="FastFlags" Layout="Tabs">
+        <controls:SectionHost.HeaderContent>
+            <!--  Shown on the Roblox FFlags tab: jumps to the flag editor  -->
+            <Button Loaded="EditorHeaderButton_Loaded" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="EditorHeaderButton_Click"
+                    ToolTip="{x:Static resources:Strings.Menu_FastFlags_Editor_Description}">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon Symbol="Code24" FontSize="14" Margin="0,0,6,0" />
+                    <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_Title}" />
+                </StackPanel>
+            </Button>
+        </controls:SectionHost.HeaderContent>
         <controls:SectionItem Label="Roblox FFlags" PageType="{x:Type pages:FastFlagsPage}" />
         <controls:SectionItem Label="Flag editor" PageType="{x:Type pages:FastFlagEditorPage}" />
-        <controls:SectionItem Label="Per-game flags" PageType="{x:Type pages:FastFlagGamesPage}" />
+        <controls:SectionItem Label="Per game flags" PageType="{x:Type pages:FastFlagGamesPage}" />
         <controls:SectionItem Label="Asset Warp" PageType="{x:Type pages:AssetWarpPage}" />
     </controls:SectionHost>
 </ui:UiPage>

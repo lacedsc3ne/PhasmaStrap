@@ -6,8 +6,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
 {
     public partial class DeveloperToolsPage : Search.ISearchToolHost
     {
-        private DiagnosticsPage? _diagnostics;
-
         public DeveloperToolsPage()
         {
             DataContext = new DeveloperToolsViewModel();
@@ -17,39 +15,16 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
         private void Page_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
             ((DeveloperToolsViewModel)DataContext).Attach();
-
-            if (SelectedKey() == "diagnostics")
-                Dispatcher.BeginInvoke(new Action(LoadDiagnostics), System.Windows.Threading.DispatcherPriority.Background);
-        }
-
-        private string SelectedKey() => ToolRail.SelectedItem is DeveloperToolItem item ? item.Key : "";
-
-        private void LoadDiagnostics()
-        {
-            if (_diagnostics is null)
-            {
-                _diagnostics = new DiagnosticsPage();
-                DiagnosticsFrame.Navigate(_diagnostics);
-                return;
-            }
-
-            (_diagnostics.DataContext as DiagnosticsViewModel)?.ResumePolling();
         }
 
         private void Page_Unloaded(object sender, System.Windows.RoutedEventArgs e)
         {
             ((DeveloperToolsViewModel)DataContext).Detach();
-            (_diagnostics?.DataContext as DiagnosticsViewModel)?.StopPolling();
         }
 
+        // Diagnostics used to be one of the tools here. It has its own place in the settings rail now.
         void Search.ISearchToolHost.ShowToolFor(Search.SettingsSearchEntry entry)
         {
-            if (entry.NestedPageType == typeof(DiagnosticsPage))
-            {
-                ShowTool("diagnostics");
-                return;
-            }
-
             var tools = ((DeveloperToolsViewModel)DataContext).Tools;
 
             foreach (DeveloperToolItem item in tools)
@@ -77,10 +52,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
 
         private void ToolRail_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (SelectedKey() == "diagnostics")
-                LoadDiagnostics();
-            else
-                (_diagnostics?.DataContext as DiagnosticsViewModel)?.StopPolling();
         }
     }
 }

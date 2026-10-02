@@ -13,6 +13,9 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
+using Wpf.Ui.Common;
+
+using PhasmaStrap.UI.Elements.Controls;
 using PhasmaStrap.UI.ViewModels.Settings;
 
 namespace PhasmaStrap.UI.Elements.Settings.Pages
@@ -27,6 +30,28 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             InitializeComponent();
 
             Loaded += (_, _) => _viewModel.RefreshShortcuts();
+
+            ItemMenu.Attach<ShortcutEntry>(ShortcutsList, (entry, menu) =>
+            {
+                menu.Add("Run it", SymbolRegular.Play24, () => Utilities.ShellExecute(entry.Path), bold: true)
+                    .Add("Open file location", SymbolRegular.FolderOpen24, NotificationCenter.RevealFile(entry.Path))
+                    .Add("Rename", SymbolRegular.Rename24, () => _viewModel.RenameShortcutCommand.Execute(entry))
+                    .Separator()
+                    .Add("Remove", SymbolRegular.Delete24, () => _viewModel.RemoveShortcutCommand.Execute(entry), "Del", danger: true);
+            });
+
+            // Del on a focused row removes that shortcut, like the menu says.
+            ShortcutsList.PreviewKeyDown += (_, e) =>
+            {
+                if (e.Key != Key.Delete)
+                    return;
+
+                if (ItemMenu.ItemAt<ShortcutEntry>(e.OriginalSource) is ShortcutEntry entry)
+                {
+                    _viewModel.RemoveShortcutCommand.Execute(entry);
+                    e.Handled = true;
+                }
+            };
         }
     }
 }

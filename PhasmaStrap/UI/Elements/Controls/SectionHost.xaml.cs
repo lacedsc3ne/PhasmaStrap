@@ -8,9 +8,27 @@ using System.Windows.Markup;
 
 namespace PhasmaStrap.UI.Elements.Controls
 {
-    public class SectionItem
+    public class SectionItem : INotifyPropertyChanged
     {
         public string Label { get; set; } = "";
+
+        private string _badge = "";
+
+        /// <summary>Small count shown after the label (for example the number of captures). Empty hides it.</summary>
+        public string Badge
+        {
+            get => _badge;
+            set
+            {
+                value ??= "";
+                if (_badge == value)
+                    return;
+                _badge = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Badge)));
+            }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         /// <summary>Heading this section is listed under in the side rail layout.</summary>
         public string Group { get; set; } = "";
@@ -54,6 +72,22 @@ namespace PhasmaStrap.UI.Elements.Controls
             get => (string)GetValue(HeaderProperty);
             set => SetValue(HeaderProperty, value);
         }
+
+        public static readonly DependencyProperty HeaderContentProperty = DependencyProperty.Register(
+            nameof(HeaderContent), typeof(object), typeof(SectionHost), new PropertyMetadata(null, (d, e) => ((SectionHost)d).HeaderSlot.Content = e.NewValue));
+
+        /// <summary>Optional content on the right of the tab bar (a status pill or a button). Tabs layout only.</summary>
+        public object? HeaderContent
+        {
+            get => GetValue(HeaderContentProperty);
+            set => SetValue(HeaderContentProperty, value);
+        }
+
+        /// <summary>The page type of the section being shown.</summary>
+        public Type? CurrentSection { get; private set; }
+
+        /// <summary>Raised after another section is shown.</summary>
+        public event EventHandler? SectionChanged;
 
         public SectionHost()
         {
@@ -154,6 +188,9 @@ namespace PhasmaStrap.UI.Elements.Controls
             }
 
             SectionFrame.Navigate(page);
+
+            CurrentSection = section.PageType;
+            SectionChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 }

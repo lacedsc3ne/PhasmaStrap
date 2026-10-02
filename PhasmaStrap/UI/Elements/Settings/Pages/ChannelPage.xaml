@@ -10,170 +10,172 @@
       Title="ChannelPage"
       Scrollable="True">
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Margin="0,4,0,0" Text="{x:Static resources:Strings.Menu_Channel_ChooseWhichRobloxDeploymentChannelPhasmaStrap}" FontSize="14" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="Channel and downloads" />
+            <Border Margin="10,2,0,0" Style="{DynamicResource PhasmaTagNeutral}">
+                <TextBlock Text="Launching" />
+            </Border>
+        </StackPanel>
+        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="Which Roblox channel you get, how it downloads, and when games tend to update." />
 
-        <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Channel_AppLevelSettingsSuchAsPhasmaStrap}" />
+        <!--  Tabs jump to a group of cards. Every card stays on the page so search can still find each setting.  -->
+        <StackPanel Margin="0,0,0,14" Orientation="Horizontal">
+            <RadioButton x:Name="RobloxTab" GroupName="ChannelTabs" Style="{DynamicResource PhasmaTab}" Content="{x:Static resources:Strings.Menu_Integrations_Tabs_Roblox}" IsChecked="True" Click="Tab_Click" Tag="{Binding ElementName=ChannelCard}" />
+            <RadioButton GroupName="ChannelTabs" Style="{DynamicResource PhasmaTab}" Content="{x:Static resources:Strings.Menu_Channel_Installer}" Click="Tab_Click" Tag="{Binding ElementName=InstallerCard}" />
+            <RadioButton GroupName="ChannelTabs" Style="{DynamicResource PhasmaTab}" Content="{x:Static resources:Strings.Menu_Channel_UpdateHeatmap}" Click="Tab_Click" Tag="{Binding ElementName=HeatmapCard}" />
+        </StackPanel>
 
-        <TabControl Margin="0,12,0,0">
+        <controls:CardColumns>
+            <controls:SettingsCard x:Name="ChannelCard" Header="{x:Static resources:Strings.ContextMenu_ChatLogs_ColumnChannel}"
+                                   Description="Which deployment channel PhasmaStrap installs and launches">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Channel_CurrentlyActiveChannel}"
+                                        Description="{Binding CurrentActiveChannel, Mode=OneWay, StringFormat='Roblox is currently running on the {0} channel.'}">
+                    <Border Style="{DynamicResource PhasmaTagNeutral}">
+                        <TextBlock FontFamily="{DynamicResource PhasmaMono}" Text="{Binding CurrentActiveChannel, Mode=OneWay}" />
+                    </Border>
+                </controls:OptionControl>
 
-            <TabItem>
-                <TabItem.Header>
+                <controls:OptionControl
+                    Header="{x:Static resources:Strings.Menu_Channel_RobloxChannel}"
+                    Description="Blank uses the default channel">
                     <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="Games24" Margin="0,0,6,0" />
-                        <TextBlock Text="{x:Static resources:Strings.Menu_Integrations_Tabs_Roblox}" />
+                        <ui:AutoSuggestBox
+                            Width="150"
+                            PlaceholderText="{x:Static resources:Strings.Menu_Channel_Production}"
+                            Text="{Binding RobloxChannel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            ItemsSource="{Binding KnownChannels, Mode=OneTime}" />
+                        <Button
+                            Margin="8,0,0,0"
+                            Style="{DynamicResource PhasmaSoftButton}"
+                            Content="{x:Static resources:Strings.Dialog_ChannelLists_BrowseButton}"
+                            Click="BrowseChannelsButton_Click" />
                     </StackPanel>
-                </TabItem.Header>
-                <StackPanel Margin="10">
-                    <TextBlock Text="{x:Static resources:Strings.ContextMenu_ChatLogs_ColumnChannel}" FontSize="20" FontWeight="Medium" />
+                </controls:OptionControl>
 
-                    <controls:OptionControl
-                        Header="{x:Static resources:Strings.Menu_Channel_CurrentlyActiveChannel}"
-                        Description="{Binding CurrentActiveChannel, Mode=OneWay, StringFormat='Roblox is currently running on the {0} channel.'}">
-                        <TextBlock Text="{Binding CurrentActiveChannel, Mode=OneWay}" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontFamily="Consolas" />
-                    </controls:OptionControl>
+                <controls:OptionControl
+                    Header="{x:Static resources:Strings.Menu_Channel_IfRobloxSChannelChanges}"
+                    Description="Automatic keeps yours. Prompt asks first. Ignore follows Roblox.">
+                    <ComboBox Padding="10,5,10,5" MinWidth="130" ItemsSource="{Binding ChannelChangeModes, Mode=OneTime}" SelectedItem="{Binding SelectedChannelChangeMode, Mode=TwoWay}" />
+                </controls:OptionControl>
+            </controls:SettingsCard>
 
-                    <controls:OptionControl
-                        Header="{x:Static resources:Strings.Menu_Channel_RobloxChannel}"
-                        Description="{x:Static resources:Strings.Menu_Channel_LeaveBlankUseRobloxSDefault}">
+            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Channel_ChannelBuildInfo}"
+                                   Description="Which build is live on the channel above, without switching to it">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Channel_LookUpBuild}">
+                    <Button Style="{DynamicResource PhasmaSoftButton}" Command="{Binding LookupChannelInfoCommand, Mode=OneTime}">
                         <StackPanel Orientation="Horizontal">
-                            <ui:AutoSuggestBox
-                                Width="240"
-                                PlaceholderText="{x:Static resources:Strings.Menu_Channel_Production}"
-                                Text="{Binding RobloxChannel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                ItemsSource="{Binding KnownChannels, Mode=OneTime}" />
-                            <ui:Button
-                                Margin="8,0,0,0"
-                                Content="{x:Static resources:Strings.Dialog_ChannelLists_BrowseButton}"
-                                Click="BrowseChannelsButton_Click" />
+                            <ui:SymbolIcon Symbol="Search24" FontSize="14" Margin="0,0,6,0" />
+                            <TextBlock Text="{x:Static resources:Strings.Menu_Channel_LookUp}" />
                         </StackPanel>
-                    </controls:OptionControl>
+                    </Button>
+                </controls:OptionControl>
 
-                    <controls:OptionControl
-                        Header="{x:Static resources:Strings.Menu_Channel_IfRobloxSChannelChanges}"
-                        Description="{x:Static resources:Strings.Menu_Channel_AutomaticKeepsSavedChannelEveryLaunch}">
-                        <ComboBox Width="160" ItemsSource="{Binding ChannelChangeModes, Mode=OneTime}" SelectedItem="{Binding SelectedChannelChangeMode, Mode=TwoWay}" />
-                    </controls:OptionControl>
+                <TextBlock Margin="2,0,2,10" TextWrapping="Wrap" FontSize="12" Text="{Binding ChannelInfoStatusText, Mode=OneWay}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowChannelInfoError}" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource PhasmaBadBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding ChannelInfoStatusText}" Value="">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding ChannelInfoStatusText}" Value="{x:Null}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
 
-                    <TextBlock Text="{x:Static resources:Strings.Menu_Channel_ChannelBuildInfo}" FontSize="20" FontWeight="Medium" Margin="0,16,0,0" />
-                    <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Channel_LooksUpWhichBuildVersionVersion}" />
-
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_Channel_LookUpBuild}" Margin="0,16,0,0">
-                        <ui:Button Content="{x:Static resources:Strings.Menu_Channel_LookUp}" Icon="ArrowClockwise24" Command="{Binding LookupChannelInfoCommand, Mode=OneTime}" />
-                    </controls:OptionControl>
-
-                    <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Text="{Binding ChannelInfoStatusText, Mode=OneWay}">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
-                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ShowChannelInfoError}" Value="True">
-                                        <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-
-                    <Grid Margin="0,8,0,0">
-                        <Grid.Style>
-                            <Style TargetType="Grid">
-                                <Setter Property="Visibility" Value="Visible" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ChannelDeployInfo}" Value="{x:Null}">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Grid.Style>
+                <StackPanel>
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ChannelDeployInfo}" Value="{x:Null}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <Border Style="{DynamicResource PhasmaDivider}" />
+                    <Grid Margin="2,10,2,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,0,16,4" VerticalAlignment="Center" Text="{x:Static resources:Strings.Dialog_ChannelLists_ColumnVersion}" />
-                        <TextBlock Grid.Row="0" Grid.Column="1" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontFamily="Consolas" Text="{Binding ChannelDeployInfo.Version, Mode=OneWay}" />
-                        <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.Dialog_ChannelLists_ColumnVersionGuid}" />
-                        <TextBlock Grid.Row="1" Grid.Column="1" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontFamily="Consolas" Text="{Binding ChannelDeployInfo.VersionGuid, Mode=OneWay}" />
+                        <TextBlock VerticalAlignment="Center" FontSize="13.5" FontWeight="SemiBold" Text="{x:Static resources:Strings.Dialog_ChannelLists_ColumnVersion}" />
+                        <TextBlock Grid.Column="1" Margin="12,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaMono}" FontSize="12"
+                                   TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ChannelDeployInfo.Version, Mode=OneWay}" />
+                    </Grid>
+                    <Border Style="{DynamicResource PhasmaDivider}" />
+                    <Grid Margin="2,10,2,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock VerticalAlignment="Center" FontSize="13.5" FontWeight="SemiBold" Text="{x:Static resources:Strings.Dialog_ChannelLists_ColumnVersionGuid}" />
+                        <TextBlock Grid.Column="1" Margin="12,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaMono}" FontSize="12"
+                                   TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ChannelDeployInfo.VersionGuid, Mode=OneWay}" />
                     </Grid>
                 </StackPanel>
-            </TabItem>
+            </controls:SettingsCard>
 
-            <TabItem>
-                <TabItem.Header>
+            <controls:SettingsCard x:Name="InstallerCard" Header="{x:Static resources:Strings.Menu_Channel_Installer}"
+                                   Description="How PhasmaStrap downloads Roblox's packages">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Channel_PreferredMirror}" Description="Auto picks whichever answers fastest">
+                    <ComboBox Padding="10,5,10,5" MinWidth="130" MaxWidth="220" ItemsSource="{Binding MirrorChoices, Mode=OneTime}" DisplayMemberPath="Display" SelectedValuePath="Url" SelectedValue="{Binding PreferredMirror, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Channel_DownloadBufferSizeKB}" Description="{x:Static resources:Strings.Menu_Channel_LargerBuffersCanSpeedUpDownloads}">
+                    <ComboBox Padding="10,5,10,5" MinWidth="100" ItemsSource="{Binding DownloadBufferOptions, Mode=OneTime}" SelectedItem="{Binding DownloadBufferKb, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Channel_ConcurrentDownloads}" Description="Higher is faster but uses more bandwidth">
+                    <ComboBox Padding="10,5,10,5" MinWidth="80" ItemsSource="{Binding ConcurrentDownloadOptions, Mode=OneTime}" SelectedItem="{Binding MaxConcurrentDownloads, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Channel_SegmentsPerFile}" Description="Splits big packages into parallel downloads">
+                    <ComboBox Padding="10,5,10,5" MinWidth="80" ItemsSource="{Binding DownloadSegmentOptions, Mode=OneTime}" SelectedItem="{Binding MaxDownloadSegments, Mode=TwoWay}" />
+                </controls:OptionControl>
+            </controls:SettingsCard>
+
+            <controls:SettingsCard x:Name="HeatmapCard" Header="{x:Static resources:Strings.Menu_Channel_UpdateHeatmap}"
+                                   Description="Which days of the week a game usually ships updates">
+                <Border Style="{DynamicResource PhasmaDivider}" />
+                <StackPanel Margin="0,12,0,12">
                     <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="ArrowDownload24" Margin="0,0,6,0" />
-                        <TextBlock Text="{x:Static resources:Strings.Menu_Channel_Installer}" />
+                        <ui:TextBox Width="160" PlaceholderText="{x:Static resources:Strings.Menu_ServerBrowser_PlaceId_Title}" ToolTip="{x:Static resources:Strings.Menu_ServerBrowser_PlaceId_Title}"
+                                    Text="{Binding HeatmapPlaceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Menu_Channel_Load}" Command="{Binding LoadHeatmapCommand, Mode=OneTime}" />
                     </StackPanel>
-                </TabItem.Header>
-                <StackPanel Margin="10">
-                    <TextBlock Text="{x:Static resources:Strings.Menu_Channel_DownloadMirror}" FontSize="20" FontWeight="Medium" />
-                    <TextBlock Text="{x:Static resources:Strings.Menu_Channel_WhichRobloxCDNMirrorDownloadFrom}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
 
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_Channel_PreferredMirror}">
-                        <ComboBox Width="260" ItemsSource="{Binding MirrorChoices, Mode=OneTime}" DisplayMemberPath="Display" SelectedValuePath="Url" SelectedValue="{Binding PreferredMirror, Mode=TwoWay}" />
-                    </controls:OptionControl>
+                    <TextBlock Margin="0,8,0,0" FontSize="12" TextWrapping="Wrap" Text="{Binding HeatmapStatusText, Mode=OneWay}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
 
-                    <TextBlock Text="{x:Static resources:Strings.Menu_Channel_DownloadTuning}" FontSize="20" FontWeight="Medium" Margin="0,16,0,0" />
-                    <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Channel_ControlsHowBootstrapperDownloadsRobloxS}" />
-
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_Channel_DownloadBufferSizeKB}" Description="{x:Static resources:Strings.Menu_Channel_LargerBuffersCanSpeedUpDownloads}">
-                        <ComboBox Width="140" ItemsSource="{Binding DownloadBufferOptions, Mode=OneTime}" SelectedItem="{Binding DownloadBufferKb, Mode=TwoWay}" />
-                    </controls:OptionControl>
-
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_Channel_ConcurrentDownloads}" Description="{x:Static resources:Strings.Menu_Channel_HowManyPackagesDownloadAtSame}">
-                        <ComboBox Width="140" ItemsSource="{Binding ConcurrentDownloadOptions, Mode=OneTime}" SelectedItem="{Binding MaxConcurrentDownloads, Mode=TwoWay}" />
-                    </controls:OptionControl>
-
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_Channel_SegmentsPerFile}" Description="{x:Static resources:Strings.Menu_Channel_SplitsEachSufficientlyLargePackageInto}">
-                        <ComboBox Width="140" ItemsSource="{Binding DownloadSegmentOptions, Mode=OneTime}" SelectedItem="{Binding MaxDownloadSegments, Mode=TwoWay}" />
-                    </controls:OptionControl>
-                </StackPanel>
-            </TabItem>
-
-            <TabItem>
-                <TabItem.Header>
-                    <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="History24" Margin="0,0,6,0" />
-                        <TextBlock Text="{x:Static resources:Strings.Menu_Channel_Heatmap}" />
-                    </StackPanel>
-                </TabItem.Header>
-                <StackPanel Margin="10">
-                    <TextBlock Text="{x:Static resources:Strings.Menu_Channel_UpdateHeatmap}" FontSize="20" FontWeight="Medium" />
-                    <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Channel_LooksAtExperienceSPublicUpdate}" />
-
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_ServerBrowser_PlaceId_Title}" Margin="0,16,0,0">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:TextBox Width="200" PlaceholderText="e.g. 13700835620" Text="{Binding HeatmapPlaceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                            <ui:Button Margin="8,0,0,0" Content="{x:Static resources:Strings.Menu_Channel_Load}" Icon="ArrowClockwise24" Command="{Binding LoadHeatmapCommand, Mode=OneTime}" />
-                        </StackPanel>
-                    </controls:OptionControl>
-
-                    <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Text="{Binding HeatmapStatusText, Mode=OneWay}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-
-                    <ItemsControl Margin="0,12,0,0" ItemsSource="{Binding HeatmapDays, Mode=OneWay}">
+                    <!--  One tile per weekday, coloured more strongly the more updates landed on that day  -->
+                    <ItemsControl Margin="0,10,0,0" ItemsSource="{Binding HeatmapDays, Mode=OneWay}" Focusable="False">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal" />
+                                <UniformGrid Rows="1" />
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <StackPanel Orientation="Vertical" Width="48" Margin="0,0,4,0">
-                                    <Grid Height="80" VerticalAlignment="Bottom">
-                                        <Border VerticalAlignment="Bottom" Width="28" Height="{Binding BarHeight}" Background="{DynamicResource AccentFillColorDefaultBrush}" CornerRadius="3" />
+                                <StackPanel Margin="3,0,3,0" ToolTip="{Binding Tip}">
+                                    <Grid Height="40">
+                                        <Border CornerRadius="6" Background="{DynamicResource PhasmaHoverBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1" />
+                                        <Border CornerRadius="6" Background="{DynamicResource PhasmaAccentBrush}" Opacity="{Binding TileOpacity}" />
                                     </Grid>
-                                    <TextBlock Text="{Binding Label}" HorizontalAlignment="Center" Margin="0,4,0,0" FontSize="12" />
-                                    <TextBlock Text="{Binding Count}" HorizontalAlignment="Center" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    <TextBlock Margin="0,6,0,0" HorizontalAlignment="Center" FontSize="11.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Label}" />
+                                    <TextBlock HorizontalAlignment="Center" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Count}" />
                                 </StackPanel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
-            </TabItem>
-
-        </TabControl>
+            </controls:SettingsCard>
+        </controls:CardColumns>
     </StackPanel>
 </ui:UiPage>

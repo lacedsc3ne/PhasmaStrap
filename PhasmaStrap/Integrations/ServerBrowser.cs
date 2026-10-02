@@ -70,6 +70,7 @@ namespace PhasmaStrap.Integrations
                                     Playing = el.TryGetProperty("playing", out var p) && p.TryGetInt32(out int playing) ? playing : 0,
                                     MaxPlayers = el.TryGetProperty("maxPlayers", out var m) && m.TryGetInt32(out int max) ? max : 0,
                                     Ping = el.TryGetProperty("ping", out var pg) && pg.TryGetInt32(out int ping) ? ping : -1,
+                                    Fps = el.TryGetProperty("fps", out var fp) && fp.ValueKind == JsonValueKind.Number && fp.TryGetDouble(out double fps) ? fps : 0,
                                 });
                             }
                         }

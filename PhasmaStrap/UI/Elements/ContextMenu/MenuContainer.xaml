@@ -22,76 +22,159 @@
         Loaded="Window_Loaded"
         Closed="Window_Closed">
     <ui:UiWindow.ContextMenu>
-        <ContextMenu MinWidth="248">
+        <ContextMenu MinWidth="268" Opened="TrayMenu_Opened">
+            <ContextMenu.Resources>
+                <!--  Icon column of a row  -->
+                <Style x:Key="TrayIcon" TargetType="{x:Type ui:SymbolIcon}">
+                    <Setter Property="FontSize" Value="15" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                </Style>
+                <!--  Row text  -->
+                <Style x:Key="TrayText" TargetType="{x:Type TextBlock}">
+                    <Setter Property="Margin" Value="6,0,0,0" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                </Style>
+                <!--  Small muted text on the right of a row (state or shortcut)  -->
+                <Style x:Key="TrayHint" TargetType="{x:Type TextBlock}">
+                    <Setter Property="Margin" Value="16,0,0,0" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="FontSize" Value="11" />
+                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+                </Style>
+                <!--  On or Off, read from the menu item it sits in  -->
+                <Style x:Key="TrayState" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource TrayHint}">
+                    <Setter Property="Text" Value="Off" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type MenuItem}}}" Value="True">
+                            <Setter Property="Text" Value="On" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+                <!--  Label and value line inside the session info flyout  -->
+                <Style x:Key="TrayStatLabel" TargetType="{x:Type TextBlock}">
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                </Style>
+                <Style x:Key="TrayStatValue" TargetType="{x:Type TextBlock}">
+                    <Setter Property="Margin" Value="24,0,0,0" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="HorizontalAlignment" Value="Right" />
+                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                </Style>
+            </ContextMenu.Resources>
+
+            <!--  Version line  -->
             <MenuItem IsEnabled="False">
                 <MenuItem.Header>
-                    <Grid Margin="0,2,0,2">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="24" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Image Grid.Column="0" Width="22" Height="22" Source="pack://application:,,,/PhasmaStrap.ico" RenderOptions.BitmapScalingMode="HighQuality" />
-                        <TextBlock x:Name="VersionTextBlock" FontWeight="SemiBold" Grid.Column="1" VerticalAlignment="Center" Margin="8,0,0,0" Text="PhasmaStrap v2.4.1" />
-                    </Grid>
+                    <TextBlock x:Name="VersionTextBlock" Margin="0,2,0,2" FontSize="11.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="PhasmaStrap 2.4.1" />
                 </MenuItem.Header>
             </MenuItem>
             <MenuItem x:Name="CurrentGameMenuItem" IsEnabled="False" Visibility="Collapsed">
                 <MenuItem.Header>
                     <Grid Margin="0,2,0,2">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="22" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Border Grid.Column="0" Width="22" Height="22" CornerRadius="5" ClipToBounds="True" Background="{DynamicResource ControlFillColorSecondaryBrush}">
+                        <Border Grid.Column="0" Width="20" Height="20" CornerRadius="5" ClipToBounds="True" Background="{DynamicResource PhasmaSelectedBrush}">
                             <Image x:Name="CurrentGameIcon" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
                         </Border>
-                        <TextBlock x:Name="CurrentGameNameTextBlock" Grid.Column="1" VerticalAlignment="Center" Margin="8,0,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" MaxWidth="220" />
+                        <TextBlock x:Name="CurrentGameNameTextBlock" Grid.Column="1" VerticalAlignment="Center" Margin="8,0,0,0" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" MaxWidth="220" />
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
+
+            <!--  Session  -->
             <MenuItem x:Name="SessionInfoMenuItem" Visibility="Collapsed">
                 <MenuItem.Header>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="22" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="Info20"/>
-                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0" Text="Session info" />
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Info20" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Text="Session info" Style="{StaticResource TrayText}" />
                     </Grid>
                 </MenuItem.Header>
                 <MenuItem IsEnabled="False">
                     <MenuItem.Header>
-                        <TextBlock x:Name="PlayTimeTextBlock" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Play time: 00:00:00" />
+                        <Grid MinWidth="230">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Play time" Style="{StaticResource TrayStatLabel}" />
+                            <TextBlock x:Name="PlayTimeTextBlock" Grid.Column="1" Text="00:00:00" Style="{StaticResource TrayStatValue}" />
+                        </Grid>
                     </MenuItem.Header>
                 </MenuItem>
                 <MenuItem IsEnabled="False">
                     <MenuItem.Header>
-                        <TextBlock x:Name="MemoryTextBlock" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Roblox memory: 0 MB" />
+                        <Grid MinWidth="230">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Roblox memory" Style="{StaticResource TrayStatLabel}" />
+                            <TextBlock x:Name="MemoryTextBlock" Grid.Column="1" Text="0 MB" Style="{StaticResource TrayStatValue}" />
+                        </Grid>
                     </MenuItem.Header>
                 </MenuItem>
                 <MenuItem IsEnabled="False">
                     <MenuItem.Header>
-                        <TextBlock x:Name="FlagsTextBlock" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="FastFlags applied: 0" />
+                        <Grid MinWidth="230">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="FastFlags applied" Style="{StaticResource TrayStatLabel}" />
+                            <TextBlock x:Name="FlagsTextBlock" Grid.Column="1" Text="0" Style="{StaticResource TrayStatValue}" />
+                        </Grid>
                     </MenuItem.Header>
                 </MenuItem>
                 <MenuItem IsEnabled="False">
                     <MenuItem.Header>
-                        <TextBlock x:Name="ServerTextBlock" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Server: -" />
+                        <Grid MinWidth="230">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Server" Style="{StaticResource TrayStatLabel}" />
+                            <TextBlock x:Name="ServerTextBlock" Grid.Column="1" Text="None" MaxWidth="260" TextTrimming="CharacterEllipsis" Style="{StaticResource TrayStatValue}" />
+                        </Grid>
                     </MenuItem.Header>
                 </MenuItem>
             </MenuItem>
+            <MenuItem x:Name="RichPresenceMenuItem" IsCheckable="True" IsChecked="True" Visibility="Collapsed" Click="RichPresenceMenuItem_Click">
+                <MenuItem.Header>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="22" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Globe24" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Text="{x:Static resources:Strings.Common_DiscordRichPresence}" Style="{StaticResource TrayText}" />
+                        <TextBlock Grid.Column="2" Style="{StaticResource TrayState}" />
+                    </Grid>
+                </MenuItem.Header>
+            </MenuItem>
             <Separator />
-            <MenuItem x:Name="RichPresenceMenuItem" Header="{x:Static resources:Strings.Common_DiscordRichPresence}" IsCheckable="True" IsChecked="True" Visibility="Collapsed" Click="RichPresenceMenuItem_Click" />
+
+            <!--  Server  -->
             <MenuItem x:Name="JoinClosestServerMenuItem" Visibility="Collapsed" Click="JoinClosestServerMenuItem_Click">
                 <MenuItem.Header>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="22" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="Rocket24"/>
-                        <TextBlock x:Name="JoinClosestServerTextBlock" Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0" Text="Join closest server" />
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Flash24" Style="{StaticResource TrayIcon}" />
+                        <TextBlock x:Name="JoinClosestServerTextBlock" Grid.Column="1" Text="Join closest server" Style="{StaticResource TrayText}" />
+                        <TextBlock x:Name="JoinClosestServerHint" Grid.Column="2" MaxWidth="150" TextTrimming="CharacterEllipsis" Style="{StaticResource TrayHint}" />
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
@@ -99,11 +182,11 @@
                 <MenuItem.Header>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="22" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="ClipboardLink24"/>
-                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0" Text="{x:Static resources:Strings.ContextMenu_CopyDeeplinkInvite}" />
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Link24" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Text="{x:Static resources:Strings.ContextMenu_CopyDeeplinkInvite}" Style="{StaticResource TrayText}" />
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
@@ -111,11 +194,11 @@
                 <MenuItem.Header>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="22" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="Info28"/>
-                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0" Text="{x:Static resources:Strings.ContextMenu_ServerInformation_Title}" />
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Server24" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Text="{x:Static resources:Strings.ContextMenu_ServerInformation_Title}" Style="{StaticResource TrayText}" />
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
@@ -123,24 +206,28 @@
                 <MenuItem.Header>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="22" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="History24"/>
-                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0" Text="{x:Static resources:Strings.ContextMenu_GameHistory_Title}" />
+                        <ui:SymbolIcon Grid.Column="0" Symbol="History24" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Text="{x:Static resources:Strings.ContextMenu_GameHistory_Title}" Style="{StaticResource TrayText}" />
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
             <Separator />
+
+            <!--  Capture and performance  -->
             <MenuItem x:Name="TakeScreenshotMenuItem" Visibility="Collapsed" Click="TakeScreenshotMenuItem_Click">
                 <MenuItem.Header>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="22" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="Camera24"/>
-                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0" Text="Take screenshot" />
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Camera24" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Text="Take screenshot" Style="{StaticResource TrayText}" />
+                        <TextBlock x:Name="ScreenshotHotkeyText" Grid.Column="2" Style="{StaticResource TrayHint}" />
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
@@ -148,11 +235,13 @@
                 <MenuItem.Header>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="22" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="VideoClip24"/>
-                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0" Text="Save instant replay" />
+                        <ui:SymbolIcon Grid.Column="0" Symbol="VideoClip24" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Text="Save instant replay" Style="{StaticResource TrayText}" />
+                        <TextBlock x:Name="ReplayHotkeyText" Grid.Column="2" Style="{StaticResource TrayHint}" />
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
@@ -160,11 +249,11 @@
                 <MenuItem.Header>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="22" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="Pulse24"/>
-                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0" Text="Measure performance (60 s)" />
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Gauge24" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Text="Measure performance (60 s)" Style="{StaticResource TrayText}" />
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
@@ -172,39 +261,66 @@
                 <MenuItem.Header>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="22" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="Broom24"/>
-                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0" Text="Clean RAM now" />
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Broom24" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Text="Clean RAM now" Style="{StaticResource TrayText}" />
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
-            <Separator />
-            <MenuItem x:Name="FrameGenMenuItem" Header="Frame generation" IsCheckable="True" Click="FrameGenMenuItem_Click" />
-            <MenuItem x:Name="OverlayFocusModeMenuItem" Header="Overlay Focus Mode (hide HUD/crosshair)" IsCheckable="True" Visibility="Collapsed" Click="OverlayFocusModeMenuItem_Click" />
+            <MenuItem x:Name="FrameGenMenuItem" IsCheckable="True" Click="FrameGenMenuItem_Click">
+                <MenuItem.Header>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="22" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Sparkle24" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Text="Frame generation" Style="{StaticResource TrayText}" />
+                        <TextBlock Grid.Column="2" Style="{StaticResource TrayState}" />
+                    </Grid>
+                </MenuItem.Header>
+            </MenuItem>
+            <MenuItem x:Name="OverlayFocusModeMenuItem" IsCheckable="True" Visibility="Collapsed" Click="OverlayFocusModeMenuItem_Click" ToolTip="Hides the HUD and the crosshair">
+                <MenuItem.Header>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="22" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Eye24" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Text="Overlay focus mode" Style="{StaticResource TrayText}" />
+                        <TextBlock Grid.Column="2" Style="{StaticResource TrayState}" />
+                    </Grid>
+                </MenuItem.Header>
+            </MenuItem>
             <MenuItem x:Name="CantSeeOverlaysMenuItem" Visibility="Collapsed" Click="CantSeeOverlaysMenuItem_Click">
                 <MenuItem.Header>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="22" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="EyeOff24"/>
-                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0" Text="Can't see overlays?" />
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Info24" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Text="Can't see overlays?" Style="{StaticResource TrayText}" />
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
             <Separator />
+
+            <!--  App  -->
             <MenuItem Click="OpenSettingsMenuItem_Click">
                 <MenuItem.Header>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="22" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="Settings24"/>
-                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0" Text="Open PhasmaStrap settings" />
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Settings24" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Text="Open PhasmaStrap settings" Style="{StaticResource TrayText}" />
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
@@ -212,11 +328,11 @@
                 <MenuItem.Header>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="22" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="PersonSwap24"/>
-                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0" Text="Switch account" />
+                        <ui:SymbolIcon Grid.Column="0" Symbol="ArrowSwap24" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Text="Switch account" Style="{StaticResource TrayText}" />
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
@@ -224,23 +340,26 @@
                 <MenuItem.Header>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="22" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="WindowHeaderHorizontalOff20"/>
-                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0" Text="{x:Static resources:Strings.ContextMenu_CloseRoblox}" />
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Dismiss24" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Text="{x:Static resources:Strings.ContextMenu_CloseRoblox}" Style="{StaticResource TrayText}" />
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
+            <Separator />
+
+            <!--  Logs and support  -->
             <MenuItem x:Name="LogTracerMenuItem" Visibility="Collapsed" Click="LogTracerMenuItem_Click">
                 <MenuItem.Header>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="22" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="DocumentCatchUp20"/>
-                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0" Text="{x:Static resources:Strings.Common_OpenLogFile}" />
+                        <ui:SymbolIcon Grid.Column="0" Symbol="DocumentCatchUp20" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Text="{x:Static resources:Strings.Common_OpenLogFile}" Style="{StaticResource TrayText}" />
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
@@ -248,11 +367,11 @@
                 <MenuItem.Header>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="22" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="WindowConsole20"/>
-                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0" Text="{x:Static resources:Strings.ContextMenu_OutputConsole_Title}" />
+                        <ui:SymbolIcon Grid.Column="0" Symbol="WindowConsole20" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Text="{x:Static resources:Strings.ContextMenu_OutputConsole_Title}" Style="{StaticResource TrayText}" />
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
@@ -260,11 +379,11 @@
                 <MenuItem.Header>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="22" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="ChatMultiple20"/>
-                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0" Text="{x:Static resources:Strings.ContextMenu_ChatLogs_Title}" />
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Chat24" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Text="{x:Static resources:Strings.ContextMenu_ChatLogs_Title}" Style="{StaticResource TrayText}" />
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
@@ -272,11 +391,11 @@
                 <MenuItem.Header>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="22" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="Heart24"/>
-                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0" Text="Support on Ko-fi" />
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Heart24" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Text="Support on Ko-fi" Style="{StaticResource TrayText}" />
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
@@ -284,11 +403,11 @@
                 <MenuItem.Header>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="22" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="WindowBulletList20"/>
-                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0" Text="{x:Static resources:Strings.ContextMenu_RPCWindow_Title}" />
+                        <ui:SymbolIcon Grid.Column="0" Symbol="WindowBulletList20" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Text="{x:Static resources:Strings.ContextMenu_RPCWindow_Title}" Style="{StaticResource TrayText}" />
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>

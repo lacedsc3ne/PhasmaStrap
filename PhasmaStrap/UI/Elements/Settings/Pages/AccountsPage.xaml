@@ -12,198 +12,310 @@
       Title="AccountsPage"
       Scrollable="True"
       Unloaded="Page_Unloaded">
-    <StackPanel Margin="0,0,14,14">
-        <TextBlock Text="Roblox accounts" FontSize="20" FontWeight="Medium" />
-        <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Accounts_SaveMultipleRobloxLoginsSwitchBetween}" />
+    <ui:UiPage.Resources>
+        <!--  Accent Switch button that turns soft on the account already in use  -->
+        <Style x:Key="AccountSwitchButton" TargetType="{x:Type Button}" BasedOn="{StaticResource PhasmaAccentButton}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource PhasmaHoverBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </ui:UiPage.Resources>
 
-        <Border Margin="0,12,0,0" Padding="14" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+    <Grid Margin="0,0,14,14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" MinWidth="420" />
+            <ColumnDefinition Width="330" />
+        </Grid.ColumnDefinitions>
 
-                <Grid Grid.Column="0" Width="48" Height="48" VerticalAlignment="Center">
-                    <Ellipse Fill="{DynamicResource ControlFillColorSecondaryBrush}" />
-                    <Image Source="{Binding CurrentAvatarUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality">
-                        <Image.Clip>
-                            <EllipseGeometry Center="24,24" RadiusX="24" RadiusY="24" />
-                        </Image.Clip>
-                    </Image>
-                </Grid>
-
-                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                    <TextBlock FontSize="11" Opacity="0.65" Text="{x:Static resources:Strings.Menu_Accounts_SignedAs}" />
-                    <TextBlock FontSize="17" FontWeight="SemiBold" Text="{Binding CurrentTitle}" />
-                    <TextBlock FontSize="12" Opacity="0.75" Text="{Binding CurrentSubtitle}" />
-                    <TextBlock FontSize="11" Opacity="0.6" Margin="0,2,0,0" Text="{Binding Status}" />
+        <!--  Ways to add an account  -->
+        <WrapPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,12" HorizontalAlignment="Right">
+            <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding LoginWithBrowserCommand, Mode=OneTime}">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon Symbol="Globe24" FontSize="14" VerticalAlignment="Center" />
+                    <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.Menu_Accounts_LogBrowser}" />
                 </StackPanel>
-
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <ui:Button Content="{x:Static resources:Strings.Menu_Accounts_AddAccount}" Icon="PersonAdd24" Appearance="Primary" IsEnabled="{Binding AddCurrentEnabled}" Command="{Binding AddCurrentCommand}" />
-                    <ui:Button Content="{x:Static resources:Strings.Menu_Accounts_SignOut}" Icon="SignOut24" Appearance="Danger" Margin="8,0,0,0" Visibility="{Binding LoggedInVisibility}" Command="{Binding LogoutCommand}" />
-                    <ui:Button Icon="ArrowClockwise24" ToolTip="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" Appearance="Secondary" Margin="8,0,0,0" Command="{Binding RefreshCommand}" />
+            </Button>
+            <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding ToggleImportCommand}">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon Symbol="Key24" FontSize="14" VerticalAlignment="Center" />
+                    <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.Menu_Accounts_ImportByCookie}" />
                 </StackPanel>
-            </Grid>
-        </Border>
-
-        <Grid Margin="0,12,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <ui:TextBox Grid.Column="0" PlaceholderText="{x:Static resources:Strings.Menu_Accounts_SearchSavedAccountsByNameNote}" Icon="Search24" ClearButtonEnabled="True" Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-            <ui:Button Grid.Column="1" Content="{x:Static resources:Strings.Menu_Accounts_LogBrowser}" Icon="Globe24" Appearance="Primary" Margin="8,0,0,0" Command="{Binding LoginWithBrowserCommand, Mode=OneTime}" />
-            <ui:Button Grid.Column="2" Content="{x:Static resources:Strings.Menu_Accounts_ImportByCookie}" Icon="Key24" Appearance="Secondary" Margin="8,0,0,0" Command="{Binding ToggleImportCommand}" />
-            <ui:Button Grid.Column="3" Content="{x:Static resources:Strings.Menu_Accounts_Folder}" Icon="Folder24" Appearance="Secondary" Margin="8,0,0,0" Command="{Binding OpenFolderCommand}" />
-        </Grid>
-
-        <ui:CardExpander Margin="0,10,0,0" Icon="PersonAdd24" IsExpanded="{Binding ImportVisible, Mode=TwoWay}">
-            <ui:CardExpander.Header>
-                <StackPanel>
-                    <TextBlock FontSize="14" Text="Add an account" />
-                    <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Accounts_ImportAccountFromItsROBLOSECURITYCookie}" />
+            </Button>
+            <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Command="{Binding OpenFolderCommand}">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon Symbol="Folder24" FontSize="14" VerticalAlignment="Center" />
+                    <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.Menu_Accounts_Folder}" />
                 </StackPanel>
-            </ui:CardExpander.Header>
-            <StackPanel>
-                <TextBlock Margin="0,0,0,8" FontSize="11" Opacity="0.7" TextWrapping="Wrap" Text="{x:Static resources:Strings.Menu_Accounts_PasteFullROBLOSECURITYValueOnlyPaste}" />
+            </Button>
+        </WrapPanel>
+
+        <!--  Saved accounts  -->
+        <StackPanel Grid.Row="1" Grid.Column="0">
+            <Border Style="{DynamicResource PhasmaCard}" Padding="16,14">
                 <Grid>
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <ui:TextBox Grid.Column="0" PlaceholderText="{x:Static resources:Strings.Menu_Accounts_WARNINGDONOTSHARE}" Text="{Binding NewCookieText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <ui:Button Grid.Column="1" Content="{x:Static resources:Strings.Common_Import}" Icon="ArrowImport24" Appearance="Primary" Margin="8,0,0,0" Command="{Binding ImportCookieCommand}" />
-                </Grid>
-                <ui:Button Margin="0,8,0,0" Content="{x:Static resources:Strings.Menu_Accounts_ImportSeveralAtOnceInstead}" Appearance="Transparent" HorizontalAlignment="Left" Padding="0" Command="{Binding ToggleBulkImportCommand}" />
 
-                <Border Margin="0,10,0,0" Padding="12" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorSecondaryBrush}" Visibility="{Binding BulkImportVisibility}">
-                    <StackPanel>
-                        <TextBlock FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_Accounts_BulkImportFromCookies}" />
-                        <TextBlock Margin="0,2,0,8" FontSize="11" Opacity="0.7" TextWrapping="Wrap" Text="{x:Static resources:Strings.Menu_Accounts_PasteOneROBLOSECURITYValuePerLine}" />
-                        <ui:TextBox Text="{Binding BulkCookieText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" MinLines="4" MaxLines="10" VerticalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="11" />
-                        <ui:Button Margin="0,8,0,0" Content="{x:Static resources:Strings.Menu_Accounts_ImportAll}" Icon="ArrowImport24" Appearance="Primary" HorizontalAlignment="Left" Command="{Binding BulkImportCookiesCommand, Mode=OneTime}" />
+                    <Grid Grid.Column="0" Width="48" Height="48" VerticalAlignment="Center">
+                        <Ellipse Fill="{DynamicResource PhasmaSelectedBrush}" />
+                        <Image Source="{Binding CurrentAvatarUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality">
+                            <Image.Clip>
+                                <EllipseGeometry Center="24,24" RadiusX="24" RadiusY="24" />
+                            </Image.Clip>
+                        </Image>
+                    </Grid>
+
+                    <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="{x:Static resources:Strings.Menu_Accounts_SignedAs}" />
+                        <TextBlock Style="{DynamicResource PhasmaHeading}" FontSize="16" Text="{Binding CurrentTitle}" />
+                        <TextBlock Style="{DynamicResource PhasmaSubtle}" FontSize="11.5" Text="{Binding CurrentSubtitle}" />
+                        <TextBlock Margin="0,2,0,0" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" TextWrapping="Wrap" TextTrimming="None" Text="{Binding Status}" />
                     </StackPanel>
-                </Border>
-            </StackPanel>
-        </ui:CardExpander>
 
-        <ItemsControl Margin="0,10,0,0" ItemsSource="{Binding FilteredAccounts}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate DataType="{x:Type models:SwitcherAccount}">
-                    <Border CornerRadius="8" Padding="12" Margin="0,0,0,8" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-
-                            <Grid Grid.Column="0" Width="42" Height="42" VerticalAlignment="Center">
-                                <Ellipse Fill="{DynamicResource ControlFillColorSecondaryBrush}" />
-                                <Image Source="{Binding AvatarUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality">
-                                    <Image.Clip>
-                                        <EllipseGeometry Center="21,21" RadiusX="21" RadiusY="21" />
-                                    </Image.Clip>
-                                </Image>
-                            </Grid>
-
-                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock FontSize="14" FontWeight="SemiBold" Text="{Binding Title}" VerticalAlignment="Center" />
-                                    <Border Margin="8,0,0,0" Padding="6,1" CornerRadius="4" VerticalAlignment="Center" Background="{DynamicResource AccentFillColorDefaultBrush}" Visibility="{Binding CurrentBadgeVisibility}">
-                                        <TextBlock FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" Text="{x:Static resources:Strings.Menu_Accounts_CURRENT}" />
-                                    </Border>
-                                </StackPanel>
-                                <TextBlock FontSize="12" Opacity="0.7" Text="{Binding Subtitle}" />
-                                <TextBlock FontSize="11" Opacity="0.55" Margin="0,1,0,0" Text="{Binding LastUsedDisplay}" />
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Style="{DynamicResource PhasmaSoftButton}" IsEnabled="{Binding AddCurrentEnabled}" Command="{Binding AddCurrentCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Add24" FontSize="14" VerticalAlignment="Center" />
+                                <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.Menu_Accounts_AddAccount}" />
                             </StackPanel>
-
-                            <ui:TextBox Grid.Column="2" VerticalAlignment="Center" Margin="10,0" MinWidth="120" MaxWidth="200" PlaceholderText="{x:Static resources:Strings.Menu_Accounts_AddNote}" Text="{Binding Note, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
-
-                            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
-                                <ui:Button Content="{x:Static resources:Strings.Menu_Accounts_Switch}" Icon="ArrowSwap24" Appearance="Primary" Command="{Binding DataContext.SwitchCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
-                                <ui:Button Icon="Copy24" ToolTip="{x:Static resources:Strings.Menu_Accounts_CopyUserID}" Appearance="Secondary" Margin="6,0,0,0" Command="{Binding DataContext.CopyUserIdCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
-                                <ui:Button Icon="Delete24" ToolTip="{x:Static resources:Strings.Menu_Accounts_RemoveSavedAccount}" Appearance="Danger" Margin="6,0,0,0" Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
+                        </Button>
+                        <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Visibility="{Binding LoggedInVisibility}" Command="{Binding LogoutCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="SignOut24" FontSize="14" VerticalAlignment="Center" />
+                                <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.Menu_Accounts_SignOut}" />
                             </StackPanel>
-                        </Grid>
-                    </Border>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+                        </Button>
+                        <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaIconButton}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" ToolTip="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" Command="{Binding RefreshCommand}">
+                            <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
 
-        <Border Visibility="{Binding EmptyStateVisibility}" Padding="30" CornerRadius="8" Margin="0,4,0,0" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
-            <StackPanel HorizontalAlignment="Center">
-                <TextBlock FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center" TextAlignment="Center" Text="{Binding EmptyStateTitle}" />
-                <TextBlock Margin="0,4,0,0" FontSize="12" Opacity="0.7" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="420" Text="{Binding EmptyStateSubtitle}" />
-            </StackPanel>
-        </Border>
+            <ui:TextBox Margin="0,10,0,0" PlaceholderText="{x:Static resources:Strings.Menu_Accounts_SearchSavedAccountsByNameNote}" Icon="Search24" ClearButtonEnabled="True" Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-        <TextBlock Margin="0,10,0,0" FontSize="12" Opacity="0.7" Text="{Binding Accounts.Count, StringFormat=Saved accounts: {0}}" />
-
-        <StackPanel x:Name="GuardRoot" Margin="0,26,0,0">
-            <TextBlock Text="{x:Static resources:Strings.Menu_Accounts_AccountGuard}" FontSize="20" FontWeight="Medium" />
-            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                       Text="{x:Static resources:Strings.Menu_Accounts_WarnsYouAboutWhatLoginStealers}" />
-
-            <controls:OptionControl Margin="0,12,0,0" Header="{x:Static resources:Strings.Menu_Accounts_TurnAccountGuard}"
-                                    Description="{x:Static resources:Strings.Menu_Accounts_ChecksHostsFileTrustedCertificatesRoblox}">
-                <ui:ToggleSwitch IsChecked="{Binding Enabled, Mode=TwoWay}" />
-            </controls:OptionControl>
-
-            <controls:OptionControl Header="{x:Static resources:Strings.Menu_Accounts_WatchSignFileBackground}"
-                                    Description="{x:Static resources:Strings.Menu_Accounts_RunsSmallPhasmaStrapProcessFromWhen}"
-                                    IsEnabled="{Binding Enabled}">
-                <ui:ToggleSwitch IsChecked="{Binding Background, Mode=TwoWay}" />
-            </controls:OptionControl>
-
-            <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
-                <ui:Button Icon="ShieldCheckmark24" Content="{x:Static resources:Strings.Menu_Accounts_CheckNow}" Command="{Binding CheckNowCommand, Mode=OneTime}" />
-                <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Status}" />
-            </StackPanel>
-
-            <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding Findings}">
+            <ItemsControl x:Name="AccountsList" Margin="0,10,0,0" ItemsSource="{Binding FilteredAccounts}">
                 <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Margin="0,0,0,8" Padding="12,10" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource SystemFillColorCautionBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
+                    <DataTemplate DataType="{x:Type models:SwitcherAccount}">
+                        <Border Margin="0,0,0,8" Padding="14,10">
+                            <Border.Style>
+                                <Style TargetType="Border" BasedOn="{StaticResource PhasmaCard}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                                            <Setter Property="BorderBrush" Value="{DynamicResource PhasmaAccentStrokeBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="2*" MinWidth="150" />
+                                    <ColumnDefinition Width="3*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding Title}" />
-                                    <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Detail}" />
+
+                                <Grid Grid.Column="0" Width="40" Height="40" VerticalAlignment="Center">
+                                    <Ellipse Fill="{DynamicResource PhasmaSelectedBrush}" />
+                                    <Image Source="{Binding AvatarUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality">
+                                        <Image.Clip>
+                                            <EllipseGeometry Center="20,20" RadiusX="20" RadiusY="20" />
+                                        </Image.Clip>
+                                    </Image>
+                                </Grid>
+
+                                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock FontSize="13.5" FontWeight="SemiBold" Text="{Binding Title}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                        <Border Margin="8,0,0,0" Style="{DynamicResource PhasmaTag}" Visibility="{Binding CurrentBadgeVisibility}">
+                                            <TextBlock FontSize="10" Foreground="{DynamicResource PhasmaAccentBrush}" Text="Current" />
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Style="{DynamicResource PhasmaSubtle}" FontSize="11" Text="{Binding Subtitle}" />
+                                    <TextBlock Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="{Binding LastUsedDisplay}" />
                                 </StackPanel>
-                                <ui:Button Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Top" Content="{x:Static resources:Strings.Menu_Accounts_Fine}" ToolTip="{x:Static resources:Strings.Menu_Accounts_YouKnowAboutDonTMention}"
-                                           Command="{Binding DataContext.AcceptCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
+
+                                <ui:TextBox x:Name="NoteBox" Grid.Column="2" Margin="10,0" VerticalAlignment="Center" PlaceholderText="{x:Static resources:Strings.Menu_Accounts_AddNote}" Text="{Binding Note, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+
+                                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button Style="{DynamicResource PhasmaIconButton}" Width="32" Height="32" BorderBrush="{DynamicResource PhasmaStrokeBrush}" ToolTip="{x:Static resources:Strings.Menu_Accounts_CopyUserID}"
+                                            Command="{Binding DataContext.CopyUserIdCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                        <ui:SymbolIcon Symbol="Copy24" FontSize="14" />
+                                    </Button>
+                                    <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaIconButton}" Width="32" Height="32" BorderBrush="{DynamicResource PhasmaStrokeBrush}" ToolTip="{x:Static resources:Strings.Menu_Accounts_RemoveSavedAccount}"
+                                            Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                        <ui:SymbolIcon Symbol="Delete24" FontSize="14" />
+                                    </Button>
+                                    <Button Margin="10,0,0,0" Style="{StaticResource AccountSwitchButton}"
+                                            Command="{Binding DataContext.SwitchCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:SymbolIcon Symbol="ArrowSwap24" FontSize="14" VerticalAlignment="Center" />
+                                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.Menu_Accounts_Switch}" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
                             </Grid>
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <StackPanel Visibility="{Binding HistoryVisibility}">
-                <TextBlock Margin="0,12,0,4" FontSize="14" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_Accounts_RecentWarnings}" />
-                <ItemsControl ItemsSource="{Binding History}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Margin="0,0,0,8">
-                                <TextBlock FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap">
-                                    <Run Text="{Binding Utc, StringFormat={}{0:g} UTC, Mode=OneWay}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                                    <Run Text="  " />
-                                    <Run Text="{Binding Title, Mode=OneWay}" />
-                                </TextBlock>
-                                <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Detail}" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
+            <Border Style="{DynamicResource PhasmaCard}" Padding="30,26" Margin="0,0,0,8" Visibility="{Binding EmptyStateVisibility}">
+                <StackPanel HorizontalAlignment="Center">
+                    <ui:SymbolIcon Symbol="PersonAdd24" FontSize="30" Opacity="0.3" HorizontalAlignment="Center" />
+                    <TextBlock Margin="0,8,0,0" FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Center" TextAlignment="Center" Text="{Binding EmptyStateTitle}" />
+                    <TextBlock Margin="0,4,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" TextTrimming="None" MaxWidth="420" Style="{DynamicResource PhasmaSubtle}" Text="{Binding EmptyStateSubtitle}" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{DynamicResource PhasmaCard}" Padding="14,10" Background="{DynamicResource PhasmaHoverBrush}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ui:SymbolIcon Grid.Column="0" Symbol="Info24" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Grid.Column="1" VerticalAlignment="Center" Style="{DynamicResource PhasmaSubtle}" FontSize="11.5" TextWrapping="Wrap" TextTrimming="None"
+                               Text="Switching swaps Roblox's own login file, so it only works while every Roblox window is closed." />
+                    <TextBlock Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal"
+                               Text="{Binding Accounts.Count, StringFormat=Saved accounts: {0}}" />
+                </Grid>
+            </Border>
         </StackPanel>
-    </StackPanel>
+
+        <!--  Account guard and cookie import  -->
+        <StackPanel Grid.Row="1" Grid.Column="1" Margin="14,0,0,0">
+            <StackPanel x:Name="GuardRoot">
+                <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Accounts_AccountGuard}"
+                                       Description="Warns you about what login stealers do: reading the sign in file, sending roblox.com somewhere else, or planting a certificate to read your traffic. It can only warn.">
+                    <controls:SettingsCard.HeaderContent>
+                        <ui:SymbolIcon Symbol="ShieldCheckmark24" FontSize="18" Foreground="{DynamicResource PhasmaAccentBrush}" />
+                    </controls:SettingsCard.HeaderContent>
+
+                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_Accounts_TurnAccountGuard}"
+                                            Description="{x:Static resources:Strings.Menu_Accounts_ChecksHostsFileTrustedCertificatesRoblox}">
+                        <ui:ToggleSwitch IsChecked="{Binding Enabled, Mode=TwoWay}" />
+                    </controls:OptionControl>
+
+                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_Accounts_WatchSignFileBackground}"
+                                            Description="{x:Static resources:Strings.Menu_Accounts_RunsSmallPhasmaStrapProcessFromWhen}"
+                                            IsEnabled="{Binding Enabled}">
+                        <ui:ToggleSwitch IsChecked="{Binding Background, Mode=TwoWay}" />
+                    </controls:OptionControl>
+
+                    <StackPanel Margin="0,0,0,10">
+                        <Border Style="{DynamicResource PhasmaDivider}" />
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding CheckNowCommand, Mode=OneTime}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14" VerticalAlignment="Center" />
+                                    <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.Menu_Accounts_CheckNow}" />
+                                </StackPanel>
+                            </Button>
+                            <TextBlock Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" TextWrapping="Wrap" TextTrimming="None" Text="{Binding Status}" />
+                        </Grid>
+
+                        <ItemsControl Margin="0,10,0,0" ItemsSource="{Binding Findings}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,0,0,8" Style="{DynamicResource PhasmaCard}" Padding="12,10" BorderBrush="{DynamicResource PhasmaWarnBrush}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <ui:SymbolIcon Grid.Column="0" Symbol="Warning24" FontSize="15" Margin="0,1,10,0" VerticalAlignment="Top" Foreground="{DynamicResource PhasmaWarnBrush}" />
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding Title}" />
+                                                <TextBlock Margin="0,2,0,0" Style="{DynamicResource PhasmaSubtle}" FontSize="11.5" TextWrapping="Wrap" TextTrimming="None" Text="{Binding Detail}" />
+                                            </StackPanel>
+                                            <Button Grid.Column="2" Margin="10,0,0,0" VerticalAlignment="Top" Style="{DynamicResource PhasmaSoftButton}" Padding="10,5"
+                                                    Content="{x:Static resources:Strings.Menu_Accounts_Fine}" ToolTip="{x:Static resources:Strings.Menu_Accounts_YouKnowAboutDonTMention}"
+                                                    Command="{Binding DataContext.AcceptCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <StackPanel Visibility="{Binding HistoryVisibility}">
+                            <TextBlock Style="{DynamicResource PhasmaSectionLabel}" Margin="0,6,0,8" Text="{x:Static resources:Strings.Menu_Accounts_RecentWarnings}" />
+                            <ItemsControl ItemsSource="{Binding History}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,8" Style="{DynamicResource PhasmaCard}" Padding="12,10" Background="{DynamicResource PhasmaHoverBrush}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <ui:SymbolIcon Grid.Column="0" Symbol="Warning24" FontSize="14" Margin="0,1,10,0" VerticalAlignment="Top" Foreground="{DynamicResource PhasmaWarnBrush}" />
+                                                <StackPanel Grid.Column="1">
+                                                    <TextBlock FontSize="12.5" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding Title}" />
+                                                    <TextBlock Margin="0,1,0,0" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="{Binding Utc, StringFormat={}{0:g} UTC}" />
+                                                    <TextBlock Margin="0,2,0,0" Style="{DynamicResource PhasmaSubtle}" FontSize="11.5" TextWrapping="Wrap" TextTrimming="None" Text="{Binding Detail}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </StackPanel>
+                </controls:SettingsCard>
+            </StackPanel>
+
+            <ui:CardExpander Icon="PersonAdd24" IsExpanded="{Binding ImportVisible, Mode=TwoWay}">
+                <ui:CardExpander.Header>
+                    <StackPanel>
+                        <TextBlock FontSize="13" FontWeight="SemiBold" Text="Add an account" />
+                        <TextBlock FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Accounts_ImportAccountFromItsROBLOSECURITYCookie}" />
+                    </StackPanel>
+                </ui:CardExpander.Header>
+                <StackPanel>
+                    <TextBlock Margin="0,0,0,8" Style="{DynamicResource PhasmaSubtle}" FontSize="11.5" TextWrapping="Wrap" TextTrimming="None" Text="{x:Static resources:Strings.Menu_Accounts_PasteFullROBLOSECURITYValueOnlyPaste}" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox Grid.Column="0" PlaceholderText="{x:Static resources:Strings.Menu_Accounts_WARNINGDONOTSHARE}" Text="{Binding NewCookieText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <Button Grid.Column="1" Margin="8,0,0,0" Style="{DynamicResource PhasmaAccentButton}" Content="{x:Static resources:Strings.Common_Import}" Command="{Binding ImportCookieCommand}" />
+                    </Grid>
+                    <Button Margin="0,8,0,0" HorizontalAlignment="Left" Padding="0,4" Style="{DynamicResource PhasmaGhostButton}" Foreground="{DynamicResource PhasmaAccentBrush}"
+                            Content="{x:Static resources:Strings.Menu_Accounts_ImportSeveralAtOnceInstead}" Command="{Binding ToggleBulkImportCommand}" />
+
+                    <Border Margin="0,8,0,0" Style="{DynamicResource PhasmaCard}" Padding="12" Visibility="{Binding BulkImportVisibility}">
+                        <StackPanel>
+                            <TextBlock FontSize="13" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_Accounts_BulkImportFromCookies}" />
+                            <TextBlock Margin="0,2,0,8" Style="{DynamicResource PhasmaSubtle}" FontSize="11.5" TextWrapping="Wrap" TextTrimming="None" Text="{x:Static resources:Strings.Menu_Accounts_PasteOneROBLOSECURITYValuePerLine}" />
+                            <ui:TextBox Text="{Binding BulkCookieText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" MinLines="4" MaxLines="10" VerticalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="11" />
+                            <Button Margin="0,8,0,0" HorizontalAlignment="Left" Style="{DynamicResource PhasmaAccentButton}" Command="{Binding BulkImportCookiesCommand, Mode=OneTime}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="ArrowImport24" FontSize="14" VerticalAlignment="Center" />
+                                    <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.Menu_Accounts_ImportAll}" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ui:CardExpander>
+        </StackPanel>
+    </Grid>
 </ui:UiPage>

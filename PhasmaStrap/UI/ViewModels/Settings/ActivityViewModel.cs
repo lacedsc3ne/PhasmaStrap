@@ -52,6 +52,10 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
     public sealed class TimelineVisit
     {
+        public string SessionId { get; init; } = "";
+        public long PlaceId { get; init; }
+        public string JobId { get; init; } = "";
+        public bool CanRejoin { get; init; }
         public string Title { get; init; } = "";
         public string Subtitle { get; init; } = "";
         public string? IconUrl { get; init; }
@@ -62,6 +66,12 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public Visibility FriendsVisibility => FriendsText.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         public List<TimelineCapture> Captures { get; init; } = new();
         public Visibility CapturesVisibility => Captures.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        /// <summary>When this server visit started and ended, for opening its screenshots and clips in the capture library.</summary>
+        public DateTime JoinedUtc { get; init; }
+        public DateTime LeftUtc { get; init; }
+        public int ScreenshotCount { get; init; }
+        public int ClipCount { get; init; }
     }
 
     public sealed class TimelineSession
@@ -100,8 +110,9 @@ namespace PhasmaStrap.UI.ViewModels.Settings
     public sealed class ActivityViewModel : NotifyPropertyChangedViewModel
     {
         private const int MaxSessionsShown = 60;
-        private const double ChartHeight = 120;
-        private const double GameBarWidth = 420;
+        // Sized for the narrow side panel on the Activity page
+        private const double ChartHeight = 72;
+        private const double GameBarWidth = 250;
 
         public ObservableCollection<TimelineSession> Sessions { get; } = new();
         public ObservableCollection<ChartBar> Days { get; } = new();
@@ -229,8 +240,11 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
                     (int Average, int Low)? fps = SessionStats.FpsSummary(visit);
 
-                    List<TimelineCapture> inside = captures
+                    var during = captures
                         .Where(c => c.Time >= visit.JoinedUtc && c.Time <= visit.LeftUtc.AddSeconds(90))
+                        .ToList();
+
+                    List<TimelineCapture> inside = during
                         .OrderBy(c => c.Time)
                         .Take(12)
                         .Select(c => new TimelineCapture { Path = c.Path, IsImage = c.Image })
@@ -238,6 +252,10 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
                     item.Visits.Add(new TimelineVisit
                     {
+                        SessionId = session.Id,
+                        PlaceId = visit.PlaceId,
+                        JobId = visit.JobId,
+                        CanRejoin = visit.PlaceId > 0 && visit.JobId.Length > 0 && visit.ServerType is "" or "Public",
                         Title = visit.GameName.Length > 0 ? visit.GameName : $"Place {visit.PlaceId}",
                         Subtitle = string.Join("  ·  ", parts),
                         IconUrl = visit.IconUrl.Length > 0 ? visit.IconUrl : null,
@@ -245,6 +263,10 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                         Spark = BuildSpark(visit.Fps),
                         FriendsText = visit.Friends.Count == 0 ? "" : "With " + string.Join(", ", visit.Friends.Select(f => f.Name.Length > 0 ? f.Name : f.UserId.ToString())),
                         Captures = inside,
+                        JoinedUtc = visit.JoinedUtc,
+                        LeftUtc = visit.LeftUtc,
+                        ScreenshotCount = during.Count(c => c.Image),
+                        ClipCount = during.Count(c => !c.Image),
                     });
                 }
 
@@ -377,6 +399,36 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             {
                 App.Logger.WriteLine("ActivityViewModel", $"Could not open '{capture.Path}': {ex.Message}");
             }
+        }
+
+        /// <summary>Opens the capture library on just the screenshots or clips taken during this visit.</summary>
+        public static void OpenCapturesOf(TimelineVisit visit, bool clips)
+        {
+            var range = new PhasmaStrap.UI.ViewModels.Dialogs.CaptureTimeFilter(
+                visit.JoinedUtc.ToLocalTime(),
+                visit.LeftUtc.AddSeconds(90).ToLocalTime(),
+                visit.Title);
+
+            PhasmaStrap.UI.Elements.Dialogs.CaptureLibraryWindow.Open(
+                clips ? PhasmaStrap.UI.ViewModels.Dialogs.CaptureLibraryViewModel.ClipsTab : PhasmaStrap.UI.ViewModels.Dialogs.CaptureLibraryViewModel.ScreenshotsTab,
+                System.Windows.Application.Current.Windows.OfType<PhasmaStrap.UI.Elements.Settings.MainWindow>().FirstOrDefault(),
+                range);
+        }
+
+        public void DeleteSession(TimelineVisit visit)
+        {
+            if (visit.SessionId.Length == 0)
+                return;
+
+            var answer = Frontend.ShowMessageBox(
+                "Delete this session?\n\nIt is taken off the timeline and out of the playtime charts. Your screenshots and clips are not touched.",
+                MessageBoxImage.Warning, MessageBoxButton.YesNo);
+
+            if (answer != MessageBoxResult.Yes)
+                return;
+
+            SessionStore.Shared.Delete(visit.SessionId);
+            Refresh();
         }
 
         private void ClearHistory()

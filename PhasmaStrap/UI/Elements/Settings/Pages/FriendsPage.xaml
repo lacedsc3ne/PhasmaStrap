@@ -14,291 +14,458 @@
     <ui:UiPage.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 
-        <Style x:Key="FriendGroupExpanderStyle" TargetType="Expander" BasedOn="{StaticResource {x:Type Expander}}">
-            <Setter Property="IsExpanded" Value="True" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="Padding" Value="8,6" />
-            <Setter Property="Margin" Value="0,0,0,2" />
+        <!--  Green for in game or online, blue for Studio, grey when offline  -->
+        <Style x:Key="FriendPresenceDot" TargetType="Ellipse">
+            <Setter Property="Fill" Value="Gray" />
             <Style.Triggers>
-                <DataTrigger Binding="{Binding Name}" Value="Offline">
-                    <Setter Property="IsExpanded" Value="False" />
+                <DataTrigger Binding="{Binding Type}" Value="Online">
+                    <Setter Property="Fill" Value="{DynamicResource PhasmaGoodBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Type}" Value="InGame">
+                    <Setter Property="Fill" Value="{DynamicResource PhasmaGoodBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Type}" Value="InStudio">
+                    <Setter Property="Fill" Value="#3498DB" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!--  Star that turns gold when the friend is a favourite  -->
+        <Style x:Key="FriendStarIcon" TargetType="ui:SymbolIcon" BasedOn="{StaticResource {x:Type ui:SymbolIcon}}">
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding StarFilled}" Value="True">
+                    <Setter Property="Foreground" Value="#F5B301" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
     </ui:UiPage.Resources>
 
     <Grid Margin="0,0,14,14">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260" />
+            <ColumnDefinition Width="*" MinWidth="300" />
+            <ColumnDefinition Width="300" />
+        </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Row="0">
-            <TextBlock Text="{x:Static resources:Strings.Menu_Friends_Friends}" FontSize="20" FontWeight="Medium" />
-            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Friends_WhoSOnlineWhatTheyRe}" />
-        </StackPanel>
+        <!--  Friend list  -->
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-        <Grid Grid.Row="1" Margin="0,12,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" MinWidth="320" />
-                <ColumnDefinition Width="320" />
-            </Grid.ColumnDefinitions>
+            <ui:TextBox Grid.Row="0" Icon="Search24" PlaceholderText="{x:Static resources:Strings.Menu_Friends_SearchNamesNotes}" Text="{Binding Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-            <Grid Grid.Column="0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-
-                <ui:CardExpander Grid.Row="0" Icon="Alert24">
-                    <ui:CardExpander.Header>
-                        <StackPanel>
-                            <TextBlock FontSize="14" Text="{x:Static resources:Strings.Menu_Friends_FriendActivityAlerts}" />
-                            <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Whether to be told, how often to check, and who counts." />
-                        </StackPanel>
-                    </ui:CardExpander.Header>
-                    <StackPanel>
-                        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Friends_FriendActivityAlerts}" Description="{x:Static resources:Strings.Menu_Friends_ToastWhenFriendComesOnlineStarts}" x:Name="AlertsOption">
-                            <ui:ToggleSwitch IsChecked="{Binding AlertsEnabled, Mode=TwoWay}" />
-                        </controls:OptionControl>
-                        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Friends_CheckEvery}" IsEnabled="{Binding InnerContent.IsChecked, ElementName=AlertsOption, Mode=OneWay}">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:NumberBox IntegersOnly="True" Width="100" Min="20" Max="600" Value="{Binding PollSeconds, Mode=TwoWay}" />
-                                <TextBlock VerticalAlignment="Center" Margin="8,0,0,0" Text="{x:Static resources:Strings.Menu_Friends_Seconds}" />
-                            </StackPanel>
-                        </controls:OptionControl>
-                        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Friends_OnlyAlertFavourites}" Description="{x:Static resources:Strings.Menu_Friends_ToastsOnlyFriendsYouStarredBelow}" IsEnabled="{Binding InnerContent.IsChecked, ElementName=AlertsOption, Mode=OneWay}">
-                            <ui:ToggleSwitch IsChecked="{Binding AlertFavouritesOnly, Mode=TwoWay}" />
-                        </controls:OptionControl>
+            <Grid Grid.Row="1" Margin="0,8,0,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ToggleButton Grid.Column="0" Style="{DynamicResource PhasmaChip}" IsChecked="{Binding FavouritesOnly, Mode=TwoWay}">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="Star24" FontSize="12" VerticalAlignment="Center" />
+                        <TextBlock Margin="5,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.Menu_Friends_FavouritesOnly}" />
                     </StackPanel>
-                </ui:CardExpander>
-
-                <StackPanel Grid.Row="1" Margin="0,12,0,8">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <ui:TextBox Grid.Column="0" Icon="Search24" PlaceholderText="{x:Static resources:Strings.Menu_Friends_SearchNamesNotes}" Text="{Binding Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        <ui:Button Grid.Column="1" Margin="8,0,0,0" Content="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" Icon="ArrowClockwise24" Appearance="Secondary" Command="{Binding RefreshCommand, Mode=OneTime}" />
-                    </Grid>
-                    <Grid Margin="0,8,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <CheckBox Grid.Column="0" VerticalAlignment="Center" Content="{x:Static resources:Strings.Menu_Friends_FavouritesOnly}" IsChecked="{Binding FavouritesOnly, Mode=TwoWay}" />
-                        <TextBlock Grid.Column="1" Margin="12,0,0,0" FontSize="12" Opacity="0.7" VerticalAlignment="Center" TextAlignment="Right" TextTrimming="CharacterEllipsis" Text="{Binding Status}" />
-                    </Grid>
-                </StackPanel>
-
-                <ListBox Grid.Row="2" ItemsSource="{Binding Friends, Mode=OneWay}" SelectedItem="{Binding SelectedFriend, Mode=TwoWay}" Background="Transparent" BorderThickness="0" Padding="0"
-                         VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" VirtualizingPanel.IsVirtualizingWhenGrouping="True"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="True"
-                         HorizontalContentAlignment="Stretch">
-                    <ListBox.GroupStyle>
-                        <GroupStyle>
-                            <GroupStyle.ContainerStyle>
-                                <Style TargetType="GroupItem">
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="GroupItem">
-                                                <Expander Style="{StaticResource FriendGroupExpanderStyle}">
-                                                    <Expander.Header>
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <TextBlock FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" Text="{Binding Name}" />
-                                                            <Border Margin="8,0,0,0" Padding="6,1" CornerRadius="9" VerticalAlignment="Center" Background="{DynamicResource ControlFillColorSecondaryBrush}">
-                                                                <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ItemCount}" />
-                                                            </Border>
-                                                        </StackPanel>
-                                                    </Expander.Header>
-                                                    <ItemsPresenter />
-                                                </Expander>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </GroupStyle.ContainerStyle>
-                        </GroupStyle>
-                    </ListBox.GroupStyle>
-                    <ListBox.ItemContainerStyle>
-                        <Style TargetType="ListBoxItem">
-                            <Setter Property="Padding" Value="0" />
-                            <Setter Property="Margin" Value="0" />
-                            <Setter Property="Background" Value="Transparent" />
-                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="ListBoxItem">
-                                        <ContentPresenter />
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </ListBox.ItemContainerStyle>
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <Border CornerRadius="8" Padding="10" Margin="0,0,0,6" BorderThickness="1">
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
-                                        <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
-                                                <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColorSecondaryBrush}" />
-                                                <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <ToggleButton Grid.Column="0" Margin="0,0,8,0" Padding="4" Width="32" Height="32" VerticalAlignment="Center" Focusable="False"
-                                                  Background="Transparent" BorderThickness="0" IsChecked="{Binding IsFavourite, Mode=TwoWay}"
-                                                  ToolTip="{x:Static resources:Strings.Menu_Friends_FavouriteKeepsFriendTopList}" AutomationProperties.Name="Favourite">
-                                        <ui:SymbolIcon Symbol="Star24" Filled="{Binding StarFilled}" FontSize="18">
-                                            <ui:SymbolIcon.Style>
-                                                <Style TargetType="ui:SymbolIcon" BasedOn="{StaticResource {x:Type ui:SymbolIcon}}">
-                                                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding StarFilled}" Value="True">
-                                                            <Setter Property="Foreground" Value="#F5B301" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </ui:SymbolIcon.Style>
-                                        </ui:SymbolIcon>
-                                    </ToggleButton>
-
-                                    <Grid Grid.Column="1" Width="38" Height="38" VerticalAlignment="Center">
-                                        <Ellipse Fill="{DynamicResource ControlFillColorSecondaryBrush}" />
-                                        <Image Source="{Binding AvatarUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality">
-                                            <Image.Clip>
-                                                <EllipseGeometry Center="19,19" RadiusX="19" RadiusY="19" />
-                                            </Image.Clip>
-                                        </Image>
-                                        <Ellipse Width="12" Height="12" HorizontalAlignment="Right" VerticalAlignment="Bottom" StrokeThickness="2" Stroke="{DynamicResource ControlFillColorDefaultBrush}">
-                                            <Ellipse.Style>
-                                                <Style TargetType="Ellipse">
-                                                    <Setter Property="Fill" Value="Gray" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Type}" Value="Online">
-                                                            <Setter Property="Fill" Value="#2ECC71" />
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Type}" Value="InGame">
-                                                            <Setter Property="Fill" Value="#2ECC71" />
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Type}" Value="InStudio">
-                                                            <Setter Property="Fill" Value="#3498DB" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Ellipse.Style>
-                                        </Ellipse>
-                                    </Grid>
-
-                                    <StackPanel Grid.Column="2" Margin="10,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock FontSize="13" FontWeight="SemiBold" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock FontSize="11" Opacity="0.7" Text="{Binding StatusText}" TextTrimming="CharacterEllipsis" />
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-
-                <StackPanel Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,24,0,24" Visibility="{Binding EmptyStateVisibility}">
-                    <ui:SymbolIcon Symbol="People24" FontSize="40" Opacity="0.25" HorizontalAlignment="Center" />
-                    <TextBlock Text="{x:Static resources:Strings.Menu_Friends_NoFriendsShowYet}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="14" Opacity="0.5" Margin="0,10,0,0" HorizontalAlignment="Center" />
-                </StackPanel>
+                </ToggleButton>
+                <TextBlock Grid.Column="1" Margin="4,0,6,0" VerticalAlignment="Center" TextAlignment="Right" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal"
+                           Text="{Binding Status}" ToolTip="{Binding Status}" />
+                <Button Grid.Column="2" Style="{DynamicResource PhasmaIconButton}" Width="30" Height="30" ToolTip="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" Command="{Binding RefreshCommand, Mode=OneTime}">
+                    <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14" />
+                </Button>
             </Grid>
 
-            <Border Grid.Column="1" Margin="14,0,0,0" Padding="16" CornerRadius="8" BorderThickness="1" VerticalAlignment="Stretch"
-                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
-                <Grid>
-                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding NoSelectionVisibility}">
-                        <ui:SymbolIcon Symbol="PersonCircle24" FontSize="38" Opacity="0.25" HorizontalAlignment="Center" />
-                        <TextBlock Margin="0,10,0,0" FontSize="13" Opacity="0.6" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center"
-                                   Text="Pick a friend on the left to see their details." />
-                    </StackPanel>
+            <ListBox x:Name="FriendsList" Grid.Row="2" ItemsSource="{Binding Friends, Mode=OneWay}" SelectedItem="{Binding SelectedFriend, Mode=TwoWay}" Background="Transparent" BorderThickness="0" Padding="0"
+                     VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="True"
+                     HorizontalContentAlignment="Stretch" ItemContainerStyle="{DynamicResource PhasmaListItem}">
+                <ListBox.GroupStyle>
+                    <GroupStyle>
+                        <GroupStyle.ContainerStyle>
+                            <Style TargetType="GroupItem">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <!--  A small caption that folds its group away; Offline starts folded  -->
+                                        <ControlTemplate TargetType="GroupItem">
+                                            <StackPanel>
+                                                <ToggleButton x:Name="GroupToggle" IsChecked="True" Focusable="False" Cursor="Hand" Margin="0,8,0,4" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
+                                                    <ToggleButton.Template>
+                                                        <ControlTemplate TargetType="ToggleButton">
+                                                            <Border Background="Transparent" Padding="10,2">
+                                                                <ContentPresenter />
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </ToggleButton.Template>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Style="{DynamicResource PhasmaCaption}" VerticalAlignment="Center">
+                                                            <Run Text="{Binding Name, Mode=OneWay}" />
+                                                            <Run Text=" · " />
+                                                            <Run Text="{Binding ItemCount, Mode=OneWay}" />
+                                                        </TextBlock>
+                                                        <ui:SymbolIcon x:Name="GroupChevron" Symbol="ChevronDown24" FontSize="11" Margin="6,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                                    </StackPanel>
+                                                </ToggleButton>
+                                                <ItemsPresenter x:Name="GroupItems" />
+                                            </StackPanel>
+                                            <ControlTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding Name}" Value="Offline">
+                                                    <Setter TargetName="GroupToggle" Property="IsChecked" Value="False" />
+                                                </DataTrigger>
+                                                <Trigger SourceName="GroupToggle" Property="IsChecked" Value="False">
+                                                    <Setter TargetName="GroupItems" Property="Visibility" Value="Collapsed" />
+                                                    <Setter TargetName="GroupChevron" Property="Symbol" Value="ChevronRight24" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </GroupStyle.ContainerStyle>
+                    </GroupStyle>
+                </ListBox.GroupStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="{Binding SelectionVisibility}">
-                        <StackPanel DataContext="{Binding SelectedFriend}">
-                            <Grid Width="76" Height="76" HorizontalAlignment="Center">
-                                <Ellipse Fill="{DynamicResource ControlFillColorSecondaryBrush}" />
+                            <Grid Grid.Column="0" Width="34" Height="34" VerticalAlignment="Center">
+                                <Ellipse Fill="{DynamicResource PhasmaSelectedBrush}" />
                                 <Image Source="{Binding AvatarUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality">
+                                    <Image.Clip>
+                                        <EllipseGeometry Center="17,17" RadiusX="17" RadiusY="17" />
+                                    </Image.Clip>
+                                </Image>
+                                <Ellipse Width="11" Height="11" HorizontalAlignment="Right" VerticalAlignment="Bottom" StrokeThickness="2" Stroke="{DynamicResource PhasmaPopupBrush}" Style="{StaticResource FriendPresenceDot}" />
+                            </Grid>
+
+                            <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                <TextBlock FontSize="13" FontWeight="SemiBold" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Style="{DynamicResource PhasmaSubtle}" FontSize="11" Text="{Binding StatusText}" />
+                            </StackPanel>
+
+                            <ToggleButton Grid.Column="2" Margin="4,0,0,0" Width="26" Height="26" Padding="0" VerticalAlignment="Center" Focusable="False"
+                                          Style="{DynamicResource PhasmaIconButton}" IsChecked="{Binding IsFavourite, Mode=TwoWay}"
+                                          ToolTip="{x:Static resources:Strings.Menu_Friends_FavouriteKeepsFriendTopList}" AutomationProperties.Name="Favourite">
+                                <ui:SymbolIcon Symbol="Star24" Filled="{Binding StarFilled}" FontSize="14" Style="{StaticResource FriendStarIcon}" />
+                            </ToggleButton>
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <StackPanel Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,32,0,24" Visibility="{Binding EmptyStateVisibility}">
+                <ui:SymbolIcon Symbol="People24" FontSize="36" Opacity="0.3" HorizontalAlignment="Center" />
+                <TextBlock Margin="0,10,0,0" HorizontalAlignment="Center" Style="{DynamicResource PhasmaSubtle}" Text="{x:Static resources:Strings.Menu_Friends_NoFriendsShowYet}" />
+            </StackPanel>
+        </Grid>
+
+        <!--  Selected friend  -->
+        <Border Grid.Column="1" Margin="14,0,0,0" Style="{DynamicResource PhasmaCard}" Padding="0" ClipToBounds="True">
+            <Grid>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24" Visibility="{Binding NoSelectionVisibility}">
+                    <ui:SymbolIcon Symbol="PersonCircle24" FontSize="38" Opacity="0.3" HorizontalAlignment="Center" />
+                    <TextBlock Margin="0,10,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Style="{DynamicResource PhasmaSubtle}"
+                               Text="Pick a friend on the left to see their details." />
+                </StackPanel>
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="{Binding SelectionVisibility}">
+                    <StackPanel DataContext="{Binding SelectedFriend}">
+                        <Border Height="96" Background="{DynamicResource PhasmaAccentSoftBrush}" CornerRadius="12,12,0,0" />
+
+                        <Grid Margin="22,-40,22,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Grid Grid.Column="0" Width="84" Height="84" VerticalAlignment="Top">
+                                <Ellipse Fill="{DynamicResource PhasmaPopupBrush}" />
+                                <Ellipse Margin="4" Fill="{DynamicResource PhasmaSelectedBrush}" />
+                                <Image Margin="4" Source="{Binding AvatarUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality">
                                     <Image.Clip>
                                         <EllipseGeometry Center="38,38" RadiusX="38" RadiusY="38" />
                                     </Image.Clip>
                                 </Image>
-                                <Ellipse Width="18" Height="18" HorizontalAlignment="Right" VerticalAlignment="Bottom" StrokeThickness="3" Stroke="{DynamicResource ControlFillColorDefaultBrush}">
-                                    <Ellipse.Style>
-                                        <Style TargetType="Ellipse">
-                                            <Setter Property="Fill" Value="Gray" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Type}" Value="Online">
-                                                    <Setter Property="Fill" Value="#2ECC71" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Type}" Value="InGame">
-                                                    <Setter Property="Fill" Value="#2ECC71" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Type}" Value="InStudio">
-                                                    <Setter Property="Fill" Value="#3498DB" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Ellipse.Style>
-                                </Ellipse>
+                                <Ellipse Width="18" Height="18" Margin="0,0,4,4" HorizontalAlignment="Right" VerticalAlignment="Bottom" StrokeThickness="3" Stroke="{DynamicResource PhasmaPopupBrush}" Style="{StaticResource FriendPresenceDot}" />
                             </Grid>
 
-                            <TextBlock Margin="0,12,0,0" FontSize="16" FontWeight="SemiBold" TextAlignment="Center" TextWrapping="Wrap" Text="{Binding Name}" />
-                            <TextBlock FontSize="12" Opacity="0.6" TextAlignment="Center" TextWrapping="Wrap" Text="{Binding Username}" />
-                            <TextBlock Margin="0,8,0,0" FontSize="12" TextAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding StatusText}" />
+                            <StackPanel Grid.Column="1" Margin="14,46,0,0">
+                                <TextBlock Style="{DynamicResource PhasmaTitle}" FontSize="20" Text="{Binding Name}" />
+                                <TextBlock Margin="0,2,0,0" Style="{DynamicResource PhasmaSubtle}" TextTrimming="CharacterEllipsis">
+                                    <Run Text="{Binding Username, Mode=OneWay, StringFormat=@{0}}" /><Run Text="{Binding FriendsSinceSuffix, Mode=OneWay}" />
+                                </TextBlock>
+                            </StackPanel>
+                        </Grid>
 
-                            <ui:Button Margin="0,14,0,0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                                       Content="{x:Static resources:Strings.Menu_ServerBrowser_Join}" Icon="ArrowRight24" Appearance="Primary"
-                                       Visibility="{Binding Joinable, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                       Command="{Binding DataContext.JoinCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}" />
-
-                            <ui:Button Margin="0,8,0,0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                                       Content="Invite to party" Icon="PeopleTeam24"
-                                       Visibility="{Binding DataContext.PartyInviteVisibility, RelativeSource={RelativeSource AncestorType=ui:UiPage}}"
-                                       Command="{Binding DataContext.InviteToPartyCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}" />
-
-                            <ToggleButton Margin="0,8,0,0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="8,6"
-                                          IsChecked="{Binding IsFavourite, Mode=TwoWay}" ToolTip="{x:Static resources:Strings.Menu_Friends_FavouriteKeepsFriendTopList}">
-                                <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="Star24" Filled="{Binding StarFilled}" FontSize="16" VerticalAlignment="Center">
-                                        <ui:SymbolIcon.Style>
-                                            <Style TargetType="ui:SymbolIcon" BasedOn="{StaticResource {x:Type ui:SymbolIcon}}">
-                                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding StarFilled}" Value="True">
-                                                        <Setter Property="Foreground" Value="#F5B301" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </ui:SymbolIcon.Style>
-                                    </ui:SymbolIcon>
-                                    <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="12" Text="Favourite" />
-                                </StackPanel>
+                        <WrapPanel Margin="22,14,22,0">
+                            <ToggleButton Margin="0,0,8,8" Style="{DynamicResource PhasmaIconButton}" BorderBrush="{DynamicResource PhasmaStrokeBrush}"
+                                          IsChecked="{Binding IsFavourite, Mode=TwoWay}" ToolTip="{x:Static resources:Strings.Menu_Friends_FavouriteKeepsFriendTopList}" AutomationProperties.Name="Favourite">
+                                <ui:SymbolIcon Symbol="Star24" Filled="{Binding StarFilled}" FontSize="16" Style="{StaticResource FriendStarIcon}" />
                             </ToggleButton>
 
-                            <TextBlock Margin="0,16,0,4" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Accounts_AddNote}" />
-                            <ui:TextBox FontSize="12" MaxLength="200" AcceptsReturn="True" TextWrapping="Wrap" MinLines="3" MaxLines="6"
-                                        PlaceholderText="{x:Static resources:Strings.Menu_Accounts_AddNote}" ClearButtonEnabled="False" ToolTip="{x:Static resources:Strings.Menu_Friends_OwnNoteAboutFriendOnlyStored}"
-                                        Text="{Binding Note, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Delay=350}" />
+                            <Button Margin="0,0,8,8" Style="{DynamicResource PhasmaSoftButton}"
+                                    Visibility="{Binding DataContext.PartyInviteVisibility, RelativeSource={RelativeSource AncestorType=ui:UiPage}}"
+                                    Command="{Binding DataContext.InviteToPartyCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="PeopleTeam24" FontSize="15" VerticalAlignment="Center" />
+                                    <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="Invite to party" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button Margin="0,0,8,8" Style="{DynamicResource PhasmaAccentButton}"
+                                    Visibility="{Binding Joinable, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                    Command="{Binding DataContext.JoinCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Play24" FontSize="14" VerticalAlignment="Center" />
+                                    <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.Menu_ServerBrowser_Join}" />
+                                </StackPanel>
+                            </Button>
+                        </WrapPanel>
+
+                        <Border Margin="22,8,22,0" Style="{DynamicResource PhasmaCard}" Background="{DynamicResource PhasmaHoverBrush}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Ellipse Grid.Column="0" Width="8" Height="8" Margin="2,0,10,0" VerticalAlignment="Center" Style="{StaticResource FriendPresenceDot}" Visibility="{Binding PresenceDotVisibility}" />
+                                <!--  The game they are in now  -->
+                                <Border Grid.Column="0" Width="46" Height="46" Margin="0,0,12,0" VerticalAlignment="Center" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}"
+                                        Background="{DynamicResource PhasmaSelectedBrush}" ClipToBounds="True" Visibility="{Binding GameTileVisibility}">
+                                    <Grid>
+                                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" FontWeight="Bold" Opacity="0.7" Text="{Binding GameInitials}" />
+                                        <Border CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}">
+                                            <Border.Background>
+                                                <ImageBrush ImageSource="{Binding GameIconUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill" />
+                                            </Border.Background>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="Right now" Visibility="{Binding RightNowCaptionVisibility}" />
+                                    <StackPanel Orientation="Horizontal" Visibility="{Binding PlayingForVisibility}">
+                                        <Ellipse Width="6" Height="6" Margin="0,0,6,0" VerticalAlignment="Center" Fill="{DynamicResource PhasmaGoodBrush}" />
+                                        <TextBlock Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="{Binding PlayingForText}" />
+                                    </StackPanel>
+                                    <TextBlock Margin="0,2,0,0" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding StatusText}" />
+                                    <TextBlock Margin="0,2,0,0" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" TextWrapping="Wrap"
+                                               Text="{Binding ServerText}" ToolTip="{Binding ServerToolTip}" Visibility="{Binding ServerTextVisibility}" />
+                                </StackPanel>
+                                <!--  Their exact server, not just their game  -->
+                                <Button Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaSoftButton}"
+                                        Visibility="{Binding SameServerVisibility}" ToolTip="Join the exact server they are on"
+                                        Command="{Binding DataContext.SameServerCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Server24" FontSize="14" VerticalAlignment="Center" />
+                                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="Same server" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!--  Played together recently, from this PC's session history  -->
+                        <Grid Margin="22,20,22,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold" Text="Played together recently" />
+                            <Button Grid.Column="1" Style="{DynamicResource PhasmaGhostButton}" Padding="6,2" FontSize="12"
+                                    Command="{Binding DataContext.OpenActivityCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock VerticalAlignment="Center" Text="Activity" />
+                                    <ui:SymbolIcon Margin="4,0,0,0" Symbol="ChevronRight24" FontSize="11" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+
+                        <ItemsControl Margin="16,0,16,0" ItemsSource="{Binding PlayedTogether}" Visibility="{Binding PlayedTogetherVisibility}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="4" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="6,0" ToolTip="{Binding ToolTip}">
+                                        <Border Height="90" CornerRadius="{DynamicResource PhasmaCornerRadius}" Background="{DynamicResource PhasmaSelectedBrush}" ClipToBounds="True">
+                                            <Grid>
+                                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="24" FontWeight="Bold" Opacity="0.7" Text="{Binding Initials}" />
+                                                <Border CornerRadius="{DynamicResource PhasmaCornerRadius}">
+                                                    <Border.Background>
+                                                        <ImageBrush ImageSource="{Binding IconUrl}" Stretch="UniformToFill" />
+                                                    </Border.Background>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                        <TextBlock Margin="0,6,0,0" FontWeight="SemiBold" FontSize="12.5" TextTrimming="CharacterEllipsis" Text="{Binding Name}" />
+                                        <TextBlock Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="{Binding When}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Margin="22,0,22,0" Style="{DynamicResource PhasmaSubtle}" TextWrapping="Wrap" TextTrimming="None"
+                                   Text="{Binding PlayedTogetherEmptyText}" Visibility="{Binding PlayedTogetherEmptyVisibility}" />
+
+                        <!--  How often you shared a server lately  -->
+                        <TextBlock Margin="22,20,22,4" FontSize="13" FontWeight="SemiBold" Text="Ran into each other" />
+                        <TextBlock Margin="22,0,22,0" Style="{DynamicResource PhasmaSubtle}" TextWrapping="Wrap" TextTrimming="None" Text="{Binding RanIntoText}" />
+
+                        <!--  Alerts just for this friend; the right click menu has the same choice  -->
+                        <Grid Margin="22,20,22,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock FontSize="13" FontWeight="SemiBold" Text="Alerts for this friend" />
+                                <TextBlock Margin="0,2,0,0" Style="{DynamicResource PhasmaSubtle}" FontSize="11.5" TextWrapping="Wrap" TextTrimming="None"
+                                           Text="Overrides the friend alerts on the right for just this person." />
+                            </StackPanel>
+                            <ComboBox Grid.Column="1" Margin="12,0,0,0" Width="190" Padding="10,5,10,5" VerticalAlignment="Center"
+                                      ItemsSource="{Binding DataContext.AlertModeOptions, RelativeSource={RelativeSource AncestorType=ui:UiPage}, Mode=OneTime}"
+                                      SelectedIndex="{Binding AlertModeIndex, Mode=TwoWay}"
+                                      IsEnabled="{Binding DataContext.AlertsEnabled, RelativeSource={RelativeSource AncestorType=ui:UiPage}, Mode=OneWay}" />
+                        </Grid>
+
+                        <TextBlock Margin="22,18,22,6" FontSize="13" FontWeight="SemiBold" Text="Your note" />
+                        <ui:TextBox x:Name="FriendNoteBox" Margin="22,0,22,22" FontSize="12" MaxLength="200" AcceptsReturn="True" TextWrapping="Wrap" MinLines="3" MaxLines="6"
+                                    PlaceholderText="{x:Static resources:Strings.Menu_Accounts_AddNote}" ClearButtonEnabled="False" ToolTip="{x:Static resources:Strings.Menu_Friends_OwnNoteAboutFriendOnlyStored}"
+                                    Text="{Binding Note, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Delay=350}" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <!--  Party, accounts and alerts  -->
+        <ScrollViewer Grid.Column="2" Margin="14,0,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+            <!--  Live from PartyService  -->
+            <controls:SettingsCard Header="Party" Description="{Binding PartyText, Mode=OneWay}">
+                <controls:SettingsCard.HeaderContent>
+                    <Border Style="{DynamicResource PhasmaTagNeutral}">
+                        <TextBlock FontSize="11" Text="{Binding PartyTagText, Mode=OneWay}" />
+                    </Border>
+                </controls:SettingsCard.HeaderContent>
+
+                <StackPanel Margin="0,2,0,10" Visibility="{Binding PartyStartVisibility, Mode=OneWay}">
+                    <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Style="{DynamicResource PhasmaAccentButton}" Command="{Binding StartPartyCommand, Mode=OneTime}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Add24" FontSize="14" VerticalAlignment="Center" />
+                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="Start a party" />
                         </StackPanel>
-                    </ScrollViewer>
+                    </Button>
+                    <Grid Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox Grid.Column="0" MaxLength="6" CharacterCasing="Upper" FontFamily="Consolas" PlaceholderText="QK7MRD" ClearButtonEnabled="False"
+                                    Text="{Binding PartyJoinCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <Button Grid.Column="1" Margin="8,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Content="Join" Command="{Binding JoinPartyCommand, Mode=OneTime}" />
+                    </Grid>
+                </StackPanel>
+
+                <Grid Margin="0,2,0,10" Visibility="{Binding PartyInVisibility, Mode=OneWay}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" FontFamily="Consolas" FontSize="20" FontWeight="Bold" Text="{Binding PartyCode, Mode=OneWay}" />
+                    <Button Grid.Column="1" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding OpenPartyCommand, Mode=OneTime}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="PeopleTeam24" FontSize="14" VerticalAlignment="Center" />
+                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="Open party" />
+                        </StackPanel>
+                    </Button>
                 </Grid>
-            </Border>
-        </Grid>
+
+                <Button Margin="0,2,0,10" HorizontalAlignment="Left" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding OpenPartyCommand, Mode=OneTime}"
+                        Visibility="{Binding PartyOpenVisibility, Mode=OneWay}">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="PeopleTeam24" FontSize="14" VerticalAlignment="Center" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="Go to Party" />
+                    </StackPanel>
+                </Button>
+
+                <TextBlock Margin="0,0,0,10" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" TextWrapping="Wrap"
+                           Text="{Binding PartyMessage, Mode=OneWay}" Visibility="{Binding PartyMessageVisibility, Mode=OneWay}" />
+            </controls:SettingsCard>
+
+            <!--  Saved accounts, read from the account switcher's list  -->
+            <controls:SettingsCard Header="Accounts">
+                <controls:SettingsCard.HeaderContent>
+                    <Button Style="{DynamicResource PhasmaGhostButton}" Padding="6,2" FontSize="12" Command="{Binding OpenAccountsCommand, Mode=OneTime}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center" Text="Manage" />
+                            <ui:SymbolIcon Margin="4,0,0,0" Symbol="ChevronRight24" FontSize="11" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </controls:SettingsCard.HeaderContent>
+
+                <ItemsControl Margin="0,0,0,6" ItemsSource="{Binding SavedAccounts, Mode=OneWay}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Grid Grid.Column="0" Width="28" Height="28" VerticalAlignment="Center">
+                                    <Ellipse Fill="{DynamicResource PhasmaSelectedBrush}" />
+                                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Text="{Binding Initial}" />
+                                    <Image Source="{Binding AvatarUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality">
+                                        <Image.Clip>
+                                            <EllipseGeometry Center="14,14" RadiusX="14" RadiusY="14" />
+                                        </Image.Clip>
+                                    </Image>
+                                </Grid>
+                                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding Name}" />
+                                    <TextBlock Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" TextTrimming="CharacterEllipsis" Text="{Binding Detail}" />
+                                </StackPanel>
+                                <ui:SymbolIcon Grid.Column="2" Margin="8,0,0,0" Symbol="CheckmarkCircle24" FontSize="15" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource PhasmaGoodBrush}" Visibility="{Binding CurrentVisibility}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Margin="38,0,0,10" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="{Binding AccountsMoreText, Mode=OneWay}" Visibility="{Binding AccountsMoreVisibility, Mode=OneWay}" />
+                <TextBlock Margin="0,0,0,10" Style="{DynamicResource PhasmaSubtle}" TextWrapping="Wrap" TextTrimming="None" Visibility="{Binding AccountsEmptyVisibility, Mode=OneWay}"
+                           Text="No saved accounts yet. Save one in Accounts to switch with one click." />
+            </controls:SettingsCard>
+
+            <controls:SettingsCard Header="Friend alerts" Description="Whether to be told, how often to check, and who counts.">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Friends_FriendActivityAlerts}" Description="{x:Static resources:Strings.Menu_Friends_ToastWhenFriendComesOnlineStarts}" x:Name="AlertsOption">
+                    <ui:ToggleSwitch IsChecked="{Binding AlertsEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Friends_CheckEvery}" IsEnabled="{Binding InnerContent.IsChecked, ElementName=AlertsOption, Mode=OneWay}">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:NumberBox IntegersOnly="True" Width="96" Min="20" Max="600" Value="{Binding PollSeconds, Mode=TwoWay}" />
+                        <TextBlock VerticalAlignment="Center" Margin="8,0,0,0" Style="{DynamicResource PhasmaSubtle}" Text="{x:Static resources:Strings.Menu_Friends_Seconds}" />
+                    </StackPanel>
+                </controls:OptionControl>
+                <controls:OptionControl Header="When anyone comes online" IsEnabled="{Binding InnerContent.IsChecked, ElementName=AlertsOption, Mode=OneWay}">
+                    <ui:ToggleSwitch IsChecked="{Binding AlertOnline, Mode=TwoWay}" />
+                </controls:OptionControl>
+                <controls:OptionControl Header="When they join a game" IsEnabled="{Binding InnerContent.IsChecked, ElementName=AlertsOption, Mode=OneWay}">
+                    <ui:ToggleSwitch IsChecked="{Binding AlertGame, Mode=TwoWay}" />
+                </controls:OptionControl>
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Friends_OnlyAlertFavourites}" Description="{x:Static resources:Strings.Menu_Friends_ToastsOnlyFriendsYouStarredBelow}" IsEnabled="{Binding InnerContent.IsChecked, ElementName=AlertsOption, Mode=OneWay}">
+                    <ui:ToggleSwitch IsChecked="{Binding AlertFavouritesOnly, Mode=TwoWay}" />
+                </controls:OptionControl>
+            </controls:SettingsCard>
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </ui:UiPage>

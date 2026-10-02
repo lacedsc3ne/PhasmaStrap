@@ -18,6 +18,41 @@ namespace PhasmaStrap.Utility
 
         [JsonPropertyName("together")]
         public bool Together { get; set; }
+
+        /// <summary>Server side id for this member. Older servers don't send it, which turns off leader transfer and removing people.</summary>
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = "";
+
+        [JsonPropertyName("you")]
+        public bool You { get; set; }
+
+        /// <summary>The place this member is in right now, from what their PhasmaStrap reports on each poll. Empty when not in a game.</summary>
+        [JsonPropertyName("place_id")]
+        public string PlaceId { get; set; } = "";
+
+        /// <summary>The server (job ID) this member is in. Empty when unknown.</summary>
+        [JsonPropertyName("job_id")]
+        public string JobId { get; set; } = "";
+    }
+
+    /// <summary>The leader asked someone to take over. Nothing changes until that person accepts.</summary>
+    public sealed class PartyLeaderOffer
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = "";
+
+        [JsonPropertyName("from_name")]
+        public string FromName { get; set; } = "";
+
+        [JsonPropertyName("to_id")]
+        public string ToId { get; set; } = "";
+
+        [JsonPropertyName("to_name")]
+        public string ToName { get; set; } = "";
+
+        /// <summary>True when the offer is for the person reading this state.</summary>
+        [JsonPropertyName("for_you")]
+        public bool ForYou { get; set; }
     }
 
     public sealed class PartyInvite
@@ -66,6 +101,16 @@ namespace PhasmaStrap.Utility
 
         [JsonPropertyName("invites")]
         public List<PartyInvite> Invites { get; set; } = new();
+
+        [JsonPropertyName("leader_offer")]
+        public PartyLeaderOffer? LeaderOffer { get; set; }
+
+        /// <summary>
+        /// What happens when the leader leaves: PartyService.LeaderLeaves values. Set by the leader for the whole party.
+        /// Empty when the server doesn't support it yet.
+        /// </summary>
+        [JsonPropertyName("on_leader_leave")]
+        public string OnLeaderLeave { get; set; } = "";
     }
 
     public static class PartyService
@@ -80,9 +125,20 @@ namespace PhasmaStrap.Utility
 
         public static event EventHandler<PartyJoin>? JoinRequested;
 
+        /// <summary>Raised once per offer when the leader asks you to take over.</summary>
+        public static event EventHandler<PartyLeaderOffer>? LeaderOffered;
+
+        /// <summary>Raised when you become leader of the party you were already in.</summary>
+        public static event EventHandler? BecameLeader;
+
+        private static string _lastOfferId = "";
+
         public static bool InParty => Current.InParty;
 
         public static bool IsLeader => Current.InParty && Current.Leader;
+
+        /// <summary>The party server sends member ids, so the leader can be passed on and people can be removed.</summary>
+        public static bool CanManageMembers => IsLeader && Current.Members.Any(m => !string.IsNullOrEmpty(m.Id));
 
         private static async Task<PartyState?> SendAsync(HttpMethod method, string path, object? body = null)
         {
@@ -120,10 +176,21 @@ namespace PhasmaStrap.Utility
             if (state is null)
                 return;
 
+            PartyState previous = Current;
             Current = state;
             WriteMarker(state);
 
             Changed?.Invoke(null, EventArgs.Empty);
+
+            PartyLeaderOffer? offer = state.LeaderOffer;
+            if (offer is not null && offer.ForYou && offer.Id.Length > 0 && offer.Id != _lastOfferId)
+            {
+                _lastOfferId = offer.Id;
+                LeaderOffered?.Invoke(null, offer);
+            }
+
+            if (previous.InParty && state.InParty && previous.Code == state.Code && !previous.Leader && state.Leader)
+                BecameLeader?.Invoke(null, EventArgs.Empty);
 
             if (state.Join is not null && !string.IsNullOrEmpty(state.Join.PlaceId))
                 JoinRequested?.Invoke(null, state.Join);
@@ -263,6 +330,35 @@ namespace PhasmaStrap.Utility
             }
         }
 
+        /// <summary>Asks a member to take over as leader. They have to accept before anything changes.</summary>
+        public static async Task<bool> OfferLeaderAsync(string memberId)
+        {
+            PartyState? state = await SendAsync(HttpMethod.Post, "/v1/party/leader/offer", new { member_id = memberId });
+            Adopt(state);
+            return state is not null;
+        }
+
+        public static async Task<bool> CancelLeaderOfferAsync()
+        {
+            PartyState? state = await SendAsync(HttpMethod.Post, "/v1/party/leader/cancel");
+            Adopt(state);
+            return state is not null;
+        }
+
+        public static async Task<bool> AnswerLeaderOfferAsync(string offerId, bool accept)
+        {
+            PartyState? state = await SendAsync(HttpMethod.Post, accept ? "/v1/party/leader/accept" : "/v1/party/leader/decline", new { id = offerId });
+            Adopt(state);
+            return state is not null;
+        }
+
+        public static async Task<bool> RemoveMemberAsync(string memberId)
+        {
+            PartyState? state = await SendAsync(HttpMethod.Post, "/v1/party/remove", new { member_id = memberId });
+            Adopt(state);
+            return state is not null;
+        }
+
         public static async Task ReportLaunchAsync(long placeId, string jobId)
         {
             if (!PhasmaAccount.SignedIn || !LeaderFromMarker())
@@ -285,6 +381,27 @@ namespace PhasmaStrap.Utility
             }
         }
 
+        /// <summary>The values of PartyState.OnLeaderLeave.</summary>
+        public static class LeaderLeaves
+        {
+            /// <summary>The member who has been in the party longest becomes leader.</summary>
+            public const string Pass = "pass";
+
+            /// <summary>The party closes and everyone is let go.</summary>
+            public const string End = "end";
+        }
+
+        /// <summary>The leader picks what happens when they leave. Only the leader can change it.</summary>
+        public static async Task<bool> SetLeaderLeavesAsync(string mode)
+        {
+            if (!IsLeader)
+                return false;
+
+            PartyState? state = await SendAsync(HttpMethod.Post, "/v1/party/settings", new { on_leader_leave = mode });
+            Adopt(state);
+            return state is not null;
+        }
+
         private static CancellationTokenSource? _cts;
         private static Task? _loop;
 
@@ -297,6 +414,23 @@ namespace PhasmaStrap.Utility
 
             _following = true;
             JoinRequested += (_, join) => PartyLauncher.Follow(join);
+            LeaderOffered += (_, offer) => ShowLeaderOffer(offer);
+            BecameLeader += (_, _) => UI.NotificationCenter.Notify("You're leading the party now", "Everyone follows you into the games you launch.", UI.NotificationCategory.General);
+        }
+
+        private static void ShowLeaderOffer(PartyLeaderOffer offer)
+        {
+            string from = string.IsNullOrEmpty(offer.FromName) ? "The leader" : offer.FromName;
+
+            string code = Current.Code;
+
+            UI.NotificationCenter.Notify(
+                $"{from} wants you to lead the party",
+                string.IsNullOrEmpty(code) ? "You would pick the games. You can also answer on the Party page." : $"Party {code} · you would pick the games",
+                UI.NotificationCategory.General,
+                durationSeconds: 30,
+                actionText: "Become leader",
+                action: () => _ = AnswerLeaderOfferAsync(offer.Id, true));
         }
 
         public static void Start()

@@ -79,6 +79,45 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         }
 
         public System.Windows.Visibility PlaceholderVisibility => _thumbnail is null ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+
+        /// <summary>The game being played when the clip was saved (from session history), if known.</summary>
+        public string? Game { get; set; }
+
+        /// <summary>Game name for the thumbnail caption, or the file name when the game isn't known.</summary>
+        public string Title => string.IsNullOrEmpty(Game) ? FileName : Game!;
+
+        private string _durationText = "";
+        private bool _durationRequested;
+
+        /// <summary>"0:30" once the clip's length has been read (in the background, then cached); "" for GIFs or until known.</summary>
+        public string DurationText
+        {
+            get
+            {
+                if (!_durationRequested && !IsGif)
+                {
+                    _durationRequested = true;
+                    var dispatcher = System.Windows.Application.Current.Dispatcher;
+                    TimeSpan? known = ClipDurations.Request(Path, duration => dispatcher.BeginInvoke(() => SetDuration(duration)));
+                    if (known is not null)
+                        _durationText = ClipDurations.Format(known.Value);
+                }
+                return _durationText;
+            }
+        }
+
+        private void SetDuration(TimeSpan? duration)
+        {
+            _durationText = duration is null ? "" : ClipDurations.Format(duration.Value);
+            OnPropertyChanged(nameof(DurationText));
+            OnPropertyChanged(nameof(DurationVisibility));
+            OnPropertyChanged(nameof(SymbolBadgeVisibility));
+        }
+
+        public System.Windows.Visibility DurationVisibility => DurationText.Length > 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+
+        /// <summary>The type icon badge is shown only while there is no length to show instead.</summary>
+        public System.Windows.Visibility SymbolBadgeVisibility => DurationText.Length > 0 ? System.Windows.Visibility.Collapsed : System.Windows.Visibility.Visible;
     }
 
     public class CaptureViewModel : NotifyPropertyChangedViewModel
@@ -123,6 +162,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         {
             OnPropertyChanged(nameof(HotkeyHintText));
             OnPropertyChanged(nameof(HotkeyHintVisibility));
+            ReplayStatusChanged();
         }
 
         public bool InstantReplayEnabled
@@ -133,13 +173,113 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 App.Settings.Prop.InstantReplayEnabled = value;
                 App.Settings.Save();
                 OnPropertyChanged(nameof(InstantReplayEnabled));
+                ReplayStatusChanged();
             }
         }
+
+        /// <summary>Header pill on the Capture page.</summary>
+        public string ReplayPillText => App.Settings.Prop.InstantReplayEnabled ? "Instant Replay on" : "Instant Replay off";
+
+        public string ReplayPillDetail => App.Settings.Prop.InstantReplayEnabled ? $"last {ShortLength(App.Settings.Prop.InstantReplayClipSeconds)}" : "";
+
+        public System.Windows.Visibility ReplayOnVisibility => App.Settings.Prop.InstantReplayEnabled ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+
+        /// <summary>The save hotkey as shown on a key cap, or "" when none is set.</summary>
+        public string ReplayHotkeyDisplay
+        {
+            get
+            {
+                HotkeyRow? row = ReplayHotkey;
+                return row is { HasGesture: true } ? HotkeyGesture.ToDisplay(row.GestureText) : "";
+            }
+        }
+
+        public System.Windows.Visibility ReplayHotkeyVisibility => ReplayHotkeyDisplay.Length > 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+
+        /// <summary>The short line on the Instant Replay page: what the rolling buffer holds and roughly how much memory it takes.</summary>
+        public string ReplayBufferText
+        {
+            get
+            {
+                if (!App.Settings.Prop.InstantReplayEnabled)
+                    return "Instant Replay is off, so nothing is buffered";
+
+                int seconds = App.Settings.Prop.InstantReplayClipSeconds;
+                string length = seconds < 60 ? $"{seconds} seconds" : seconds % 60 == 0 ? (seconds == 60 ? "minute" : $"{seconds / 60} minutes") : $"{seconds / 60}:{seconds % 60:00}";
+                string where = App.Settings.Prop.InstantReplayGpuEncoding ? "in memory, encoded on the graphics card" : "in memory";
+
+                return $"Buffering the last {length} · about {EstimateBufferMegabytes():0} MB {where}";
+            }
+        }
+
+        private static string ShortLength(int seconds) =>
+            seconds < 60 ? $"{seconds} s" : seconds % 60 == 0 ? $"{seconds / 60} min" : $"{seconds / 60}:{seconds % 60:00}";
+
+        private void ReplayStatusChanged()
+        {
+            OnPropertyChanged(nameof(ReplayPillText));
+            OnPropertyChanged(nameof(ReplayPillDetail));
+            OnPropertyChanged(nameof(ReplayOnVisibility));
+            OnPropertyChanged(nameof(ReplayBufferText));
+            OnPropertyChanged(nameof(ReplayHotkeyDisplay));
+            OnPropertyChanged(nameof(ReplayHotkeyVisibility));
+        }
+
+        // Same sums as ReplayEstimateText, for the short buffer line.
+        private static (int Width, int Height) RecordSize()
+        {
+            var screen = System.Windows.Forms.Screen.PrimaryScreen?.Bounds ?? new System.Drawing.Rectangle(0, 0, 1920, 1080);
+            int width = screen.Width & ~1;
+            int height = screen.Height & ~1;
+
+            int maxHeight = App.Settings.Prop.InstantReplayMaxHeight;
+            if (maxHeight > 0 && height > maxHeight)
+            {
+                width = (int)Math.Round(width * (double)maxHeight / height) & ~1;
+                height = maxHeight;
+            }
+
+            return (width, height);
+        }
+
+        private static double EstimateBufferMegabytes()
+        {
+            var (width, height) = RecordSize();
+            int fps = App.Settings.Prop.InstantReplayFps;
+            int seconds = App.Settings.Prop.InstantReplayClipSeconds;
+            int quality = App.Settings.Prop.InstantReplayQuality;
+
+            if (App.Settings.Prop.InstantReplayGpuEncoding)
+            {
+                double clipMb = InstantReplayRecorder.BitrateFor(width, height, fps, quality) / 8.0 * seconds / 1048576.0;
+                double videoMb = clipMb * (seconds + GpuReplayRecorder.SegmentSeconds) / seconds;
+                double soundMb = App.Settings.Prop.InstantReplayAudio ? (seconds + GpuReplayRecorder.SegmentSeconds + 2) * 48000 * 4 / 1048576.0 * (App.Settings.Prop.InstantReplayMicrophone ? 2 : 1) : 0;
+                return videoMb + soundMb;
+            }
+
+            double bufferMb = InstantReplayRecorder.EstimateBufferBytes(width, height, fps, seconds, quality) / 1048576.0;
+            return Math.Min(bufferMb, InstantReplayRecorder.MaxBufferMegabytes);
+        }
+
+        public bool ShareHideNames
+        {
+            get => App.Settings.Prop.CaptureShareHideNames;
+            set { App.Settings.Prop.CaptureShareHideNames = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(ShareHideNames)); }
+        }
+
+        public bool ShareStamp
+        {
+            get => App.Settings.Prop.CaptureShareStamp;
+            set { App.Settings.Prop.CaptureShareStamp = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(ShareStamp)); }
+        }
+
+        /// <summary>Everything in the Library tab: screenshots, clips and GIFs.</summary>
+        public int LibraryCount => Screenshots.Count + Replays.Count;
 
         public int InstantReplayClipSeconds
         {
             get => App.Settings.Prop.InstantReplayClipSeconds;
-            set { App.Settings.Prop.InstantReplayClipSeconds = value; ReplaySettingChanged(nameof(InstantReplayClipSeconds)); OnPropertyChanged(nameof(ClipLengthText)); }
+            set { App.Settings.Prop.InstantReplayClipSeconds = value; ReplaySettingChanged(nameof(InstantReplayClipSeconds)); OnPropertyChanged(nameof(ClipLengthText)); ReplayStatusChanged(); }
         }
 
         public int MaxClipSeconds => InstantReplayRecorder.MaxClipSeconds;
@@ -280,6 +420,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 OnPropertyChanged(nameof(SoundAvailable));
                 OnPropertyChanged(nameof(MicrophonePickerEnabled));
                 OnPropertyChanged(nameof(ReplayEstimateText));
+                OnPropertyChanged(nameof(ReplayBufferText));
 
                 PresetChanged();
             }
@@ -423,6 +564,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 App.Settings.SaveDeferred();
                 OnPropertyChanged(nameof(SelectedStorageLimit));
                 OnPropertyChanged(nameof(StorageUsageText));
+                OnPropertyChanged(nameof(Storage));
             }
         }
 
@@ -442,6 +584,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 App.Settings.SaveDeferred();
                 OnPropertyChanged(nameof(SelectedMaxAge));
                 OnPropertyChanged(nameof(StorageUsageText));
+                OnPropertyChanged(nameof(Storage));
             }
         }
 
@@ -463,6 +606,51 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                     text += $"\nWith these limits the {due.Count} oldest ({Size(due.Sum(e => e.Bytes))}) will move to the Recycle Bin the next time you take a screenshot or save a clip.";
 
                 return text;
+            }
+        }
+
+        /// <summary>Read only numbers for the storage meter: how much each kind takes, against the size limit.</summary>
+        public sealed class StorageSummary
+        {
+            public string UsedText { get; init; } = "";
+            public string OfText { get; init; } = "";
+            public string ClipsText { get; init; } = "";
+            public string ScreenshotsText { get; init; } = "";
+            public string GifsText { get; init; } = "";
+            public System.Windows.GridLength ClipsWidth { get; init; }
+            public System.Windows.GridLength ScreenshotsWidth { get; init; }
+            public System.Windows.GridLength GifsWidth { get; init; }
+            public System.Windows.GridLength FreeWidth { get; init; }
+        }
+
+        public StorageSummary Storage
+        {
+            get
+            {
+                List<CaptureStorage.Entry> shots = CaptureStorage.Scan(new[] { ScreenshotCapture.ScreenshotsDir });
+                List<CaptureStorage.Entry> clipsAndGifs = CaptureStorage.Scan(new[] { InstantReplayRecorder.ClipsDir });
+
+                long shotBytes = shots.Sum(e => e.Bytes);
+                long gifBytes = clipsAndGifs.Where(e => e.Path.EndsWith(".gif", StringComparison.OrdinalIgnoreCase)).Sum(e => e.Bytes);
+                long clipBytes = clipsAndGifs.Sum(e => e.Bytes) - gifBytes;
+                long used = shotBytes + gifBytes + clipBytes;
+                long limit = App.Settings.Prop.CaptureStorageLimitMB * 1048576L;
+
+                // Star widths in MB keep the numbers small for the layout.
+                static System.Windows.GridLength Star(long bytes) => new(Math.Max(0, bytes) / 1048576.0, System.Windows.GridUnitType.Star);
+
+                return new StorageSummary
+                {
+                    UsedText = Size(used),
+                    OfText = limit > 0 ? $"of {Size(limit)} used by screenshots, clips and GIFs" : "used by screenshots, clips and GIFs, with no size limit",
+                    ClipsText = Size(clipBytes),
+                    ScreenshotsText = Size(shotBytes),
+                    GifsText = Size(gifBytes),
+                    ClipsWidth = Star(clipBytes),
+                    ScreenshotsWidth = Star(shotBytes),
+                    GifsWidth = Star(gifBytes),
+                    FreeWidth = Star(limit > 0 ? limit - used : (used == 0 ? 1048576 : 0)),
+                };
             }
         }
 
@@ -519,7 +707,14 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             if (confirm != System.Windows.MessageBoxResult.Yes)
                 return;
 
-            string? problem = await ScreenshotShare.ShareAsync(item.Path, Path.GetFileNameWithoutExtension(item.Path), "");
+            string? stamp = null;
+            if (App.Settings.Prop.CaptureShareStamp)
+            {
+                string? game = new CaptureLibrary.GameIndex().GameAt(item.Taken);
+                stamp = (game is null ? "" : game + " · ") + item.Taken.ToString("d MMM yyyy, HH:mm");
+            }
+
+            string? problem = await ScreenshotShare.ShareAsync(item.Path, Path.GetFileNameWithoutExtension(item.Path), "", App.Settings.Prop.CaptureShareHideNames, stamp);
 
             NotificationCenter.Notify(
                 problem is null ? "Screenshot sent for review" : "Could not share that screenshot",
@@ -537,12 +732,13 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             App.Settings.SaveDeferred();
             OnPropertyChanged(property);
             OnPropertyChanged(nameof(ReplayEstimateText));
+            OnPropertyChanged(nameof(ReplayBufferText));
             PresetChanged();
         }
 
         public ObservableCollection<ReplayClipItem> Replays { get; } = new();
 
-        private const int RecentCount = 3;
+        private const int RecentCount = 4;
         public ObservableCollection<ScreenshotItem> RecentScreenshots { get; } = new();
         public ObservableCollection<ReplayClipItem> RecentReplays { get; } = new();
 
@@ -657,11 +853,18 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                     .Where(f => !f.Name.EndsWith(".editing.mp4", StringComparison.OrdinalIgnoreCase))
                     .OrderByDescending(f => f.LastWriteTime);
 
+                CaptureLibrary.GameIndex? games = null;
+
                 foreach (FileInfo file in files)
                 {
-                    fresh.Add(known.TryGetValue(file.FullName, out ReplayClipItem? item) && item.Bytes == file.Length && item.Taken == file.LastWriteTime
-                        ? item
-                        : new ReplayClipItem { Path = file.FullName, Taken = file.LastWriteTime, Bytes = file.Length });
+                    if (known.TryGetValue(file.FullName, out ReplayClipItem? item) && item.Bytes == file.Length && item.Taken == file.LastWriteTime)
+                    {
+                        fresh.Add(item);
+                        continue;
+                    }
+
+                    games ??= new CaptureLibrary.GameIndex();
+                    fresh.Add(new ReplayClipItem { Path = file.FullName, Taken = file.LastWriteTime, Bytes = file.Length, Game = games.GameAt(file.LastWriteTime) });
                 }
             }
 
@@ -675,7 +878,9 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             SyncRecent(Replays, RecentReplays);
             OnPropertyChanged(nameof(HasReplays));
             OnPropertyChanged(nameof(AllClipsText));
+            OnPropertyChanged(nameof(LibraryCount));
             OnPropertyChanged(nameof(StorageUsageText));
+            OnPropertyChanged(nameof(Storage));
         }
 
         public bool HasScreenshots => Screenshots.Count > 0;
@@ -732,6 +937,20 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             RefreshGallery();
             RefreshReplays();
             WatchFolders();
+
+            try
+            {
+                if (ReplayHotkey is HotkeyRow row)
+                    row.PropertyChanged += (_, e) =>
+                    {
+                        if (e.PropertyName is nameof(HotkeyRow.GestureText) or nameof(HotkeyRow.HasGesture))
+                            ReplayStatusChanged();
+                    };
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("CaptureViewModel", $"Can't follow the replay hotkey: {ex.Message}");
+            }
         }
 
         private readonly List<FileSystemWatcher> _watchers = new();
@@ -828,8 +1047,10 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             SyncRecent(Screenshots, RecentScreenshots);
             OnPropertyChanged(nameof(HasScreenshots));
             OnPropertyChanged(nameof(AllScreenshotsText));
+            OnPropertyChanged(nameof(LibraryCount));
             OnPropertyChanged(nameof(RecentHintVisibility));
             OnPropertyChanged(nameof(StorageUsageText));
+            OnPropertyChanged(nameof(Storage));
         }
     }
 }

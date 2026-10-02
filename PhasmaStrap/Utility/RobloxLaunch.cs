@@ -31,6 +31,12 @@ namespace PhasmaStrap.Utility
             try
             {
                 Process.Start(Paths.Process, $"-player \"{uri}\"");
+
+                // Deployment > "Close PhasmaStrap" set to Minimise to tray: also when joining from inside the app
+                if (App.Settings.Prop.SettingsWindowOnLaunch == "Tray")
+                    System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
+                        System.Windows.Application.Current.Windows.OfType<UI.Elements.Settings.MainWindow>().FirstOrDefault()?.HideToTray()));
+
                 return true;
             }
             catch (Exception ex)

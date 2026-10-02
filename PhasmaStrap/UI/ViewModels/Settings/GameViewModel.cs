@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using PhasmaStrap.Integrations;
 using PhasmaStrap.Models;
 using PhasmaStrap.Utility;
+using PhasmaStrap.Utility.Backend;
 
 namespace PhasmaStrap.UI.ViewModels.Settings
 {
@@ -21,12 +22,147 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             set { _iconUrl = value ?? ""; OnPropertyChanged(nameof(IconUrl)); }
         }
 
-        public string Caption => IsRoot ? "Start place" : $"Place {PlaceId}";
+        public string Caption => StatsText.Length > 0 ? StatsText : IsRoot ? "Start place" : $"Place {PlaceId}";
+
+        public string IdText => $"Place ID {PlaceId}";
+
+        /// <summary>Players and servers, then the place ID, for the Places tab.</summary>
+        public string DetailText => StatsText.Length > 0 ? $"{StatsText}  ·  {IdText}" : IdText;
+
+        private string _statsText = "";
+        /// <summary>"214K playing · 18.1K servers" once known, from PhasmaStrap's server or this place's server list.</summary>
+        public string StatsText
+        {
+            get => _statsText;
+            private set { _statsText = value; OnPropertyChanged(nameof(StatsText)); OnPropertyChanged(nameof(Caption)); OnPropertyChanged(nameof(DetailText)); }
+        }
+
+        /// <summary>True once the totals came from the server, so a partial count from one list doesn't replace them.</summary>
+        public bool HasFullStats { get; private set; }
+
+        public void SetStats(long playing, long servers, bool full, bool atLeast = false)
+        {
+            if (HasFullStats && !full)
+                return;
+
+            HasFullStats |= full;
+            string more = atLeast ? "+" : "";
+            StatsText = servers > 0
+                ? $"{GameCatalog.Compact(playing)}{more} playing  ·  {GameCatalog.Compact(servers)}{more} server{(servers == 1 ? "" : "s")}"
+                : "";
+        }
     }
 
-    public sealed class ServerRow
+    /// <summary>A friend shown on a server row: a round initial or avatar.</summary>
+    public sealed class ServerFriend
+    {
+        public long UserId { get; init; }
+        public string Name { get; init; } = "";
+        public string? AvatarUrl { get; init; }
+        public string Initial => Name.Length > 0 ? Name[..1].ToUpperInvariant() : "?";
+    }
+
+    /// <summary>A friend in the "Friends in this game" card on the Overview tab.</summary>
+    public sealed class GameFriendRow
+    {
+        public long UserId { get; init; }
+        public string Name { get; init; } = "";
+        public string Detail { get; init; } = "";
+        public string? AvatarUrl { get; init; }
+        public string Initial => Name.Length > 0 ? Name[..1].ToUpperInvariant() : "?";
+        public FriendPresence? Presence { get; init; }
+        public bool CanJoin => Presence?.Joinable ?? false;
+        public Visibility JoinVisibility => CanJoin ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    /// <summary>A region chip above the server list.</summary>
+    public sealed class RegionChip : NotifyPropertyChangedViewModel
+    {
+        public string Code { get; init; } = "";
+        public string Name { get; init; } = "";
+        public int Count { get; init; }
+        public string Label => Count > 0 ? $"{Name}  {Count}" : Name;
+
+        private bool _isSelected;
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set { _isSelected = value; OnPropertyChanged(nameof(IsSelected)); }
+        }
+    }
+
+    public sealed class GameAccountOption
+    {
+        /// <summary>0 means whoever is signed in to Roblox at launch.</summary>
+        public long UserId { get; init; }
+        public string Name { get; init; } = "";
+        public string Initial => Name.Length > 0 ? Name[..1].ToUpperInvariant() : "?";
+        public override string ToString() => Name;
+    }
+
+    public sealed class ServerRow : NotifyPropertyChangedViewModel
     {
         public ServerListItem Server { get; init; } = new();
+
+        private string _region = "";
+        /// <summary>"Frankfurt, DE" when known.</summary>
+        public string Region
+        {
+            get => _region;
+            set
+            {
+                _region = value ?? "";
+                OnPropertyChanged(nameof(Region));
+                OnPropertyChanged(nameof(City));
+                OnPropertyChanged(nameof(Badge));
+                OnPropertyChanged(nameof(Continent));
+                OnPropertyChanged(nameof(HasRegion));
+            }
+        }
+
+        private string _continentHint = "";
+        public string ContinentHint { get => _continentHint; set { _continentHint = value ?? ""; OnPropertyChanged(nameof(Continent)); OnPropertyChanged(nameof(Badge)); } }
+
+        public string City => ServerFacts.SplitRegion(_region).City;
+        public string Country => ServerFacts.SplitRegion(_region).Country;
+        public string Continent => ServerFacts.ContinentOf(Country, _continentHint);
+        public string Badge => ServerFacts.Badge(Country, Continent);
+        public bool HasRegion => City.Length > 0;
+
+        private DateTime? _firstSeenUtc;
+        public DateTime? FirstSeenUtc
+        {
+            get => _firstSeenUtc;
+            set { _firstSeenUtc = value; OnPropertyChanged(nameof(FirstSeenUtc)); OnPropertyChanged(nameof(UptimeText)); }
+        }
+
+        public string UptimeText => ServerFacts.Uptime(_firstSeenUtc);
+
+        private double _fps;
+        /// <summary>The server's frame rate: Roblox's own number when it lists one, otherwise PhasmaStrap's server.</summary>
+        public double Fps
+        {
+            get => Server.Fps > 0 ? Server.Fps : _fps;
+            set { _fps = value; OnPropertyChanged(nameof(Fps)); OnPropertyChanged(nameof(FpsText)); }
+        }
+
+        public string FpsText => Fps > 0 ? Math.Round(Fps).ToString() : "";
+
+        /// <summary>Average FPS of PhasmaStrap players in this server, for the information window.</summary>
+        public double ClientFps { get; set; }
+
+        private List<ServerFriend> _friends = new();
+        public List<ServerFriend> Friends
+        {
+            get => _friends;
+            set { _friends = value ?? new(); OnPropertyChanged(nameof(Friends)); OnPropertyChanged(nameof(HasFriends)); OnPropertyChanged(nameof(FriendsTip)); }
+        }
+
+        public bool HasFriends => _friends.Count > 0;
+
+        public string FriendsTip => string.Join(", ", _friends.Select(f => f.Name));
+
+        public string JoinText => IsFull ? "Full" : "Join";
 
         public int Playing => Server.Playing;
         public int MaxPlayers => Server.MaxPlayers;
@@ -42,9 +178,22 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string PingLevel => Server.Ping <= 0 ? "none" : Server.Ping < 60 ? "good" : Server.Ping < 130 ? "ok" : "bad";
     }
 
-    public sealed class GamePrivateServerRow
+    public sealed class GamePrivateServerRow : NotifyPropertyChangedViewModel
     {
         public PrivateServerInfo Info { get; init; } = new();
+
+        private bool _isFriend;
+        /// <summary>The owner is one of your Roblox friends.</summary>
+        public bool IsFriend
+        {
+            get => _isFriend;
+            set { _isFriend = value; OnPropertyChanged(nameof(IsFriend)); OnPropertyChanged(nameof(FriendVisibility)); }
+        }
+
+        public Visibility FriendVisibility => _isFriend && !Info.Owned ? Visibility.Visible : Visibility.Collapsed;
+
+        /// <summary>Short line for the places rail: whose it is.</summary>
+        public string RailText => Info.Owned ? "Yours" : string.IsNullOrEmpty(Info.OwnerName) ? "Shared with you" : $"Shared by {Info.OwnerName}";
         public string Title => string.IsNullOrWhiteSpace(Info.Name) ? "Private server" : Info.Name;
 
         public string Subtitle
@@ -63,6 +212,30 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 return who;
             }
         }
+
+        public bool IsActive => Info.Active;
+
+        public string StateText => Info.Active ? "Can join now" : "Inactive";
+    }
+
+    /// <summary>One visit to this game, read from the session history on Activity.</summary>
+    public sealed class GameSessionRow
+    {
+        public long PlaceId { get; init; }
+        public string JobId { get; init; } = "";
+        public bool CanRejoin { get; init; }
+        public string WhenText { get; init; } = "";
+        public string PlaceText { get; init; } = "";
+        public string ServerText { get; init; } = "";
+        public string TimeText { get; init; } = "";
+        public string FpsText { get; init; } = "";
+    }
+
+    /// <summary>One day in the "last 14 days" chart on a game's History tab.</summary>
+    public sealed class GameDayBar
+    {
+        public double Height { get; init; }
+        public string Tip { get; init; } = "";
     }
 
     public sealed class GameProfileOption
@@ -77,9 +250,12 @@ namespace PhasmaStrap.UI.ViewModels.Settings
     {
         private const string LOG_IDENT = "GameViewModel";
 
+        public const string TabOverview = "overview";
+        public const string TabPlaces = "places";
         public const string TabServers = "servers";
         public const string TabAbout = "about";
         public const string TabPrivate = "private";
+        public const string TabHistory = "history";
 
         private readonly CancellationTokenSource _cts = new();
         private readonly long _requestedPlaceId;
@@ -98,6 +274,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             RebuildProfileOptions();
             _ = LoadAsync();
+            _ = LoadAccountsAsync();
         }
 
         public void Dispose()
@@ -118,7 +295,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public long RootPlaceId { get; private set; }
 
         private string _name;
-        public string Name { get => _name; private set { _name = value; OnPropertyChanged(nameof(Name)); } }
+        public string Name { get => _name; private set { _name = value; OnPropertyChanged(nameof(Name)); OnPropertyChanged(nameof(PlacesHeader)); } }
 
         private string _creator = "";
         public string Creator { get => _creator; private set { _creator = value; OnPropertyChanged(nameof(Creator)); } }
@@ -155,9 +332,15 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 OnPropertyChanged(nameof(ServersTabVisibility));
                 OnPropertyChanged(nameof(AboutTabVisibility));
                 OnPropertyChanged(nameof(PrivateTabVisibility));
+                OnPropertyChanged(nameof(OverviewTabVisibility));
+                OnPropertyChanged(nameof(PlacesTabVisibility));
+                OnPropertyChanged(nameof(HistoryTabVisibility));
             }
         }
 
+        public bool IsOverviewTab { get => _tab == TabOverview; set { if (value) ShowTab(TabOverview); } }
+        public bool IsPlacesTab { get => _tab == TabPlaces; set { if (value) ShowTab(TabPlaces); } }
+        public bool IsHistoryTab { get => _tab == TabHistory; set { if (value) ShowTab(TabHistory); } }
         public bool IsServersTab { get => _tab == TabServers; set { if (value) ShowTab(TabServers); } }
         public bool IsAboutTab { get => _tab == TabAbout; set { if (value) ShowTab(TabAbout); } }
         public bool IsPrivateTab { get => _tab == TabPrivate; set { if (value) ShowTab(TabPrivate); } }
@@ -170,14 +353,23 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             OnPropertyChanged(nameof(IsServersTab));
             OnPropertyChanged(nameof(IsAboutTab));
             OnPropertyChanged(nameof(IsPrivateTab));
+            OnPropertyChanged(nameof(IsOverviewTab));
+            OnPropertyChanged(nameof(IsPlacesTab));
+            OnPropertyChanged(nameof(IsHistoryTab));
 
             if (tab == TabPrivate && !_privateLoaded)
                 _ = LoadPrivateServersAsync();
+
+            if (tab == TabHistory && !_historyLoaded)
+                LoadHistory();
         }
 
         public Visibility ServersTabVisibility => _tab == TabServers ? Visibility.Visible : Visibility.Collapsed;
         public Visibility AboutTabVisibility => _tab == TabAbout ? Visibility.Visible : Visibility.Collapsed;
         public Visibility PrivateTabVisibility => _tab == TabPrivate ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility OverviewTabVisibility => _tab == TabOverview ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility PlacesTabVisibility => _tab == TabPlaces ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility HistoryTabVisibility => _tab == TabHistory ? Visibility.Visible : Visibility.Collapsed;
 
         public ICommand ShowTabCommand => new RelayCommand<string>(tab =>
         {
@@ -200,6 +392,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                     Places.Add(new PlaceItem { PlaceId = _requestedPlaceId, Name = Name, IsRoot = true });
                     OnPropertyChanged(nameof(PlacesTitle));
                     SelectPlace(Places[0]);
+                    RefreshPlaytime();
                     return;
                 }
 
@@ -240,7 +433,18 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 BannerUrl = await GameCatalog.GetBannerUrlAsync(UniverseId, ct) ?? "";
 
                 await LoadPlacesAsync(ct);
+                RefreshPlaytime();
                 Status = "";
+
+                OnPropertyChanged(nameof(IsFavourite));
+                OnPropertyChanged(nameof(FavouriteTip));
+                OnPropertyChanged(nameof(NotFavouriteVisibility));
+                _ = LoadPlaceStatsAsync();
+                _ = LoadFriendsAsync();
+
+                // Loaded straight away so the tab count and the places rail can show them.
+                if (!_privateLoaded)
+                    _ = LoadPrivateServersAsync();
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
@@ -251,6 +455,29 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 Status = $"Couldn't load everything for this game: {ex.Message}";
             }
         }
+
+        #endregion
+
+        #region Favourite
+
+        private long FavouritePlaceId => RootPlaceId > 0 ? RootPlaceId : _requestedPlaceId;
+
+        public bool IsFavourite => GamesStore.Shared.IsFavourite(UniverseId, FavouritePlaceId);
+
+        public string FavouriteTip => IsFavourite ? "Remove from your favourites" : "Add to your favourites";
+
+        public Visibility NotFavouriteVisibility => IsFavourite ? Visibility.Collapsed : Visibility.Visible;
+
+        public ICommand ToggleFavouriteCommand => new RelayCommand(() =>
+        {
+            if (UniverseId <= 0 && FavouritePlaceId <= 0)
+                return;
+
+            GamesStore.Shared.SetFavourite(UniverseId, FavouritePlaceId, Name, IconUrl, !IsFavourite);
+            OnPropertyChanged(nameof(IsFavourite));
+            OnPropertyChanged(nameof(FavouriteTip));
+            OnPropertyChanged(nameof(NotFavouriteVisibility));
+        });
 
         #endregion
 
@@ -319,6 +546,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             OnPropertyChanged(nameof(PlacesTitle));
             OnPropertyChanged(nameof(PlaceSearchVisibility));
+            OnPropertyChanged(nameof(PlacesHeader));
 
             PlaceItem? initial = Places.FirstOrDefault(p => p.PlaceId == _requestedPlaceId) ?? Places.FirstOrDefault(p => p.IsRoot) ?? Places.FirstOrDefault();
             if (initial is not null)
@@ -340,6 +568,70 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 SelectPlace(place);
         });
 
+        public string PlacesHeader => $"Places in {Name}";
+
+        /// <summary>Players and servers per place from PhasmaStrap's server, when it has them.</summary>
+        private async Task LoadPlaceStatsAsync()
+        {
+            try
+            {
+                Dictionary<long, PlaceStats> stats = await GamesApi.GetPlaceStatsAsync(Places.Select(p => p.PlaceId));
+                if (_cts.IsCancellationRequested || stats.Count == 0)
+                    return;
+
+                foreach (PlaceItem place in Places)
+                {
+                    if (stats.TryGetValue(place.PlaceId, out PlaceStats? stat))
+                        place.SetStats(stat.Playing, stat.Servers, full: true);
+                }
+
+                long total = stats.Values.Sum(p => p.Servers);
+                if (total > 0)
+                {
+                    _totalServers = total;
+                    OnPropertyChanged(nameof(ServerCountText));
+                }
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Place stats failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>Places tab: picks the place and shows its public servers.</summary>
+        public ICommand ShowPlaceServersCommand => new RelayCommand<PlaceItem>(place =>
+        {
+            if (place is null)
+                return;
+
+            SelectedPlace = place;
+            ShowTab(TabServers);
+        });
+
+        /// <summary>Places tab: picks the place and switches the launch setup to that place only.</summary>
+        public ICommand PlaceFlagsCommand => new RelayCommand<PlaceItem>(place =>
+        {
+            if (place is null)
+                return;
+
+            SelectedPlace = place;
+            OnlyThisPlace = true;
+            ShowTab(TabOverview);
+        });
+
+        /// <summary>Places tab: picks the place and launches it.</summary>
+        /// <summary>The place Play launches: the picked place, else the start place.</summary>
+        public long LaunchPlaceId => _selectedPlace?.PlaceId ?? (RootPlaceId > 0 ? RootPlaceId : _requestedPlaceId);
+
+        public ICommand PlayPlaceCommand => new RelayCommand<PlaceItem>(place =>
+        {
+            if (place is null)
+                return;
+
+            SelectedPlace = place;
+            Play();
+        });
+
         private void SelectPlace(PlaceItem place)
         {
             _selectedPlace = place;
@@ -349,6 +641,8 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             OnPropertyChanged(nameof(OverlaySummary));
             OnPropertyChanged(nameof(ResolutionSummary));
             OnPropertyChanged(nameof(ScopePlaceText));
+            OnPropertyChanged(nameof(SelectedPlaceIdText));
+            OnPropertyChanged(nameof(SelectedPlaceCaption));
 
             _wholeGame = FlagLayers.RuleFor(App.FlagProfiles.Prop, place.PlaceId, 0) is null;
             OnPropertyChanged(nameof(WholeGame));
@@ -403,6 +697,118 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool SortByPlayers { get => _sortMode == "players"; set { if (value) { SortMode = "players"; ApplyServerView(); } } }
         public bool SortBySpace { get => _sortMode == "space"; set { if (value) { SortMode = "space"; ApplyServerView(); } } }
 
+        /// <summary>All public servers of the game, when PhasmaStrap's server knows it.</summary>
+        private long _totalServers;
+
+        public string ServerCountText => _totalServers > 0 ? GameCatalog.Compact(_totalServers) : _allServers.Count > 0 ? GameCatalog.Compact(_allServers.Count) : "";
+
+        /// <summary>Region, uptime and FPS per job id, filled in after the list arrives.</summary>
+        private Dictionary<string, ServerStats> _facts = new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>Friends in each server, from their Roblox presence.</summary>
+        private Dictionary<string, List<ServerFriend>> _friendsByJob = new(StringComparer.OrdinalIgnoreCase);
+
+        public ObservableCollection<RegionChip> RegionChips { get; } = new();
+
+        public Visibility RegionChipsVisibility => RegionChips.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+
+        private string _regionFilter = "";
+
+        public ICommand SelectRegionCommand => new RelayCommand<RegionChip>(chip =>
+        {
+            if (chip is null)
+                return;
+
+            _regionFilter = chip.Code;
+            foreach (RegionChip other in RegionChips)
+                other.IsSelected = other.Code == _regionFilter;
+
+            ApplyServerView();
+        });
+
+        private bool _pingUnder80;
+        public bool PingUnder80
+        {
+            get => _pingUnder80;
+            set { _pingUnder80 = value; OnPropertyChanged(nameof(PingUnder80)); ApplyServerView(); }
+        }
+
+        private bool _friendsInside;
+        public bool FriendsInside
+        {
+            get => _friendsInside;
+            set { _friendsInside = value; OnPropertyChanged(nameof(FriendsInside)); ApplyServerView(); }
+        }
+
+        public Visibility FriendsInsideVisibility => _friendsByJob.Count > 0 || _friendsInside ? Visibility.Visible : Visibility.Collapsed;
+
+        private void RebuildRegionChips()
+        {
+            var counts = _allServers
+                .Select(s => _facts.TryGetValue(s.JobId, out ServerStats? f) ? ServerFacts.ContinentOf(f.Country, f.Continent) : "")
+                .Where(c => c.Length > 0)
+                .GroupBy(c => c)
+                .Select(g => (Code: g.Key, Count: g.Count()))
+                .OrderByDescending(g => g.Count)
+                .ToList();
+
+            if (_regionFilter.Length > 0 && counts.All(c => c.Code != _regionFilter))
+                _regionFilter = "";
+
+            RegionChips.Clear();
+            RegionChips.Add(new RegionChip { Code = "", Name = "All regions", IsSelected = _regionFilter.Length == 0 });
+            foreach (var (code, count) in counts)
+            {
+                string name = ServerFacts.ContinentName(code);
+                RegionChips.Add(new RegionChip { Code = code, Name = name.Length > 0 ? name : code, Count = count, IsSelected = code == _regionFilter });
+            }
+
+            OnPropertyChanged(nameof(RegionChipsVisibility));
+        }
+
+        private async Task FillServerFactsAsync(long placeId, int loadId)
+        {
+            try
+            {
+                Dictionary<string, ServerStats> facts = await GamesApi.FactsAsync(placeId, _allServers, _cts.Token);
+                if (loadId != _serverLoadId || facts.Count == 0)
+                    return;
+
+                foreach ((string jobId, ServerStats stats) in facts)
+                    _facts[jobId] = stats;
+
+                foreach (ServerRow row in Servers)
+                    ApplyFacts(row);
+
+                RebuildRegionChips();
+            }
+            catch (OperationCanceledException) when (_cts.IsCancellationRequested)
+            {
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Server facts failed: {ex.Message}");
+            }
+        }
+
+        private void ApplyFacts(ServerRow row)
+        {
+            if (_facts.TryGetValue(row.Server.JobId, out ServerStats? stats))
+            {
+                row.ContinentHint = stats.Continent;
+                row.Region = stats.Region;
+                row.FirstSeenUtc = stats.FirstSeenUtc;
+                if (stats.ServerFps is double fps && fps > 0)
+                    row.Fps = fps;
+                row.ClientFps = stats.ClientFps ?? 0;
+            }
+
+            row.Friends = _friendsByJob.TryGetValue(row.Server.JobId, out List<ServerFriend>? friends) ? friends : new List<ServerFriend>();
+        }
+
+        private string ContinentOfServer(ServerListItem server) =>
+            _facts.TryGetValue(server.JobId, out ServerStats? f) ? ServerFacts.ContinentOf(f.Country, f.Continent) : "";
+
         public ICommand RefreshServersCommand => new AsyncRelayCommand(LoadServersAsync);
 
         private int _serverLoadId;
@@ -425,7 +831,14 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                     return;
 
                 _allServers = servers;
+
+                // Until the server has totals, the list itself gives a lower bound for this place.
+                bool capped = servers.Count >= 300;
+                place.SetStats(servers.Sum(s => (long)s.Playing), servers.Count, full: false, atLeast: capped);
+
+                RebuildRegionChips();
                 ApplyServerView();
+                _ = FillServerFactsAsync(place.PlaceId, loadId);
             }
             catch (OperationCanceledException) when (_cts.IsCancellationRequested)
             {
@@ -449,6 +862,15 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             if (_hideFull)
                 view = view.Where(s => s.MaxPlayers <= 0 || s.Playing < s.MaxPlayers);
 
+            if (_pingUnder80)
+                view = view.Where(s => s.Ping > 0 && s.Ping < 80);
+
+            if (_regionFilter.Length > 0)
+                view = view.Where(s => ContinentOfServer(s) == _regionFilter);
+
+            if (_friendsInside)
+                view = view.Where(s => _friendsByJob.ContainsKey(s.JobId));
+
             view = _sortMode switch
             {
                 "players" => view.OrderByDescending(s => s.Playing),
@@ -458,7 +880,13 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             Servers.Clear();
             foreach (ServerListItem server in view.Take(150))
-                Servers.Add(new ServerRow { Server = server });
+            {
+                var row = new ServerRow { Server = server };
+                ApplyFacts(row);
+                Servers.Add(row);
+            }
+
+            OnPropertyChanged(nameof(ServerCountText));
 
             int hidden = _allServers.Count - Servers.Count;
             ServerStatus = _allServers.Count == 0
@@ -471,7 +899,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             if (row is null || _selectedPlace is null)
                 return;
 
-            ServerBrowser.JoinServer(_selectedPlace.PlaceId, row.Server.JobId);
+            Launch(RobloxLaunch.DeepLink(_selectedPlace.PlaceId, row.Server.JobId));
         });
 
         public ICommand JoinBestCommand => new RelayCommand(() =>
@@ -488,16 +916,31 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             if (best is null)
                 Play();
             else
-                ServerBrowser.JoinServer(_selectedPlace.PlaceId, best.JobId);
+                Launch(RobloxLaunch.DeepLink(_selectedPlace.PlaceId, best.JobId));
         });
 
         public ICommand PlayCommand => new RelayCommand(Play);
 
         private void Play()
         {
-            long placeId = _selectedPlace?.PlaceId ?? (RootPlaceId > 0 ? RootPlaceId : _requestedPlaceId);
+            long placeId = LaunchPlaceId;
             if (placeId > 0)
-                HomeViewModel.LaunchUri(RobloxLaunch.DeepLink(placeId));
+                Launch(RobloxLaunch.DeepLink(placeId));
+        }
+
+        /// <summary>Opens a Roblox link as the account picked in the launch setup, or as whoever is signed in.</summary>
+        public void Launch(string uri)
+        {
+            long userId = _selectedAccount?.UserId ?? 0;
+
+            AccountQuickSwitch.Account? account = userId > 0 && userId != _signedInUserId
+                ? HomeViewModel.SavedAccounts().FirstOrDefault(a => a.UserId == userId)
+                : null;
+
+            if (account is null)
+                HomeViewModel.LaunchUri(uri);
+            else
+                _ = HomeViewModel.LaunchAsAccountAsync(account, uri);
         }
 
         public ICommand CopyLinkCommand => new RelayCommand(() =>
@@ -534,6 +977,8 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         private string _privateStatus = "";
         public string PrivateStatus { get => _privateStatus; private set { _privateStatus = value; OnPropertyChanged(nameof(PrivateStatus)); } }
 
+        public string PrivateCountText => PrivateServers.Count > 0 ? PrivateServers.Count.ToString() : "";
+
         public Visibility PrivateSearchVisibility => PrivateServers.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
 
         private string _privateSearch = "";
@@ -563,9 +1008,16 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 List<PrivateServerInfo> all = await PhasmaStrap.Integrations.PrivateServers.ListAsync(_cts.Token);
                 var placeIds = Places.Select(p => p.PlaceId).ToHashSet();
 
+                HashSet<long> hidden = GamesStore.Shared.HiddenPrivateServers();
+
                 foreach (PrivateServerInfo info in all.Where(s => (UniverseId > 0 && s.UniverseId == UniverseId) || placeIds.Contains(s.PlaceId))
+                                                      .Where(s => !hidden.Contains(s.Id))
                                                       .OrderByDescending(s => s.Owned).ThenByDescending(s => s.Active))
-                    PrivateServers.Add(new GamePrivateServerRow { Info = info });
+                    PrivateServers.Add(new GamePrivateServerRow { Info = info, IsFriend = !info.Owned && _friendIds.Contains(info.OwnerId) });
+
+                OnPropertyChanged(nameof(PrivateRailVisibility));
+
+                OnPropertyChanged(nameof(PrivateCountText));
 
                 PrivateStatus = PrivateServers.Count == 0
                     ? "You don't own a private server here and nobody has shared one with you."
@@ -587,6 +1039,80 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
+        public Visibility PrivateRailVisibility => PrivateServers.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        public ICommand CopyPrivateLinkCommand => new AsyncRelayCommand<GamePrivateServerRow>(async row =>
+        {
+            if (row is null)
+                return;
+
+            try
+            {
+                string? link = await PhasmaStrap.Integrations.PrivateServers.GetLinkAsync(row.Info, _cts.Token);
+                if (link is null)
+                {
+                    PrivateStatus = $"{row.Title} has no invite link right now. Replace the invite link to make one.";
+                    return;
+                }
+
+                ClipboardShare.CopyText(link);
+                PrivateStatus = $"Invite link for {row.Title} copied. Anyone with it can join.";
+            }
+            catch (Exception ex)
+            {
+                PrivateStatus = $"Couldn't get the link: {ex.Message}";
+            }
+        });
+
+        public ICommand NewPrivateLinkCommand => new AsyncRelayCommand<GamePrivateServerRow>(async row =>
+        {
+            if (row is null)
+                return;
+
+            MessageBoxResult answer = Frontend.ShowMessageBox(
+                $"Make a new invite link for \"{row.Title}\"?\n\nThe current link stops working, so anyone you gave it to can't use it to join any more. People already added to the server keep access.",
+                MessageBoxImage.Question, MessageBoxButton.YesNo);
+
+            if (answer != MessageBoxResult.Yes)
+                return;
+
+            try
+            {
+                string? link = await PhasmaStrap.Integrations.PrivateServers.NewLinkAsync(row.Info, _cts.Token);
+                if (link is null)
+                {
+                    PrivateStatus = "Roblox made a new link but didn't send it back. Use Copy invite link.";
+                    return;
+                }
+
+                ClipboardShare.CopyText(link);
+                PrivateStatus = $"New invite link for {row.Title} copied. The old one no longer works.";
+            }
+            catch (Exception ex)
+            {
+                PrivateStatus = $"Couldn't make a new link: {ex.Message}";
+            }
+        });
+
+        public ICommand OpenPrivateOnWebsiteCommand => new RelayCommand<GamePrivateServerRow>(row =>
+        {
+            if (row is not null && row.Info.PlaceId > 0)
+                Utilities.ShellExecute($"https://www.roblox.com/games/{row.Info.PlaceId}#!/game-instances");
+        });
+
+        /// <summary>Hides a private server from the lists on this PC. The Private servers tab can show it again.</summary>
+        public void HidePrivateServer(GamePrivateServerRow? row)
+        {
+            if (row is null)
+                return;
+
+            GamesStore.Shared.SetPrivateServerHidden(row.Info.Id, true);
+            PrivateServers.Remove(row);
+            OnPropertyChanged(nameof(PrivateCountText));
+            OnPropertyChanged(nameof(PrivateRailVisibility));
+            PrivateStatus = $"{row.Title} is hidden. Show it again from the Private servers tab.";
+        }
+
         public ICommand JoinPrivateCommand => new AsyncRelayCommand<GamePrivateServerRow>(async row =>
         {
             if (row is null)
@@ -603,6 +1129,386 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 PrivateStatus = $"Couldn't join: {ex.Message}";
             }
         });
+
+        #endregion
+
+        #region Play time and history
+
+        public string SelectedPlaceIdText => _selectedPlace is null ? "" : _selectedPlace.PlaceId.ToString();
+
+        public string SelectedPlaceCaption => _selectedPlace is null ? "" : _selectedPlace.IsRoot ? "Start place" : _selectedPlace.Name;
+
+        private string _playtimeValue = "0";
+        public string PlaytimeValue { get => _playtimeValue; private set { _playtimeValue = value; OnPropertyChanged(nameof(PlaytimeValue)); } }
+
+        private string _playtimeUnit = "minutes";
+        public string PlaytimeUnit { get => _playtimeUnit; private set { _playtimeUnit = value; OnPropertyChanged(nameof(PlaytimeUnit)); } }
+
+        private string _lastPlayedText = "Never";
+        public string LastPlayedText { get => _lastPlayedText; private set { _lastPlayedText = value; OnPropertyChanged(nameof(LastPlayedText)); } }
+
+        private string _lastPlayedPlace = "Not played through PhasmaStrap yet";
+        public string LastPlayedPlace { get => _lastPlayedPlace; private set { _lastPlayedPlace = value; OnPropertyChanged(nameof(LastPlayedPlace)); } }
+
+        private bool BelongsHere(long universeId, long placeId) =>
+            (UniverseId > 0 && universeId == UniverseId) || (placeId > 0 && Places.Any(p => p.PlaceId == placeId));
+
+        /// <summary>Totals this game's tracked play time, the same numbers the Library shows.</summary>
+        private void RefreshPlaytime()
+        {
+            List<PlayTimeEntry> entries = PlayTimeStore.GetAll().Where(e => BelongsHere(e.UniverseId, e.PlaceId)).ToList();
+            double minutes = entries.Sum(e => e.TotalMinutes);
+
+            if (minutes >= 60)
+            {
+                PlaytimeValue = ((int)(minutes / 60)).ToString();
+                PlaytimeUnit = (int)(minutes / 60) == 1 ? "hour" : "hours";
+            }
+            else
+            {
+                PlaytimeValue = ((int)Math.Round(minutes)).ToString();
+                PlaytimeUnit = (int)Math.Round(minutes) == 1 ? "minute" : "minutes";
+            }
+
+            PlayTimeEntry? last = entries.OrderByDescending(e => e.LastPlayed).FirstOrDefault();
+            if (last is not null && last.LastPlayed != default)
+            {
+                LastPlayedText = last.LastPlayedText;
+                string place = PlaceNames.NameOf(last.PlaceId);
+                LastPlayedPlace = place.Length > 0 ? place : last.DisplayName;
+            }
+        }
+
+        public ObservableCollection<GameSessionRow> Sessions { get; } = new();
+
+        public ObservableCollection<GameDayBar> DayBars { get; } = new();
+
+        private bool _historyLoaded;
+
+        private string _historySummary = "";
+        public string HistorySummary { get => _historySummary; private set { _historySummary = value; OnPropertyChanged(nameof(HistorySummary)); } }
+
+        public Visibility HistoryEmptyVisibility => _historyLoaded && Sessions.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        public Visibility HistoryListVisibility => Sessions.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        public ICommand RefreshHistoryCommand => new RelayCommand(LoadHistory);
+
+        public ICommand RejoinCommand => new RelayCommand<GameSessionRow>(row =>
+        {
+            if (row is not null && row.CanRejoin)
+                Launch(RobloxLaunch.DeepLink(row.PlaceId, row.JobId));
+        });
+
+        private static string WhenText(DateTime local)
+        {
+            DateTime today = DateTime.Now.Date;
+            if (local.Date == today)
+                return $"Today {local:HH:mm}";
+            if (local.Date == today.AddDays(-1))
+                return $"Yesterday {local:HH:mm}";
+            if (local.Date > today.AddDays(-7))
+                return $"{local:ddd HH:mm}";
+            return local.ToString("d MMM HH:mm");
+        }
+
+        private static string DaysAgoText(DateTime local)
+        {
+            int days = (int)(DateTime.Now.Date - local.Date).TotalDays;
+            return days switch
+            {
+                <= 0 => "today",
+                1 => "yesterday",
+                < 7 => $"{days} days ago",
+                < 14 => "last week",
+                _ => $"on {local:d MMM}",
+            };
+        }
+
+        private void LoadHistory()
+        {
+            _historyLoaded = true;
+            Sessions.Clear();
+            DayBars.Clear();
+
+            List<ServerVisit> visits;
+            try
+            {
+                visits = SessionStore.Shared.Load().Sessions
+                    .SelectMany(s => s.Visits)
+                    .Where(v => BelongsHere(v.UniverseId, v.PlaceId))
+                    .OrderByDescending(v => v.JoinedUtc)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Session history failed: {ex.Message}");
+                visits = new List<ServerVisit>();
+            }
+
+            foreach (ServerVisit visit in visits.Take(100))
+            {
+                string place = PlaceNames.NameOf(visit.PlaceId);
+                if (place.Length == 0)
+                    place = Places.FirstOrDefault(p => p.PlaceId == visit.PlaceId)?.Name ?? (visit.GameName.Length > 0 ? visit.GameName : $"Place {visit.PlaceId}");
+
+                bool isPublic = visit.ServerType is "" or "Public";
+                var server = new List<string>();
+                if (visit.Region.Length > 0)
+                    server.Add(visit.Region);
+                if (!isPublic)
+                    server.Add("private");
+
+                (int Average, int Low)? fps = SessionStats.FpsSummary(visit);
+
+                Sessions.Add(new GameSessionRow
+                {
+                    PlaceId = visit.PlaceId,
+                    JobId = visit.JobId,
+                    CanRejoin = visit.PlaceId > 0 && visit.JobId.Length > 0 && isPublic,
+                    WhenText = WhenText(visit.JoinedUtc.ToLocalTime()),
+                    PlaceText = place,
+                    ServerText = string.Join("  ·  ", server),
+                    TimeText = SessionStats.Duration(visit.Length.TotalMinutes),
+                    FpsText = fps is null ? "" : $"{fps.Value.Average} avg",
+                });
+            }
+
+            // Minutes played per day over the last two weeks, oldest first.
+            DateTime first = DateTime.Now.Date.AddDays(-13);
+            double[] perDay = new double[14];
+            foreach (ServerVisit visit in visits)
+            {
+                int day = (int)(visit.JoinedUtc.ToLocalTime().Date - first).TotalDays;
+                if (day >= 0 && day < 14)
+                    perDay[day] += visit.Length.TotalMinutes;
+            }
+
+            double most = Math.Max(perDay.Max(), 1);
+            for (int i = 0; i < 14; i++)
+                DayBars.Add(new GameDayBar { Height = Math.Max(perDay[i] / most * 90, perDay[i] > 0 ? 4 : 2), Tip = $"{first.AddDays(i):ddd d MMM}: {SessionStats.Duration(perDay[i])}" });
+
+            int recent = visits.Count(v => v.JoinedUtc.ToLocalTime().Date >= first);
+            double hours = perDay.Sum() / 60;
+            string total = hours >= 1 ? $"{(int)Math.Round(hours)} hours" : SessionStats.Duration(perDay.Sum());
+            HistorySummary = recent == 0
+                ? "Not played in the last 14 days"
+                : $"{total} in {recent} session{(recent == 1 ? "" : "s")}";
+
+            OnPropertyChanged(nameof(HistoryEmptyVisibility));
+            OnPropertyChanged(nameof(HistoryListVisibility));
+        }
+
+        #endregion
+
+        #region Friends in this game
+
+        public ObservableCollection<GameFriendRow> FriendsInGame { get; } = new();
+
+        private HashSet<long> _friendIds = new();
+
+        private string _friendsStatus = "Looking for friends...";
+        public string FriendsStatus { get => _friendsStatus; private set { _friendsStatus = value; OnPropertyChanged(nameof(FriendsStatus)); } }
+
+        public Visibility FriendsEmptyVisibility => FriendsInGame.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        public ICommand JoinFriendCommand => new RelayCommand<GameFriendRow>(row =>
+        {
+            if (row?.Presence is not null && row.Presence.Joinable)
+                Launch(FriendsService.GetJoinDeeplink(row.Presence));
+        });
+
+        public ICommand RefreshFriendsCommand => new AsyncRelayCommand(LoadFriendsAsync);
+
+        private bool InThisGame(FriendPresence presence) =>
+            presence.Type == FriendPresenceType.InGame
+            && ((UniverseId > 0 && presence.UniverseId == UniverseId)
+                || (RootPlaceId > 0 && presence.RootPlaceId == RootPlaceId)
+                || (presence.PlaceId > 0 && Places.Any(p => p.PlaceId == presence.PlaceId)));
+
+        /// <summary>
+        /// Friends playing this game right now (Roblox presence), then friends you have played it with before
+        /// (the session history on Activity). Also fills the friends shown on each server row.
+        /// </summary>
+        private async Task LoadFriendsAsync()
+        {
+            try
+            {
+                RobloxCookie.RobloxAccount? me = await RobloxCookie.GetAccountAsync();
+                if (me is null)
+                {
+                    FriendsStatus = "Sign in to Roblox to see friends in this game.";
+                    return;
+                }
+
+                List<FriendInfo> friends = await FriendsService.GetFriendsAsync(me.UserId, _cts.Token);
+                _friendIds = friends.Select(f => f.UserId).ToHashSet();
+
+                foreach (GamePrivateServerRow row in PrivateServers)
+                    row.IsFriend = !row.Info.Owned && _friendIds.Contains(row.Info.OwnerId);
+
+                Dictionary<long, FriendPresence> presence = friends.Count == 0
+                    ? new Dictionary<long, FriendPresence>()
+                    : await FriendsService.GetPresenceAsync(friends.Select(f => f.UserId), _cts.Token);
+
+                string NameOf(FriendInfo f) => string.IsNullOrWhiteSpace(f.DisplayName) ? f.Username : f.DisplayName;
+
+                var playing = friends
+                    .Where(f => presence.TryGetValue(f.UserId, out FriendPresence? p) && InThisGame(p))
+                    .ToList();
+
+                // Friends you have been in a server of this game with, most recent first.
+                var together = new List<(long UserId, string Name, DateTime When)>();
+                try
+                {
+                    foreach (ServerVisit visit in SessionStore.Shared.Load().Sessions.SelectMany(x => x.Visits)
+                                 .Where(v => BelongsHere(v.UniverseId, v.PlaceId))
+                                 .OrderByDescending(v => v.JoinedUtc))
+                    {
+                        foreach (SessionFriend friend in visit.Friends)
+                        {
+                            if (playing.Any(f => f.UserId == friend.UserId) || together.Any(t => t.UserId == friend.UserId))
+                                continue;
+
+                            together.Add((friend.UserId, friend.Name, visit.JoinedUtc.ToLocalTime()));
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Session history for friends failed: {ex.Message}");
+                }
+
+                var shown = playing.Select(f => f.UserId).Concat(together.Take(8).Select(t => t.UserId)).ToList();
+                Dictionary<long, string> avatars = shown.Count == 0
+                    ? new Dictionary<long, string>()
+                    : await FriendsService.GetAvatarsAsync(shown, _cts.Token);
+
+                FriendsInGame.Clear();
+                var byJob = new Dictionary<string, List<ServerFriend>>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (FriendInfo friend in playing)
+                {
+                    FriendPresence p = presence[friend.UserId];
+                    avatars.TryGetValue(friend.UserId, out string? avatar);
+
+                    string place = Places.FirstOrDefault(x => x.PlaceId == p.PlaceId)?.Name ?? (p.LastLocation.Length > 0 ? p.LastLocation : Name);
+
+                    FriendsInGame.Add(new GameFriendRow
+                    {
+                        UserId = friend.UserId,
+                        Name = NameOf(friend),
+                        Detail = $"{place}, right now",
+                        AvatarUrl = avatar,
+                        Presence = p,
+                    });
+
+                    if (!string.IsNullOrEmpty(p.GameId))
+                    {
+                        if (!byJob.TryGetValue(p.GameId, out List<ServerFriend>? list))
+                            byJob[p.GameId] = list = new List<ServerFriend>();
+
+                        list.Add(new ServerFriend { UserId = friend.UserId, Name = NameOf(friend), AvatarUrl = avatar });
+                    }
+                }
+
+                foreach (var (userId, name, when) in together.Take(8))
+                {
+                    avatars.TryGetValue(userId, out string? avatar);
+                    string friendName = friends.FirstOrDefault(f => f.UserId == userId) is FriendInfo info ? NameOf(info) : name;
+
+                    FriendsInGame.Add(new GameFriendRow
+                    {
+                        UserId = userId,
+                        Name = friendName.Length > 0 ? friendName : $"User {userId}",
+                        Detail = $"Played together {DaysAgoText(when)}",
+                        AvatarUrl = avatar,
+                    });
+                }
+
+                _friendsByJob = byJob;
+                foreach (ServerRow row in Servers)
+                    row.Friends = byJob.TryGetValue(row.Server.JobId, out List<ServerFriend>? list) ? list : new List<ServerFriend>();
+
+                OnPropertyChanged(nameof(FriendsEmptyVisibility));
+                OnPropertyChanged(nameof(FriendsInsideVisibility));
+
+                FriendsStatus = FriendsInGame.Count == 0
+                    ? "None of your friends are playing this right now."
+                    : playing.Count == 0 ? "Nobody is playing it right now." : $"{playing.Count} playing now";
+            }
+            catch (OperationCanceledException) when (_cts.IsCancellationRequested)
+            {
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Friends in this game failed: {ex.Message}");
+                FriendsStatus = "Couldn't load your friends right now.";
+            }
+        }
+
+        #endregion
+
+        #region Account
+
+        public ObservableCollection<GameAccountOption> AccountOptions { get; } = new();
+
+        private long _signedInUserId;
+
+        private GameAccountOption? _selectedAccount;
+        /// <summary>Which saved account Play and Join use for this game. Kept per game on this PC.</summary>
+        public GameAccountOption? SelectedAccount
+        {
+            get => _selectedAccount;
+            set
+            {
+                if (value is null || ReferenceEquals(value, _selectedAccount) || _cts.IsCancellationRequested)
+                    return;
+
+                _selectedAccount = value;
+                OnPropertyChanged(nameof(SelectedAccount));
+                OnPropertyChanged(nameof(AccountNote));
+
+                if (UniverseId > 0)
+                    GamesStore.Shared.SetAccountFor(UniverseId, value.UserId == _signedInUserId ? 0 : value.UserId);
+            }
+        }
+
+        public string AccountNote => _selectedAccount is null || _selectedAccount.UserId == 0 || _selectedAccount.UserId == _signedInUserId
+            ? "Plays as whoever is signed in to Roblox."
+            : "Roblox has to be closed to switch accounts. PhasmaStrap swaps the login, then launches.";
+
+        public Visibility AccountVisibility => AccountOptions.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+
+        private async Task LoadAccountsAsync()
+        {
+            try
+            {
+                RobloxCookie.RobloxAccount? me = await RobloxCookie.GetAccountAsync();
+                _signedInUserId = me?.UserId ?? 0;
+
+                // Waits for the game's ID, which the saved choice is keyed by.
+                for (int i = 0; i < 40 && UniverseId <= 0 && !_cts.IsCancellationRequested; i++)
+                    await Task.Delay(250);
+
+                List<AccountQuickSwitch.Account> saved = HomeViewModel.SavedAccounts();
+
+                AccountOptions.Clear();
+                AccountOptions.Add(new GameAccountOption { UserId = 0, Name = me is null ? "Signed in account" : $"{me.Username} (signed in)" });
+                foreach (AccountQuickSwitch.Account account in saved.Where(a => a.UserId != _signedInUserId))
+                    AccountOptions.Add(new GameAccountOption { UserId = account.UserId, Name = account.Title });
+
+                long wanted = GamesStore.Shared.AccountFor(UniverseId);
+                _selectedAccount = AccountOptions.FirstOrDefault(a => a.UserId == wanted) ?? AccountOptions[0];
+                OnPropertyChanged(nameof(SelectedAccount));
+                OnPropertyChanged(nameof(AccountNote));
+                OnPropertyChanged(nameof(AccountVisibility));
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Accounts failed: {ex.Message}");
+            }
+        }
 
         #endregion
 

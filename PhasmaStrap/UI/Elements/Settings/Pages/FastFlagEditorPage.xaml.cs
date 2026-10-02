@@ -2,10 +2,16 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
+using System.Windows.Media;
 using System.Collections.ObjectModel;
 
+using Wpf.Ui.Common;
+
+using PhasmaStrap.UI.Elements.Controls;
 using PhasmaStrap.UI.Elements.Dialogs;
 using PhasmaStrap.Utility;
+using PhasmaStrap.Utility.Backend;
 
 namespace PhasmaStrap.UI.Elements.Settings.Pages
 {
@@ -16,15 +22,43 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
         private string _note = "";
         private string _tone = "";
 
-        public string Name { get => _name; set { _name = value; Changed(nameof(Name)); } }
-        public string Value { get => _value; set { _value = value; Changed(nameof(Value)); } }
+        public string Name { get => _name; set { _name = value; Changed(nameof(Name)); Changed(nameof(Title)); Changed(nameof(Description)); SwitchChanged(); } }
+        public string Value { get => _value; set { _value = value; Changed(nameof(Value)); Changed(nameof(IsOn)); SwitchChanged(); } }
         public string Note { get => _note; set { _note = value; Changed(nameof(Note)); } }
 
         public string Tone { get => _tone; set { _tone = value; Changed(nameof(Tone)); } }
 
-        public bool IsTurnedOff { get; set; }
+        private bool _isTurnedOff;
+        public bool IsTurnedOff { get => _isTurnedOff; set { _isTurnedOff = value; SwitchChanged(); Changed(nameof(DeleteHint)); } }
 
-        public bool IsInherited { get; set; }
+        private bool _isInherited;
+        public bool IsInherited { get => _isInherited; set { _isInherited = value; Changed(nameof(DeleteHint)); } }
+
+        /// <summary>Readable name for the card view (server catalog title, or the flag name in words).</summary>
+        public string Title => FlagCategories.TitleOf(_name);
+
+        /// <summary>One line from the server catalog, or "".</summary>
+        public string Description => FlagCategories.DescriptionOf(_name);
+
+        public string Category => FlagCategories.CategoryOf(_name);
+
+        /// <summary>FFlag style flag holding True or False: shown as a switch in the card view.</summary>
+        public bool IsSwitch => !_isTurnedOff && FlagCategories.IsSwitch(_name, _value);
+
+        public bool IsOn => _value.Equals("True", StringComparison.OrdinalIgnoreCase);
+
+        public Visibility SwitchVisibility => IsSwitch ? Visibility.Visible : Visibility.Collapsed;
+
+        public Visibility ValueBoxVisibility => IsSwitch ? Visibility.Collapsed : Visibility.Visible;
+
+        public string DeleteHint => _isInherited ? "Turn off for these games" : _isTurnedOff ? "Stop turning it off" : "Delete";
+
+        private void SwitchChanged()
+        {
+            Changed(nameof(IsSwitch));
+            Changed(nameof(SwitchVisibility));
+            Changed(nameof(ValueBoxVisibility));
+        }
 
         public event PropertyChangedEventHandler? PropertyChanged;
         private void Changed(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
@@ -35,15 +69,65 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
         public static string? ProfileToOpen { get; set; }
     }
 
+    /// <summary>One entry in the flag editor's sidebar: your flags, or a profile.</summary>
+    public sealed class FlagScopeEntry
+    {
+        public string? ProfileId { get; init; }
+        public string Name { get; init; } = "";
+        public string Summary { get; init; } = "";
+        public string ToolTip { get; init; } = "";
+        public Visibility DefaultVisibility => ProfileId is null ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    /// <summary>A card of flags in one category.</summary>
+    public sealed class FlagGroup
+    {
+        public string Name { get; init; } = "";
+        public SymbolRegular Symbol { get; init; } = SymbolRegular.Flag24;
+        public List<FlagRow> Rows { get; init; } = new();
+        public string CountText => Rows.Count == 1 ? "1 flag" : $"{Rows.Count} flags";
+    }
+
+    /// <summary>A game or place a profile is given to, shown as a chip.</summary>
+    public sealed class FlagAssignChip
+    {
+        public FlagGameRule Rule { get; init; } = null!;
+        public string Title { get; init; } = "";
+        public string Subtitle { get; init; } = "";
+        public string Initials { get; init; } = "";
+        public string? IconUrl { get; init; }
+        public string ToolTip => $"{Title}: {Subtitle}";
+    }
+
+    /// <summary>A game in the "Assign to a game" picker.</summary>
+    public sealed class FlagAssignResult
+    {
+        public long UniverseId { get; init; }
+        public long RootPlaceId { get; init; }
+        public long LinkedPlaceId { get; init; }
+        public string Name { get; init; } = "";
+        public string Detail { get; init; } = "";
+        public string? IconUrl { get; init; }
+        public string Initials => FastFlagEditorPage.InitialsOf(Name);
+    }
+
     public partial class FastFlagEditorPage
     {
-        private sealed class ScopeItem
-        {
-            public string? ProfileId { get; init; }
-            public string Display { get; init; } = "";
-        }
-
         private readonly ObservableCollection<FlagRow> _rows = new();
+
+        private readonly ObservableCollection<FlagGroup> _groups = new();
+
+        private readonly ObservableCollection<FlagAssignChip> _assigned = new();
+
+        private readonly ObservableCollection<FlagAssignResult> _assignResults = new();
+
+        private readonly ObservableCollection<PhasmaStrap.Integrations.UniversePlace> _assignPlaces = new();
+
+        // Card view or table view; remembered while the app runs.
+        private static bool _tableView;
+
+        // The card row the keyboard (F2, Del, Ctrl C) and the right click menu act on.
+        private FlagRow? _cardRow;
 
         private bool _hideQuickFlags = false;
         private bool _showYoursInProfile = true;
@@ -58,12 +142,60 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
 
         private static readonly HashSet<string> QuickFlagNames = new(FastFlagManager.PresetFlags.Values, StringComparer.Ordinal);
 
-        private const double MinimumListHeight = 320;
+        // The last row holds the list card plus the help note under it.
+        private const double MinimumListHeight = 420;
 
         public FastFlagEditorPage()
         {
             InitializeComponent();
             DataGrid.ItemsSource = _rows;
+            CardsView.ItemsSource = _groups;
+            AssignedList.ItemsSource = _assigned;
+            AssignResults.ItemsSource = _assignResults;
+            AssignPlaces.ItemsSource = _assignPlaces;
+
+            ItemMenu.Attach<FlagScopeEntry>(ScopeList, BuildScopeMenu);
+
+            if (_tableView)
+                TableViewButton.IsChecked = true;
+            ApplyView();
+        }
+
+        public static string InitialsOf(string name)
+        {
+            string[] words = (name ?? "").Split(new[] { ' ', '-', '_', ':' }, StringSplitOptions.RemoveEmptyEntries)
+                .Where(w => char.IsLetterOrDigit(w[0])).ToArray();
+
+            if (words.Length == 0)
+                return "?";
+            if (words.Length == 1)
+                return words[0][..1].ToUpperInvariant();
+            return (words[0][..1] + words[1][..1]).ToUpperInvariant();
+        }
+
+        private void ViewSwitch_Checked(object sender, RoutedEventArgs e)
+        {
+            if (CardsView is null || TableView is null)
+                return;
+
+            _tableView = TableViewButton.IsChecked == true;
+            ApplyView();
+        }
+
+        private void ApplyView()
+        {
+            CardsView.Visibility = _tableView ? Visibility.Collapsed : Visibility.Visible;
+            TableView.Visibility = _tableView ? Visibility.Visible : Visibility.Collapsed;
+            DeleteSelectedButton.Visibility = _tableView ? Visibility.Visible : Visibility.Collapsed;
+
+            EditHintText.Text = _tableView
+                ? "Double click a cell to edit. A profile holds flag changes for chosen games only. Give it to games on Per game flags."
+                : "Type a value and press Enter to change a flag, or flip its switch. A profile holds flag changes for chosen games only. Give it to games on Per game flags.";
+
+            if (!_tableView && RootLayout is not null)
+                RootLayout.Height = double.NaN;
+
+            UpdateLayoutHeight();
         }
 
         private void PageScroller_SizeChanged(object sender, SizeChangedEventArgs e) => UpdateLayoutHeight();
@@ -73,6 +205,10 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
         private void UpdateLayoutHeight()
         {
             if (PageScroller is null || RootLayout is null || RootLayout.RowDefinitions.Count == 0)
+                return;
+
+            // Cards grow with their content and the page scrolls; only the table is sized to the window.
+            if (!_tableView)
                 return;
 
             double above = 0;
@@ -105,6 +241,19 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
 
             RefreshScopes();
             ReloadList();
+
+            _ = LoadCatalogAsync();
+        }
+
+        // Titles, descriptions and categories from the PhasmaStrap server, when it answers.
+        private async Task LoadCatalogAsync()
+        {
+            if (FlagsCaptureApi.Catalog is not null)
+                return;
+
+            FlagCatalog? catalog = await FlagsCaptureApi.LoadFlagCatalogAsync();
+            if (catalog is not null && IsLoaded)
+                ReloadList();
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e) => App.FlagProfiles.Edited -= OnProfilesEdited;
@@ -129,21 +278,43 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
         {
             _refreshingScopes = true;
 
-            var items = new List<ScopeItem> { new() { ProfileId = null, Display = "Your flags - every game" } };
-            foreach (FlagProfile profile in App.FlagProfiles.Prop.Profiles.OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase))
-                items.Add(new ScopeItem { ProfileId = profile.Id, Display = $"Profile: {profile.Name}" });
+            int yours = App.FastFlags.Prop.Count;
+            var items = new List<FlagScopeEntry>
+            {
+                new()
+                {
+                    ProfileId = null,
+                    Name = "Your flags",
+                    Summary = $"{Count(yours, "flag")} · Every game",
+                    ToolTip = "Flags every game you launch through PhasmaStrap starts with",
+                }
+            };
 
-            ScopeBox.ItemsSource = items;
-            ScopeBox.SelectedItem = items.FirstOrDefault(i => i.ProfileId == _profileId) ?? items[0];
+            foreach (FlagProfile profile in App.FlagProfiles.Prop.Profiles.OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                int games = App.FlagProfiles.RulesUsing(profile.Id).Count();
+                items.Add(new FlagScopeEntry
+                {
+                    ProfileId = profile.Id,
+                    Name = profile.Name,
+                    Summary = $"{Count(profile.ChangeCount, "flag")} · {(games == 0 ? "Not used" : Count(games, "game"))}",
+                    ToolTip = $"Runs on top of your flags in {(games == 0 ? "no game yet" : Count(games, "game"))}. Right click to rename, duplicate or delete.",
+                });
+            }
+
+            ScopeList.ItemsSource = items;
+            ScopeList.SelectedItem = items.FirstOrDefault(i => i.ProfileId == _profileId) ?? items[0];
 
             _refreshingScopes = false;
 
             UpdateScopeUi();
         }
 
-        private void ScopeBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private static string Count(int count, string noun) => count == 1 ? $"1 {noun}" : $"{count} {noun}s";
+
+        private void ScopeList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (_refreshingScopes || ScopeBox.SelectedItem is not ScopeItem item)
+            if (_refreshingScopes || ScopeList.SelectedItem is not FlagScopeEntry item || item.ProfileId == _profileId)
                 return;
 
             _profileId = item.ProfileId;
@@ -158,20 +329,48 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
 
             TurnOffButton.Visibility = profile is null ? Visibility.Collapsed : Visibility.Visible;
             ShowYoursButton.Visibility = profile is null ? Visibility.Collapsed : Visibility.Visible;
+            CompareButton.Visibility = profile is null ? Visibility.Collapsed : Visibility.Visible;
+            DuplicateButton.Visibility = profile is null ? Visibility.Collapsed : Visibility.Visible;
+            ShareButton.Visibility = profile is null ? Visibility.Collapsed : Visibility.Visible;
 
             if (profile is null)
             {
+                ScopeTitle.Text = "Your flags";
                 ScopeText.Text = "These flags apply to every game you launch through PhasmaStrap. A game with a profile gets these plus the profile's changes.";
                 UsedByPanel.Visibility = Visibility.Collapsed;
+                _assigned.Clear();
+                AssignPopup.IsOpen = false;
                 return;
             }
 
-            ScopeText.Text = $"\"{profile.Name}\" only applies to the games it is given to. The list shows everything those games start with: the profile's own flags, and your flags marked \"From your flags\". Change a value to change it for these games only; delete one of your flags here to turn it off for them.";
+            ScopeTitle.Text = profile.Name;
+            ScopeText.Text = $"Runs on top of your flags, only in the games it is given to. The list shows everything those games start with: the profile's own flags, and your flags marked \"From your flags\". Change a value to change it for these games only; delete one of your flags here to turn it off for them.";
 
-            List<string> games = App.FlagProfiles.RulesUsing(profile.Id).Select(DescribeRule).ToList();
-            UsedByText.Text = games.Count == 0
-                ? "No game uses this profile yet."
-                : "Used by: " + string.Join(", ", games);
+            List<FlagGameRule> rules = App.FlagProfiles.RulesUsing(profile.Id)
+                .OrderBy(r => r.GameName.Length > 0 ? r.GameName : "~", StringComparer.OrdinalIgnoreCase)
+                .ThenBy(r => r.PlaceId)
+                .ToList();
+
+            _assigned.Clear();
+            foreach (FlagGameRule rule in rules)
+            {
+                string game = rule.GameName.Length > 0 ? rule.GameName : rule.UniverseId > 0 ? $"Game {rule.UniverseId}" : $"Place {rule.PlaceId}";
+                string where = rule.IsWholeGame
+                    ? "Whole game"
+                    : rule.PlaceId == rule.RootPlaceId ? "Only its start place"
+                    : rule.PlaceName.Length > 0 ? $"Only {rule.PlaceName}" : $"Only place {rule.PlaceId}";
+
+                _assigned.Add(new FlagAssignChip
+                {
+                    Rule = rule,
+                    Title = game,
+                    Subtitle = where,
+                    Initials = InitialsOf(game),
+                    IconUrl = rule.IconUrl.Length > 0 ? rule.IconUrl : null,
+                });
+            }
+
+            UsedByText.Text = rules.Count == 0 ? "No game uses this profile yet. Assign it to a game so it starts with these flags." : "";
             UsedByPanel.Visibility = Visibility.Visible;
         }
 
@@ -260,9 +459,379 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             menu.IsOpen = true;
         }
 
-        private static MenuItem MenuItem(string header, bool enabled, Action action)
+        // ---- Assign to a game ----
+
+        private CancellationTokenSource? _assignCts;
+        private FlagAssignResult? _assignGame;
+        private readonly System.Windows.Threading.DispatcherTimer _assignDebounce = new() { Interval = TimeSpan.FromMilliseconds(450) };
+        private bool _assignDebounceHooked;
+
+        private void AssignButton_Click(object sender, RoutedEventArgs e)
         {
-            var item = new MenuItem { Header = header, IsEnabled = enabled };
+            if (Profile is null)
+                return;
+
+            AssignSearchBox.Text = "";
+            ShowAssignStep(pickPlace: false);
+            ShowRecentGames();
+            AssignPopup.IsOpen = true;
+
+            Dispatcher.BeginInvoke(new Action(() => AssignSearchBox.Focus()), System.Windows.Threading.DispatcherPriority.Input);
+        }
+
+        private void ShowAssignStep(bool pickPlace)
+        {
+            AssignResults.Visibility = pickPlace ? Visibility.Collapsed : Visibility.Visible;
+            AssignWherePanel.Visibility = pickPlace ? Visibility.Visible : Visibility.Collapsed;
+            AssignHint.Text = pickPlace ? "The whole game, or only one of its places" : "Pick a game, then whole game or one place";
+        }
+
+        private string RuleDetail(long universeId)
+        {
+            List<FlagGameRule> rules = App.FlagProfiles.Prop.Rules.Where(r => r.UniverseId == universeId && universeId > 0).ToList();
+            if (rules.Count == 0)
+                return "";
+
+            var names = rules.Select(r => App.FlagProfiles.Find(r.ProfileId)?.Name).Where(n => !string.IsNullOrEmpty(n)).Distinct().ToList();
+            string where = rules.Count == 1 ? (rules[0].IsWholeGame ? "Whole game" : "1 place") : $"{rules.Count} places";
+            return names.Count == 0 ? where : $"{where} · uses {string.Join(", ", names)}";
+        }
+
+        private void ShowRecentGames()
+        {
+            _assignResults.Clear();
+
+            IEnumerable<IGrouping<long, PlayTimeEntry>> recent;
+            try
+            {
+                recent = PhasmaStrap.Integrations.PlayTimeStore.GetAll().Where(e => e.UniverseId > 0).GroupBy(e => e.UniverseId).Take(8).ToList();
+            }
+            catch
+            {
+                recent = Enumerable.Empty<IGrouping<long, PlayTimeEntry>>();
+            }
+
+            foreach (var game in recent)
+            {
+                PlayTimeEntry latest = game.OrderByDescending(e => e.LastPlayed).First();
+                string detail = RuleDetail(game.Key);
+
+                _assignResults.Add(new FlagAssignResult
+                {
+                    UniverseId = game.Key,
+                    RootPlaceId = latest.PlaceId,
+                    Name = latest.Name.Length > 0 ? latest.Name : $"Game {game.Key}",
+                    IconUrl = string.IsNullOrEmpty(latest.IconUrl) ? null : latest.IconUrl,
+                    Detail = detail.Length > 0 ? detail : "Played recently",
+                });
+            }
+
+            AssignHint.Text = _assignResults.Count > 0 ? "Recently played, or search above. Pick a game, then whole game or one place" : "Search for a game above";
+        }
+
+        private void AssignSearchBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (!_assignDebounceHooked)
+            {
+                _assignDebounce.Tick += async (_, _) =>
+                {
+                    _assignDebounce.Stop();
+                    await SearchGamesAsync();
+                };
+                _assignDebounceHooked = true;
+            }
+
+            _assignDebounce.Stop();
+            _assignDebounce.Start();
+        }
+
+        private async void AssignSearchBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                _assignDebounce.Stop();
+                e.Handled = true;
+                await SearchGamesAsync();
+            }
+            else if (e.Key == Key.Escape)
+            {
+                AssignPopup.IsOpen = false;
+                e.Handled = true;
+            }
+        }
+
+        private async Task SearchGamesAsync()
+        {
+            string text = AssignSearchBox.Text.Trim();
+            ShowAssignStep(pickPlace: false);
+
+            if (text.Length == 0)
+            {
+                ShowRecentGames();
+                return;
+            }
+
+            _assignCts?.Cancel();
+            var cts = _assignCts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+
+            AssignHint.Text = "Searching...";
+
+            try
+            {
+                RobloxLaunchTarget? target = RobloxLinkParser.TryParse(text, out RobloxLaunchTarget parsed) ? parsed
+                    : text.Contains('.') ? await RobloxLinkParser.ResolveAsync(text, cts.Token) : null;
+
+                if (target is { Kind: RobloxLinkKind.Place, PlaceId: > 0 })
+                {
+                    GameInfo? game = await GameLookup.FromPlaceAsync(target.PlaceId, cts.Token);
+                    if (cts.IsCancellationRequested || _assignCts != cts)
+                        return;
+
+                    _assignResults.Clear();
+
+                    if (game is null)
+                    {
+                        AssignHint.Text = $"No game found for place {target.PlaceId}.";
+                        return;
+                    }
+
+                    _assignResults.Add(new FlagAssignResult
+                    {
+                        UniverseId = game.UniverseId,
+                        RootPlaceId = game.RootPlaceId,
+                        LinkedPlaceId = target.PlaceId,
+                        Name = game.Name,
+                        IconUrl = string.IsNullOrEmpty(game.IconUrl) ? null : game.IconUrl,
+                        Detail = RuleDetail(game.UniverseId) is { Length: > 0 } detail ? detail : "From the link",
+                    });
+
+                    AssignHint.Text = "Pick a game, then whole game or one place";
+                    return;
+                }
+
+                List<GameInfo> games = await GameLookup.SearchAsync(text, cts.Token);
+                if (cts.IsCancellationRequested || _assignCts != cts)
+                    return;
+
+                _assignResults.Clear();
+                foreach (GameInfo game in games)
+                {
+                    _assignResults.Add(new FlagAssignResult
+                    {
+                        UniverseId = game.UniverseId,
+                        RootPlaceId = game.RootPlaceId,
+                        Name = game.Name,
+                        IconUrl = string.IsNullOrEmpty(game.IconUrl) ? null : game.IconUrl,
+                        Detail = RuleDetail(game.UniverseId),
+                    });
+                }
+
+                AssignHint.Text = games.Count == 0 ? "No games found. Try other words, or paste the game's link." : "Pick a game, then whole game or one place";
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                AssignHint.Text = $"Search failed: {ex.Message}";
+            }
+        }
+
+        private async void AssignResults_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (AssignResults.SelectedItem is not FlagAssignResult game)
+                return;
+
+            AssignResults.SelectedItem = null;
+            _assignGame = game;
+            AssignGameText.Text = game.Name;
+            _assignPlaces.Clear();
+            ShowAssignStep(pickPlace: true);
+
+            List<PhasmaStrap.Integrations.UniversePlace> places;
+            try
+            {
+                places = await PhasmaStrap.Integrations.UniversePlaces.GetPlacesAsync(game.UniverseId, game.RootPlaceId);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("FastFlagEditorPage", $"Could not list the places of {game.Name}: {ex.Message}");
+                places = new();
+            }
+
+            if (_assignGame != game)
+                return;
+
+            if (places.Count == 0)
+            {
+                if (game.RootPlaceId > 0)
+                    places.Add(new PhasmaStrap.Integrations.UniversePlace(game.RootPlaceId, "Start place", true));
+                if (game.LinkedPlaceId > 0 && game.LinkedPlaceId != game.RootPlaceId)
+                    places.Add(new PhasmaStrap.Integrations.UniversePlace(game.LinkedPlaceId, $"Place {game.LinkedPlaceId}", false));
+            }
+
+            foreach (PhasmaStrap.Integrations.UniversePlace place in places)
+                _assignPlaces.Add(place);
+        }
+
+        private void AssignBack_Click(object sender, RoutedEventArgs e)
+        {
+            _assignGame = null;
+            ShowAssignStep(pickPlace: false);
+            AssignHint.Text = "Pick a game, then whole game or one place";
+        }
+
+        private void AssignWholeGame_Click(object sender, RoutedEventArgs e)
+        {
+            if (_assignGame is FlagAssignResult game)
+                Assign(game, 0, "");
+        }
+
+        private void AssignPlaces_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (AssignPlaces.SelectedItem is not PhasmaStrap.Integrations.UniversePlace place || _assignGame is not FlagAssignResult game)
+                return;
+
+            AssignPlaces.SelectedItem = null;
+            Assign(game, place.PlaceId, place.Name);
+        }
+
+        // Same rule handling as the Per game flags tab: one rule per whole game or per place.
+        private void Assign(FlagAssignResult game, long placeId, string placeName)
+        {
+            FlagProfile? profile = Profile;
+            if (profile is null)
+                return;
+
+            FlagGameRule? rule = placeId <= 0
+                ? App.FlagProfiles.Prop.Rules.FirstOrDefault(r => r.IsWholeGame && r.UniverseId == game.UniverseId)
+                : App.FlagProfiles.Prop.Rules.FirstOrDefault(r => r.PlaceId == placeId);
+
+            string? before = rule is null || rule.ProfileId == profile.Id ? null : App.FlagProfiles.Find(rule.ProfileId)?.Name;
+
+            if (rule is null)
+            {
+                rule = new FlagGameRule();
+                App.FlagProfiles.Prop.Rules.Add(rule);
+            }
+
+            rule.UniverseId = game.UniverseId;
+            rule.RootPlaceId = game.RootPlaceId;
+            rule.PlaceId = placeId;
+            rule.PlaceName = placeName;
+            rule.GameName = game.Name;
+            rule.IconUrl = game.IconUrl ?? "";
+            rule.ProfileId = profile.Id;
+
+            if (placeId > 0)
+                GameLookup.Remember(placeId, game.UniverseId);
+            if (game.RootPlaceId > 0)
+                GameLookup.Remember(game.RootPlaceId, game.UniverseId);
+
+            AssignPopup.IsOpen = false;
+            _assignGame = null;
+
+            MarkProfilesEdited();
+            RefreshScopes();
+
+            if (before is not null)
+                UsedByText.Text = $"{game.Name} used \"{before}\" before and now uses \"{profile.Name}\".";
+        }
+
+        private void Unassign_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not FrameworkElement { Tag: FlagAssignChip chip })
+                return;
+
+            App.FlagProfiles.Prop.Rules.Remove(chip.Rule);
+            MarkProfilesEdited();
+            RefreshScopes();
+        }
+
+        private void Compare_Click(object sender, RoutedEventArgs e)
+        {
+            FlagProfile? profile = Profile;
+            if (profile is null)
+                return;
+
+            var dialog = new FlagPreviewDialog(profile.Name, profile) { Owner = Owner };
+            dialog.ShowDialog();
+        }
+
+        private void Duplicate_Click(object sender, RoutedEventArgs e)
+        {
+            if (Profile is FlagProfile profile)
+                DuplicateProfile(profile);
+        }
+
+        private void Share_Click(object sender, RoutedEventArgs e)
+        {
+            if (Profile is FlagProfile profile)
+                CopyShareCode(profile);
+        }
+
+        private void Import_Click(object sender, RoutedEventArgs e)
+        {
+            FlagProfile? profile = Profile;
+            string scope = profile is null ? "your flags" : $"\"{profile.Name}\"";
+
+            var menu = new System.Windows.Controls.ContextMenu { PlacementTarget = ImportButton, Placement = PlacementMode.Top };
+            menu.Items.Add(MenuItem("Add a profile from a share code", true, PasteShareCode));
+            menu.Items.Add(MenuItem("Add a profile from the gallery", true, AddFromGallery));
+            menu.Items.Add(new Separator());
+            menu.Items.Add(MenuItem($"Paste JSON into {scope}", true, () => ShowAddDialog(jsonTab: true)));
+            menu.IsOpen = true;
+        }
+
+        private void BuildScopeMenu(FlagScopeEntry entry, ItemMenu menu)
+        {
+            FlagProfile? profile = App.FlagProfiles.Find(entry.ProfileId);
+
+            if (entry.ProfileId != _profileId)
+                SwitchTo(entry.ProfileId);
+
+            if (profile is null)
+            {
+                menu.Add("Export JSON", SymbolRegular.ArrowExportRtl24, () => ExportJSONButton_Click(this, new RoutedEventArgs()))
+                    .Add("Paste JSON into your flags", SymbolRegular.ArrowImport24, () => ShowAddDialog(jsonTab: true))
+                    .Separator()
+                    .Add("New profile", SymbolRegular.Add24, () => NewProfile_Click(this, new RoutedEventArgs()));
+                return;
+            }
+
+            menu.Add("Rename", SymbolRegular.Rename24, () => RenameProfile(profile), "F2")
+                .Add("Duplicate", SymbolRegular.Copy24, () => DuplicateProfile(profile))
+                .Add("Compare with your flags", SymbolRegular.BranchCompare24, () => Compare_Click(this, new RoutedEventArgs()))
+                .Separator()
+                .Add("Copy share code", SymbolRegular.Share24, () => CopyShareCode(profile))
+                .Add("Publish to the gallery", SymbolRegular.CloudArrowUp24, () => PublishToGallery(profile))
+                .Add("Choose games", SymbolRegular.Games24, () => GoToGames_Click(this, new RoutedEventArgs()))
+                .Separator()
+                .Add("Delete this profile", SymbolRegular.Delete24, () => DeleteProfile(profile), "Del", danger: true);
+        }
+
+        private void ScopeList_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.OriginalSource is TextBox || Profile is not FlagProfile profile)
+                return;
+
+            if (e.Key == Key.F2)
+            {
+                RenameProfile(profile);
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Delete)
+            {
+                DeleteProfile(profile);
+                e.Handled = true;
+            }
+        }
+
+        private static MenuItem MenuItem(string header, bool enabled, Action action, string gesture = "", bool danger = false)
+        {
+            var item = new MenuItem { Header = header, IsEnabled = enabled, InputGestureText = gesture };
+            if (danger)
+                item.SetResourceReference(Control.ForegroundProperty, "SystemFillColorCriticalBrush");
             item.Click += (_, _) => action();
             return item;
         }
@@ -359,7 +928,7 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
         private void PasteShareCode()
         {
             string clipboard = "";
-            try { clipboard = Clipboard.GetText(); } catch { }
+            try { clipboard = System.Windows.Clipboard.GetText(); } catch { }
 
             string found = FlagLayers.FindProfileCode(clipboard);
             string? code = AskName("Add a profile", "Paste a share code or a phasmastrap.com/g/ link:", found.Length > 0 ? found : GalleryLinkIn(clipboard));
@@ -515,6 +1084,7 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             foreach (FlagRow row in rows.OrderBy(r => r.Name, StringComparer.OrdinalIgnoreCase))
                 _rows.Add(row);
 
+            RebuildGroups();
             UpdateEmptyText(profile);
 
             if (selectedName is null)
@@ -526,6 +1096,40 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
                 DataGrid.SelectedItem = again;
                 DataGrid.ScrollIntoView(again);
             }
+        }
+
+        private static SymbolRegular SymbolFor(string category) => category switch
+        {
+            FlagCategories.FrameRate => SymbolRegular.TopSpeed24,
+            FlagCategories.Rendering => SymbolRegular.Gauge24,
+            FlagCategories.Network => SymbolRegular.Router24,
+            FlagCategories.Interface => SymbolRegular.WindowBulletList20,
+            FlagCategories.Sound => SymbolRegular.Chat24,
+            FlagCategories.Telemetry => SymbolRegular.ShieldCheckmark24,
+            FlagCategories.Debug => SymbolRegular.Wrench24,
+            _ => SymbolRegular.Flag24,
+        };
+
+        // The card view: the same rows, one card per category.
+        private void RebuildGroups()
+        {
+            _groups.Clear();
+
+            foreach (var group in _rows
+                .GroupBy(r => r.Category, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(g => FlagCategories.OrderOf(g.Key))
+                .ThenBy(g => g.Key, StringComparer.OrdinalIgnoreCase))
+            {
+                _groups.Add(new FlagGroup
+                {
+                    Name = group.Key,
+                    Symbol = SymbolFor(group.Key),
+                    Rows = group.ToList(),
+                });
+            }
+
+            if (_cardRow is not null && !_rows.Contains(_cardRow))
+                _cardRow = _rows.FirstOrDefault(r => r.Name == _cardRow.Name);
         }
 
         private void UpdateEmptyText(FlagProfile? profile)
@@ -571,6 +1175,37 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
 
             if (refresh)
                 ReloadList();
+        }
+
+        /// <summary>Shows one of your own flags (every game scope), used when it is picked from the top bar search.</summary>
+        public void FocusFlag(string name)
+        {
+            if (_profileId is not null)
+            {
+                _profileId = null;
+                RefreshScopes();
+            }
+
+            if (QuickFlagNames.Contains(name) && _hideQuickFlags)
+            {
+                TogglePresetsButton.IsChecked = false;
+                _hideQuickFlags = false;
+            }
+
+            if (!_tableView)
+            {
+                // The card view has no selection: narrow the list down to that flag instead.
+                SearchTextBox.Text = name;
+                _searchFilter = name;
+                _searchDebounce.Stop();
+                ReloadList();
+                _cardRow = _rows.FirstOrDefault(r => r.Name == name);
+                return;
+            }
+
+            ClearSearch();
+            Select(name);
+            DataGrid.Focus();
         }
 
         private void Select(string name)
@@ -619,9 +1254,13 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             MarkProfilesEdited();
         }
 
-        private void ShowAddDialog()
+        private void ShowAddDialog() => ShowAddDialog(jsonTab: false);
+
+        private void ShowAddDialog(bool jsonTab)
         {
             var dialog = new AddFastFlagDialog { Owner = Owner };
+            if (jsonTab)
+                dialog.Tabs.SelectedIndex = 1;
             dialog.ShowDialog();
 
             if (dialog.Result != MessageBoxResult.OK)
@@ -824,18 +1463,12 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
                 if (row.IsInherited && text == row.Value)
                     return;
 
-                if (FlagValidation.Problem(row.Name, text) is string problem)
+                if (!CommitValue(row, text))
                 {
-                    Frontend.ShowMessageBox($"{row.Name}\n\n{problem}", MessageBoxImage.Warning);
                     e.Cancel = true;
                     textbox.Text = row.IsTurnedOff ? "" : row.Value;
                     return;
                 }
-
-                SetInScope(row.Name, text);
-                row.Value = text;
-                row.IsTurnedOff = false;
-                row.IsInherited = false;
             }
 
             Dispatcher.BeginInvoke(new Action(() =>
@@ -845,23 +1478,193 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             }), System.Windows.Threading.DispatcherPriority.Background);
         }
 
+        /// <summary>Gives a flag a new value in the scope being edited (both views use this). False when the value isn't valid.</summary>
+        private bool CommitValue(FlagRow row, string text)
+        {
+            if (FlagValidation.Problem(row.Name, text) is string problem)
+            {
+                Frontend.ShowMessageBox($"{row.Name}\n\n{problem}", MessageBoxImage.Warning);
+                return false;
+            }
+
+            SetInScope(row.Name, text);
+            row.Value = text;
+            row.IsTurnedOff = false;
+            row.IsInherited = false;
+            return true;
+        }
+
+        // Card view: refresh one row's note in place, so typing on into the next box keeps its focus.
+        private void RefreshRowNote(FlagRow row)
+        {
+            FlagProfile? profile = Profile;
+
+            if (profile is null)
+            {
+                string? problem = FlagValidation.Problem(row.Name, row.Value);
+                row.Note = problem ?? (QuickFlagNames.Contains(row.Name) ? "Set by a Roblox FFlags toggle" : "");
+                row.Tone = problem is null ? "" : "Problem";
+                return;
+            }
+
+            FlagRow fresh = ProfileRow(row.Name, row.Value);
+            row.Note = fresh.Note;
+            row.Tone = fresh.Tone;
+        }
+
+        private void AfterCardEdit(FlagRow row)
+        {
+            RefreshRowNote(row);
+            RefreshScopes();
+            UpdateScopeUi();
+        }
+
+        private void CardSwitch_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not ToggleButton toggle || toggle.Tag is not FlagRow row)
+                return;
+
+            _cardRow = row;
+            string value = toggle.IsChecked == true ? "True" : "False";
+
+            if (!CommitValue(row, value))
+            {
+                toggle.IsChecked = row.IsOn;
+                return;
+            }
+
+            AfterCardEdit(row);
+        }
+
+        private void CardValue_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (sender is not TextBox box || box.Tag is not FlagRow row)
+                return;
+
+            if (e.Key == Key.Enter)
+            {
+                CommitCardValue(box, row);
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Escape)
+            {
+                box.Text = row.IsTurnedOff ? "" : row.Value;
+                box.SelectAll();
+                e.Handled = true;
+            }
+        }
+
+        private void CardValue_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            if (sender is TextBox box && box.Tag is FlagRow row)
+                CommitCardValue(box, row);
+        }
+
+        private void CommitCardValue(TextBox box, FlagRow row)
+        {
+            string text = box.Text.Trim();
+            string current = row.IsTurnedOff ? "" : row.Value;
+
+            if (text == current || (text.Length == 0 && row.IsTurnedOff))
+                return;
+
+            if (row.IsInherited && text == row.Value)
+                return;
+
+            if (!CommitValue(row, text))
+            {
+                box.Text = current;
+                return;
+            }
+
+            AfterCardEdit(row);
+        }
+
+        private void CardDelete_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement { Tag: FlagRow row })
+                DeleteRows(new List<FlagRow> { row });
+        }
+
+        private void CardRow_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is not FrameworkElement { Tag: FlagRow row } element)
+                return;
+
+            _cardRow = row;
+
+            // Keep keyboard shortcuts working on the row unless a value box or switch was clicked.
+            if (e.OriginalSource is DependencyObject source && FindAncestor<TextBox>(source) is null && FindAncestor<ButtonBase>(source) is null)
+                element.Focus();
+        }
+
+        private static T? FindAncestor<T>(DependencyObject? node) where T : DependencyObject
+        {
+            while (node is not null && node is not T)
+                node = node is Visual ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node);
+            return node as T;
+        }
+
+        private void CardRow_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+        {
+            if (sender is not FrameworkElement { Tag: FlagRow row, ContextMenu: System.Windows.Controls.ContextMenu menu })
+            {
+                e.Handled = true;
+                return;
+            }
+
+            _cardRow = row;
+            FillRowMenu(menu, new List<FlagRow> { row }, fromTable: false);
+        }
+
+        private void CardsView_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.OriginalSource is TextBox || _cardRow is null || !_rows.Contains(_cardRow))
+                return;
+
+            FlagRow row = _cardRow;
+
+            if (e.Key == Key.Delete)
+            {
+                DeleteRows(new List<FlagRow> { row });
+                e.Handled = true;
+            }
+            else if (e.Key == Key.F2)
+            {
+                EditValue(row);
+                e.Handled = true;
+            }
+            else if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                CopyAsJson(new List<FlagRow> { row });
+                e.Handled = true;
+            }
+        }
+
         private void AddButton_Click(object sender, RoutedEventArgs e) => ShowAddDialog();
 
-        private void SearchDatabaseButton_Click(object sender, RoutedEventArgs e)
+        private void SearchDatabaseButton_Click(object sender, RoutedEventArgs e) => OpenDatabase(null);
+
+        private void OpenDatabase(string? query)
         {
             FlagProfile? profile = Profile;
             string target = profile is null ? "your flags" : $"profile \"{profile.Name}\"";
 
-            var dialog = new FFlagSearchDialog(AddFromDatabase, target) { Owner = Owner };
+            var dialog = new FFlagSearchDialog(AddFromDatabase, target, query) { Owner = Owner };
             dialog.ShowDialog();
         }
 
-        private void DeleteButton_Click(object sender, RoutedEventArgs e)
+        private void DeleteButton_Click(object sender, RoutedEventArgs e) => DeleteSelected();
+
+        private void DeleteSelected() => DeleteRows(DataGrid.SelectedItems.OfType<FlagRow>().ToList());
+
+        private void DeleteRows(List<FlagRow> doomed)
         {
             FlagProfile? profile = Profile;
             bool turnedOff = false;
+            bool changed = false;
 
-            foreach (FlagRow row in DataGrid.SelectedItems.OfType<FlagRow>().ToList())
+            foreach (FlagRow row in doomed)
             {
                 if (profile is not null && row.IsInherited)
                 {
@@ -873,6 +1676,7 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
 
                 _rows.Remove(row);
                 RemoveFromScope(row.Name);
+                changed = true;
             }
 
             if (turnedOff)
@@ -880,7 +1684,12 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
                 MarkProfilesEdited();
                 ReloadList();
             }
+            else if (changed)
+            {
+                RebuildGroups();
+            }
 
+            RefreshScopes();
             UpdateScopeUi();
             UpdateEmptyText(Profile);
         }
@@ -946,7 +1755,30 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
                 return;
             }
 
+            FillRowMenu(menu, rows, fromTable: true);
+        }
+
+        // The right click menu for one or more flags, shared by the table and the cards.
+        private void FillRowMenu(System.Windows.Controls.ContextMenu menu, List<FlagRow> rows, bool fromTable)
+        {
             menu.Items.Clear();
+
+            if (rows.Count == 1)
+            {
+                FlagRow single = rows[0];
+                menu.Items.Add(MenuItem("Edit value", !fromTable || !DataGrid.IsReadOnly, () => EditValue(single), "F2"));
+                menu.Items.Add(MenuItem("Copy name", true, () => ClipboardShare.CopyText(single.Name)));
+            }
+
+            menu.Items.Add(MenuItem("Copy as JSON", true, () => CopyAsJson(rows), "Ctrl+C"));
+
+            if (rows.Count == 1)
+            {
+                FlagRow single = rows[0];
+                menu.Items.Add(MenuItem("Look it up in the database", true, () => OpenDatabase(single.Name)));
+            }
+
+            menu.Items.Add(new Separator());
 
             FlagProfile? current = Profile;
             List<FlagProfile> others = App.FlagProfiles.Prop.Profiles.Where(p => p.Id != current?.Id).OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase).ToList();
@@ -972,11 +1804,73 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             }
 
             menu.Items.Add(new Separator());
-            menu.Items.Add(MenuItem("Copy as JSON", true, () =>
+            menu.Items.Add(MenuItem("Delete", true, () => DeleteRows(rows), "Del", danger: true));
+        }
+
+        private static void CopyAsJson(List<FlagRow> rows)
+        {
+            var dictionary = rows.Where(r => !r.IsTurnedOff).ToDictionary(r => r.Name, r => (object)r.Value);
+            ClipboardShare.CopyText(JsonSerializer.Serialize(dictionary, new JsonSerializerOptions { WriteIndented = true }));
+        }
+
+        // Right click picks the clicked row first, so the menu acts on it.
+        private void DataGrid_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            DependencyObject? current = e.OriginalSource as DependencyObject;
+            while (current is not null && current is not DataGridRow)
+                current = current is Visual ? VisualTreeHelper.GetParent(current) : LogicalTreeHelper.GetParent(current);
+
+            if (current is DataGridRow { IsSelected: false } row)
             {
-                var dictionary = rows.Where(r => !r.IsTurnedOff).ToDictionary(r => r.Name, r => (object)r.Value);
-                ClipboardShare.CopyText(JsonSerializer.Serialize(dictionary, new JsonSerializerOptions { WriteIndented = true }));
-            }));
+                DataGrid.SelectedItems.Clear();
+                row.IsSelected = true;
+            }
+        }
+
+        private void DataGrid_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.OriginalSource is TextBox || DataGrid.SelectedItems.Count == 0)
+                return;
+
+            if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                CopyAsJson(DataGrid.SelectedItems.OfType<FlagRow>().ToList());
+                e.Handled = true;
+                return;
+            }
+
+            if (e.Key != Key.Delete)
+                return;
+
+            DeleteSelected();
+            e.Handled = true;
+        }
+
+        private void EditValue(FlagRow row)
+        {
+            if (!_tableView)
+            {
+                // Card view: ask for the value in a small box.
+                string? text = AskName("Edit value", $"New value for {row.Name}:", row.IsTurnedOff ? "" : row.Value);
+                if (text is null)
+                    return;
+
+                text = text.Trim();
+                if (text == (row.IsTurnedOff ? "" : row.Value) || !CommitValue(row, text))
+                    return;
+
+                AfterCardEdit(row);
+                return;
+            }
+
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                DataGrid.SelectedItem = row;
+                DataGrid.ScrollIntoView(row);
+                DataGrid.CurrentCell = new DataGridCellInfo(row, DataGrid.Columns[1]);
+                DataGrid.Focus();
+                DataGrid.BeginEdit();
+            }), System.Windows.Threading.DispatcherPriority.Input);
         }
 
         private MenuItem ProfileSubmenu(string header, List<FlagProfile> profiles, Action<FlagProfile> action)
@@ -1091,7 +1985,7 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
                 _ => JsonSerializer.Serialize(flags, options)
             };
 
-            Clipboard.SetDataObject(payload);
+            System.Windows.Clipboard.SetDataObject(payload);
 
             string message = Strings.Menu_FastFlagEditor_JsonCopiedToClipboard;
             if (profile is not null && profile.Remove.Count > 0)

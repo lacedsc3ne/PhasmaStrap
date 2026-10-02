@@ -184,19 +184,60 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                     OnPropertyChanged(nameof(DiscordActivityJoinEnabled));
                     OnPropertyChanged(nameof(DiscordAccountOnProfile));
                 }
+
+                RefreshJoinPreview();
             }
         }
 
         public bool DiscordActivityJoinEnabled
         {
             get => !App.Settings.Prop.HideRPCButtons;
-            set { App.Settings.Prop.HideRPCButtons = !value; OnPropertyChanged(nameof(DiscordActivityJoinEnabled)); }
+            set
+            {
+                App.Settings.Prop.HideRPCButtons = !value;
+                OnPropertyChanged(nameof(DiscordActivityJoinEnabled));
+                RefreshJoinPreview();
+            }
         }
 
         public bool DiscordNativeJoin
         {
             get => App.Settings.Prop.DiscordNativeJoin;
-            set => App.Settings.Prop.DiscordNativeJoin = value;
+            set
+            {
+                App.Settings.Prop.DiscordNativeJoin = value;
+                RefreshJoinPreview();
+            }
+        }
+
+        /// <summary>True when friends would see a Join button on your Discord profile right now.</summary>
+        public bool JoinPreviewActive => DiscordActivityEnabled && DiscordActivityJoinEnabled;
+
+        /// <summary>Discord's own button says "Ask to Join"; the PhasmaStrap one says "Join".</summary>
+        public string JoinPreviewText => DiscordNativeJoin ? "Ask to Join" : "Join";
+
+        /// <summary>Explains what friends see and what pressing the button does, since this preview cannot join anything itself.</summary>
+        public string JoinPreviewTooltip
+        {
+            get
+            {
+                if (!DiscordActivityEnabled)
+                    return "Your game activity is not shown on Discord, so friends see no Join button.";
+
+                if (!DiscordActivityJoinEnabled)
+                    return "Joining is off. Friends see what you are playing, but no Join button.";
+
+                return DiscordNativeJoin
+                    ? "Friends see Discord's own Ask to Join button. When you accept, Discord starts PhasmaStrap on their PC and it joins your server, so they need PhasmaStrap too."
+                    : "Friends see a Join button on your profile. Pressing it opens Roblox straight into your server. This is only a preview, it does not join anything.";
+            }
+        }
+
+        private void RefreshJoinPreview()
+        {
+            OnPropertyChanged(nameof(JoinPreviewActive));
+            OnPropertyChanged(nameof(JoinPreviewText));
+            OnPropertyChanged(nameof(JoinPreviewTooltip));
         }
 
         public bool DiscordAccountOnProfile

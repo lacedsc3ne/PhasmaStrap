@@ -6,10 +6,39 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       xmlns:pages="clr-namespace:PhasmaStrap.UI.Elements.Settings.Pages"
+      xmlns:vm="clr-namespace:PhasmaStrap.UI.ViewModels.Settings"
       mc:Ignorable="d"
       Title="CapturePage"
       Scrollable="False">
     <controls:SectionHost x:Name="Host" Header="Capture" Layout="Tabs">
+        <controls:SectionHost.HeaderContent>
+            <!--  Instant Replay status pill: click it to open the Instant Replay tab  -->
+            <Button Padding="12,6" Style="{DynamicResource PhasmaGhostButton}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" Background="{DynamicResource PhasmaPanelBrush}"
+                    DataContext="{x:Static vm:CaptureViewModel.Shared}" Click="ReplayPill_Click" ToolTip="Instant Replay settings">
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding InstantReplayEnabled}" Value="True">
+                                        <Setter Property="Fill" Value="{DynamicResource PhasmaAccentBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                    <TextBlock VerticalAlignment="Center" FontSize="12.5" FontWeight="SemiBold" Text="{Binding ReplayPillText, Mode=OneWay}" />
+                    <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="11.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding ReplayPillDetail, Mode=OneWay}"
+                               Visibility="{Binding ReplayOnVisibility, Mode=OneWay}" />
+                    <Border Margin="10,0,0,0" Padding="6,1" VerticalAlignment="Center" CornerRadius="5" BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}"
+                            Visibility="{Binding ReplayHotkeyVisibility, Mode=OneWay}">
+                        <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ReplayHotkeyDisplay, Mode=OneWay}" />
+                    </Border>
+                </StackPanel>
+            </Button>
+        </controls:SectionHost.HeaderContent>
+        <controls:SectionItem Label="Library" PageType="{x:Type pages:CaptureLibraryPage}" />
         <controls:SectionItem Label="Screenshots" PageType="{x:Type pages:CaptureScreenshotsPage}" />
         <controls:SectionItem Label="Instant Replay" PageType="{x:Type pages:CaptureReplayPage}" />
         <controls:SectionItem Label="Storage" PageType="{x:Type pages:CaptureStoragePage}" />

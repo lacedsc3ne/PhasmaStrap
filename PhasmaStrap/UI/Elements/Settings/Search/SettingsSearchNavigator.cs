@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
@@ -19,6 +19,7 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
 
         public static void Reveal(INavigation navigation, Frame frame, SettingsSearchEntry entry)
         {
+            entry = AsOwnSection(entry);
             Type host = SectionHosts.Resolve(entry.PageType);
             bool alreadyThere = frame.Content is FrameworkElement current && current.GetType() == host;
 
@@ -38,6 +39,75 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
             }
 
             EnterSection((FrameworkElement)frame.Content, entry);
+        }
+
+        /// <summary>
+        /// Pages that used to be shown inside another page (Game chat in Integrations, Diagnostics in Developer tools,
+        /// Channel and Roblox version in Deployment, Extensions in Mods) now have their own place in the rail.
+        /// Entries that still describe them as embedded are pointed straight at the section instead.
+        /// </summary>
+        private static SettingsSearchEntry AsOwnSection(SettingsSearchEntry entry)
+        {
+            if (entry.NestedPageType is null || !SectionHosts.IsSection(entry.NestedPageType))
+                return entry;
+
+            return new SettingsSearchEntry(entry.Kind, entry.Header, entry.Description, entry.NestedPageType, entry.PageName, entry.Tab, entry.Section, entry.Group, null);
+        }
+
+        /// <summary>
+        /// Opens a page (or a section inside one of the top bar pages) and runs <paramref name="whenShown"/>
+        /// on the page itself once it is loaded.
+        /// </summary>
+        public static void OpenPage(INavigation navigation, Frame frame, Type pageType, Action<FrameworkElement>? whenShown = null)
+        {
+            Type host = SectionHosts.Resolve(pageType);
+
+            void Enter(FrameworkElement hostPage)
+            {
+                if (host != pageType && hostPage is ISectionHostPage sectioned)
+                {
+                    sectioned.SectionHost.Show(pageType);
+                    if (whenShown is not null)
+                        RunWhenLoaded(hostPage, () => WaitForPage(hostPage, pageType, whenShown));
+                    return;
+                }
+
+                if (whenShown is not null)
+                    RunWhenLoaded(hostPage, () => whenShown(hostPage));
+            }
+
+            if (frame.Content is FrameworkElement current && current.GetType() == host)
+            {
+                Enter(current);
+                return;
+            }
+
+            NavigatedEventHandler? handler = null;
+            handler = (_, _) =>
+            {
+                frame.Navigated -= handler;
+                if (frame.Content is FrameworkElement page && page.GetType() == host)
+                    Enter(page);
+            };
+
+            frame.Navigated += handler;
+            navigation.Navigate(host);
+        }
+
+        private static void WaitForPage(FrameworkElement hostPage, Type pageType, Action<FrameworkElement> then, int attempt = 0)
+        {
+            FrameworkElement? page = Descendants<FrameworkElement>(hostPage).FirstOrDefault(e => e.GetType() == pageType);
+
+            if (page is null)
+            {
+                if (attempt < MaxAttempts)
+                    RetryLater(hostPage, () => WaitForPage(hostPage, pageType, then, attempt + 1));
+                else
+                    App.Logger.WriteLine(LOG_IDENT, $"Section {pageType.Name} never appeared inside {hostPage.GetType().Name}");
+                return;
+            }
+
+            RunWhenLoaded(page, () => then(page));
         }
 
         private static void EnterSection(FrameworkElement hostPage, SettingsSearchEntry entry)
@@ -337,7 +407,8 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
 
                 case SettingsSearchEntryKind.Group:
                     return (FrameworkElement?)Descendants<CardExpander>(scope).FirstOrDefault(c => HeaderText(c.Header) == entry.Header)
-                        ?? Descendants<System.Windows.Controls.Expander>(scope).FirstOrDefault(c => HeaderText(c.Header) == entry.Header);
+                        ?? (FrameworkElement?)Descendants<System.Windows.Controls.Expander>(scope).FirstOrDefault(c => HeaderText(c.Header) == entry.Header)
+                        ?? Descendants<SettingsCard>(scope).FirstOrDefault(c => c.Header == entry.Header);
 
                 case SettingsSearchEntryKind.Section:
                     return Descendants<TextBlock>(scope).FirstOrDefault(t => !IsIcon(t) && t.Text == entry.Header);

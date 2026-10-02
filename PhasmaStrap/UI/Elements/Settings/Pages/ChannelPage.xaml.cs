@@ -12,6 +12,15 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             InitializeComponent();
         }
 
+        /// <summary>The tabs at the top scroll the page to their group of cards.</summary>
+        private void Tab_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not FrameworkElement { Tag: FrameworkElement card })
+                return;
+
+            card.BringIntoView(new Rect(0, 0, Math.Max(1, card.ActualWidth), Math.Max(card.ActualHeight, 600)));
+        }
+
         private void BrowseChannelsButton_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new ChannelListsDialog { Owner = Window.GetWindow(this) };

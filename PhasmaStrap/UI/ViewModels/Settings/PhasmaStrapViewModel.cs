@@ -22,6 +22,34 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             set => App.Settings.Prop.EnableAnalytics = value;
         }
 
+        /// <summary>Uploads a short report when PhasmaStrap crashes (POST /v1/crash). Off by default.</summary>
+        public bool SendCrashReports
+        {
+            get => App.Settings.Prop.SendCrashReports;
+            set => App.Settings.Prop.SendCrashReports = value;
+        }
+
+        public string[] UpdateChannels { get; } = { "Stable", "Beta" };
+
+        /// <summary>Stable or Beta. Beta also takes prereleases; the updater and the check below both follow it.</summary>
+        public string UpdateChannel
+        {
+            get => string.Equals(App.Settings.Prop.AppUpdateChannel, "Beta", StringComparison.OrdinalIgnoreCase) ? "Beta" : "Stable";
+            set
+            {
+                string channel = string.Equals(value, "Beta", StringComparison.OrdinalIgnoreCase) ? "Beta" : "Stable";
+                if (channel == UpdateChannel)
+                    return;
+
+                App.Settings.Prop.AppUpdateChannel = channel;
+                OnPropertyChanged(nameof(UpdateChannel));
+                _ = LoadUpdateStateAsync();
+            }
+        }
+
+        /// <summary>The installed version, for the tag on the Updates card.</summary>
+        public string VersionTag => $"v{App.Version}";
+
         public bool LaunchAtStartupEnabled
         {
             get => App.Settings.Prop.LaunchAtStartup;
@@ -78,6 +106,72 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool ShouldExportSystemInfo { get; set; } = true;
 
         public ICommand ExportDataCommand => new RelayCommand(ExportData);
+
+        private string _updateHeadline = "Checking for a newer version";
+
+        /// <summary>"You are on the latest version", or which newer one is out. From the same release check the updater uses.</summary>
+        public string UpdateHeadline
+        {
+            get => _updateHeadline;
+            private set { _updateHeadline = value; OnPropertyChanged(nameof(UpdateHeadline)); }
+        }
+
+        private string _updateDetail = $"You are on version {App.Version}";
+        public string UpdateDetail
+        {
+            get => _updateDetail;
+            private set { _updateDetail = value; OnPropertyChanged(nameof(UpdateDetail)); }
+        }
+
+        private string? _releaseUrl;
+
+        public Visibility ReleaseNotesVisibility => _releaseUrl is null ? Visibility.Collapsed : Visibility.Visible;
+
+        public ICommand OpenReleaseNotesCommand => new RelayCommand(() =>
+        {
+            if (_releaseUrl is not null)
+                Utilities.ShellExecute(_releaseUrl);
+        });
+
+        public async Task LoadUpdateStateAsync()
+        {
+            GithubRelease? latest = await App.GetLatestRelease();
+
+            if (latest is null || string.IsNullOrWhiteSpace(latest.TagName))
+            {
+                UpdateHeadline = "Could not check for a newer version";
+                UpdateDetail = $"You are on version {App.Version}";
+                return;
+            }
+
+            string released = DateTime.TryParse(latest.CreatedAt, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime when)
+                ? $"released {when.ToLocalTime().ToString("d MMM", CultureInfo.CurrentCulture)}"
+                : "";
+
+            bool newer;
+            try
+            {
+                newer = Utilities.CompareVersions(App.Version, latest.TagName) == VersionComparison.LessThan;
+            }
+            catch
+            {
+                newer = false;
+            }
+
+            _releaseUrl = $"https://github.com/{App.ProjectRepository}/releases/tag/{latest.TagName}";
+            OnPropertyChanged(nameof(ReleaseNotesVisibility));
+
+            if (newer)
+            {
+                UpdateHeadline = $"Version {latest.TagName.TrimStart('v', 'V')} is out";
+                UpdateDetail = $"You are on {App.Version}{(released.Length > 0 ? $" · it was {released}" : "")}.{(App.Settings.Prop.CheckForUpdates ? " It installs the next time you launch Roblox." : "")}";
+            }
+            else
+            {
+                UpdateHeadline = "You are on the latest version";
+                UpdateDetail = $"Version {App.Version}{(released.Length > 0 ? $" · {released}" : "")}";
+            }
+        }
 
         private void ExportData()
         {

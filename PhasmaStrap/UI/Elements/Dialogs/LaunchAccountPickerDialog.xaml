@@ -1,0 +1,71 @@
+<base:WpfUiWindow x:Class="PhasmaStrap.UI.Elements.Dialogs.LaunchAccountPickerDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:base="clr-namespace:PhasmaStrap.UI.Elements.Base"
+        Title="Which account?"
+        Width="420" Height="500"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="Mica">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="Which account?" ShowMaximize="False" ShowMinimize="False" />
+
+        <TextBlock Grid.Row="1" Margin="18,4,18,10" Style="{DynamicResource PhasmaSubtle}" TextWrapping="Wrap"
+                   Text="Roblox starts on the account you pick. You can turn this question off on the Deployment page." />
+
+        <ListBox x:Name="AccountList" Grid.Row="2" Margin="12,0,12,0" Background="Transparent" BorderThickness="0"
+                 ItemContainerStyle="{DynamicResource PhasmaListItem}" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 MouseDoubleClick="AccountList_MouseDoubleClick" SelectionChanged="AccountList_SelectionChanged">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Grid Grid.Column="0" Width="34" Height="34" Margin="0,0,11,0">
+                            <Ellipse Fill="{DynamicResource PhasmaAccentSoftBrush}" />
+                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold" Text="{Binding Initial}" />
+                            <Ellipse>
+                                <Ellipse.Fill>
+                                    <ImageBrush ImageSource="{Binding AvatarUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill" />
+                                </Ellipse.Fill>
+                            </Ellipse>
+                        </Grid>
+
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding Name}" />
+                            <TextBlock Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" TextTrimming="CharacterEllipsis" Text="{Binding Detail}" />
+                        </StackPanel>
+
+                        <Border Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaTag}" Visibility="{Binding CurrentVisibility}">
+                            <TextBlock FontSize="10" Text="In use" />
+                        </Border>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <StackPanel Grid.Row="3" Margin="18,12,18,16" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Style="{DynamicResource PhasmaGhostButton}" Content="Cancel" IsCancel="True" Click="Cancel_Click" />
+            <Button x:Name="LaunchButton" Margin="8,0,0,0" Style="{DynamicResource PhasmaAccentButton}" IsDefault="True" IsEnabled="False" Click="Launch_Click">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon Symbol="Play24" FontSize="14" Margin="0,0,6,0" />
+                    <TextBlock Text="Launch" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+    </Grid>
+</base:WpfUiWindow>

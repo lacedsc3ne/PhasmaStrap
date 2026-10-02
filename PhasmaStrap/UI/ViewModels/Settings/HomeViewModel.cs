@@ -20,6 +20,12 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public string Subtitle { get; init; } = "";
 
+        /// <summary>Tracked play time, for the Library's "Most played" order. 0 for games not played.</summary>
+        public double TotalMinutes { get; init; }
+
+        /// <summary>When it was last played (local time), or default for games not played.</summary>
+        public DateTime LastPlayed { get; init; }
+
         private string _iconUrl = "";
         public string IconUrl
         {
@@ -86,6 +92,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public const string TabLibrary = "library";
         public const string SectionPrivateServers = "privateservers";
         public const string SectionHistory = "history";
+        public const string SectionServerBrowser = "serverbrowser";
 
         public const string ViewHome = "home";
         public const string ViewSearch = "search";
@@ -99,6 +106,25 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             LoadLibrary();
             _ = LoadFriendsAsync();
             _ = LoadSortsAsync();
+
+            GamesStore.Changed += GamesStore_Changed;
+        }
+
+        private void GamesStore_Changed(object? sender, EventArgs e)
+        {
+            void Refresh()
+            {
+                if (_libraryFilter == FilterFavourites)
+                    ApplyLibraryView();
+                else
+                    OnPropertyChanged(nameof(FavouriteCount));
+            }
+
+            var dispatcher = Application.Current?.Dispatcher;
+            if (dispatcher is null || dispatcher.CheckAccess())
+                Refresh();
+            else
+                dispatcher.BeginInvoke(Refresh);
         }
 
         #region Navigation between views
@@ -149,9 +175,14 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             _searchCts?.Cancel();
             CloseGame();
 
-            if (tab == SectionPrivateServers || tab == SectionHistory)
+            if (tab == SectionPrivateServers || tab == SectionHistory || tab == SectionServerBrowser)
             {
-                string page = tab == SectionPrivateServers ? "PrivateServersPage.xaml" : "HistoryPage.xaml";
+                string page = tab switch
+                {
+                    SectionPrivateServers => "PrivateServersPage.xaml",
+                    SectionServerBrowser => "ServerBrowserPage.xaml",
+                    _ => "HistoryPage.xaml",
+                };
                 SectionSource = new Uri($"/UI/Elements/Settings/Pages/{page}", UriKind.Relative);
                 Tab = tab;
                 View = ViewSection;
@@ -208,11 +239,14 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             Game = null;
         }
 
-        private void RefreshProfiles()
+        internal void RefreshProfiles()
         {
-            foreach (GameCard card in Library.Concat(HomeLibrary).Concat(SearchResults).Concat(SortGames))
+            foreach (GameCard card in Library.Concat(HomeLibrary).Concat(LibraryView).Concat(SearchResults).Concat(SortGames))
                 card.RefreshProfile();
             Hero?.RefreshProfile();
+
+            if (_libraryFilter == FilterOwnFlags)
+                ApplyLibraryView();
         }
 
         #endregion
@@ -241,6 +275,24 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public Visibility WelcomeVisibility => _hero is null ? Visibility.Visible : Visibility.Collapsed;
 
         private string _heroDetail = "";
+        /// <summary>Minutes played in this game over the last 7 days, from the session history on Activity. 0 when none or off.</summary>
+        private static double MinutesThisWeek(long universeId, long placeId)
+        {
+            try
+            {
+                DateTime since = DateTime.UtcNow.AddDays(-7);
+
+                return SessionStore.Shared.Load().Sessions
+                    .SelectMany(s => s.Visits)
+                    .Where(v => v.JoinedUtc >= since && (universeId > 0 ? v.UniverseId == universeId : v.PlaceId == placeId))
+                    .Sum(v => Math.Max(0, ((v.LeftUtc > v.JoinedUtc ? v.LeftUtc : v.JoinedUtc) - v.JoinedUtc).TotalMinutes));
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
         public string HeroDetail
         {
             get => _heroDetail;
@@ -273,8 +325,10 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                     UniverseId = entry.UniverseId,
                     PlaceId = entry.PlaceId,
                     Name = entry.DisplayName,
-                    Subtitle = $"{entry.LastPlayedText}  ·  {entry.TotalTimeText}",
+                    Subtitle = $"{entry.TotalTimeText} played  ·  {entry.LastPlayedText}",
                     IconUrl = entry.IconUrl,
+                    TotalMinutes = entry.TotalMinutes,
+                    LastPlayed = entry.LastPlayed,
                 };
 
                 Library.Add(card);
@@ -298,15 +352,128 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 };
                 string placeName = PlaceNames.NameOf(last.PlaceId);
                 string prefix = placeName.Length > 0 && placeName != last.Name ? placeName + "  ·  " : "";
-                HeroDetail = prefix + "played " + last.LastPlayedText.ToLowerInvariant() + "  ·  " + last.TotalTimeText + " in total";
+                double week = MinutesThisWeek(last.UniverseId, last.PlaceId);
+                string time = week >= 1 ? SessionStats.Duration(week) + " this week" : last.TotalTimeText + " in total";
+                HeroDetail = prefix + "played " + last.LastPlayedText.ToLowerInvariant() + "  ·  " + time;
                 _ = FillHeroBannerAsync(Hero);
             }
 
             OnPropertyChanged(nameof(LibraryCountText));
             OnPropertyChanged(nameof(LibraryEmptyVisibility));
 
+            ApplyLibraryView();
+
             _ = FillLibraryNamesAsync(entries);
         }
+
+        #region Library filters
+
+        public const string FilterAll = "all";
+        public const string FilterRecent = "recent";
+        public const string FilterOwnFlags = "flags";
+        public const string FilterFavourites = "favourites";
+
+        /// <summary>How far back "Recent" looks.</summary>
+        private const int RecentDays = 14;
+
+        /// <summary>The Library tab's tiles: <see cref="Library"/> filtered and sorted, plus favourites never played.</summary>
+        public ObservableCollection<GameCard> LibraryView { get; } = new();
+
+        private string _libraryFilter = FilterAll;
+        public string LibraryFilter
+        {
+            get => _libraryFilter;
+            private set
+            {
+                _libraryFilter = value;
+                OnPropertyChanged(nameof(LibraryFilter));
+                OnPropertyChanged(nameof(IsFilterAll));
+                OnPropertyChanged(nameof(IsFilterRecent));
+                OnPropertyChanged(nameof(IsFilterOwnFlags));
+                OnPropertyChanged(nameof(IsFilterFavourites));
+                ApplyLibraryView();
+            }
+        }
+
+        public bool IsFilterAll { get => _libraryFilter == FilterAll; set { if (value) LibraryFilter = FilterAll; } }
+        public bool IsFilterRecent { get => _libraryFilter == FilterRecent; set { if (value) LibraryFilter = FilterRecent; } }
+        public bool IsFilterOwnFlags { get => _libraryFilter == FilterOwnFlags; set { if (value) LibraryFilter = FilterOwnFlags; } }
+        public bool IsFilterFavourites { get => _libraryFilter == FilterFavourites; set { if (value) LibraryFilter = FilterFavourites; } }
+
+        private bool _mostPlayed;
+        /// <summary>Most played first instead of most recent first.</summary>
+        public bool MostPlayed
+        {
+            get => _mostPlayed;
+            set { _mostPlayed = value; OnPropertyChanged(nameof(MostPlayed)); ApplyLibraryView(); }
+        }
+
+        public int FavouriteCount => GamesStore.Shared.Favourites().Count;
+
+        public string LibraryViewNote => _libraryFilter switch
+        {
+            FilterRecent => $"Games you played in the last {RecentDays} days",
+            FilterOwnFlags => "Games that start with their own FastFlag profile",
+            FilterFavourites => "Games you marked with the heart on their page",
+            _ => "Every game you have played through PhasmaStrap, kept across restarts",
+        };
+
+        public Visibility LibraryViewEmptyVisibility => Library.Count > 0 && LibraryView.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        public string LibraryViewEmptyText => _libraryFilter switch
+        {
+            FilterRecent => $"Nothing played in the last {RecentDays} days.",
+            FilterOwnFlags => "None of your games have their own flags yet. Right click a game and pick Give it its own flags.",
+            FilterFavourites => "No favourites yet. Open a game and press the heart to keep it here.",
+            _ => "",
+        };
+
+        internal void ApplyLibraryView()
+        {
+            IEnumerable<GameCard> cards = Library;
+
+            if (_libraryFilter == FilterFavourites)
+            {
+                List<GamesStore.FavouriteGame> favourites = GamesStore.Shared.Favourites();
+                var played = Library.Where(card => favourites.Any(f => SameGame(f, card))).ToList();
+
+                // Favourites you have not played through PhasmaStrap still get a tile.
+                var unplayed = favourites
+                    .Where(f => !played.Any(card => SameGame(f, card)))
+                    .Select(f => new GameCard { UniverseId = f.UniverseId, PlaceId = f.PlaceId, Name = f.Name, IconUrl = f.IconUrl, Subtitle = "Not played yet" });
+
+                cards = played.Concat(unplayed);
+            }
+            else if (_libraryFilter == FilterRecent)
+            {
+                DateTime since = DateTime.Now.AddDays(-RecentDays);
+                cards = cards.Where(card => card.LastPlayed >= since);
+            }
+            else if (_libraryFilter == FilterOwnFlags)
+            {
+                cards = cards.Where(card => card.HasProfile);
+            }
+
+            cards = _mostPlayed
+                ? cards.OrderByDescending(card => card.TotalMinutes).ThenByDescending(card => card.LastPlayed)
+                : cards.OrderByDescending(card => card.LastPlayed);
+
+            LibraryView.Clear();
+            foreach (GameCard card in cards)
+                LibraryView.Add(card);
+
+            OnPropertyChanged(nameof(LibraryViewNote));
+            OnPropertyChanged(nameof(LibraryViewEmptyVisibility));
+            OnPropertyChanged(nameof(LibraryViewEmptyText));
+            OnPropertyChanged(nameof(FavouriteCount));
+
+            _ = FillIconsAsync(LibraryView.Where(card => card.IconUrl.Length == 0).ToList());
+        }
+
+        private static bool SameGame(GamesStore.FavouriteGame favourite, GameCard card) =>
+            (favourite.UniverseId > 0 && favourite.UniverseId == card.UniverseId) || (favourite.PlaceId > 0 && favourite.PlaceId == card.PlaceId);
+
+        #endregion
 
         private bool _namesFilled;
 
@@ -362,6 +529,21 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             LaunchUri(RobloxLaunch.DeepLink(PlaceNames.StartPlaceOf(card.PlaceId)));
         });
 
+        public ICommand CopyLinkCommand => new RelayCommand<GameCard>(card =>
+        {
+            if (card is null || card.PlaceId <= 0)
+                return;
+
+            try
+            {
+                Clipboard.SetText($"https://www.roblox.com/games/{card.PlaceId}");
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Copy failed: {ex.Message}");
+            }
+        });
+
         public ICommand OpenHeroServersCommand => new RelayCommand(() =>
         {
             if (Hero is null)
@@ -369,6 +551,15 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             OpenGame(Hero);
         });
+
+        public bool IsInLibrary(GameCard card) => Library.Contains(card);
+
+        /// <summary>Forgets a played place, along with its play time.</summary>
+        public void RemoveFromLibrary(GameCard card)
+        {
+            if (PlayTimeStore.Remove(card.PlaceId))
+                LoadLibrary();
+        }
 
         #endregion
 
@@ -382,6 +573,46 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             get => _friendsStatus;
             private set { _friendsStatus = value; OnPropertyChanged(nameof(FriendsStatus)); }
         }
+
+        private string _friendsCountText = "";
+        /// <summary>"3 of 41 online", next to the panel title. Empty until the friends are loaded.</summary>
+        public string FriendsCountText
+        {
+            get => _friendsCountText;
+            private set { _friendsCountText = value; OnPropertyChanged(nameof(FriendsCountText)); }
+        }
+
+        /// <summary>Raised when the page should open the Party page.</summary>
+        public event EventHandler? OpenPartyRequested;
+
+        private bool _partyBusy;
+
+        public string PartyButtonText => PartyService.InParty ? "Open your party" : "Start a party";
+
+        public ICommand StartPartyCommand => new AsyncRelayCommand(async () =>
+        {
+            if (_partyBusy)
+                return;
+
+            _partyBusy = true;
+            try
+            {
+                // Without an account or with parties off, the Party page explains what to turn on.
+                if (!PartyService.InParty && PhasmaAccount.SignedIn && App.Settings.Prop.PartyEnabled)
+                    await PartyService.CreateAsync();
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Starting a party failed: {ex.Message}");
+            }
+            finally
+            {
+                _partyBusy = false;
+            }
+
+            OnPropertyChanged(nameof(PartyButtonText));
+            OpenPartyRequested?.Invoke(this, EventArgs.Empty);
+        });
 
         public ICommand JoinFriendCommand => new RelayCommand<FriendPlayingRow>(row =>
         {
@@ -399,6 +630,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 if (me is null)
                 {
                     FriendsPlaying.Clear();
+                    FriendsCountText = "";
                     FriendsStatus = "Sign in to Roblox to see which friends are playing.";
                     return;
                 }
@@ -431,13 +663,16 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 }
 
                 int online = presence.Values.Count(p => p.Type != FriendPresenceType.Offline);
+                FriendsCountText = friends.Count == 0 ? "" : $"{online} of {friends.Count} online";
                 FriendsStatus = FriendsPlaying.Count == 0
-                    ? (online == 0 ? "None of your friends are online right now." : $"{online} online, nobody in a game right now.")
-                    : $"{online} of {friends.Count} online";
+                    ? (online == 0 ? "None of your friends are online right now." : "Nobody is in a game right now.")
+                    : "";
+                OnPropertyChanged(nameof(PartyButtonText));
             }
             catch (Exception ex)
             {
                 App.Logger.WriteLine(LOG_IDENT, $"Friends playing failed: {ex.Message}");
+                FriendsCountText = "";
                 FriendsStatus = "Couldn't load your friends right now.";
             }
         }
@@ -463,11 +698,40 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 sort.IsSelected = ReferenceEquals(sort, row);
 
             SortGames.Clear();
-            foreach (GameCard card in row.Games)
+            foreach (GameCard card in row.Games.Take(HomeSortCount))
                 SortGames.Add(card);
 
-            _ = FillIconsAsync(row.Games);
+            OnPropertyChanged(nameof(BrowseVisibility));
+
+            _ = FillIconsAsync(SortGames.ToList());
         }
+
+        /// <summary>Tiles in the catalog row on Home. Browse shows the whole list.</summary>
+        private const int HomeSortCount = 12;
+
+        public Visibility BrowseVisibility => Sorts.Any(s => s.IsSelected) ? Visibility.Visible : Visibility.Collapsed;
+
+        /// <summary>Shows every game of the picked catalog list, in the search view.</summary>
+        public ICommand BrowseCommand => new RelayCommand(() =>
+        {
+            CatalogSortRow? row = Sorts.FirstOrDefault(s => s.IsSelected);
+            if (row is null)
+                return;
+
+            _searchCts?.Cancel();
+            CloseGame();
+            SetLinkTarget(null);
+
+            SearchResults.Clear();
+            foreach (GameCard card in row.Games)
+                SearchResults.Add(card);
+
+            SearchBusy = false;
+            SearchStatus = $"{row.Name}  ·  {row.Games.Count} games";
+            View = ViewSearch;
+
+            _ = FillIconsAsync(row.Games);
+        });
 
         private async Task LoadSortsAsync()
         {
@@ -667,6 +931,99 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             {
                 SearchBusy = false;
             }
+        }
+
+        #endregion
+
+        #region Flag profiles and accounts for the right click menus
+
+        /// <summary>The profile a whole game starts with, or "" for the usual flags.</summary>
+        internal static string ProfileIdFor(long universeId) =>
+            universeId <= 0 ? "" : App.FlagProfiles.Prop.Rules.FirstOrDefault(r => r.IsWholeGame && r.UniverseId == universeId)?.ProfileId ?? "";
+
+        /// <summary>Gives a whole game a flag profile, or takes it away when <paramref name="profileId"/> is empty.</summary>
+        internal static void AssignProfile(long universeId, long rootPlaceId, string gameName, string iconUrl, string profileId)
+        {
+            if (universeId <= 0)
+                return;
+
+            var data = App.FlagProfiles.Prop;
+            FlagGameRule? rule = data.Rules.FirstOrDefault(r => r.IsWholeGame && r.UniverseId == universeId);
+
+            if (string.IsNullOrEmpty(profileId))
+            {
+                if (rule is not null)
+                    data.Rules.Remove(rule);
+            }
+            else
+            {
+                if (rule is null)
+                {
+                    rule = new FlagGameRule();
+                    data.Rules.Add(rule);
+                }
+
+                rule.UniverseId = universeId;
+                rule.RootPlaceId = rootPlaceId;
+                rule.PlaceId = 0;
+                rule.PlaceName = "";
+                rule.GameName = gameName;
+                rule.IconUrl = iconUrl;
+                rule.ProfileId = profileId;
+
+                if (rootPlaceId > 0)
+                    GameLookup.Remember(rootPlaceId, universeId);
+            }
+
+            try
+            {
+                // Saved straight away, like the game page: a launch reads it from disk.
+                App.FlagProfiles.Save();
+                App.FlagProfiles.NotifyEdited();
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Saving the profile assignment failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>Makes an empty profile named after the game and gives it to the whole game.</summary>
+        internal static string CreateOwnProfile(long universeId, long rootPlaceId, string gameName, string iconUrl)
+        {
+            var profile = new FlagProfile { Name = FlagLayers.UniqueName(App.FlagProfiles.Prop, gameName) };
+            App.FlagProfiles.Prop.Profiles.Add(profile);
+            AssignProfile(universeId, rootPlaceId, gameName, iconUrl, profile.Id);
+            return profile.Id;
+        }
+
+        internal static List<AccountQuickSwitch.Account> SavedAccounts() => AccountQuickSwitch.List(Paths.AccountBackups);
+
+        /// <summary>Signs Roblox in as a saved account, then opens <paramref name="uri"/>. Roblox has to be closed, since the login is swapped on disk.</summary>
+        internal static async Task LaunchAsAccountAsync(AccountQuickSwitch.Account account, string uri)
+        {
+            Process[] running = Process.GetProcessesByName(App.RobloxPlayerAppName);
+            bool open = running.Length > 0;
+            foreach (Process process in running)
+                process.Dispose();
+
+            if (open)
+            {
+                Frontend.ShowMessageBox($"Close Roblox first, then try again to play as {account.Title}.", MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                await AccountQuickSwitch.SwitchAsync(Paths.AccountBackups, RobloxCookie.LiveCookiesDatPath, account.UserId);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Account switch failed: {ex.Message}");
+                Frontend.ShowMessageBox($"Couldn't switch to {account.Title}: {ex.Message}", MessageBoxImage.Warning);
+                return;
+            }
+
+            LaunchUri(uri);
         }
 
         #endregion

@@ -74,6 +74,8 @@ namespace PhasmaStrap
             {
                 ActivityWatcher = new(_watcherData.LogFile);
                 NowPlaying.Follow(ActivityWatcher);
+                Utility.Backend.GameServerReporter.Follow(ActivityWatcher);
+                Utility.PerformanceSessionRecorder.Follow(ActivityWatcher);
 
                 ActivityWatcher.OnGameJoin += (sender, _) => OverlayHub.OnGameJoin((sender as ActivityWatcher)?.Data.PlaceId ?? 0);
                 ActivityWatcher.OnGameLeave += delegate { OverlayHub.OnGameLeave(); };
@@ -542,6 +544,9 @@ namespace PhasmaStrap
 
             ActivityWatcher?.Start();
 
+            // "Allow more than one Roblox": keep Roblox's singleton mutex while this Roblox runs
+            RobloxMultiInstance.Hold();
+
             await WaitForRobloxExitAsync();
 
             bool possibleCrash = ActivityWatcher is not null && ActivityWatcher.InGame;
@@ -696,6 +701,7 @@ namespace PhasmaStrap
             Step("window customizer", RobloxWindowCustomizer.Shutdown);
             Step("process optimizer", StopProcessOptimizer);
             Step("memory manager", MemoryManager.Shutdown);
+            Step("multi instance", RobloxMultiInstance.Release);
             Step("hotkeys", () => _hotkeys?.Dispose());
             Step("instant replay", _instantReplay.Dispose);
             Step("activity watcher", () => ActivityWatcher?.Dispose());

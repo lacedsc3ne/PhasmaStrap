@@ -10,86 +10,97 @@
       d:DesignHeight="900" d:DesignWidth="800"
       Title="AssetWarpPage"
       Scrollable="True">
+    <ui:UiPage.Resources>
+        <!--  A check box row inside a card: box on the left, title and a short line under it  -->
+        <Style x:Key="BlockRowCheck" TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
+            <Setter Property="FontSize" Value="13.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="BlockRowNote" TargetType="TextBlock">
+            <Setter Property="Margin" Value="30,2,0,0" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+        </Style>
+    </ui:UiPage.Resources>
 
     <StackPanel Margin="0,0,14,14">
-        <TextBlock FontSize="20" FontWeight="Medium" Text="{x:Static resources:Strings.Menu_FastFlagSettings_Tab_AssetWarp}" />
-        <TextBlock Margin="0,2,0,0" TextWrapping="Wrap" FontSize="14" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_AssetWarp_Description}" />
+        <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="{x:Static resources:Strings.Menu_FastFlagSettings_Tab_AssetWarp}" />
+        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" MaxWidth="760" HorizontalAlignment="Left"
+                   Text="Blocks whole categories of asset from loading in game, for a performance boost. Works by taking blocked asset types out of the request the game makes for them." />
 
-        <controls:OptionControl
-            Margin="0,12,0,0"
-            Header="{x:Static resources:Strings.Menu_AssetWarp_Enabled_Title}"
-            Description="{Binding StatusText, Mode=OneWay}">
+        <controls:OptionControl Margin="0,0,0,12" Header="{x:Static resources:Strings.Menu_AssetWarp_Enabled_Title}" Description="{Binding StatusText, Mode=OneWay}">
             <ui:ToggleSwitch IsChecked="{Binding AssetWarpEnabled, Mode=TwoWay}" />
         </controls:OptionControl>
 
-        <StackPanel IsEnabled="{Binding AssetWarpEnabled, Mode=OneWay}">
-            <ui:Card Margin="0,12,0,0">
+        <controls:CardColumns IsEnabled="{Binding AssetWarpEnabled, Mode=OneWay}">
+            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_FastFlagSettings_AssetBlocking}" Description="{x:Static resources:Strings.Menu_FastFlagSettings_StripSpecificAssetCategoriesFromDownloading}">
                 <StackPanel>
-                    <TextBlock FontSize="14" Text="{x:Static resources:Strings.Menu_FastFlagSettings_AssetBlocking}" />
-                    <TextBlock FontSize="12" Text="{x:Static resources:Strings.Menu_FastFlagSettings_StripSpecificAssetCategoriesFromDownloading}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                    <WrapPanel Margin="0,12,0,0">
-                        <CheckBox Margin="0,0,24,6"
-                                  Content="{x:Static resources:Strings.Menu_AssetWarp_DisableTextures_Title}"
-                                  ToolTip="{x:Static resources:Strings.Menu_AssetWarp_DisableTextures_Description}"
-                                  IsChecked="{Binding DisableAllTextures, Mode=TwoWay}" />
-                        <CheckBox Margin="0,0,24,6"
-                                  Content="{x:Static resources:Strings.Menu_AssetWarp_DisableDecals_Title}"
-                                  ToolTip="{x:Static resources:Strings.Menu_AssetWarp_DisableDecals_Description}"
-                                  IsChecked="{Binding DisableAllDecals, Mode=TwoWay}" />
-                        <CheckBox Margin="0,0,24,6"
-                                  Content="{x:Static resources:Strings.Menu_AssetWarp_DisableImages_Title}"
-                                  ToolTip="{x:Static resources:Strings.Menu_AssetWarp_DisableImages_Description}"
-                                  IsChecked="{Binding DisableAllImages, Mode=TwoWay}" />
-                        <CheckBox Margin="0,0,24,6"
-                                  Content="{x:Static resources:Strings.Menu_AssetWarp_DisableAnimations_Title}"
-                                  ToolTip="{x:Static resources:Strings.Menu_AssetWarp_DisableAnimations_Description}"
-                                  IsChecked="{Binding DisableAllAnimations, Mode=TwoWay}" />
-                        <CheckBox Margin="0,0,0,6"
-                                  Content="{x:Static resources:Strings.Menu_AssetWarp_DisableMeshes_Title}"
-                                  ToolTip="{x:Static resources:Strings.Menu_AssetWarp_DisableMeshes_Description}"
-                                  IsChecked="{Binding DisableAllMeshes, Mode=TwoWay}" />
-                    </WrapPanel>
-                </StackPanel>
-            </ui:Card>
-
-            <TextBlock Text="{x:Static resources:Strings.Menu_AssetWarp_Preloading_Header}" FontSize="20" FontWeight="Medium" Margin="0,16,0,2" />
-
-            <ui:CardExpander Margin="0,4,0,0">
-                <ui:CardExpander.Header>
-                    <StackPanel>
-                        <TextBlock FontSize="14" Text="{x:Static resources:Strings.Menu_FastFlagSettings_PreloadBehavior}" />
-                        <TextBlock FontSize="12" Text="{x:Static resources:Strings.Menu_FastFlagSettings_WarmsAssetCacheAheadTimeSo}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    <Border Style="{DynamicResource PhasmaDivider}" />
+                    <StackPanel Margin="2,10,2,10">
+                        <CheckBox Style="{StaticResource BlockRowCheck}" Content="{x:Static resources:Strings.Menu_AssetWarp_DisableTextures_Title}"
+                                  ToolTip="{x:Static resources:Strings.Menu_AssetWarp_DisableTextures_Description}" IsChecked="{Binding DisableAllTextures, Mode=TwoWay}" />
+                        <TextBlock Style="{StaticResource BlockRowNote}" Text="Texture and texture pack entries" />
                     </StackPanel>
-                </ui:CardExpander.Header>
-                <StackPanel>
-                    <controls:OptionControl
-                        Header="{x:Static resources:Strings.Menu_AssetWarp_PreloadEnabled_Title}"
-                        Description="{x:Static resources:Strings.Menu_AssetWarp_PreloadEnabled_Description}">
-                        <ui:ToggleSwitch IsChecked="{Binding PreloadEnabled, Mode=TwoWay}" />
-                    </controls:OptionControl>
-
-                    <controls:OptionControl
-                        Header="{x:Static resources:Strings.Menu_AssetWarp_PreloadCacheLimit_Title}"
-                        Description="{x:Static resources:Strings.Menu_AssetWarp_PreloadCacheLimit_Description}">
-                        <StackPanel Width="250">
-                            <Slider Minimum="256" Maximum="8192" TickFrequency="256" IsSnapToTickEnabled="True" Value="{Binding PreloadCacheMb, Mode=TwoWay}" />
-                            <TextBlock HorizontalAlignment="Right" Text="{Binding PreloadCacheSizeDisplay, Mode=OneWay}" />
-                        </StackPanel>
-                    </controls:OptionControl>
-
-                    <controls:OptionControl
-                        Header="{x:Static resources:Strings.Menu_AssetWarp_PreloadAvatar_Title}"
-                        Description="{x:Static resources:Strings.Menu_AssetWarp_PreloadAvatar_Description}">
-                        <ui:ToggleSwitch IsChecked="{Binding PreloadAvatar, Mode=TwoWay}" />
-                    </controls:OptionControl>
-
-                    <controls:OptionControl
-                        Header="{x:Static resources:Strings.Menu_AssetWarp_PreloadCrossGame_Title}"
-                        Description="{x:Static resources:Strings.Menu_AssetWarp_PreloadCrossGame_Description}">
-                        <ui:ToggleSwitch IsChecked="{Binding PreloadCrossGame, Mode=TwoWay}" />
-                    </controls:OptionControl>
                 </StackPanel>
-            </ui:CardExpander>
-        </StackPanel>
+
+                <StackPanel>
+                    <Border Style="{DynamicResource PhasmaDivider}" />
+                    <StackPanel Margin="2,10,2,10">
+                        <CheckBox Style="{StaticResource BlockRowCheck}" Content="{x:Static resources:Strings.Menu_AssetWarp_DisableDecals_Title}"
+                                  ToolTip="{x:Static resources:Strings.Menu_AssetWarp_DisableDecals_Description}" IsChecked="{Binding DisableAllDecals, Mode=TwoWay}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel>
+                    <Border Style="{DynamicResource PhasmaDivider}" />
+                    <StackPanel Margin="2,10,2,10">
+                        <CheckBox Style="{StaticResource BlockRowCheck}" Content="{x:Static resources:Strings.Menu_AssetWarp_DisableImages_Title}"
+                                  ToolTip="{x:Static resources:Strings.Menu_AssetWarp_DisableImages_Description}" IsChecked="{Binding DisableAllImages, Mode=TwoWay}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel>
+                    <Border Style="{DynamicResource PhasmaDivider}" />
+                    <StackPanel Margin="2,10,2,10">
+                        <CheckBox Style="{StaticResource BlockRowCheck}" Content="{x:Static resources:Strings.Menu_AssetWarp_DisableAnimations_Title}"
+                                  ToolTip="{x:Static resources:Strings.Menu_AssetWarp_DisableAnimations_Description}" IsChecked="{Binding DisableAllAnimations, Mode=TwoWay}" />
+                        <TextBlock Style="{StaticResource BlockRowNote}" Text="Breaks games with no fallback animation" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel>
+                    <Border Style="{DynamicResource PhasmaDivider}" />
+                    <StackPanel Margin="2,10,2,10">
+                        <CheckBox Style="{StaticResource BlockRowCheck}" Content="{x:Static resources:Strings.Menu_AssetWarp_DisableMeshes_Title}"
+                                  ToolTip="{x:Static resources:Strings.Menu_AssetWarp_DisableMeshes_Description}" IsChecked="{Binding DisableAllMeshes, Mode=TwoWay}" />
+                        <TextBlock Style="{StaticResource BlockRowNote}" Text="Makes all 3D geometry invisible" />
+                    </StackPanel>
+                </StackPanel>
+            </controls:SettingsCard>
+
+            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_FastFlagSettings_PreloadBehavior}" Description="Warms the asset cache so games feel quicker">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_AssetWarp_PreloadEnabled_Title}" Description="Repeat lookups skip the network">
+                    <ui:ToggleSwitch IsChecked="{Binding PreloadEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_AssetWarp_PreloadCacheLimit_Title}">
+                    <StackPanel Orientation="Horizontal">
+                        <Slider Width="110" VerticalAlignment="Center" Minimum="256" Maximum="8192" TickFrequency="256" IsSnapToTickEnabled="True" Value="{Binding PreloadCacheMb, Mode=TwoWay}" />
+                        <TextBlock Margin="8,0,0,0" MinWidth="52" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding PreloadCacheSizeDisplay, Mode=OneWay}" />
+                    </StackPanel>
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_AssetWarp_PreloadAvatar_Title}">
+                    <ui:ToggleSwitch IsChecked="{Binding PreloadAvatar, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_AssetWarp_PreloadCrossGame_Title}">
+                    <ui:ToggleSwitch IsChecked="{Binding PreloadCrossGame, Mode=TwoWay}" />
+                </controls:OptionControl>
+            </controls:SettingsCard>
+        </controls:CardColumns>
     </StackPanel>
 </ui:UiPage>

@@ -43,6 +43,13 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             _open.Show();
         }
 
+        /// <summary>Opens the library on <paramref name="tab"/> showing only what was taken in <paramref name="range"/>.</summary>
+        public static void Open(int tab, Window? owner, CaptureTimeFilter? range)
+        {
+            Open(tab, owner);
+            _open?._viewModel.SetRange(range);
+        }
+
         private void CardRows_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             _viewModel.SetColumns((int)((CardRows.ActualWidth - 18) / CardWidth));

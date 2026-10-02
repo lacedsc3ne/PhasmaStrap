@@ -63,10 +63,13 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
         private readonly string _targetName;
 
-        public FFlagSearchDialog(Func<string, string, string?>? addFlagCallback = null, string targetName = "your flags")
+        private readonly string _initialQuery;
+
+        public FFlagSearchDialog(Func<string, string, string?>? addFlagCallback = null, string targetName = "your flags", string? initialQuery = null)
         {
             _addFlagCallback = addFlagCallback;
             _targetName = targetName;
+            _initialQuery = initialQuery?.Trim() ?? "";
 
             InitializeComponent();
 
@@ -83,6 +86,12 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             UpdateSearchResultsCount();
             ValidationResultsCount.Text = String.Format(Strings.Dialog_FFlagSearch_ResultsCount, 0);
             BrowseResultsCount.Text = String.Format(Strings.Dialog_FFlagSearch_BrowseCount, 0);
+
+            if (_initialQuery.Length > 0)
+            {
+                MainTabControl.SelectedIndex = 0;
+                SearchTextBox.Text = _initialQuery;
+            }
 
             _ = LoadDataAsync(_lifetimeCancellation.Token);
         }
@@ -137,6 +146,9 @@ namespace PhasmaStrap.UI.Elements.Dialogs
                 _flagMetadata = flagMetadata;
 
                 await UpdateStatusAsync(String.Format(Strings.Dialog_FFlagSearch_StatusLoaded, allFlags.Count));
+
+                // A search typed (or passed in) before the data arrived ran on an empty list: run it again now.
+                RerunCurrentSearch();
             }
             catch (OperationCanceledException) when (token.IsCancellationRequested)
             {

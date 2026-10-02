@@ -63,9 +63,9 @@ namespace PhasmaStrap.UI.Elements.ContextMenu
             if (App.Settings.Prop.UseDiscordRichPresence)
                 RPCDebugMenuItem.Visibility = Visibility.Visible;
 
-            VersionTextBlock.Text = $"{App.ProjectName} v{App.Version}";
+            VersionTextBlock.Text = $"{App.ProjectName} {App.Version}";
 
-            FlagsTextBlock.Text = $"FastFlags applied: {(App.Settings.Prop.UseFastFlagManager ? App.FastFlags.Prop.Count : 0)}";
+            FlagsTextBlock.Text = $"{(App.Settings.Prop.UseFastFlagManager ? App.FastFlags.Prop.Count : 0)}";
             FrameGenMenuItem.IsChecked = FrameGenSettings.ModeIndex > 0;
             OverlayFocusModeMenuItem.IsChecked = App.Settings.Prop.OverlayFocusModeEnabled;
 
@@ -77,7 +77,21 @@ namespace PhasmaStrap.UI.Elements.ContextMenu
             SaveReplayMenuItem.Visibility = App.Settings.Prop.InstantReplayEnabled ? Visibility.Visible : Visibility.Collapsed;
 
             _sessionTimer.Tick += SessionTimer_Tick;
+
+            RefreshHotkeyHints();
         }
+
+        private void TrayMenu_Opened(object sender, RoutedEventArgs e) => RefreshHotkeyHints();
+
+        // Shows the hotkey bound on the Shortcuts page next to the matching tray item, or nothing if none is bound
+        private void RefreshHotkeyHints()
+        {
+            ScreenshotHotkeyText.Text = HotkeyHint(PhasmaStrap.Utility.HotkeyActions.TakeScreenshot);
+            ReplayHotkeyText.Text = HotkeyHint(PhasmaStrap.Utility.HotkeyActions.SaveInstantReplay);
+        }
+
+        private static string HotkeyHint(string actionId) =>
+            App.Settings.Prop.HotkeyBindings.TryGetValue(actionId, out string? text) && !string.IsNullOrWhiteSpace(text) ? text : "";
 
         private void SessionTimer_Tick(object? sender, EventArgs e)
         {
@@ -85,7 +99,7 @@ namespace PhasmaStrap.UI.Elements.ContextMenu
             if (_activityWatcher?.InGame != true || data is null)
                 return;
 
-            PlayTimeTextBlock.Text = $"Play time: {DateTime.Now - data.TimeJoined:hh\\:mm\\:ss}";
+            PlayTimeTextBlock.Text = $"{DateTime.Now - data.TimeJoined:hh\\:mm\\:ss}";
             UpdateServerLine(data);
 
             try
@@ -94,7 +108,7 @@ namespace PhasmaStrap.UI.Elements.ContextMenu
                 if (pid != 0)
                 {
                     using var process = Process.GetProcessById(pid);
-                    MemoryTextBlock.Text = $"Roblox memory: {process.WorkingSet64 / 1048576.0:0} MB";
+                    MemoryTextBlock.Text = $"{process.WorkingSet64 / 1048576.0:N0} MB";
                 }
             }
             catch
@@ -108,7 +122,7 @@ namespace PhasmaStrap.UI.Elements.ContextMenu
             string where = region.Length > 0 ? region : data.MachineAddressValid ? data.MachineAddress : "address pending";
             int ping = PhasmaStrap.Utility.ServerPingMonitor.LatestMs;
 
-            ServerTextBlock.Text = $"Server: {data.ServerType} · {where}" + (ping >= 0 ? $" · {ping} ms" : "");
+            ServerTextBlock.Text = $"{data.ServerType} · {where}" + (ping >= 0 ? $" · {ping} ms" : "");
         }
 
         private async Task UpdateCurrentGameAsync(ActivityData data)
@@ -189,11 +203,11 @@ namespace PhasmaStrap.UI.Elements.ContextMenu
                     {
                         _lastClosest = best;
                         _lastClosestPlaceId = data.PlaceId;
-                        JoinClosestServerTextBlock.Text = $"Join closest server ({best.DatacenterName}, ~{best.EstimatedPingMs}ms)";
+                        JoinClosestServerHint.Text = $"{best.DatacenterName} · {best.EstimatedPingMs} ms";
                     }
                     else
                     {
-                        JoinClosestServerTextBlock.Text = "Join closest server (none found)";
+                        JoinClosestServerHint.Text = "None found";
                     }
                 });
             }
@@ -236,14 +250,14 @@ namespace PhasmaStrap.UI.Elements.ContextMenu
                 {
                     InviteDeeplinkMenuItem.Visibility = Visibility.Visible;
                     JoinClosestServerMenuItem.Visibility = Visibility.Visible;
-                    JoinClosestServerTextBlock.Text = "Join closest server (checking...)";
+                    JoinClosestServerHint.Text = "Checking...";
                 }
 
                 ServerDetailsMenuItem.Visibility = Visibility.Visible;
                 SessionInfoMenuItem.Visibility = Visibility.Visible;
                 MeasurePerformanceMenuItem.Visibility = Visibility.Visible;
                 UpdateServerLine(data);
-                PlayTimeTextBlock.Text = "Play time: 00:00:00";
+                PlayTimeTextBlock.Text = "00:00:00";
                 _sessionTimer.Start();
             });
 
@@ -263,7 +277,7 @@ namespace PhasmaStrap.UI.Elements.ContextMenu
                 CurrentGameMenuItem.Visibility = Visibility.Collapsed;
                 CurrentGameIcon.Source = null;
                 CurrentGameNameTextBlock.Text = "";
-                MemoryTextBlock.Text = "Roblox memory: 0 MB";
+                MemoryTextBlock.Text = "0 MB";
                 _lastClosest = null;
 
                 _serverInformationWindow?.Close();

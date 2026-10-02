@@ -11,10 +11,17 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
     {
         public PhasmaStrapPage()
         {
-            DataContext = new PhasmaStrapViewModel();
+            var viewModel = new PhasmaStrapViewModel();
+            DataContext = viewModel;
             InitializeComponent();
 
-            PhasmaAccountSection.DataContext = new PhasmaAccountViewModel();
+            _ = viewModel.LoadUpdateStateAsync();
+
+            var account = new PhasmaAccountViewModel();
+            PhasmaAccountSection.DataContext = account;
+
+            // Roblox link state and the newest backup come from the server; the page shows the local view until then.
+            _ = account.LoadSummaryAsync();
         }
 
         private void HistoryExpander_Expanded(object sender, System.Windows.RoutedEventArgs e)

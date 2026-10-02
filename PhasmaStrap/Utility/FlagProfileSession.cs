@@ -22,6 +22,11 @@ namespace PhasmaStrap.Utility
             public string Profile { get; set; } = "";
             public string Signature { get; set; } = "";
             public DateTime RestartUtc { get; set; } = DateTime.MinValue;
+
+            /// <summary>Set when the running Roblox was started with a one time profile, for the game below.</summary>
+            public bool OneTime { get; set; }
+            public long OneTimeUniverseId { get; set; }
+            public long OneTimePlaceId { get; set; }
         }
 
         private static string MarkerPath => Path.Combine(Paths.Base, "AppliedFlagProfile.json");
@@ -167,13 +172,91 @@ namespace PhasmaStrap.Utility
                 kind: NotificationKindId.FastFlagProfile);
         }
 
-        public static void RecordLaunch(Wanted applied)
+        public static void RecordLaunch(Wanted applied, OneTimeRequest? oneTime = null)
         {
             Marker marker = Read();
             marker.Profile = applied.ProfileName;
             marker.Signature = applied.Signature;
+            marker.OneTime = oneTime is not null;
+            marker.OneTimeUniverseId = oneTime?.UniverseId ?? 0;
+            marker.OneTimePlaceId = oneTime?.PlaceId ?? 0;
             Write(marker);
         }
+
+        #region One time profile
+
+        /// <summary>A flag profile asked for one launch only, left on disk for the launch that follows.</summary>
+        public sealed class OneTimeRequest
+        {
+            public string ProfileId { get; set; } = "";
+            public long UniverseId { get; set; }
+            public long PlaceId { get; set; }
+            public DateTime RequestedUtc { get; set; }
+        }
+
+        private static string OneTimePath => Path.Combine(Paths.Base, "OneTimeFlagProfile.json");
+
+        /// <summary>How long a request waits for its launch before it is ignored.</summary>
+        private static readonly TimeSpan OneTimeLifetime = TimeSpan.FromMinutes(2);
+
+        /// <summary>
+        /// Makes the next launch use <paramref name="profileId"/> instead of the game's own profile, without changing
+        /// any saved rule. An empty id means "just your usual flags" for that launch.
+        /// </summary>
+        public static void RequestOneTime(string profileId, long universeId, long placeId)
+        {
+            try
+            {
+                var request = new OneTimeRequest { ProfileId = profileId ?? "", UniverseId = universeId, PlaceId = placeId, RequestedUtc = DateTime.UtcNow };
+                File.WriteAllText(OneTimePath, JsonSerializer.Serialize(request));
+                App.Logger.WriteLine(LOG_IDENT, $"Next launch of place {placeId} uses {(request.ProfileId.Length > 0 ? $"profile {request.ProfileId}" : "your usual flags")} once");
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not save the one time profile: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Takes the waiting one time request, if there is a fresh one. The request is used up either way.
+        /// <paramref name="profile"/> is null for "your usual flags".
+        /// </summary>
+        public static bool TakeOneTime(FlagProfileData profiles, out OneTimeRequest? request, out FlagProfile? profile)
+        {
+            request = null;
+            profile = null;
+
+            try
+            {
+                if (!File.Exists(OneTimePath))
+                    return false;
+
+                OneTimeRequest? read = JsonSerializer.Deserialize<OneTimeRequest>(File.ReadAllText(OneTimePath));
+                File.Delete(OneTimePath);
+
+                if (read is null || DateTime.UtcNow - read.RequestedUtc > OneTimeLifetime)
+                    return false;
+
+                profile = read.ProfileId.Length == 0 ? null : profiles.Profiles.FirstOrDefault(p => p.Id == read.ProfileId);
+                if (read.ProfileId.Length > 0 && profile is null)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"The one time profile {read.ProfileId} no longer exists");
+                    return false;
+                }
+
+                request = read;
+                string what = profile is null ? "your usual flags" : "profile " + profile.Name;
+                App.Logger.WriteLine(LOG_IDENT, $"Using {what} for this launch only");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not read the one time profile: {ex.Message}");
+                return false;
+            }
+        }
+
+        #endregion
 
         public static void OnGameJoined(ActivityData data)
         {
@@ -184,6 +267,11 @@ namespace PhasmaStrap.Utility
                 GameLookup.Remember(data.PlaceId, data.UniverseId);
 
             if (!App.Settings.Prop.UseFastFlagManager)
+                return;
+
+            // Roblox was started with a profile picked for this game once: that is what the player asked for.
+            Marker started = Read();
+            if (started.OneTime && ((started.OneTimeUniverseId > 0 && started.OneTimeUniverseId == data.UniverseId) || started.OneTimePlaceId == data.PlaceId))
                 return;
 
             FlagProfileData profiles = FlagProfileManager.ReadFromDisk();

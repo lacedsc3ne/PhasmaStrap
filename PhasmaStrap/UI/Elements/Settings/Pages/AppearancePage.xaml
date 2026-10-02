@@ -11,17 +11,222 @@
       d:DesignHeight="900" d:DesignWidth="800"
       Title="AppearancePage"
       Scrollable="True">
+    <ui:UiPage.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </ui:UiPage.Resources>
+
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Text="{x:Static resources:Strings.Menu_Appearance_Title}" FontSize="20" FontWeight="Medium" />
-        <TextBlock Text="{x:Static resources:Strings.Menu_Appearance_Description}" FontSize="14" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" />
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="{x:Static resources:Strings.Menu_Appearance_Title}" />
+            <Border Margin="10,2,0,0" Style="{DynamicResource PhasmaTagNeutral}">
+                <TextBlock Text="Look and feel" />
+            </Border>
+        </StackPanel>
+        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="Theme, effects and background for PhasmaStrap." />
+
+        <controls:CardColumns>
+            <controls:SettingsCard Header="Theme and language">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Appearance_Global_Theme_Title}">
+                    <ComboBox Padding="10,5,10,5" MinWidth="130" ItemsSource="{Binding Themes, Mode=OneTime}" Text="{Binding Theme, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Path=., Converter={StaticResource EnumNameConverter}}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Appearance_Language_Title}" Description="Needs a relaunch">
+                    <ComboBox Padding="10,5,10,5" MinWidth="130" MaxWidth="200" ItemsSource="{Binding Languages, Mode=OneTime}" Text="{Binding SelectedLanguage, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Appearance_ColorTheme_Title}" Description="Overrides colors in PhasmaStrap's own menus">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Margin="0,0,10,0" Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Common_Edit}" Command="{Binding EditColorThemeCommand}" />
+                        <ui:ToggleSwitch VerticalAlignment="Center" IsChecked="{Binding CustomColorThemeEnabled, Mode=TwoWay}" />
+                    </StackPanel>
+                </controls:OptionControl>
+            </controls:SettingsCard>
+
+            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Appearance_VisualEffects_Title}">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Appearance_WindowBackdrop_Title}" Description="Material behind PhasmaStrap's windows">
+                    <ComboBox Padding="10,5,10,5" MinWidth="120" ItemsSource="{Binding BackdropStyles, Mode=OneTime}" Text="{Binding WindowBackdropStyle, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Path=., Converter={StaticResource EnumNameConverter}}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Appearance_ThemeTransition_Title}">
+                    <ui:ToggleSwitch IsChecked="{Binding ThemeTransitionEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Appearance_SmoothProgressBars_Title}">
+                    <ui:ToggleSwitch IsChecked="{Binding SmoothProgressBarsEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Appearance_SnowEffect_Title}">
+                    <ui:ToggleSwitch IsChecked="{Binding SnowEffectEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Appearance_ControllerNavigation}" Description="Use an Xbox or generic gamepad">
+                    <ui:ToggleSwitch IsChecked="{Binding ControllerNavigationEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
+            </controls:SettingsCard>
+
+            <controls:SettingsCard controls:CardColumns.FullRow="True"
+                                   Header="{x:Static resources:Strings.Menu_Appearance_GlobalBackground_Title}"
+                                   Description="A picture, GIF or video behind this window. Copied into PhasmaStrap so it keeps working.">
+                <controls:SettingsCard.HeaderContent>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Margin="0,0,10,0" Style="{DynamicResource PhasmaSoftButton}" IsEnabled="{Binding NotImporting, Mode=OneWay}" Command="{Binding AddBackgroundCommand}"
+                                Visibility="{Binding GlobalBackgroundEnabled, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Add24" FontSize="13" Margin="0,0,6,0" />
+                                <TextBlock Text="{x:Static resources:Strings.Menu_Appearance_AddImageGIFVideo}" />
+                            </StackPanel>
+                        </Button>
+                        <ui:ToggleSwitch VerticalAlignment="Center" IsChecked="{Binding GlobalBackgroundEnabled, Mode=TwoWay}" />
+                    </StackPanel>
+                </controls:SettingsCard.HeaderContent>
+
+                <StackPanel Margin="0,0,0,14" Visibility="{Binding GlobalBackgroundEnabled, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Margin="0,0,0,8" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding BackgroundStatus, Mode=OneWay}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding BackgroundStatus}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding BackgroundStatus}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <Border Margin="0,0,0,10" Padding="20" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasBackgrounds}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel HorizontalAlignment="Center">
+                            <ui:SymbolIcon HorizontalAlignment="Center" Symbol="ImageMultiple24" FontSize="22" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                            <TextBlock Margin="0,8,0,0" HorizontalAlignment="Center" FontSize="12.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Appearance_NoBackgroundsAddedYet}" />
+                        </StackPanel>
+                    </Border>
+
+                    <ItemsControl ItemsSource="{Binding Backgrounds, Mode=OneWay}" Focusable="False">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Width="170" Margin="0,0,10,10" Padding="3" CornerRadius="{DynamicResource PhasmaCornerRadius}" Background="{DynamicResource PhasmaHoverBrush}" Cursor="Hand">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="BorderThickness" Value="2" />
+                                            <Setter Property="BorderBrush" Value="Transparent" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource PhasmaAccentBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Border.InputBindings>
+                                        <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.SelectBackgroundCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
+                                    </Border.InputBindings>
+                                    <StackPanel>
+                                        <Grid Height="90">
+                                            <Border CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="#22000000" ClipToBounds="True">
+                                                <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                                            </Border>
+                                            <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="6" Padding="6,1" CornerRadius="5" Background="#B0000000">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsAnimated}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Text="{x:Static resources:Strings.Menu_Appearance_GIF}" FontSize="10" FontWeight="SemiBold" Foreground="White" />
+                                            </Border>
+                                            <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="6" Padding="6,1" CornerRadius="5" Background="#B0000000">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsVideo}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <ui:SymbolIcon Symbol="Play12" FontSize="10" Foreground="White" Margin="0,0,3,0" />
+                                                    <TextBlock Text="{x:Static resources:Strings.Menu_Appearance_VIDEO}" FontSize="10" FontWeight="SemiBold" Foreground="White" />
+                                                </StackPanel>
+                                            </Border>
+                                        </Grid>
+                                        <Grid Margin="4,4,0,1">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="12" Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Path}" />
+                                            <Button Grid.Column="1" Width="26" Height="26" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Menu_Appearance_RemoveBackground}"
+                                                    Command="{Binding DataContext.RemoveBackgroundCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                                <ui:SymbolIcon Symbol="Delete16" FontSize="12" />
+                                            </Button>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Grid Margin="0,4,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" MaxWidth="260" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_Appearance_GlobalBackground_OpacityTitle}"
+                                   ToolTip="{x:Static resources:Strings.Menu_Appearance_GlobalBackground_OpacityDescription}" />
+                        <Slider Grid.Column="1" Margin="14,0,14,0" VerticalAlignment="Center" Minimum="0" Maximum="1" Value="{Binding GlobalBackgroundOverlayOpacity, Mode=TwoWay}"
+                                ToolTip="{x:Static resources:Strings.Menu_Appearance_GlobalBackground_OpacityDescription}" />
+                        <TextBlock Grid.Column="2" Margin="0,0,10,0" VerticalAlignment="Center" HorizontalAlignment="Right" TextAlignment="Right" FontSize="12" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Pause a video background while the window is not in front" />
+                        <ui:ToggleSwitch Grid.Column="3" VerticalAlignment="Center" IsChecked="{Binding VideoPauseInactive, Mode=TwoWay}"
+                                         ToolTip="{x:Static resources:Strings.Menu_Appearance_PauseVideoBackgroundWhileSettingsWindow}" />
+                    </Grid>
+                </StackPanel>
+            </controls:SettingsCard>
+        </controls:CardColumns>
 
         <!--  Theme studio: look tokens that apply live across the whole app  -->
-        <Border Margin="0,14,0,0" Padding="18" Style="{DynamicResource PhasmaCard}">
+        <Border Padding="18" Style="{DynamicResource PhasmaCard}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="24" />
-                    <ColumnDefinition Width="260" />
+                    <ColumnDefinition Width="320" />
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0">
@@ -31,9 +236,24 @@
                             <TextBlock Margin="0,3,0,0" TextWrapping="Wrap" Style="{DynamicResource PhasmaSubtle}"
                                        Text="Accent, glass, roundness and spacing. Changes show up straight away everywhere in PhasmaStrap." />
                         </StackPanel>
-                        <Button HorizontalAlignment="Right" VerticalAlignment="Top" Style="{DynamicResource PhasmaGhostButton}" Command="{Binding ResetLookCommand}">
-                            <TextBlock Text="Reset" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                        </Button>
+                        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top" Orientation="Horizontal">
+                            <!--  Themes export as one small .phtheme file you can share  -->
+                            <Button Style="{DynamicResource PhasmaGhostButton}" Command="{Binding ImportLookCommand}" ToolTip="Import .phtheme">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="ArrowImport24" FontSize="13" Margin="0,0,5,0" />
+                                    <TextBlock Text="Import" FontSize="12" />
+                                </StackPanel>
+                            </Button>
+                            <Button Margin="4,0,0,0" Style="{DynamicResource PhasmaGhostButton}" Command="{Binding ExportLookCommand}" ToolTip="Save as a .phtheme file to share">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="ArrowExportLtr24" FontSize="13" Margin="0,0,5,0" />
+                                    <TextBlock Text="Export" FontSize="12" />
+                                </StackPanel>
+                            </Button>
+                            <Button Margin="4,0,0,0" Style="{DynamicResource PhasmaGhostButton}" Command="{Binding ResetLookCommand}">
+                                <TextBlock Text="Reset" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            </Button>
+                        </StackPanel>
                     </Grid>
 
                     <TextBlock Margin="0,16,0,8" Text="Start from" Style="{DynamicResource PhasmaCaption}" />
@@ -183,466 +403,131 @@
                     </Button>
                 </StackPanel>
 
-                <!--  Live sample  -->
-                <Border Grid.Column="2" Padding="14" VerticalAlignment="Top" Style="{DynamicResource PhasmaPanel}">
+                <!--  Live sample: a small copy of the app window drawn with the same theme tokens, so every change above shows here at once  -->
+                <Border Grid.Column="2" Padding="14" VerticalAlignment="Top" Style="{DynamicResource PhasmaPanel}" IsHitTestVisible="False" Focusable="False">
                     <StackPanel>
-                        <TextBlock Text="PREVIEW" Style="{DynamicResource PhasmaCaption}" />
-                        <Border Margin="0,10,0,0" Style="{DynamicResource PhasmaCard}" Padding="{DynamicResource PhasmaRowPadding}">
+                        <Grid>
+                            <TextBlock Text="APPLICATION" Style="{DynamicResource PhasmaCaption}" />
+                            <Border HorizontalAlignment="Right" Style="{DynamicResource PhasmaTagNeutral}">
+                                <TextBlock FontSize="10" Text="Updates as you drag" />
+                            </Border>
+                        </Grid>
+
+                        <Border Margin="0,10,0,0" Height="196" ClipToBounds="True" CornerRadius="{DynamicResource PhasmaCornerRadius}"
+                                Background="{DynamicResource PhasmaScrimBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1">
                             <Grid>
-                                <StackPanel>
-                                    <TextBlock Text="Blox Fruits" Style="{DynamicResource PhasmaHeading}" FontSize="14" />
-                                    <TextBlock Text="Second Sea" Style="{DynamicResource PhasmaSubtle}" />
-                                </StackPanel>
-                                <Button HorizontalAlignment="Right" VerticalAlignment="Center" Style="{DynamicResource PhasmaAccentButton}" IsHitTestVisible="False" Focusable="False">
-                                    <TextBlock Text="Play" />
-                                </Button>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="22" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+
+                                <!--  Title bar  -->
+                                <Grid Grid.Row="0" Margin="8,0,8,0">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Border Width="10" Height="10" CornerRadius="3" Background="{DynamicResource PhasmaAccentBrush}" />
+                                        <TextBlock Margin="5,0,0,0" FontSize="9.5" FontWeight="SemiBold" FontFamily="{DynamicResource PhasmaHeadingFont}" Text="PhasmaStrap" />
+                                    </StackPanel>
+                                    <Border HorizontalAlignment="Right" VerticalAlignment="Center" Padding="6,1" CornerRadius="4" Background="{DynamicResource PhasmaAccentBrush}">
+                                        <TextBlock FontSize="8.5" FontWeight="SemiBold" Foreground="{DynamicResource PhasmaAccentTextBrush}" Text="Launch" />
+                                    </Border>
+                                </Grid>
+
+                                <!--  The panel every page sits on, with the side rail and a page  -->
+                                <Border Grid.Row="1" Margin="6,0,6,6" Padding="6" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}"
+                                        Background="{DynamicResource PhasmaPanelBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="92" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                                            <Border Padding="6,4" CornerRadius="5" Background="{DynamicResource PhasmaSelectedBrush}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <ui:SymbolIcon Symbol="Games24" FontSize="10" />
+                                                    <TextBlock Margin="5,0,0,0" FontSize="9.5" FontWeight="SemiBold" Text="Games" />
+                                                </StackPanel>
+                                            </Border>
+                                            <StackPanel Margin="6,6,0,0" Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="People24" FontSize="10" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                                <TextBlock Margin="5,0,0,0" FontSize="9.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="People" />
+                                            </StackPanel>
+                                            <StackPanel Margin="6,6,0,0" Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="Gauge24" FontSize="10" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                                <TextBlock Margin="5,0,0,0" FontSize="9.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Performance" />
+                                            </StackPanel>
+                                            <StackPanel Margin="6,6,0,0" Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="Flag24" FontSize="10" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                                <TextBlock Margin="5,0,0,0" FontSize="9.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="FastFlags" />
+                                            </StackPanel>
+                                            <StackPanel Margin="6,6,0,0" Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="Color24" FontSize="10" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                                <TextBlock Margin="5,0,0,0" FontSize="9.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Look and feel" />
+                                            </StackPanel>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1">
+                                            <Border Style="{DynamicResource PhasmaCard}" Padding="7">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Width="24" Height="24" CornerRadius="5" Background="{DynamicResource PhasmaAccentSoftBrush}">
+                                                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource PhasmaAccentBrush}" Text="BF" />
+                                                    </Border>
+                                                    <StackPanel Grid.Column="1" Margin="6,0,4,0" VerticalAlignment="Center">
+                                                        <TextBlock FontSize="10.5" FontWeight="SemiBold" FontFamily="{DynamicResource PhasmaHeadingFont}" TextTrimming="CharacterEllipsis" Text="Blox Fruits" />
+                                                        <TextBlock FontSize="8.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextTrimming="CharacterEllipsis" Text="Second Sea" />
+                                                    </StackPanel>
+                                                    <Border Grid.Column="2" VerticalAlignment="Center" Padding="7,2" CornerRadius="4" Background="{DynamicResource PhasmaAccentBrush}">
+                                                        <TextBlock FontSize="8.5" FontWeight="SemiBold" Foreground="{DynamicResource PhasmaAccentTextBrush}" Text="Play" />
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+
+                                            <Border Margin="0,6,0,0" Style="{DynamicResource PhasmaCard}" Padding="7,2">
+                                                <StackPanel>
+                                                    <Grid Margin="0,5,0,5">
+                                                        <TextBlock VerticalAlignment="Center" FontSize="9.5" FontWeight="SemiBold" Text="Unlock frame rate" />
+                                                        <Border HorizontalAlignment="Right" Width="20" Height="11" CornerRadius="6" Background="{DynamicResource PhasmaAccentBrush}">
+                                                            <Ellipse Width="7" Height="7" Margin="0,0,2,0" HorizontalAlignment="Right" Fill="{DynamicResource PhasmaAccentTextBrush}" />
+                                                        </Border>
+                                                    </Grid>
+                                                    <Border Style="{DynamicResource PhasmaDivider}" />
+                                                    <Grid Margin="0,5,0,5">
+                                                        <TextBlock VerticalAlignment="Center" FontSize="9.5" FontWeight="SemiBold" Text="FastFlag profile" />
+                                                        <Border HorizontalAlignment="Right" Padding="5,0" CornerRadius="4" Background="{DynamicResource PhasmaAccentSoftBrush}">
+                                                            <TextBlock FontSize="8.5" Foreground="{DynamicResource PhasmaAccentBrush}" Text="Low ping PvP" />
+                                                        </Border>
+                                                    </Grid>
+                                                    <Border Style="{DynamicResource PhasmaDivider}" />
+                                                    <Grid Margin="0,5,0,5">
+                                                        <TextBlock VerticalAlignment="Center" FontSize="9.5" FontWeight="SemiBold" Text="Render scale" />
+                                                        <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="9" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="100%" />
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
                             </Grid>
                         </Border>
-                        <WrapPanel Margin="0,10,0,0">
-                            <ToggleButton Content="Lowest ping" IsChecked="True" Style="{DynamicResource PhasmaChip}" IsHitTestVisible="False" Focusable="False" />
-                            <ToggleButton Content="Hide full" Style="{DynamicResource PhasmaChip}" IsHitTestVisible="False" Focusable="False" />
+
+                        <TextBlock Margin="0,14,0,0" Text="CONTROLS" Style="{DynamicResource PhasmaCaption}" />
+                        <WrapPanel Margin="0,8,0,0">
+                            <ToggleButton Content="Lowest ping" IsChecked="True" Style="{DynamicResource PhasmaChip}" Focusable="False" />
+                            <ToggleButton Content="Hide full" Style="{DynamicResource PhasmaChip}" Focusable="False" />
                         </WrapPanel>
-                        <Border Margin="0,10,0,0" Style="{DynamicResource PhasmaTag}">
+                        <Border Margin="0,10,0,0" HorizontalAlignment="Left" Style="{DynamicResource PhasmaTag}">
                             <TextBlock Text="Low ping PvP" />
                         </Border>
-                        <ui:TextBox Margin="0,10,0,0" PlaceholderText="Text box" IsHitTestVisible="False" Focusable="False" />
+                        <ui:TextBox Margin="0,10,0,0" PlaceholderText="Text box" Focusable="False" IsTabStop="False" />
                     </StackPanel>
                 </Border>
             </Grid>
         </Border>
 
-        <Grid Margin="0,14,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-
-            <ui:Card Grid.Column="0" Margin="0,0,5,0">
-                <StackPanel>
-                    <TextBlock FontSize="14" Text="{x:Static resources:Strings.Menu_Appearance_Application_Title}" />
-                    <TextBlock FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                               Text="How this window looks with the theme and effects you have picked." />
-
-                    <Border Margin="0,10,0,0" Height="150" CornerRadius="8" ClipToBounds="True" BorderThickness="1"
-                            BorderBrush="{DynamicResource ControlElevationBorderBrush}" Background="{DynamicResource ApplicationBackgroundBrush}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="20" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-
-                            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0">
-                                <Border Width="8" Height="2" Margin="3,0" Background="{DynamicResource TextFillColorTertiaryBrush}" />
-                                <Border Width="8" Height="8" Margin="3,0" BorderThickness="1" BorderBrush="{DynamicResource TextFillColorTertiaryBrush}" />
-                                <Border Width="8" Height="8" Margin="3,0" CornerRadius="2" Background="{DynamicResource SystemFillColorCriticalBrush}" />
-                            </StackPanel>
-
-                            <Grid Grid.Row="1" Margin="8,0,8,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="72" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-
-                                <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                    <Border Height="14" CornerRadius="4" Background="{DynamicResource AccentFillColorDefaultBrush}" />
-                                    <Border Height="10" Margin="0,7,0,0" CornerRadius="3" Background="{DynamicResource ControlFillColorDefaultBrush}" />
-                                    <Border Height="10" Margin="0,6,0,0" CornerRadius="3" Background="{DynamicResource ControlFillColorDefaultBrush}" />
-                                    <Border Height="10" Margin="0,6,0,0" CornerRadius="3" Background="{DynamicResource ControlFillColorDefaultBrush}" />
-                                    <Border Height="10" Margin="0,6,0,0" CornerRadius="3" Background="{DynamicResource ControlFillColorDefaultBrush}" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="1">
-                                    <Border Width="72" Height="8" HorizontalAlignment="Left" CornerRadius="3" Background="{DynamicResource TextFillColorSecondaryBrush}" />
-                                    <Border Height="30" Margin="0,8,0,0" CornerRadius="6" BorderThickness="1" BorderBrush="{DynamicResource ControlElevationBorderBrush}" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
-                                        <Grid Margin="8,0">
-                                            <Border Width="56" Height="6" HorizontalAlignment="Left" VerticalAlignment="Center" CornerRadius="3" Background="{DynamicResource TextFillColorTertiaryBrush}" />
-                                            <Border Width="22" Height="12" HorizontalAlignment="Right" VerticalAlignment="Center" CornerRadius="6" Background="{DynamicResource AccentFillColorDefaultBrush}" />
-                                        </Grid>
-                                    </Border>
-                                    <Border Height="30" Margin="0,6,0,0" CornerRadius="6" BorderThickness="1" BorderBrush="{DynamicResource ControlElevationBorderBrush}" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
-                                        <Grid Margin="8,0">
-                                            <Border Width="44" Height="6" HorizontalAlignment="Left" VerticalAlignment="Center" CornerRadius="3" Background="{DynamicResource TextFillColorTertiaryBrush}" />
-                                            <Border Width="22" Height="12" HorizontalAlignment="Right" VerticalAlignment="Center" CornerRadius="6" Background="{DynamicResource ControlFillColorDefaultBrush}" />
-                                        </Grid>
-                                    </Border>
-                                </StackPanel>
-                            </Grid>
-                        </Grid>
-                    </Border>
-                </StackPanel>
-            </ui:Card>
-
-            <ui:Card Grid.Column="1" Margin="5,0,0,0">
-                <StackPanel>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                            <TextBlock FontSize="14" Text="{x:Static resources:Strings.Menu_Appearance_Bootstrapper_Title}" />
-                            <TextBlock FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                                       Text="{x:Static resources:Strings.Menu_Appearance_Bootstrapper_Description}" />
-                        </StackPanel>
-                        <ui:Button Grid.Column="1" VerticalAlignment="Top" Content="{x:Static resources:Strings.Menu_Appearance_Preview}" Command="{Binding PreviewBootstrapperCommand}" />
-                    </Grid>
-
-                    <Border Margin="0,10,0,0" Height="150" CornerRadius="8" ClipToBounds="True" BorderThickness="1"
-                            BorderBrush="{DynamicResource ControlElevationBorderBrush}" Background="{DynamicResource SolidBackgroundFillColorBaseBrush}">
-                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                            <Border Width="40" Height="40" HorizontalAlignment="Center" CornerRadius="8" Background="{DynamicResource ControlFillColorDefaultBrush}" BorderThickness="1" BorderBrush="{DynamicResource ControlElevationBorderBrush}">
-                                <ui:SymbolIcon Symbol="Rocket24" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                            </Border>
-                            <Border Width="104" Height="7" Margin="0,12,0,0" HorizontalAlignment="Center" CornerRadius="3" Background="{DynamicResource TextFillColorSecondaryBrush}" />
-                            <Border Width="168" Height="6" Margin="0,12,0,0" HorizontalAlignment="Center" CornerRadius="3" Background="{DynamicResource ControlFillColorDefaultBrush}">
-                                <Border Width="104" Height="6" HorizontalAlignment="Left" CornerRadius="3" Background="{DynamicResource AccentFillColorDefaultBrush}" />
-                            </Border>
-                            <Border Width="56" Height="18" Margin="0,12,0,0" HorizontalAlignment="Center" CornerRadius="4" BorderThickness="1" BorderBrush="{DynamicResource ControlElevationBorderBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}" />
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </ui:Card>
-        </Grid>
-
-        <Grid Margin="0,18,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-
-            <StackPanel Grid.Column="0" Margin="0,0,6,0">
-                <TextBlock FontSize="14" FontWeight="Medium" Text="Theme and language" />
-
-                <ui:Card Margin="0,8,0,0">
-                    <StackPanel>
-                        <TextBlock FontSize="14" TextWrapping="Wrap" Text="{x:Static resources:Strings.Menu_Appearance_Global_Theme_Title}" />
-                        <ComboBox Margin="0,8,0,0" Padding="10,5,10,5" HorizontalAlignment="Stretch" ItemsSource="{Binding Themes, Mode=OneTime}" Text="{Binding Theme, Mode=TwoWay}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Path=., Converter={StaticResource EnumNameConverter}}" />
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                    </StackPanel>
-                </ui:Card>
-
-                <ui:Card Margin="0,8,0,0">
-                    <StackPanel>
-                        <TextBlock FontSize="14" TextWrapping="Wrap" Text="{x:Static resources:Strings.Menu_Appearance_Language_Title}" />
-                        <TextBlock FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Appearance_Language_Description}" />
-                        <ComboBox Margin="0,8,0,0" Padding="10,5,10,5" HorizontalAlignment="Stretch" ItemsSource="{Binding Languages, Mode=OneTime}" Text="{Binding SelectedLanguage, Mode=TwoWay}" />
-                    </StackPanel>
-                </ui:Card>
-
-                <ui:Card Margin="0,8,0,0">
-                    <StackPanel>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" FontSize="14" TextWrapping="Wrap" VerticalAlignment="Center" Text="{x:Static resources:Strings.Menu_Appearance_ColorTheme_Title}" />
-                            <ui:ToggleSwitch Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" IsChecked="{Binding CustomColorThemeEnabled, Mode=TwoWay}" />
-                        </Grid>
-                        <TextBlock FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Appearance_ColorTheme_Description}" />
-                        <ui:Button Margin="0,8,0,0" HorizontalAlignment="Stretch" Content="{x:Static resources:Strings.Common_Edit}" Command="{Binding EditColorThemeCommand}" />
-                    </StackPanel>
-                </ui:Card>
-            </StackPanel>
-
-            <StackPanel Grid.Column="1" Margin="6,0,6,0">
-                <TextBlock FontSize="14" FontWeight="Medium" Text="{x:Static resources:Strings.Menu_Appearance_VisualEffects_Title}" />
-
-                <ui:Card Margin="0,8,0,0">
-                    <StackPanel>
-                        <TextBlock FontSize="14" TextWrapping="Wrap" Text="{x:Static resources:Strings.Menu_Appearance_WindowBackdrop_Title}" />
-                        <TextBlock FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Appearance_WindowBackdrop_Description}" />
-                        <ComboBox Margin="0,8,0,0" Padding="10,5,10,5" HorizontalAlignment="Stretch" ItemsSource="{Binding BackdropStyles, Mode=OneTime}" Text="{Binding WindowBackdropStyle, Mode=TwoWay}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Path=., Converter={StaticResource EnumNameConverter}}" />
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                    </StackPanel>
-                </ui:Card>
-
-                <controls:OptionControl
-                    Header="{x:Static resources:Strings.Menu_Appearance_ThemeTransition_Title}"
-                    Description="{x:Static resources:Strings.Menu_Appearance_ThemeTransition_Description}">
-                    <ui:ToggleSwitch IsChecked="{Binding ThemeTransitionEnabled, Mode=TwoWay}" />
-                </controls:OptionControl>
-
-                <controls:OptionControl
-                    Header="{x:Static resources:Strings.Menu_Appearance_SmoothProgressBars_Title}"
-                    Description="{x:Static resources:Strings.Menu_Appearance_SmoothProgressBars_Description}">
-                    <ui:ToggleSwitch IsChecked="{Binding SmoothProgressBarsEnabled, Mode=TwoWay}" />
-                </controls:OptionControl>
-
-                <controls:OptionControl
-                    Header="{x:Static resources:Strings.Menu_Appearance_SnowEffect_Title}"
-                    Description="{x:Static resources:Strings.Menu_Appearance_SnowEffect_Description}">
-                    <ui:ToggleSwitch IsChecked="{Binding SnowEffectEnabled, Mode=TwoWay}" />
-                </controls:OptionControl>
-
-                <controls:OptionControl
-                    Header="{x:Static resources:Strings.Menu_Appearance_ControllerNavigation}"
-                    Description="{x:Static resources:Strings.Menu_Appearance_NavigateSettingsWindowXboxGenericGamepad}">
-                    <ui:ToggleSwitch IsChecked="{Binding ControllerNavigationEnabled, Mode=TwoWay}" />
-                </controls:OptionControl>
-            </StackPanel>
-
-            <StackPanel Grid.Column="2" Margin="6,0,0,0">
-                <TextBlock FontSize="14" FontWeight="Medium" Text="{x:Static resources:Strings.Menu_Appearance_IconSection_Title}" />
-
-                <ui:Card Margin="0,8,0,0" x:Name="IconSelector">
-                    <StackPanel>
-                        <TextBlock FontSize="14" TextWrapping="Wrap" Text="{x:Static resources:Strings.Menu_Appearance_Icon_Title}" />
-                        <TextBlock FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Appearance_Icon_Description}" />
-                        <ComboBox Margin="0,8,0,0" Padding="10,5,10,5" HorizontalAlignment="Stretch" ItemsSource="{Binding Icons, Mode=OneWay}" SelectedValuePath="IconType" SelectedValue="{Binding Icon, Mode=TwoWay}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="16" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <Image Height="16" Source="{Binding ImageSource, Mode=OneWay}" RenderOptions.BitmapScalingMode="HighQuality" />
-                                        <TextBlock Grid.Column="1" Margin="8,0,0,0" Text="{Binding Path=IconType, Converter={StaticResource EnumNameConverter}}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                    </StackPanel>
-                </ui:Card>
-
-                <ui:Card Margin="0,8,0,0">
-                    <StackPanel>
-                        <TextBlock FontSize="14" TextWrapping="Wrap" Text="{x:Static resources:Strings.Menu_Appearance_CustomisationTitle_Title}" />
-                        <TextBlock FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Appearance_CustomisationTitle_Description}" />
-                        <ui:TextBox Margin="0,8,0,0" Text="{Binding Title, Mode=TwoWay}" />
-                    </StackPanel>
-                </ui:Card>
-
-                <ui:Card Margin="0,8,0,0">
-                    <StackPanel>
-                        <TextBlock FontSize="14" TextWrapping="Wrap" Text="{x:Static resources:Strings.Menu_Appearance_CustomisationIcon_Title}" />
-                        <TextBlock FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Appearance_CustomisationIcon_Description}" />
-                        <ui:TextBox Margin="0,8,0,0" Text="{Binding CustomIconLocation, Mode=TwoWay}" />
-                        <ui:Button Margin="0,6,0,0" HorizontalAlignment="Stretch" Icon="Folder24" Content="{x:Static resources:Strings.Common_Browse}" Command="{Binding BrowseCustomIconLocationCommand}" />
-                    </StackPanel>
-                </ui:Card>
-            </StackPanel>
-        </Grid>
-
-        <ui:CardExpander Margin="0,18,0,0" IsExpanded="{Binding GlobalBackgroundEnabled, Mode=OneWay}" Style="{StaticResource NoUserExpansionCardExpanderStyle}">
-            <ui:CardExpander.Header>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0">
-                        <TextBlock FontSize="14" Text="{x:Static resources:Strings.Menu_Appearance_GlobalBackground_Title}" />
-                        <TextBlock FontSize="12" Text="{x:Static resources:Strings.Menu_Appearance_GlobalBackground_Description}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                    </StackPanel>
-                    <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding GlobalBackgroundEnabled, Mode=TwoWay}" />
-                </Grid>
-            </ui:CardExpander.Header>
-            <StackPanel>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                               Text="{x:Static resources:Strings.Menu_Appearance_ClickPictureUseImagesAnimatedGIFs}" />
-                    <ui:Button Grid.Column="1" Margin="12,0,0,0" Icon="Add24" Appearance="Primary" Content="{x:Static resources:Strings.Menu_Appearance_AddImageGIFVideo}" Command="{Binding AddBackgroundCommand}" IsEnabled="{Binding NotImporting, Mode=OneWay}" />
-                </Grid>
-
-                <TextBlock Margin="0,6,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding BackgroundStatus, Mode=OneWay}" />
-
-                <TextBlock Margin="0,14,0,4" HorizontalAlignment="Center" Opacity="0.6" Text="{x:Static resources:Strings.Menu_Appearance_NoBackgroundsAddedYet}">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding HasBackgrounds}" Value="False">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-
-                <ItemsControl Margin="0,10,0,0" ItemsSource="{Binding Backgrounds, Mode=OneWay}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Width="176" Margin="0,0,10,10" Padding="3" CornerRadius="8" Background="{DynamicResource ControlFillColorDefaultBrush}">
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Setter Property="BorderThickness" Value="2" />
-                                        <Setter Property="BorderBrush" Value="Transparent" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColorSecondaryBrush}" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                                <Border.InputBindings>
-                                    <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.SelectBackgroundCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
-                                </Border.InputBindings>
-                                <StackPanel>
-                                    <Grid Height="94">
-                                        <Border CornerRadius="6" Background="#22000000" ClipToBounds="True">
-                                            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
-                                        </Border>
-                                        <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5" Padding="5,1" CornerRadius="4" Background="#B0000000">
-                                            <Border.Style>
-                                                <Style TargetType="Border">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsAnimated}" Value="True">
-                                                            <Setter Property="Visibility" Value="Visible" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                            <TextBlock Text="{x:Static resources:Strings.Menu_Appearance_GIF}" FontSize="10" FontWeight="SemiBold" Foreground="White" />
-                                        </Border>
-                                        <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5" Padding="5,1" CornerRadius="4" Background="#B0000000">
-                                            <Border.Style>
-                                                <Style TargetType="Border">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsVideo}" Value="True">
-                                                            <Setter Property="Visibility" Value="Visible" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                            <StackPanel Orientation="Horizontal">
-                                                <ui:SymbolIcon Symbol="Play12" FontSize="10" Foreground="White" Margin="0,0,3,0" />
-                                                <TextBlock Text="{x:Static resources:Strings.Menu_Appearance_VIDEO}" FontSize="10" FontWeight="SemiBold" Foreground="White" />
-                                            </StackPanel>
-                                        </Border>
-                                    </Grid>
-                                    <Grid Margin="4,5,0,2">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="12" Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Path}" />
-                                        <ui:Button Grid.Column="1" Padding="4" Appearance="Transparent" Icon="Delete16" ToolTip="{x:Static resources:Strings.Menu_Appearance_RemoveBackground}"
-                                                   Command="{Binding DataContext.RemoveBackgroundCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
-                                    </Grid>
-                                </StackPanel>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
-                <Grid Margin="0,6,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="180" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{x:Static resources:Strings.Menu_Appearance_GlobalBackground_OpacityTitle}" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <Slider Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding GlobalBackgroundOverlayOpacity, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,4,0,0" FontSize="12" Text="{x:Static resources:Strings.Menu_Appearance_GlobalBackground_OpacityDescription}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                </Grid>
-
-                <CheckBox Margin="0,12,0,0" IsChecked="{Binding VideoPauseInactive, Mode=TwoWay}">
-                    <TextBlock TextWrapping="Wrap" Text="{x:Static resources:Strings.Menu_Appearance_PauseVideoBackgroundWhileSettingsWindow}" />
-                </CheckBox>
-            </StackPanel>
-        </ui:CardExpander>
-
-        <ui:CardExpander Margin="0,10,0,0" IsExpanded="{Binding Path=CustomThemesExpanded, Mode=OneWay}" Style="{StaticResource NoUserExpansionCardExpanderStyle}">
-            <ui:CardExpander.Header>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0">
-                        <TextBlock FontSize="14" Text="{x:Static resources:Strings.Menu_Appearance_Style_Title}" />
-                        <TextBlock FontSize="12" Text="{x:Static resources:Strings.Menu_Appearance_Style_Description}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                    </StackPanel>
-                    <ComboBox Grid.Column="1" Width="200" Padding="10,5,10,5" ItemsSource="{Binding Dialogs, Mode=OneTime}" Text="{Binding Dialog, Mode=TwoWay}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Path=., Converter={StaticResource EnumNameConverter}}" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                </Grid>
-            </ui:CardExpander.Header>
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="250" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <ListBox x:Name="CustomThemesListBox" Height="265" Grid.Row="0" Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding CustomThemes, Mode=OneWay}" SelectionChanged="CustomThemeSelection" SelectedIndex="{Binding SelectedCustomThemeIndex, Mode=TwoWay}" />
-                <Grid Grid.Row="1" Grid.Column="0" Margin="0,8,4,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <ui:Button Grid.Column="0" Margin="0,0,4,0" Icon="Add28" Content="{x:Static resources:Strings.Common_New}" HorizontalAlignment="Stretch" Command="{Binding AddCustomThemeCommand, Mode=OneTime}" />
-                    <ui:Button Grid.Column="1" Margin="4,0,0,0" Icon="Delete28" Content="{x:Static resources:Strings.Common_Delete}" HorizontalAlignment="Stretch" Appearance="Danger" IsEnabled="{Binding IsCustomThemeSelected, Mode=OneWay}" Command="{Binding DeleteCustomThemeCommand, Mode=OneTime}" />
-                </Grid>
-                <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Margin="4,0,0,0">
-                    <StackPanel.Style>
-                        <Style>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsCustomThemeSelected}" Value="False">
-                                    <Setter Property="StackPanel.Visibility" Value="Collapsed"></Setter>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </StackPanel.Style>
-                    <TextBlock Text="{x:Static resources:Strings.Common_Name}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <ui:TextBox Margin="0,4,0,0" Text="{Binding SelectedCustomThemeName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <Grid Margin="0,8,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <ui:Button Grid.Column="0" Margin="0,0,4,0" Icon="Edit28" Content="{x:Static resources:Strings.Common_Rename}" HorizontalAlignment="Stretch" Command="{Binding RenameCustomThemeCommand, Mode=OneTime}" />
-                        <ui:Button Grid.Column="1" Margin="4,0,4,0" Icon="DesktopEdit24" Content="{x:Static resources:Strings.Common_Edit}" HorizontalAlignment="Stretch" Command="{Binding EditCustomThemeCommand, Mode=OneTime}" />
-                        <ui:Button Grid.Column="2" Margin="4,0,0,0" Icon="ArrowExportRtl24" Content="{x:Static resources:Strings.Common_Export}" HorizontalAlignment="Stretch" Command="{Binding ExportCustomThemeCommand, Mode=OneTime}" />
-                    </Grid>
-                </StackPanel>
-                <TextBlock Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Text="{x:Static resources:Strings.Menu_Appearance_CustomThemes_NoneSelected}" TextWrapping="Wrap" VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <TextBlock.Style>
-                        <Style>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsCustomThemeSelected}" Value="True">
-                                    <Setter Property="TextBlock.Visibility" Value="Collapsed"></Setter>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-            </Grid>
-        </ui:CardExpander>
     </StackPanel>
 </ui:UiPage>

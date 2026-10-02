@@ -729,6 +729,22 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                         foreach (string path in paths)
                             managedClaimCounts[path] = managedClaimCounts.GetValueOrDefault(path) + 1;
 
+                    // Which enabled mods claim each path, by name, so a row can say what it clashes with.
+                    Dictionary<string, string> namesById = records.ToDictionary(r => r.Id, r => r.Name, StringComparer.OrdinalIgnoreCase);
+                    Dictionary<string, List<string>> claimantsByPath = new(StringComparer.OrdinalIgnoreCase);
+                    foreach (var (modId, paths) in pathsByMod)
+                    {
+                        foreach (string path in paths)
+                        {
+                            if (!claimantsByPath.TryGetValue(path, out List<string>? claimants))
+                            {
+                                claimants = new List<string>();
+                                claimantsByPath[path] = claimants;
+                            }
+                            claimants.Add(modId);
+                        }
+                    }
+
                     return records.Select(record =>
                     {
                         string scanError = scan.Failures.GetValueOrDefault(record.Id) ?? string.Empty;
@@ -745,14 +761,39 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                         }
 
                         int conflicts = 0;
+                        List<ManagedModConflict> conflictList = new();
                         if (pathsByMod.TryGetValue(record.Id, out HashSet<string>? ownPaths))
                         {
-                            conflicts = ownPaths.Count(path =>
-                                managedClaimCounts.GetValueOrDefault(path) > 1 ||
-                                pathCounts.GetValueOrDefault(path) > managedClaimCounts.GetValueOrDefault(path));
+                            foreach (string path in ownPaths.OrderBy(p => p, StringComparer.OrdinalIgnoreCase))
+                            {
+                                bool sharedWithMod = managedClaimCounts.GetValueOrDefault(path) > 1;
+                                bool sharedWithFolder = pathCounts.GetValueOrDefault(path) > managedClaimCounts.GetValueOrDefault(path);
+
+                                if (!sharedWithMod && !sharedWithFolder)
+                                    continue;
+
+                                conflicts++;
+
+                                List<string> others = claimantsByPath.GetValueOrDefault(path)?
+                                    .Where(id => !string.Equals(id, record.Id, StringComparison.OrdinalIgnoreCase))
+                                    .Select(id => namesById.GetValueOrDefault(id) ?? id)
+                                    .ToList() ?? new List<string>();
+
+                                if (sharedWithFolder)
+                                    others.Add("your mods folder");
+
+                                conflictList.Add(new ManagedModConflict
+                                {
+                                    Path = path.Replace('\\', '/'),
+                                    With = others.Count > 0 ? string.Join(", ", others) : "another mod",
+                                });
+                            }
                         }
 
-                        return new ManagedModItem(record.Id, record.Name, record.Enabled, record.CreatedUtc, statistics.FileCount, statistics.TotalBytes, conflicts, scanError);
+                        return new ManagedModItem(record.Id, record.Name, record.Enabled, record.CreatedUtc, statistics.FileCount, statistics.TotalBytes, conflicts, scanError)
+                        {
+                            Conflicts = conflictList,
+                        };
                     }).ToArray();
                 });
 
@@ -942,6 +983,46 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public ICommand RemoveManagedModCommand => new AsyncRelayCommand<ManagedModItem>(RemoveManagedModAsync);
         public ICommand OpenManagedModCommand => new RelayCommand<ManagedModItem>(OpenManagedMod);
         public ICommand CopyManagedModIdCommand => new RelayCommand<ManagedModItem>(CopyManagedModId);
+        public ICommand ExportManagedModCommand => new AsyncRelayCommand<ManagedModItem>(ExportManagedModAsync);
+        public ICommand ToggleManagedModConflictsCommand => new RelayCommand<ManagedModItem>(item =>
+        {
+            if (item is not null && item.HasConflicts)
+                item.ShowConflicts = !item.ShowConflicts;
+        });
+
+        /// <summary>Packs a mod's folder into a .zip the user picks, so it can be shared or kept.</summary>
+        private async Task ExportManagedModAsync(ManagedModItem? item)
+        {
+            if (item is null)
+                return;
+
+            string safeName = string.Concat(item.Name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c)).Trim();
+            var dialog = new SaveFileDialog
+            {
+                Filter = $"{Strings.FileTypes_ZipArchive}|*.zip",
+                FileName = (safeName.Length > 0 ? safeName : "Mod") + ".zip"
+            };
+
+            if (dialog.ShowDialog() != true)
+                return;
+
+            try
+            {
+                string destination = dialog.FileName;
+                int files = await Task.Run(() => ManagedModStore.ExportZip(item.Id, destination));
+
+                NotificationCenter.Notify(
+                    "Mod exported",
+                    $"{item.Name}: {files} file{(files == 1 ? "" : "s")} in {Path.GetFileName(destination)}",
+                    NotificationCategory.General,
+                    onClick: NotificationCenter.RevealFile(destination));
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteException("ModsViewModel::ExportManagedMod", ex);
+                Frontend.ShowMessageBox("The mod could not be exported:\n" + ex.Message, MessageBoxImage.Warning);
+            }
+        }
 
         #endregion
 

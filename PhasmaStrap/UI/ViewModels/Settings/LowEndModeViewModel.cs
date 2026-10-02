@@ -43,7 +43,11 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             : $"{LowEndMode.Active} is on" + (App.Settings.Prop.LowEndBackupFlags.Count > 0 ? " - press Save to keep it, Turn off puts back what you had before." : ".");
 
         private string _preview;
-        public string Preview { get => _preview; private set { _preview = value; OnPropertyChanged(nameof(Preview)); RefreshChanges(); } }
+        public string Preview { get => _preview; private set { _preview = value; OnPropertyChanged(nameof(Preview)); OnPropertyChanged(nameof(PreviewIsLight)); OnPropertyChanged(nameof(PreviewIsStrong)); RefreshChanges(); } }
+
+        public bool PreviewIsLight => _preview == LowEndMode.Light;
+
+        public bool PreviewIsStrong => _preview == LowEndMode.Strong;
 
         public string ActiveLevel => LowEndMode.Active;
 
@@ -57,7 +61,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             OnPropertyChanged(nameof(ChangesHeader));
         }
 
-        public string ChangesHeader => $"What {_preview} changes:";
+        public string ChangesHeader => $"What {_preview} changes";
 
         public ICommand ShowCommand => new RelayCommand<string>(level =>
         {

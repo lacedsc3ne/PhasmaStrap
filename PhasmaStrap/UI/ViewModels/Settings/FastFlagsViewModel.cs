@@ -680,6 +680,37 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
+        private static int MonitorRefreshRate
+        {
+            get
+            {
+                try { return DisplaySystem.GetCurrentMode(null)?.RefreshRate ?? 0; }
+                catch { return 0; }
+            }
+        }
+
+        /// <summary>"Match my monitor": sets the frame rate limit flag to this display's refresh rate.</summary>
+        public bool MatchMonitorFramerate
+        {
+            get => MonitorRefreshRate > 1 && FramerateLimit == MonitorRefreshRate;
+            set
+            {
+                int refresh = MonitorRefreshRate;
+
+                if (value && refresh > 1)
+                    FramerateLimit = refresh;
+                else if (!value && MatchMonitorFramerate)
+                    FramerateLimit = 0;
+
+                OnPropertyChanged(nameof(FramerateLimit));
+                OnPropertyChanged(nameof(MatchMonitorFramerate));
+            }
+        }
+
+        public string MatchMonitorDescription => MonitorRefreshRate > 1
+            ? $"Locks to {MonitorRefreshRate} Hz on this display"
+            : "Locks to your display's refresh rate";
+
         public bool Pseudolocalization
         {
             get => App.FastFlags.GetPreset("UI.Pseudolocalization") == "True";

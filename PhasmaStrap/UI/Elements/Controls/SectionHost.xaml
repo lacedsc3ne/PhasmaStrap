@@ -131,6 +131,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <TextBlock
                 x:Name="TabTitle"
@@ -139,6 +140,8 @@
                 VerticalAlignment="Center"
                 Style="{DynamicResource PhasmaTitle}" />
             <ContentControl x:Name="TabSlot" Grid.Column="1" VerticalAlignment="Center" Focusable="False" />
+            <!--  Optional HeaderContent from the host page (status pill, button)  -->
+            <ContentControl x:Name="HeaderSlot" Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" Focusable="False" />
         </Grid>
 
         <!--  Rail layout: a side menu with group headings  -->
@@ -167,7 +170,21 @@
                     SelectionChanged="RailItems_SelectionChanged">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Label}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Label}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                <!--  Optional count after the label  -->
+                                <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="11" Text="{Binding Badge}" Foreground="{DynamicResource TextFillColorTertiaryBrush}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Badge}" Value="">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>

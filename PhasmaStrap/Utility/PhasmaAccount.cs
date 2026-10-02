@@ -353,19 +353,72 @@ namespace PhasmaStrap.Utility
             }
         }
 
-        public static Dictionary<string, string> BackupTargets() => new()
+        /// <summary>Only backed up when "What to include" is set to Everything.</summary>
+        private static readonly string[] EverythingOnlyBackups = { "FriendNotes.json", "FriendHistory.json", "Games.json" };
+
+        /// <summary>Every file a backup may hold, by its name in the backup. Restore writes only these (plus any custom theme).</summary>
+        public static Dictionary<string, string> BackupTargets()
         {
-            ["Settings.json"] = App.Settings.FileLocation,
-            ["FastFlagProfiles.json"] = App.FlagProfiles.FileLocation,
-            ["ClientAppSettings.json"] = App.FastFlags.FileLocation,
-        };
+            var targets = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["Settings.json"] = App.Settings.FileLocation,
+                ["FastFlagProfiles.json"] = App.FlagProfiles.FileLocation,
+                ["ClientAppSettings.json"] = App.FastFlags.FileLocation,
+                ["CustomColorTheme.xaml"] = Paths.CustomColorThemeXaml,
+                ["FriendNotes.json"] = Path.Combine(Paths.Base, "FriendNotes.json"),
+                ["FriendHistory.json"] = Path.Combine(Paths.Base, "FriendHistory.json"),
+                ["Games.json"] = Path.Combine(Paths.Base, "Games.json"),
+            };
+
+            try
+            {
+                if (Directory.Exists(Paths.CustomThemes))
+                {
+                    foreach (string directory in Directory.GetDirectories(Paths.CustomThemes))
+                    {
+                        string theme = Path.Combine(directory, "Theme.xml");
+                        if (File.Exists(theme))
+                            targets[$"CustomThemes/{Path.GetFileName(directory)}/Theme.xml"] = theme;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not list the custom themes for the backup: {ex.Message}");
+            }
+
+            return targets;
+        }
+
+        /// <summary>Where a file from a backup goes back to, or null for a name this PhasmaStrap does not restore.</summary>
+        public static string? RestorePathFor(string name)
+        {
+            if (BackupTargets().TryGetValue(name, out string? known))
+                return known;
+
+            // A custom theme made on another PC: CustomThemes/<name>/Theme.xml
+            Match match = Regex.Match(name, @"^CustomThemes/([^/\\:*?""<>|]+)/Theme\.xml$");
+            if (!match.Success)
+                return null;
+
+            string folder = match.Groups[1].Value;
+            if (folder is "." or ".." || folder.Trim().Length == 0)
+                return null;
+
+            return Path.Combine(Paths.CustomThemes, folder, "Theme.xml");
+        }
 
         public static async Task<int> BackUpNowAsync()
         {
             var files = new Dictionary<string, string>();
 
+            bool everything = string.Equals(App.Settings.Prop.BackupScope, "Everything", StringComparison.OrdinalIgnoreCase);
+
             foreach (var (name, file) in BackupTargets())
             {
+                if (!everything && EverythingOnlyBackups.Contains(name))
+                    continue;
+
                 if (File.Exists(file))
                     files[name] = await File.ReadAllTextAsync(file);
             }
@@ -381,7 +434,7 @@ namespace PhasmaStrap.Utility
             if (!App.Settings.Prop.AutoBackupEnabled || !SignedIn)
                 return;
 
-            if (DateTime.TryParse(App.State.Prop.LastAutoBackup, out var last) && DateTime.UtcNow - last.ToUniversalTime() < TimeSpan.FromHours(24))
+            if (DateTime.TryParse(App.State.Prop.LastAutoBackup, out var last) && DateTime.UtcNow - last.ToUniversalTime() < TimeSpan.FromHours(1))
                 return;
 
             try

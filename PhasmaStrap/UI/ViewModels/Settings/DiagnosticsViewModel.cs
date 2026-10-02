@@ -27,6 +27,33 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string Address { get; init; } = "";
         public string Numbers { get; init; } = "";
         public PointCollection Spark { get; init; } = new();
+        public List<DiagnosticsBar> Bars { get; init; } = new();
+    }
+
+    /// <summary>How a bar in a diagnostics chart is coloured: normal, a spike worth noticing, or a lost sample.</summary>
+    public enum ChartBarKind
+    {
+        Normal,
+        Spike,
+        Lost,
+    }
+
+    /// <summary>One bar of the Connection and Stutter charts. Height is in pixels for a chart of <see cref="DiagnosticsCharts.Height"/>.</summary>
+    public sealed class DiagnosticsBar
+    {
+        public double Height { get; init; }
+        public ChartBarKind Kind { get; init; }
+        public string Tip { get; init; } = "";
+    }
+
+    /// <summary>Health check outcome at a glance, for the icon in the summary card.</summary>
+    public enum HealthState
+    {
+        NotRun,
+        Running,
+        Good,
+        Warn,
+        Bad,
     }
 
     public sealed partial class DiagnosticsViewModel : NotifyPropertyChangedViewModel
@@ -58,6 +85,29 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         private string _healthSummary = "Checks the things that stop Roblox from starting or Play links from working. Nothing is changed unless you press a Fix button.";
         public string HealthSummary { get => _healthSummary; private set { _healthSummary = value; OnPropertyChanged(nameof(HealthSummary)); } }
 
+        private HealthState _healthOverall = HealthState.NotRun;
+
+        /// <summary>Good when every check passed, Warn when something is worth a look, Bad when something is broken.</summary>
+        public HealthState HealthOverall
+        {
+            get => _healthOverall;
+            private set
+            {
+                _healthOverall = value;
+                OnPropertyChanged(nameof(HealthOverall));
+                OnPropertyChanged(nameof(HealthSymbol));
+            }
+        }
+
+        public Wpf.Ui.Common.SymbolRegular HealthSymbol => _healthOverall switch
+        {
+            HealthState.Good => Wpf.Ui.Common.SymbolRegular.CheckmarkCircle24,
+            HealthState.Warn => Wpf.Ui.Common.SymbolRegular.Warning24,
+            HealthState.Bad => Wpf.Ui.Common.SymbolRegular.ErrorCircle24,
+            HealthState.Running => Wpf.Ui.Common.SymbolRegular.ArrowClockwise24,
+            _ => Wpf.Ui.Common.SymbolRegular.HeartPulse24,
+        };
+
         private bool _healthBusy;
         public bool HealthIdle => !_healthBusy;
 
@@ -70,6 +120,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             OnPropertyChanged(nameof(HealthIdle));
             Health.Clear();
             HealthSummary = "Checking...";
+            HealthOverall = HealthState.Running;
 
             try
             {
@@ -78,17 +129,22 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                     CancellationToken.None);
 
                 int problems = results.Count(r => r.Status == HealthStatus.Problem), warnings = results.Count(r => r.Status == HealthStatus.Warning);
+                int fine = results.Count - problems - warnings;
+                string fineText = fine > 0 ? $", {fine} {(fine == 1 ? "is" : "are")} fine" : "";
 
                 HealthSummary = problems > 0
-                    ? $"{problems} problem{(problems == 1 ? "" : "s")} found{(warnings > 0 ? $" and {warnings} thing{(warnings == 1 ? "" : "s")} worth a look" : "")}."
+                    ? $"{problems} problem{(problems == 1 ? "" : "s")} found{(warnings > 0 ? $" and {warnings} thing{(warnings == 1 ? "" : "s")} worth a look" : "")}{fineText}."
                     : warnings > 0
-                        ? $"Nothing broken. {warnings} thing{(warnings == 1 ? "" : "s")} worth a look."
+                        ? $"{warnings} thing{(warnings == 1 ? " needs" : "s need")} a look{fineText}."
                         : "Everything checked out.";
+
+                HealthOverall = problems > 0 ? HealthState.Bad : warnings > 0 ? HealthState.Warn : HealthState.Good;
             }
             catch (Exception ex)
             {
                 App.Logger.WriteException("DiagnosticsViewModel::RunHealth", ex);
                 HealthSummary = $"The check stopped: {ex.Message}";
+                HealthOverall = HealthState.Bad;
             }
             finally
             {
@@ -227,6 +283,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                             ? $"{target.Average:0} ms  ·  jitter {target.Jitter:0.0}  ·  worst {target.Worst}  ·  lost {target.LossPercent:0.#} %"
                             : "no answer",
                         Spark = Spark(target.Samples),
+                        Bars = DiagnosticsCharts.PingBars(target.Samples),
                     });
                 }
 

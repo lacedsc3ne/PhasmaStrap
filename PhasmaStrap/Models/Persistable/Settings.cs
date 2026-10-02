@@ -363,5 +363,29 @@ namespace PhasmaStrap.Models.Persistable
         public string HomepageBackgroundColor { get; set; } = "#1A1A2E";
         public string HomepageBackgroundGradientColor { get; set; } = "#16213E";
         public double HomepageBackgroundGradientAngle { get; set; } = 45.0;
+
+        // Capture library: applied to a screenshot before it is shared to the gallery.
+        public bool CaptureShareHideNames { get; set; } = true;
+        public bool CaptureShareStamp { get; set; } = false;
+
+        // PhasmaStrap updates: "Stable" or "Beta" (Beta also takes GitHub prereleases).
+        public string AppUpdateChannel { get; set; } = "Stable";
+
+        // Uploads a short report (POST /v1/crash) when PhasmaStrap itself crashes. Off until the user turns it on.
+        public bool SendCrashReports { get; set; } = false;
+
+        // Deployment page, "When you press Play".
+        public string SettingsWindowOnLaunch { get; set; } = "Close";
+        public bool AllowMultipleRoblox { get; set; } = false;
+        public bool AskAccountOnLaunch { get; set; } = false;
+        public bool ConfirmWebsiteJoins { get; set; } = false;
+        public bool FullscreenOnLaunch { get; set; } = false;
+
+        // Settings backup, "What to include": "Standard" (settings, flags and themes) or "Everything" (adds friend notes and the games library).
+        public string BackupScope { get; set; } = "Standard";
+
+        // Friend alerts for friends on "Use my usual alerts": which changes pop up.
+        public bool FriendAlertOnline { get; set; } = true;
+        public bool FriendAlertGame { get; set; } = true;
     }
 }

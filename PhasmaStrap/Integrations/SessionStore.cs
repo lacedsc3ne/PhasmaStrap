@@ -147,6 +147,46 @@ namespace PhasmaStrap.Integrations
             }
         }
 
+        public void Delete(string sessionId)
+        {
+            if (string.IsNullOrEmpty(sessionId))
+                return;
+
+            using var mutex = new Mutex(false, "PhasmaStrap-SessionStore");
+            bool owned = false;
+
+            try
+            {
+                try { owned = mutex.WaitOne(3000); }
+                catch (AbandonedMutexException) { owned = true; }
+
+                // Never rewrite a file we could not read, or the rest of the history would be lost
+                if (!owned || !TryLoad(out SessionData data))
+                {
+                    Log?.Invoke("Could not open the session file to delete a session");
+                    return;
+                }
+
+                if (data.Sessions.RemoveAll(s => s.Id == sessionId) == 0)
+                    return;
+
+                string temp = _path + ".tmp";
+                File.WriteAllText(temp, JsonSerializer.Serialize(data, JsonOptions));
+                File.Move(temp, _path, true);
+            }
+            catch (Exception ex)
+            {
+                Log?.Invoke($"Could not write {_path}: {ex.Message}");
+            }
+            finally
+            {
+                if (owned)
+                {
+                    try { mutex.ReleaseMutex(); } catch { }
+                }
+            }
+        }
+
         public void Clear()
         {
             try { if (File.Exists(_path)) File.Delete(_path); } catch (Exception ex) { Log?.Invoke($"Could not delete {_path}: {ex.Message}"); }
@@ -290,6 +330,53 @@ namespace PhasmaStrap.Integrations
             }
 
             return result.Values.OrderByDescending(c => c.LastSeenUtc).ToList();
+        }
+
+        /// <summary>Every recorded server where this friend was seen with you, newest first.</summary>
+        public static List<ServerVisit> VisitsWith(SessionData data, long userId)
+        {
+            return Visits(data)
+                .Where(v => v.Friends.Any(f => f.UserId == userId))
+                .OrderByDescending(v => v.JoinedUtc)
+                .ToList();
+        }
+
+        /// <summary>One entry per game you shared a server with this friend in, newest first.</summary>
+        public static List<GameTotal> GamesWith(SessionData data, long userId, int take)
+        {
+            List<ServerVisit> visits = VisitsWith(data, userId);
+
+            Dictionary<string, string> names = Visits(data)
+                .Where(v => v.GameName.Length > 0)
+                .GroupBy(KeyOf)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(v => v.JoinedUtc).First().GameName);
+
+            Dictionary<string, string> icons = Visits(data)
+                .Where(v => v.IconUrl.Length > 0)
+                .GroupBy(KeyOf)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(v => v.JoinedUtc).First().IconUrl);
+
+            return visits
+                .GroupBy(KeyOf)
+                .Select(group =>
+                {
+                    ServerVisit newest = group.First();
+                    string key = group.Key;
+
+                    return new GameTotal
+                    {
+                        UniverseId = newest.UniverseId,
+                        PlaceId = newest.PlaceId,
+                        Name = names.TryGetValue(key, out string? name) ? name : $"Place {newest.PlaceId}",
+                        IconUrl = icons.TryGetValue(key, out string? icon) ? icon : "",
+                        Minutes = group.Sum(v => v.Length.TotalMinutes),
+                        Visits = group.Count(),
+                        LastPlayedUtc = group.Max(v => v.LeftUtc > v.JoinedUtc ? v.LeftUtc : v.JoinedUtc),
+                    };
+                })
+                .OrderByDescending(g => g.LastPlayedUtc)
+                .Take(take)
+                .ToList();
         }
 
         public static (int Average, int Low)? FpsSummary(ServerVisit visit)

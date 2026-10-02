@@ -11,104 +11,210 @@
     <ui:UiPage.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 
+        <!--  Section header: name and a small count  -->
+        <Style x:Key="SectionCount" TargetType="{x:Type TextBlock}">
+            <Setter Property="Margin" Value="8,0,0,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+        </Style>
+
         <DataTemplate x:Key="ServerTemplate">
-            <Border Margin="0,0,0,8" Padding="12,10" CornerRadius="8" BorderThickness="1"
-                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
+            <Border Margin="0,0,0,8" Padding="14,10" Style="{DynamicResource PhasmaCard}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Width="44" Height="44" CornerRadius="6" ClipToBounds="True" Background="{DynamicResource ControlFillColorSecondaryBrush}">
-                        <Image Source="{Binding IconUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                    <Border Grid.Column="0" Width="38" Height="38" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" ClipToBounds="True" Background="{DynamicResource PhasmaSelectedBrush}">
+                        <Grid>
+                            <ui:SymbolIcon Symbol="LockClosed24" FontSize="16" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                            <Border CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}">
+                                <Border.Background>
+                                    <ImageBrush ImageSource="{Binding IconUrl, Converter={StaticResource ImageUrlConverter}, ConverterParameter=96}" Stretch="UniformToFill" />
+                                </Border.Background>
+                            </Border>
+                        </Grid>
                     </Border>
 
                     <StackPanel Grid.Column="1" Margin="12,0,12,0" VerticalAlignment="Center">
-                        <TextBlock FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding Title}" />
-                        <TextBlock FontSize="12" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Subtitle}" />
-                        <TextBlock FontSize="12" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding StatusText}" />
+                        <TextBlock FontSize="13.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding ServerName}" />
+                        <TextBlock FontSize="11.5" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding GameLine}" />
                     </StackPanel>
 
-                    <WrapPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
-                        <ui:Button Margin="0,2,6,2" Icon="Play24" Content="{x:Static resources:Strings.Menu_ServerBrowser_Join}" Appearance="Primary" IsEnabled="{Binding CanJoin}"
-                                   Command="{Binding DataContext.JoinCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}" />
-                        <ui:Button Margin="0,2,6,2" Icon="Link24" Content="{x:Static resources:Strings.Menu_History_CopyLink}" Visibility="{Binding OwnerVisibility}" ToolTip="{x:Static resources:Strings.Menu_PrivateServers_CopyServerSInviteLink}"
-                                   Command="{Binding DataContext.CopyLinkCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}" />
-                        <ui:Button Margin="0,2,6,2" Icon="ArrowSync24" Content="{x:Static resources:Strings.Menu_PrivateServers_NewLink}" Visibility="{Binding OwnerVisibility}" ToolTip="{x:Static resources:Strings.Menu_PrivateServers_MakeNewInviteLinkOldOne}"
-                                   Command="{Binding DataContext.NewLinkCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}" />
-                        <ui:Button Margin="0,2,0,2" Padding="8,6" Icon="Open24" ToolTip="{x:Static resources:Strings.Menu_PrivateServers_OpenGameSServerListRoblox}"
-                                   Command="{Binding DataContext.OpenOnRobloxCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}" />
-                    </WrapPanel>
+                    <StackPanel Grid.Column="2" Margin="0,0,16,0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border>
+                            <Border.Style>
+                                <Style TargetType="{x:Type Border}" BasedOn="{StaticResource PhasmaTag}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Server.Active}" Value="False">
+                                            <Setter Property="Background" Value="{DynamicResource PhasmaSelectedBrush}" />
+                                            <Setter Property="TextElement.Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding TagText}" Value="">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock Text="{Binding TagText}" FontSize="11" />
+                        </Border>
+                        <Border Margin="6,0,0,0" Style="{DynamicResource PhasmaTagNeutral}" Visibility="{Binding FriendVisibility}" ToolTip="The owner is one of your Roblox friends">
+                            <TextBlock Text="Friend" FontSize="11" />
+                        </Border>
+                        <Border Margin="6,0,0,0" Style="{DynamicResource PhasmaTagNeutral}" Visibility="{Binding HiddenVisibility}" ToolTip="Hidden from this list. Right click to show it again.">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="EyeOff24" FontSize="11" Margin="0,0,4,0" />
+                                <TextBlock Text="Hidden" FontSize="11" />
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Margin="10,0,0,0" MinWidth="90" VerticalAlignment="Center" FontSize="11.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding StatusText}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Margin="0,0,6,0" Width="32" Height="32" Style="{DynamicResource PhasmaIconButton}" BorderBrush="{DynamicResource PhasmaStrokeBrush}"
+                                Visibility="{Binding OwnerVisibility}" ToolTip="{x:Static resources:Strings.Menu_PrivateServers_CopyServerSInviteLink}" AutomationProperties.Name="{x:Static resources:Strings.Menu_History_CopyLink}"
+                                Command="{Binding DataContext.CopyLinkCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}">
+                            <ui:SymbolIcon Symbol="Link24" FontSize="14" />
+                        </Button>
+                        <Button Margin="0,0,6,0" Width="32" Height="32" Style="{DynamicResource PhasmaIconButton}" BorderBrush="{DynamicResource PhasmaStrokeBrush}"
+                                Visibility="{Binding OwnerVisibility}" ToolTip="{x:Static resources:Strings.Menu_PrivateServers_MakeNewInviteLinkOldOne}" AutomationProperties.Name="{x:Static resources:Strings.Menu_PrivateServers_NewLink}"
+                                Command="{Binding DataContext.NewLinkCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}">
+                            <ui:SymbolIcon Symbol="ArrowSync24" FontSize="14" />
+                        </Button>
+                        <Button Margin="0,0,10,0" Width="32" Height="32" Style="{DynamicResource PhasmaIconButton}" BorderBrush="{DynamicResource PhasmaStrokeBrush}"
+                                ToolTip="{x:Static resources:Strings.Menu_PrivateServers_OpenGameSServerListRoblox}" AutomationProperties.Name="Open on Roblox"
+                                Command="{Binding DataContext.OpenOnRobloxCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}">
+                            <ui:SymbolIcon Symbol="Open24" FontSize="14" />
+                        </Button>
+                        <Button Padding="14,6" Style="{DynamicResource PhasmaAccentButton}" IsEnabled="{Binding CanJoin}"
+                                Command="{Binding DataContext.JoinCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Play24" Filled="True" FontSize="12" Margin="0,0,6,0" Foreground="{DynamicResource PhasmaAccentTextBrush}" />
+                                <TextBlock Text="{x:Static resources:Strings.Menu_ServerBrowser_Join}" FontSize="12.5" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
                 </Grid>
             </Border>
         </DataTemplate>
     </ui:UiPage.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="0,0,14,14">
-            <TextBlock Text="{x:Static resources:Strings.Menu_PrivateServers_PrivateServers}" FontSize="20" FontWeight="Medium" />
-            <TextBlock Margin="0,4,0,0" FontSize="14" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                       Text="{x:Static resources:Strings.Menu_PrivateServers_OwnPrivateServersOnesSharedYou}" />
+    <ScrollViewer x:Name="ServersRoot" VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="0,8,14,14">
 
-            <DockPanel Margin="0,12,0,0">
-                <ui:Button DockPanel.Dock="Left" Icon="ArrowDownload24" Content="{x:Static resources:Strings.Menu_PrivateServers_LoadMyPrivateServers}" Appearance="Primary" IsEnabled="{Binding NotBusy}" Command="{Binding LoadCommand, Mode=OneTime}" />
-                <ui:ProgressRing DockPanel.Dock="Left" Margin="12,0,0,0" Width="18" Height="18" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Status}" />
+            <!--  Filters and the load button  -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="180" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Grid Grid.Column="0" Margin="0,0,8,0" Visibility="{Binding ListsVisibility}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBox Grid.Column="0" Icon="Search24" PlaceholderText="{x:Static resources:Strings.Menu_PrivateServers_SearchGamesServerNamesUsernames}" Text="{Binding Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <ComboBox Grid.Column="1" Width="120" Margin="8,0,0,0" Padding="10,5,10,5" ToolTip="{x:Static resources:Strings.Menu_PrivateServers_WhoseServersShowFriendsAreListed}" ItemsSource="{Binding OwnerOptions}" SelectedItem="{Binding Owner, Mode=TwoWay}" />
+                    <ComboBox Grid.Column="2" Width="130" Margin="8,0,0,0" Padding="10,5,10,5" ToolTip="{x:Static resources:Strings.Menu_PrivateServers_OnlyServersGame}" ItemsSource="{Binding GameOptions}" SelectedItem="{Binding Game, Mode=TwoWay}" />
+                    <ComboBox Grid.Column="3" Width="150" Margin="8,0,0,0" Padding="10,5,10,5" SelectedIndex="{Binding ShowIndex, Mode=TwoWay}">
+                        <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_YoursShared}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_OnlyYours}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_OnlySharedYou}" />
+                    </ComboBox>
+                    <ComboBox Grid.Column="4" Width="140" Margin="8,0,0,0" Padding="10,5,10,5" SelectedIndex="{Binding StatusIndex, Mode=TwoWay}">
+                        <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_AnyStatus}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_CanJoinNow}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_Inactive}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_EndingWithin30Days}" />
+                    </ComboBox>
+                    <ComboBox Grid.Column="5" Width="140" Margin="8,0,0,0" Padding="10,5,10,5" SelectedIndex="{Binding SortIndex, Mode=TwoWay}">
+                        <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_SortByGame}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_SortByOwner}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_EndingSoonestFirst}" />
+                    </ComboBox>
+                </Grid>
+
+                <Button Grid.Column="1" Height="34" Style="{DynamicResource PhasmaSoftButton}" IsEnabled="{Binding NotBusy}" Command="{Binding LoadCommand, Mode=OneTime}">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="13" Margin="0,0,6,0" />
+                        <TextBlock Text="{x:Static resources:Strings.Menu_PrivateServers_LoadMyPrivateServers}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <!--  Status and filter summary  -->
+            <DockPanel Margin="2,10,0,0">
+                <ui:ProgressRing DockPanel.Dock="Left" Margin="0,0,10,0" Width="16" Height="16" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Visibility="{Binding ListsVisibility}">
+                    <!--  Servers hidden with "Hide from this list": show them again  -->
+                    <StackPanel Margin="0,0,12,0" Orientation="Horizontal" Visibility="{Binding HiddenToggleVisibility}">
+                        <ToggleButton Style="{DynamicResource PhasmaChip}" IsChecked="{Binding ShowHidden, Mode=TwoWay}" ToolTip="Also list the servers you hid">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Eye24" FontSize="12" Margin="0,0,5,0" />
+                                <TextBlock Text="{Binding HiddenText}" />
+                            </StackPanel>
+                        </ToggleButton>
+                        <Button Margin="2,0,0,0" Padding="8,4" Style="{DynamicResource PhasmaGhostButton}" Command="{Binding ShowAllHiddenCommand, Mode=OneTime}" ToolTip="Stop hiding every server">
+                            <TextBlock Text="Unhide all" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </Button>
+                    </StackPanel>
+                    <TextBlock VerticalAlignment="Center" Text="{Binding FilterSummary}" Style="{DynamicResource PhasmaSubtle}" />
+                    <Button Margin="6,0,0,0" Padding="8,4" Style="{DynamicResource PhasmaGhostButton}" Command="{Binding ClearFiltersCommand, Mode=OneTime}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Dismiss24" FontSize="12" Margin="0,0,5,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Text="{x:Static resources:Strings.Menu_PrivateServers_ClearFilters}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+                <TextBlock VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Status}" />
             </DockPanel>
 
+            <!--  Before the first load  -->
+            <Border Margin="0,14,0,0" Padding="26,22" Style="{DynamicResource PhasmaCard}" Visibility="{Binding NotLoadedVisibility}">
+                <StackPanel>
+                    <ui:SymbolIcon HorizontalAlignment="Left" Symbol="LockClosed24" FontSize="22" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    <TextBlock Margin="0,10,0,0" Text="{x:Static resources:Strings.Menu_PrivateServers_PrivateServers}" Style="{DynamicResource PhasmaHeading}" />
+                    <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" Style="{DynamicResource PhasmaSubtle}" Text="{x:Static resources:Strings.Menu_PrivateServers_OwnPrivateServersOnesSharedYou}" />
+                </StackPanel>
+            </Border>
+
             <StackPanel Visibility="{Binding ListsVisibility}">
-
-                <Border Margin="0,16,0,0" Padding="12" CornerRadius="8" BorderThickness="1"
-                        BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
-                    <StackPanel>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <ui:TextBox Grid.Column="0" Icon="Search24" PlaceholderText="{x:Static resources:Strings.Menu_PrivateServers_SearchGamesServerNamesUsernames}" Text="{Binding Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                            <ComboBox Grid.Column="1" Margin="8,0,0,0" Padding="10,5,10,5" ToolTip="{x:Static resources:Strings.Menu_PrivateServers_WhoseServersShowFriendsAreListed}" ItemsSource="{Binding OwnerOptions}" SelectedItem="{Binding Owner, Mode=TwoWay}" />
-                            <ComboBox Grid.Column="2" Margin="8,0,0,0" Padding="10,5,10,5" ToolTip="{x:Static resources:Strings.Menu_PrivateServers_OnlyServersGame}" ItemsSource="{Binding GameOptions}" SelectedItem="{Binding Game, Mode=TwoWay}" />
-                        </Grid>
-                        <WrapPanel Margin="0,8,0,0">
-                            <ComboBox Width="190" Margin="0,0,8,0" Padding="10,5,10,5" SelectedIndex="{Binding ShowIndex, Mode=TwoWay}">
-                                <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_YoursShared}" />
-                                <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_OnlyYours}" />
-                                <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_OnlySharedYou}" />
-                            </ComboBox>
-                            <ComboBox Width="190" Margin="0,0,8,0" Padding="10,5,10,5" SelectedIndex="{Binding StatusIndex, Mode=TwoWay}">
-                                <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_AnyStatus}" />
-                                <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_CanJoinNow}" />
-                                <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_Inactive}" />
-                                <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_EndingWithin30Days}" />
-                            </ComboBox>
-                            <ComboBox Width="190" Margin="0,0,8,0" Padding="10,5,10,5" SelectedIndex="{Binding SortIndex, Mode=TwoWay}">
-                                <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_SortByGame}" />
-                                <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_SortByOwner}" />
-                                <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_EndingSoonestFirst}" />
-                            </ComboBox>
-                            <ui:Button Margin="0,0,12,0" Icon="Dismiss24" Content="{x:Static resources:Strings.Menu_PrivateServers_ClearFilters}" Appearance="Secondary" Command="{Binding ClearFiltersCommand, Mode=OneTime}" />
-                            <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding FilterSummary}" />
-                        </WrapPanel>
-                    </StackPanel>
-                </Border>
-
                 <TextBlock Margin="0,16,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Visibility="{Binding NoMatchesVisibility}" Text="{x:Static resources:Strings.Menu_PrivateServers_NoServersMatchTheseFilters}" />
 
                 <StackPanel Visibility="{Binding YoursVisibility}">
-                    <TextBlock Margin="0,20,0,8" FontSize="20" FontWeight="Medium" Text="{x:Static resources:Strings.Menu_PrivateServers_Yours}" />
-                    <TextBlock Margin="0,0,0,8" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Visibility="{Binding NoOwnedVisibility}" Text="{x:Static resources:Strings.Menu_PrivateServers_YouDonTOwnAnyPrivate}" />
-                    <ItemsControl ItemsSource="{Binding Owned}" ItemTemplate="{StaticResource ServerTemplate}" />
+                    <StackPanel Margin="2,18,0,10" Orientation="Horizontal">
+                        <TextBlock FontSize="13.5" Style="{DynamicResource PhasmaHeading}" Text="{x:Static resources:Strings.Menu_PrivateServers_Yours}" />
+                        <TextBlock Style="{StaticResource SectionCount}" Text="{Binding Owned.Count}" />
+                    </StackPanel>
+                    <TextBlock Margin="2,0,0,8" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Visibility="{Binding NoOwnedVisibility}" Text="{x:Static resources:Strings.Menu_PrivateServers_YouDonTOwnAnyPrivate}" />
+                    <ItemsControl ItemsSource="{Binding Owned}" ItemTemplate="{StaticResource ServerTemplate}" Focusable="False" />
                 </StackPanel>
 
                 <StackPanel Visibility="{Binding SharedVisibility}">
-                    <TextBlock Margin="0,20,0,8" FontSize="20" FontWeight="Medium" Text="{x:Static resources:Strings.Menu_PrivateServers_SharedYou}" />
-                    <TextBlock Margin="0,0,0,8" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Visibility="{Binding NoSharedVisibility}" Text="{x:Static resources:Strings.Menu_PrivateServers_NobodyHasAddedYouTheirPrivate}" />
-                    <ItemsControl ItemsSource="{Binding Shared}" ItemTemplate="{StaticResource ServerTemplate}" />
+                    <StackPanel Margin="2,18,0,10" Orientation="Horizontal">
+                        <TextBlock FontSize="13.5" Style="{DynamicResource PhasmaHeading}" Text="{x:Static resources:Strings.Menu_PrivateServers_SharedYou}" />
+                        <TextBlock Style="{StaticResource SectionCount}" Text="{Binding Shared.Count}" />
+                    </StackPanel>
+                    <TextBlock Margin="2,0,0,8" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Visibility="{Binding NoSharedVisibility}" Text="{x:Static resources:Strings.Menu_PrivateServers_NobodyHasAddedYouTheirPrivate}" />
+                    <ItemsControl ItemsSource="{Binding Shared}" ItemTemplate="{StaticResource ServerTemplate}" Focusable="False" />
                 </StackPanel>
+
+                <Border Margin="0,8,0,0" Padding="14,10" Style="{DynamicResource PhasmaCard}" Background="{DynamicResource PhasmaPanelBrush}">
+                    <DockPanel>
+                        <ui:SymbolIcon DockPanel.Dock="Left" Margin="0,0,10,0" Symbol="Info24" FontSize="14" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                        <TextBlock TextWrapping="Wrap" FontSize="11.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   Text="Replacing an invite link makes the old one stop working, for when a link has got around too far." />
+                    </DockPanel>
+                </Border>
             </StackPanel>
         </StackPanel>
     </ScrollViewer>

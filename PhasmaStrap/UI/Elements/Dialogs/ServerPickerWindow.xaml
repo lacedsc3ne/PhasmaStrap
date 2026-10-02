@@ -7,8 +7,8 @@
         xmlns:base="clr-namespace:PhasmaStrap.UI.Elements.Base"
         mc:Ignorable="d"
         Title="Choose a server"
-        Width="560"
-        Height="520"
+        Width="520"
+        Height="560"
         ResizeMode="NoResize"
         Topmost="True"
         ShowInTaskbar="True"
@@ -22,74 +22,75 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <ui:TitleBar Grid.Row="0" Padding="8" Title="Choose a server" ShowMinimize="False" ShowMaximize="False" Icon="pack://application:,,,/PhasmaStrap.ico" />
+        <Border Grid.Row="0" VerticalAlignment="Bottom" Style="{DynamicResource PhasmaDivider}" />
 
-        <StackPanel Grid.Row="1" Margin="16,2,16,8">
-            <TextBlock x:Name="HeadlineText" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" Text="Looking for servers..." />
-            <TextBlock x:Name="DetailText" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Roblox is waiting for your choice. Do nothing and it picks a server itself." />
-            <ProgressBar x:Name="TimeBar" Margin="0,8,0,0" Height="3" Minimum="0" Maximum="1" Value="1" />
+        <!--  What is going on and how long Roblox will wait  -->
+        <StackPanel Grid.Row="1" Margin="18,16,18,12">
+            <TextBlock x:Name="GameText" Margin="0,0,0,4" FontSize="16" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Visibility="Collapsed" />
+            <TextBlock x:Name="HeadlineText" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Text="Looking for servers..." />
+            <TextBlock x:Name="DetailText" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Roblox is waiting for your choice. Do nothing and it picks a server itself." />
+            <ProgressBar x:Name="TimeBar" Margin="0,10,0,0" Height="3" Minimum="0" Maximum="1" Value="1" ToolTip="Time left before Roblox picks a server itself" />
         </StackPanel>
 
-        <Grid Grid.Row="2" Margin="16,0,16,0">
-            <ui:ProgressRing x:Name="Searching" IsIndeterminate="True" Width="40" Height="40" VerticalAlignment="Center" HorizontalAlignment="Center" />
+        <!--  Servers, closest first  -->
+        <Grid Grid.Row="2" Margin="12,0,12,0">
+            <ui:ProgressRing x:Name="Searching" IsIndeterminate="True" Width="36" Height="36" VerticalAlignment="Center" HorizontalAlignment="Center" />
 
             <ListBox x:Name="ServerList" Visibility="Collapsed" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch"
+                     ItemContainerStyle="{DynamicResource PhasmaListItem}"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" MouseDoubleClick="ServerList_MouseDoubleClick" SelectionChanged="ServerList_SelectionChanged">
-
-                <ListBox.ItemContainerStyle>
-                    <Style TargetType="ListBoxItem">
-                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="ListBoxItem">
-                                    <Border x:Name="Row" Margin="0,0,6,4" Padding="10,6" CornerRadius="6" BorderThickness="1" BorderBrush="Transparent" Background="Transparent">
-                                        <ContentPresenter />
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="Row" Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
-                                        </Trigger>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="Row" Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
-                                            <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource SystemAccentColorSecondaryBrush}" />
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </ListBox.ItemContainerStyle>
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <Grid Margin="2,4">
+                        <Grid Margin="2,2">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="90" />
-                                <ColumnDefinition Width="90" />
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="80" />
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock FontSize="13" FontWeight="SemiBold" Text="{Binding Region}" />
-                                <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Detail}" />
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding Region}" />
+                                <TextBlock FontSize="11.5" Margin="0,1,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Detail}" />
                             </StackPanel>
-                            <TextBlock Grid.Column="1" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Players}" />
-                            <TextBlock Grid.Column="2" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Ping}" />
+                            <TextBlock Grid.Column="1" FontSize="12.5" VerticalAlignment="Center" HorizontalAlignment="Right" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Players}" />
+                            <TextBlock Grid.Column="2" FontSize="12.5" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Ping}">
+                                <TextBlock.Style>
+                                    <Style TargetType="{x:Type TextBlock}">
+                                        <Setter Property="Foreground" Value="{DynamicResource PhasmaBadBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding PingTone}" Value="good">
+                                                <Setter Property="Foreground" Value="{DynamicResource PhasmaGoodBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding PingTone}" Value="warn">
+                                                <Setter Property="Foreground" Value="{DynamicResource PhasmaWarnBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </Grid>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
         </Grid>
 
-        <Grid Grid.Row="3" Margin="16,10,16,14">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" FontSize="11" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Ping is estimated from the distance to the server's datacenter. Enter joins the selection, Esc lets Roblox choose." />
-            <ui:Button Grid.Column="1" Margin="10,0,0,0" Content="Let Roblox choose" Click="Skip_Click" />
-            <ui:Button Grid.Column="2" x:Name="JoinButton" Margin="8,0,0,0" Content="Join this server" Icon="ArrowRight24" Appearance="Primary" IsEnabled="False" Click="Join_Click" />
-        </Grid>
+        <TextBlock Grid.Row="3" Margin="18,10,18,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                   Text="Ping is estimated from the distance to the datacenter. Enter joins, Esc lets Roblox choose." />
+
+        <!--  Choice  -->
+        <StackPanel Grid.Row="4" Margin="18,14,18,16" HorizontalAlignment="Right" Orientation="Horizontal">
+            <Button Click="Skip_Click" Style="{DynamicResource PhasmaGhostButton}">
+                <TextBlock Text="Let Roblox choose" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+            </Button>
+            <Button x:Name="JoinButton" Margin="8,0,0,0" IsEnabled="False" Click="Join_Click" Style="{DynamicResource PhasmaAccentButton}">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon Symbol="Play24" Filled="True" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                    <TextBlock Text="Join this server" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
     </Grid>
 </base:WpfUiWindow>

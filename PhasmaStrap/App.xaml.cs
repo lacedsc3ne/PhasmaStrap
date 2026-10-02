@@ -145,6 +145,10 @@ namespace PhasmaStrap
 
             SendLog();
 
+            // Opt in crash report (Settings > Account and backup > Send crash reports), sent off the UI thread
+            if (Settings.Prop.SendCrashReports)
+                _ = Task.Run(() => Utility.Backend.ExtrasApi.SendCrashReportAsync(ex));
+
             if (Bootstrapper?.Dialog != null)
             {
                 if (Bootstrapper.Dialog.TaskbarProgressValue == 0)
@@ -177,6 +181,14 @@ namespace PhasmaStrap
 
             try
             {
+                // Beta channel: the newest release including prereleases, falling back to the stable one below
+                if (String.Equals(Settings.Prop.AppUpdateChannel, "Beta", StringComparison.OrdinalIgnoreCase))
+                {
+                    GithubRelease? beta = await GetLatestBetaRelease();
+                    if (beta is not null)
+                        return beta;
+                }
+
                 var releaseInfo = await GetReleaseJson<GithubRelease>("/v1/releases/latest", "/releases/latest");
 
                 if (releaseInfo is null || releaseInfo.Assets is null)
@@ -193,6 +205,61 @@ namespace PhasmaStrap
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Newest release on the Beta channel: PhasmaStrap's server first (GET /v1/releases/latest?channel=beta),
+        /// otherwise the newest of GitHub's recent releases with prereleases included. Null when neither answers.
+        /// </summary>
+        private static async Task<GithubRelease?> GetLatestBetaRelease()
+        {
+            const string LOG_IDENT = "App::GetLatestBetaRelease";
+
+            try
+            {
+                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                using var response = await HttpClient.GetAsync(ServerBase + "/v1/releases/latest?channel=beta", timeout.Token);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    GithubRelease? fromServer = JsonSerializer.Deserialize<GithubRelease>(await response.Content.ReadAsStringAsync(timeout.Token));
+                    if (fromServer is not null && fromServer.Assets is not null && !String.IsNullOrEmpty(fromServer.TagName))
+                        return fromServer;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine(LOG_IDENT, $"PhasmaStrap's server didn't answer ({ex.Message}) - asking GitHub");
+            }
+
+            try
+            {
+                List<GithubRelease>? releases = await Http.GetJson<List<GithubRelease>>($"https://api.github.com/repos/{ProjectRepository}/releases?per_page=20");
+                GithubRelease? newest = null;
+
+                foreach (GithubRelease release in releases ?? new List<GithubRelease>())
+                {
+                    if (release.Draft || release.Assets is null || String.IsNullOrEmpty(release.TagName))
+                        continue;
+
+                    try
+                    {
+                        if (newest is null || Utilities.CompareVersions(newest.TagName, release.TagName) == VersionComparison.LessThan)
+                            newest = release;
+                    }
+                    catch (Exception)
+                    {
+                        // A tag that isn't a version number is skipped
+                    }
+                }
+
+                return newest;
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteException(LOG_IDENT, ex);
+                return null;
+            }
         }
 
         public static async Task<T> GetReleaseJson<T>(string serverPath, string githubPath)
@@ -479,6 +546,15 @@ namespace PhasmaStrap
                 catch (Exception ex)
                 {
                     Logger.WriteLine(LOG_IDENT, $"Protocol handler registration failed: {ex.Message}");
+                }
+
+                try
+                {
+                    WindowsRegistry.RegisterLinks();
+                }
+                catch (Exception ex)
+                {
+                    Logger.WriteLine(LOG_IDENT, $"Setting link handler registration failed: {ex.Message}");
                 }
 
                 try

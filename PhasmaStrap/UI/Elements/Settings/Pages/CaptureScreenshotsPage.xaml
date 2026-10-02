@@ -12,164 +12,220 @@
       Title="CaptureScreenshotsPage"
       Scrollable="True">
     <ui:UiPage.Resources>
-        <Style x:Key="HotkeyCaptureButton" TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
-            <Setter Property="Appearance" Value="Secondary" />
-            <Setter Property="Width" Value="200" />
+        <!--  The key field (DataContext is the HotkeyRow): looks like a key cap, lights up while it is listening  -->
+        <Style x:Key="HotkeyCaptureButton" TargetType="Button" BasedOn="{StaticResource PhasmaSoftButton}">
+            <Setter Property="MinWidth" Value="90" />
+            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="FontSize" Value="12" />
             <Setter Property="Focusable" Value="False" />
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
             <Setter Property="ToolTip" Value="Click, then press the key or combination. Esc cancels and keeps the current hotkey." />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HasGesture}" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsListening}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource PhasmaAccentSoftBrush}" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource PhasmaAccentBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
         <Style x:Key="HotkeyStatusText" TargetType="TextBlock">
-            <Setter Property="Margin" Value="2,0,0,6" />
+            <Setter Property="Margin" Value="2,0,0,10" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="TextWrapping" Value="Wrap" />
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
         </Style>
+
+        <!--  Small dark buttons that sit on top of a thumbnail  -->
+        <Style x:Key="ThumbOverlayButton" TargetType="Button" BasedOn="{StaticResource PhasmaGhostButton}">
+            <Setter Property="Background" Value="#8C000000" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="MinWidth" Value="26" />
+            <Setter Property="Padding" Value="6,0" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
     </ui:UiPage.Resources>
 
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Text="{x:Static resources:Strings.Menu_Capture_Screenshots}" FontSize="20" FontWeight="Medium" />
-        <TextBlock Margin="0,2,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Capture_ScreenshotsRobloxWindowSavedLocallyBind}" />
+        <!--  Actions  -->
+        <WrapPanel Margin="0,0,0,6">
+            <Button Margin="0,0,8,6" Style="{DynamicResource PhasmaAccentButton}" Command="{Binding TakeScreenshotCommand, Mode=OneTime}">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon Symbol="Camera24" FontSize="14" Margin="0,0,6,0" />
+                    <TextBlock Text="{x:Static resources:Strings.Menu_Capture_TakeScreenshotNow}" />
+                </StackPanel>
+            </Button>
+            <Button Margin="0,0,8,6" Style="{DynamicResource PhasmaSoftButton}" ToolTip="{x:Static resources:Strings.Menu_Capture_EveryScreenshotSearchFiltersRename}" Command="{Binding OpenScreenshotLibraryCommand, Mode=OneTime}">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon Symbol="Grid24" FontSize="14" Margin="0,0,6,0" />
+                    <TextBlock Text="{Binding AllScreenshotsText}" />
+                </StackPanel>
+            </Button>
+            <Button Margin="0,0,8,6" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Command="{Binding OpenFolderCommand, Mode=OneTime}">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon Symbol="Folder24" FontSize="14" Margin="0,0,6,0" />
+                    <TextBlock Text="{x:Static resources:Strings.Menu_Capture_OpenFolder}" />
+                </StackPanel>
+            </Button>
+            <TextBlock Margin="4,0,0,6" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="The button only works while Roblox is open" />
+        </WrapPanel>
 
-        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-            <ui:Button Content="{x:Static resources:Strings.Menu_Capture_TakeScreenshotNow}" Icon="Camera24" Command="{Binding TakeScreenshotCommand, Mode=OneTime}" />
-            <ui:Button Margin="8,0,0,0" Content="{Binding AllScreenshotsText}" Icon="ImageMultiple24" Appearance="Primary" ToolTip="{x:Static resources:Strings.Menu_Capture_EveryScreenshotSearchFiltersRename}" Command="{Binding OpenScreenshotLibraryCommand, Mode=OneTime}" />
-            <ui:Button Margin="8,0,0,0" Content="{x:Static resources:Strings.Menu_Capture_OpenFolder}" Icon="Folder24" Appearance="Secondary" Command="{Binding OpenFolderCommand, Mode=OneTime}" />
-        </StackPanel>
-
-        <TextBlock Margin="0,8,0,0" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Status, Mode=OneWay}" />
-
-        <controls:OptionControl Header="Screenshot hotkey" Description="Press this while a game is running and the Roblox window is saved to your gallery.">
-            <StackPanel Orientation="Horizontal">
-                <ui:Button Uid="Capture" Content="{Binding ScreenshotHotkey.ButtonText}" Tag="{Binding ScreenshotHotkey}" Click="CaptureButton_Click">
-                    <ui:Button.Style>
-                        <Style TargetType="ui:Button" BasedOn="{StaticResource HotkeyCaptureButton}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding ScreenshotHotkey.IsListening}" Value="True">
-                                    <Setter Property="Appearance" Value="Primary" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ui:Button.Style>
-                </ui:Button>
-                <ui:Button Margin="8,0,0,0" Focusable="False" Content="{x:Static resources:Strings.ContextMenu_OutputConsole_Clear}" Appearance="Secondary"
-                           IsEnabled="{Binding ScreenshotHotkey.HasGesture}" Tag="{Binding ScreenshotHotkey}" Click="ClearButton_Click" />
-            </StackPanel>
-        </controls:OptionControl>
-
-        <TextBlock Text="{Binding ScreenshotHotkey.StatusText}">
+        <TextBlock Margin="0,0,0,10" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Status, Mode=OneWay}">
             <TextBlock.Style>
-                <Style TargetType="TextBlock" BasedOn="{StaticResource HotkeyStatusText}">
+                <Style TargetType="TextBlock">
                     <Style.Triggers>
-                        <DataTrigger Binding="{Binding ScreenshotHotkey.HasStatus}" Value="False">
+                        <Trigger Property="Text" Value="">
                             <Setter Property="Visibility" Value="Collapsed" />
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding ScreenshotHotkey.StatusIsWarning}" Value="True">
-                            <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}" />
-                        </DataTrigger>
+                        </Trigger>
                     </Style.Triggers>
                 </Style>
             </TextBlock.Style>
         </TextBlock>
 
-        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Capture_CopyNewScreenshotsClipboard}" Description="{x:Static resources:Strings.Menu_Capture_ScreenshotTakenHotkeyAlsoCopiedSo}">
-            <ui:ToggleSwitch IsChecked="{Binding CopyScreenshotToClipboard, Mode=TwoWay}" />
-        </controls:OptionControl>
+        <controls:CardColumns>
+            <controls:SettingsCard Header="Taking screenshots">
+                <controls:OptionControl Header="Screenshot hotkey" Description="Press it in game to save the Roblox window">
+                    <StackPanel Orientation="Horizontal">
+                        <!--  Uid="Capture" and Tag are used by the code behind to keep listening when this is clicked  -->
+                        <Button Uid="Capture" DataContext="{Binding ScreenshotHotkey}" Style="{StaticResource HotkeyCaptureButton}"
+                                Content="{Binding ButtonText}" Tag="{Binding}" Click="CaptureButton_Click" />
+                        <Button Margin="6,0,0,0" Focusable="False" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold"
+                                Content="{x:Static resources:Strings.ContextMenu_OutputConsole_Clear}"
+                                IsEnabled="{Binding ScreenshotHotkey.HasGesture}" Tag="{Binding ScreenshotHotkey}" Click="ClearButton_Click" />
+                    </StackPanel>
+                </controls:OptionControl>
 
-        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Capture_PickAreaWhenIPressScreenshot}" Description="{x:Static resources:Strings.Menu_Capture_GameFreezesScreenYouDragOver}">
-            <ui:ToggleSwitch IsChecked="{Binding ScreenshotPickArea, Mode=TwoWay}" />
-        </controls:OptionControl>
+                <TextBlock Text="{Binding ScreenshotHotkey.StatusText}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource HotkeyStatusText}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ScreenshotHotkey.HasStatus}" Value="False">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding ScreenshotHotkey.StatusIsWarning}" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource PhasmaWarnBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
 
-        <StackPanel HorizontalAlignment="Center" Margin="0,24,0,24">
-            <StackPanel.Style>
-                <Style TargetType="StackPanel">
-                    <Setter Property="Visibility" Value="Collapsed" />
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding HasScreenshots}" Value="False">
-                            <Setter Property="Visibility" Value="Visible" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </StackPanel.Style>
-            <ui:SymbolIcon Symbol="Camera24" FontSize="48" Opacity="0.25" HorizontalAlignment="Center" />
-            <TextBlock Text="{x:Static resources:Strings.Menu_Capture_NoScreenshotsYet}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="16" Opacity="0.5" Margin="0,12,0,0" HorizontalAlignment="Center" />
-        </StackPanel>
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Capture_CopyNewScreenshotsClipboard}" Description="Paste straight into a chat with Ctrl V">
+                    <ui:ToggleSwitch IsChecked="{Binding CopyScreenshotToClipboard, Mode=TwoWay}" />
+                </controls:OptionControl>
 
-        <TextBlock Margin="0,14,0,0" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Visibility="{Binding RecentHintVisibility}"
-                   Text="{x:Static resources:Strings.Menu_Capture_LatestScreenshotsOpenAllScreenshotsSearch}" />
-        <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding RecentScreenshots, Mode=OneWay}">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <UniformGrid Columns="3" />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <ui:Card Margin="0,0,10,10" Padding="0" Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ItemsControl}}">
-                        <ui:Card.ContextMenu>
-                            <ContextMenu DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}">
-                                <MenuItem Header="{x:Static resources:Strings.Common_Copy}" Command="{Binding Tag.CopyScreenshotCommand}" CommandParameter="{Binding DataContext}">
-                                    <MenuItem.Icon><ui:SymbolIcon Symbol="Copy24" /></MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem Header="{x:Static resources:Strings.Menu_Capture_CopyFilePath}" Command="{Binding Tag.CopyScreenshotPathCommand}" CommandParameter="{Binding DataContext}">
-                                    <MenuItem.Icon><ui:SymbolIcon Symbol="Link24" /></MenuItem.Icon>
-                                </MenuItem>
-                                <Separator />
-                                <MenuItem Header="{x:Static resources:Strings.Common_Open}" Command="{Binding Tag.OpenScreenshotCommand}" CommandParameter="{Binding DataContext}">
-                                    <MenuItem.Icon><ui:SymbolIcon Symbol="Open24" /></MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem Header="{x:Static resources:Strings.Common_Edit}" Command="{Binding Tag.EditScreenshotCommand}" CommandParameter="{Binding DataContext}">
-                                    <MenuItem.Icon><ui:SymbolIcon Symbol="Edit24" /></MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem Header="{x:Static resources:Strings.Common_Rename}" Command="{Binding Tag.RenameScreenshotCommand}" CommandParameter="{Binding DataContext}">
-                                    <MenuItem.Icon><ui:SymbolIcon Symbol="Rename24" /></MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem Header="{x:Static resources:Strings.Menu_Capture_ShowFolder}" Command="{Binding Tag.RevealScreenshotCommand}" CommandParameter="{Binding DataContext}">
-                                    <MenuItem.Icon><ui:SymbolIcon Symbol="FolderOpen24" /></MenuItem.Icon>
-                                </MenuItem>
-                                <Separator />
-                                <MenuItem Header="Share to the gallery" Command="{Binding Tag.ShareScreenshotCommand}" CommandParameter="{Binding DataContext}">
-                                    <MenuItem.Icon><ui:SymbolIcon Symbol="Share24" /></MenuItem.Icon>
-                                </MenuItem>
-                                <Separator />
-                                <MenuItem Header="{x:Static resources:Strings.Common_Delete}" Command="{Binding Tag.DeleteScreenshotCommand}" CommandParameter="{Binding DataContext}">
-                                    <MenuItem.Icon><ui:SymbolIcon Symbol="Delete24" /></MenuItem.Icon>
-                                </MenuItem>
-                            </ContextMenu>
-                        </ui:Card.ContextMenu>
-                        <StackPanel>
-                            <Border Height="140" CornerRadius="8,8,0,0" ClipToBounds="True" Background="{DynamicResource ControlFillColorDefaultBrush}">
-                                <Border.InputBindings>
-                                    <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.OpenScreenshotCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
-                                </Border.InputBindings>
-                                <Image Source="{Binding Thumbnail}" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Capture_PickAreaWhenIPressScreenshot}" Description="The game freezes and you drag over the part you want">
+                    <ui:ToggleSwitch IsChecked="{Binding ScreenshotPickArea, Mode=TwoWay}" />
+                </controls:OptionControl>
+            </controls:SettingsCard>
+
+            <controls:SettingsCard Header="Latest screenshots">
+                <controls:SettingsCard.HeaderContent>
+                    <TextBlock FontSize="11.5" TextWrapping="Wrap" MaxWidth="240" TextAlignment="Right" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                               Text="Right click for copy, rename, share to the gallery" />
+                </controls:SettingsCard.HeaderContent>
+
+                <!--  Empty state  -->
+                <StackPanel HorizontalAlignment="Center" Margin="0,22,0,26">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasScreenshots}" Value="False">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <ui:SymbolIcon Symbol="Camera24" FontSize="34" Opacity="0.3" HorizontalAlignment="Center" />
+                    <TextBlock Margin="0,10,0,0" HorizontalAlignment="Center" FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Capture_NoScreenshotsYet}" />
+                    <TextBlock Margin="0,2,0,0" HorizontalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Set a hotkey and press it in game" />
+                </StackPanel>
+
+                <ItemsControl Margin="0,0,0,4" ItemsSource="{Binding RecentScreenshots, Mode=OneWay}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="2" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,10,12" Background="Transparent" Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ItemsControl}}">
+                                <Border.ContextMenu>
+                                    <ContextMenu DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}">
+                                        <MenuItem Header="{x:Static resources:Strings.Common_Copy}" Command="{Binding Tag.CopyScreenshotCommand}" CommandParameter="{Binding DataContext}">
+                                            <MenuItem.Icon><ui:SymbolIcon Symbol="Copy24" /></MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="{x:Static resources:Strings.Menu_Capture_CopyFilePath}" Command="{Binding Tag.CopyScreenshotPathCommand}" CommandParameter="{Binding DataContext}">
+                                            <MenuItem.Icon><ui:SymbolIcon Symbol="Link24" /></MenuItem.Icon>
+                                        </MenuItem>
+                                        <Separator />
+                                        <MenuItem Header="{x:Static resources:Strings.Common_Open}" Command="{Binding Tag.OpenScreenshotCommand}" CommandParameter="{Binding DataContext}">
+                                            <MenuItem.Icon><ui:SymbolIcon Symbol="Open24" /></MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="{x:Static resources:Strings.Common_Edit}" Command="{Binding Tag.EditScreenshotCommand}" CommandParameter="{Binding DataContext}">
+                                            <MenuItem.Icon><ui:SymbolIcon Symbol="Edit24" /></MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="{x:Static resources:Strings.Common_Rename}" Command="{Binding Tag.RenameScreenshotCommand}" CommandParameter="{Binding DataContext}">
+                                            <MenuItem.Icon><ui:SymbolIcon Symbol="Rename24" /></MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="{x:Static resources:Strings.Menu_Capture_ShowFolder}" Command="{Binding Tag.RevealScreenshotCommand}" CommandParameter="{Binding DataContext}">
+                                            <MenuItem.Icon><ui:SymbolIcon Symbol="FolderOpen24" /></MenuItem.Icon>
+                                        </MenuItem>
+                                        <Separator />
+                                        <MenuItem Header="Share to the gallery" Command="{Binding Tag.ShareScreenshotCommand}" CommandParameter="{Binding DataContext}">
+                                            <MenuItem.Icon><ui:SymbolIcon Symbol="Share24" /></MenuItem.Icon>
+                                        </MenuItem>
+                                        <Separator />
+                                        <MenuItem Header="{x:Static resources:Strings.Common_Delete}" Command="{Binding Tag.DeleteScreenshotCommand}" CommandParameter="{Binding DataContext}">
+                                            <MenuItem.Icon><ui:SymbolIcon Symbol="Delete24" /></MenuItem.Icon>
+                                        </MenuItem>
+                                    </ContextMenu>
+                                </Border.ContextMenu>
+                                <StackPanel>
+                                    <Grid Height="110">
+                                        <Border Style="{DynamicResource PhasmaThumb}" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Cursor="Hand">
+                                            <Border.InputBindings>
+                                                <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.OpenScreenshotCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
+                                            </Border.InputBindings>
+                                            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                                        </Border>
+                                        <StackPanel Margin="0,0,6,6" HorizontalAlignment="Right" VerticalAlignment="Bottom" Orientation="Horizontal">
+                                            <Button Style="{StaticResource ThumbOverlayButton}" ToolTip="{x:Static resources:Strings.Menu_Capture_CopyClipboardReadyPasteIntoChat}" AutomationProperties.Name="Copy screenshot"
+                                                    Command="{Binding DataContext.CopyScreenshotCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                                <ui:SymbolIcon Symbol="Copy16" FontSize="12" />
+                                            </Button>
+                                            <Button Margin="4,0,0,0" Style="{StaticResource ThumbOverlayButton}" Content="{x:Static resources:Strings.Common_Edit}" ToolTip="{x:Static resources:Strings.Menu_Capture_CropDrawAddTextPixelateParts}"
+                                                    Command="{Binding DataContext.EditScreenshotCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
+                                            <Button Margin="4,0,0,0" Style="{StaticResource ThumbOverlayButton}" ToolTip="{x:Static resources:Strings.Menu_Capture_DeleteScreenshot}" AutomationProperties.Name="{x:Static resources:Strings.Menu_Capture_DeleteScreenshot}"
+                                                    Command="{Binding DataContext.DeleteScreenshotCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                                <ui:SymbolIcon Symbol="Delete16" FontSize="12" />
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                    <Grid Margin="0,6,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" FontSize="12" FontWeight="SemiBold" Text="{Binding FileName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FileName}" />
+                                        <TextBlock Grid.Column="1" Margin="8,0,0,0" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding TakenDisplay}" />
+                                    </Grid>
+                                </StackPanel>
                             </Border>
-                            <Grid Margin="10,8,10,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock FontSize="12" FontWeight="SemiBold" Text="{Binding FileName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FileName}" />
-                                    <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding TakenDisplay}" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                    <ui:Button Margin="0,0,6,0" Padding="4" Appearance="Transparent" Icon="Copy16" ToolTip="{x:Static resources:Strings.Menu_Capture_CopyClipboardReadyPasteIntoChat}" AutomationProperties.Name="Copy screenshot"
-                                               Command="{Binding DataContext.CopyScreenshotCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                               CommandParameter="{Binding}" />
-                                    <ui:Button Padding="6,4" Appearance="Secondary" Icon="Edit16" Content="{x:Static resources:Strings.Common_Edit}" ToolTip="{x:Static resources:Strings.Menu_Capture_CropDrawAddTextPixelateParts}"
-                                               Command="{Binding DataContext.EditScreenshotCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                               CommandParameter="{Binding}" />
-                                    <ui:Button Margin="6,0,0,0" Padding="4" Appearance="Transparent" Icon="Delete16" ToolTip="{x:Static resources:Strings.Menu_Capture_DeleteScreenshot}"
-                                               Command="{Binding DataContext.DeleteScreenshotCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                               CommandParameter="{Binding}" />
-                                </StackPanel>
-                            </Grid>
-                        </StackPanel>
-                    </ui:Card>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Margin="0,0,0,10" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Visibility="{Binding RecentHintVisibility}"
+                           Text="{x:Static resources:Strings.Menu_Capture_LatestScreenshotsOpenAllScreenshotsSearch}" />
+            </controls:SettingsCard>
+        </controls:CardColumns>
     </StackPanel>
 </ui:UiPage>

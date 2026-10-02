@@ -10,32 +10,52 @@
       Title="GameChatPage"
       Scrollable="True">
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Text="{x:Static resources:Strings.Menu_GameChat_Description}" FontSize="14" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
-        <TextBlock Text="{x:Static resources:Strings.Menu_GameChat_KeyboardHookNotice}" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0" />
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+            <TextBlock Style="{DynamicResource PhasmaPageTitle}" VerticalAlignment="Center" Text="Game chat" />
+            <Border Style="{DynamicResource PhasmaTagNeutral}" Margin="12,0,0,0">
+                <TextBlock FontSize="11" Text="PhasmaStrap" />
+            </Border>
+        </StackPanel>
 
-        <TextBlock Text="{x:Static resources:Strings.Menu_GameChat_General_Title}" FontSize="20" FontWeight="Medium" Margin="0,16,0,0" />
+        <!--  What it is, and the keyboard hook notice  -->
+        <Border Style="{DynamicResource PhasmaCard}" Padding="14,10" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <ui:SymbolIcon Grid.Column="0" Symbol="Info24" FontSize="15" Margin="0,1,10,0" VerticalAlignment="Top" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <StackPanel Grid.Column="1">
+                    <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_GameChat_Description}" />
+                    <TextBlock Margin="0,2,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_GameChat_KeyboardHookNotice}" />
+                </StackPanel>
+            </Grid>
+        </Border>
 
-        <controls:OptionControl Header="{x:Static resources:Strings.Menu_GameChat_Enabled_Title}" Description="{x:Static resources:Strings.Menu_GameChat_Enabled_Description}">
-            <ui:ToggleSwitch IsChecked="{Binding GameChatEnabled, Mode=TwoWay}" />
-        </controls:OptionControl>
+        <controls:CardColumns>
+            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_GameChat_General_Title}">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_GameChat_Enabled_Title}" Description="{x:Static resources:Strings.Menu_GameChat_Enabled_Description}">
+                    <ui:ToggleSwitch IsChecked="{Binding GameChatEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
 
-        <controls:OptionControl Header="{x:Static resources:Strings.Menu_GameChat_ServerUrl_Title}" Description="{x:Static resources:Strings.Menu_GameChat_ServerUrl_Description}">
-            <TextBox Width="320" Text="{Binding GameChatServerUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-        </controls:OptionControl>
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_GameChat_ServerUrl_Title}" Description="{x:Static resources:Strings.Menu_GameChat_ServerUrl_Description}">
+                    <ui:TextBox Width="180" PlaceholderText="wss://" Text="{Binding GameChatServerUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </controls:OptionControl>
 
-        <controls:OptionControl Header="{x:Static resources:Strings.Menu_GameChat_MessageFilter_Title}" Description="{x:Static resources:Strings.Menu_GameChat_MessageFilter_Description}">
-            <ComboBox Width="160" ItemsSource="{Binding FilterPreferenceOptions, Mode=OneTime}" SelectedItem="{Binding GameChatFilterPreference, Mode=TwoWay}" />
-        </controls:OptionControl>
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_GameChat_MessageFilter_Title}" Description="{x:Static resources:Strings.Menu_GameChat_MessageFilter_Description}">
+                    <ComboBox MinWidth="120" Padding="10,5,10,5" ItemsSource="{Binding FilterPreferenceOptions, Mode=OneTime}" SelectedItem="{Binding GameChatFilterPreference, Mode=TwoWay}" />
+                </controls:OptionControl>
+            </controls:SettingsCard>
 
-        <TextBlock Text="{x:Static resources:Strings.Menu_GameChat_Translation_Title}" FontSize="20" FontWeight="Medium" Margin="0,16,0,0" />
+            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_GameChat_Translation_Title}">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_GameChat_Translation_Enable_Title}" Description="{x:Static resources:Strings.Menu_GameChat_Translation_Enable_Description}">
+                    <ui:ToggleSwitch IsChecked="{Binding AutoTranslate, Mode=TwoWay}" />
+                </controls:OptionControl>
 
-        <controls:OptionControl Header="{x:Static resources:Strings.Menu_GameChat_Translation_Enable_Title}" Description="{x:Static resources:Strings.Menu_GameChat_Translation_Enable_Description}">
-            <ui:ToggleSwitch IsChecked="{Binding AutoTranslate, Mode=TwoWay}" />
-        </controls:OptionControl>
-
-        <controls:OptionControl Header="{x:Static resources:Strings.Menu_GameChat_Translation_Language_Title}" Description="{x:Static resources:Strings.Menu_GameChat_Translation_Language_Description}">
-            <ComboBox Width="220" ItemsSource="{Binding AutoTranslateLanguages, Mode=OneTime}" DisplayMemberPath="Value" SelectedValuePath="Key" SelectedValue="{Binding AutoTranslateLanguage, Mode=TwoWay}" />
-        </controls:OptionControl>
-
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_GameChat_Translation_Language_Title}" Description="{x:Static resources:Strings.Menu_GameChat_Translation_Language_Description}">
+                    <ComboBox MinWidth="140" Padding="10,5,10,5" ItemsSource="{Binding AutoTranslateLanguages, Mode=OneTime}" DisplayMemberPath="Value" SelectedValuePath="Key" SelectedValue="{Binding AutoTranslateLanguage, Mode=TwoWay}" />
+                </controls:OptionControl>
+            </controls:SettingsCard>
+        </controls:CardColumns>
     </StackPanel>
 </ui:UiPage>

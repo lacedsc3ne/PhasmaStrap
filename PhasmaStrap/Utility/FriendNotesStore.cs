@@ -7,8 +7,11 @@ namespace PhasmaStrap.Utility
             public bool Favourite { get; set; }
             public string Note { get; set; } = "";
 
+            /// <summary>Alert override for this friend: "" follows the usual settings, or one of the AlertMode values.</summary>
+            public string Alerts { get; set; } = "";
+
             [System.Text.Json.Serialization.JsonIgnore]
-            public bool IsEmpty => !Favourite && string.IsNullOrWhiteSpace(Note);
+            public bool IsEmpty => !Favourite && string.IsNullOrWhiteSpace(Note) && string.IsNullOrEmpty(Alerts);
         }
 
         public static Action<string>? Log;
@@ -65,7 +68,7 @@ namespace PhasmaStrap.Utility
             {
                 Reload();
                 return _entries.TryGetValue(userId, out Entry? entry)
-                    ? new Entry { Favourite = entry.Favourite, Note = entry.Note }
+                    ? new Entry { Favourite = entry.Favourite, Note = entry.Note, Alerts = entry.Alerts ?? "" }
                     : new Entry();
             }
         }
@@ -88,6 +91,11 @@ namespace PhasmaStrap.Utility
                 Reload();
 
                 var entry = new Entry { Favourite = favourite, Note = (note ?? "").Trim() };
+
+                // Keep this friend's alert choice when only the star or the note changes
+                if (_entries.TryGetValue(userId, out Entry? existing))
+                    entry.Alerts = existing.Alerts ?? "";
+
                 if (entry.IsEmpty)
                     _entries.Remove(userId);
                 else
@@ -97,6 +105,53 @@ namespace PhasmaStrap.Utility
 
                 _saveTimer ??= new System.Threading.Timer(_ => Flush(), null, System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
                 _saveTimer.Change(400, System.Threading.Timeout.Infinite);
+            }
+        }
+
+        /// <summary>The values an alert override can take. Anything else means "use the usual settings".</summary>
+        public static class AlertMode
+        {
+            public const string Usual = "";
+            public const string Online = "online";
+            public const string Game = "game";
+            public const string Never = "never";
+        }
+
+        public void SetAlerts(long userId, string? mode)
+        {
+            lock (_lock)
+            {
+                Reload();
+
+                _entries.TryGetValue(userId, out Entry? existing);
+                var entry = new Entry
+                {
+                    Favourite = existing?.Favourite ?? false,
+                    Note = existing?.Note ?? "",
+                    Alerts = mode is AlertMode.Online or AlertMode.Game or AlertMode.Never ? mode! : AlertMode.Usual,
+                };
+
+                if (entry.IsEmpty)
+                    _entries.Remove(userId);
+                else
+                    _entries[userId] = entry;
+
+                _dirty = true;
+
+                _saveTimer ??= new System.Threading.Timer(_ => Flush(), null, System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+                _saveTimer.Change(400, System.Threading.Timeout.Infinite);
+            }
+        }
+
+        /// <summary>Friends with their own alert choice, keyed by user ID.</summary>
+        public Dictionary<long, string> AlertOverrides()
+        {
+            lock (_lock)
+            {
+                Reload();
+                return _entries
+                    .Where(pair => !string.IsNullOrEmpty(pair.Value.Alerts))
+                    .ToDictionary(pair => pair.Key, pair => pair.Value.Alerts);
             }
         }
 

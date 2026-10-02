@@ -13,188 +13,225 @@
       Scrollable="True">
     <ui:UiPage.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+
+        <!--  A status line that hides itself while it has nothing to say  -->
+        <Style x:Key="StatusLine" TargetType="{x:Type TextBlock}">
+            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Style.Triggers>
+                <Trigger Property="Text" Value="">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </Trigger>
+                <Trigger Property="Text" Value="{x:Null}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!--  Empty state text inside a card  -->
+        <Style x:Key="EmptyLine" TargetType="{x:Type TextBlock}">
+            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+        </Style>
     </ui:UiPage.Resources>
+
     <StackPanel Margin="0,0,14,14">
-        <TextBlock TextWrapping="Wrap" FontSize="14" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_AssetEngine_LetsGameSAssetDownloadsTextures}" />
+        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Margin="0,0,0,14" Text="Lets the game's asset downloads pass through PhasmaStrap, so they can be kept on disk, shrunk, replaced and counted." />
 
-        <Border Margin="0,12,0,0" Padding="12,10" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
-            <TextBlock TextWrapping="Wrap" Text="{Binding StatusText, Mode=OneWay}" />
-        </Border>
+        <controls:CardColumns>
+            <controls:SettingsCard controls:CardColumns.FullRow="True" Header="Routing" Description="{Binding StatusText, Mode=OneWay}">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_AssetEngine_RouteAssetDownloadsThroughPhasmaStrap}" Description="Everything below except swap packs depends on this. Takes effect next launch.">
+                    <ui:ToggleSwitch IsChecked="{Binding RouteEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
+            </controls:SettingsCard>
 
-        <controls:OptionControl Margin="0,8,0,0" Header="{x:Static resources:Strings.Menu_AssetEngine_RouteAssetDownloadsThroughPhasmaStrap}" Description="{x:Static resources:Strings.Menu_AssetEngine_SwitchEverythingBelowExceptSwapPacks}">
-            <ui:ToggleSwitch IsChecked="{Binding RouteEnabled, Mode=TwoWay}" />
-        </controls:OptionControl>
+            <!--  Asset cache, with the games it knows about  -->
+            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_AssetEngine_AssetCache}">
+                <controls:SettingsCard.HeaderContent>
+                    <Button Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Content="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" AutomationProperties.Name="Refresh the asset engine" Command="{Binding RefreshCommand, Mode=OneTime}" />
+                </controls:SettingsCard.HeaderContent>
 
-        <TextBlock Text="{x:Static resources:Strings.Menu_AssetEngine_AssetCache}" FontSize="20" FontWeight="Medium" Margin="0,20,0,0" />
-        <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_AssetEngine_KeepsDownloadedAssetsDiskAcrossSessions}" />
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_AssetEngine_KeepAssetsDisk}" Description="Stored once, however many games use them">
+                    <ui:ToggleSwitch IsChecked="{Binding CacheEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
 
-        <controls:OptionControl Header="{x:Static resources:Strings.Menu_AssetEngine_KeepAssetsDisk}">
-            <ui:ToggleSwitch IsChecked="{Binding CacheEnabled, Mode=TwoWay}" />
-        </controls:OptionControl>
-        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Capture_SizeLimit}" Description="{Binding CacheUsage, Mode=OneWay}">
-            <StackPanel Orientation="Horizontal">
-                <ComboBox Width="120" ItemsSource="{Binding CacheLimitOptions, Mode=OneTime}" SelectedItem="{Binding SelectedCacheLimit, Mode=TwoWay}" />
-                <ui:Button Margin="8,0,0,0" Content="{x:Static resources:Strings.Menu_AssetEngine_EmptyCache}" Icon="Delete24" Command="{Binding ClearCacheCommand, Mode=OneTime}" />
-            </StackPanel>
-        </controls:OptionControl>
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Capture_SizeLimit}" Description="{Binding CacheUsage, Mode=OneWay}">
+                    <StackPanel Orientation="Horizontal">
+                        <ComboBox MinWidth="90" ItemsSource="{Binding CacheLimitOptions, Mode=OneTime}" SelectedItem="{Binding SelectedCacheLimit, Mode=TwoWay}" />
+                        <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Content="{x:Static resources:Strings.Menu_AssetEngine_EmptyCache}" Command="{Binding ClearCacheCommand, Mode=OneTime}" />
+                    </StackPanel>
+                </controls:OptionControl>
 
-        <Grid Margin="0,12,0,4">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" FontSize="14" FontWeight="Medium" VerticalAlignment="Center" Text="{x:Static resources:Strings.Menu_AssetEngine_GamesPhasmaStrapKnowsAssets}" />
-            <ui:Button Grid.Column="1" Content="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" Icon="ArrowClockwise24" Appearance="Secondary" AutomationProperties.Name="Refresh the asset engine" Command="{Binding RefreshCommand, Mode=OneTime}" />
-        </Grid>
-        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_AssetEngine_PrefetchDownloadsWhatGameKnownUse}" />
-        <TextBlock Margin="2,8,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Visibility="{Binding GamesEmptyVisibility, Mode=OneWay}" Text="{x:Static resources:Strings.Menu_AssetEngine_NoneYetGameAppearsHereAfter}" />
+                <StackPanel>
+                    <Border Style="{DynamicResource PhasmaDivider}" />
+                    <TextBlock Margin="0,10,0,2" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="{x:Static resources:Strings.Menu_AssetEngine_GamesPhasmaStrapKnowsAssets}" />
+                    <TextBlock Margin="0,0,0,8" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Prefetch downloads what a game uses before you join. It only runs when you press it." />
+                    <TextBlock Style="{StaticResource EmptyLine}" Visibility="{Binding GamesEmptyVisibility, Mode=OneWay}" Text="No games yet. A game shows up here after you play it with routing on." />
 
-        <ItemsControl Margin="0,6,0,0" ItemsSource="{Binding Games, Mode=OneWay}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Border Margin="0,0,0,6" Padding="12,8" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock FontSize="13" FontWeight="SemiBold" Text="{Binding Name}" />
-                                <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Detail}" />
-                                <ProgressBar Margin="0,6,0,0" Height="3" Minimum="0" Maximum="1" Value="{Binding Progress}" Visibility="{Binding Busy, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                            </StackPanel>
-                            <ui:Button Grid.Column="1" Margin="12,0,0,0" Content="{x:Static resources:Strings.Menu_AssetEngine_Prefetch}" Icon="ArrowDownload24" IsEnabled="{Binding CanPrefetch}"
-                                       Command="{Binding DataContext.PrefetchCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}" />
-                        </Grid>
-                    </Border>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-        <TextBlock Margin="0,2,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding PrefetchStatus, Mode=OneWay}" />
+                    <ItemsControl ItemsSource="{Binding Games, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock FontSize="13.5" FontWeight="SemiBold" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Margin="0,2,0,0" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Detail}" />
+                                        <ProgressBar Margin="0,6,0,0" Height="3" Minimum="0" Maximum="1" Value="{Binding Progress}" Visibility="{Binding Busy, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Margin="12,0,0,0" Style="{DynamicResource PhasmaSoftButton}" VerticalAlignment="Center" IsEnabled="{Binding CanPrefetch}"
+                                            Command="{Binding DataContext.PrefetchCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:SymbolIcon Symbol="ArrowDownload24" FontSize="13" Margin="0,0,6,0" />
+                                            <TextBlock Text="{x:Static resources:Strings.Menu_AssetEngine_Prefetch}" />
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
 
-        <TextBlock Text="{x:Static resources:Strings.Menu_AssetEngine_TextureShrinker}" FontSize="20" FontWeight="Medium" Margin="0,20,0,0" />
-        <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_AssetEngine_ScalesLargeImagesDownTheirWay}" />
+                    <TextBlock Style="{StaticResource StatusLine}" Text="{Binding PrefetchStatus, Mode=OneWay}" />
+                </StackPanel>
+            </controls:SettingsCard>
 
-        <controls:OptionControl Header="{x:Static resources:Strings.Menu_AssetEngine_ShrinkLargeImages}">
-            <ui:ToggleSwitch IsChecked="{Binding ShrinkEnabled, Mode=TwoWay}" />
-        </controls:OptionControl>
-        <controls:OptionControl Header="{x:Static resources:Strings.Menu_AssetEngine_LargestSide}" Description="{x:Static resources:Strings.Menu_AssetEngine_ImagesBiggerThanAreScaledDown}">
-            <ComboBox Width="230" ItemsSource="{Binding ShrinkOptions, Mode=OneTime}" SelectedItem="{Binding SelectedShrink, Mode=TwoWay}" />
-        </controls:OptionControl>
+            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_AssetEngine_TextureShrinker}" Description="Scales big images down instead of removing them, so they use far less video memory.">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_AssetEngine_ShrinkLargeImages}" Description="Less video memory, the game still looks like itself">
+                    <ui:ToggleSwitch IsChecked="{Binding ShrinkEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_AssetEngine_LargestSide}" Description="Bigger images are scaled down to this">
+                    <ComboBox MinWidth="110" MaxWidth="200" ItemsSource="{Binding ShrinkOptions, Mode=OneTime}" SelectedItem="{Binding SelectedShrink, Mode=TwoWay}" />
+                </controls:OptionControl>
+            </controls:SettingsCard>
 
-        <TextBlock Text="{x:Static resources:Strings.Menu_AssetEngine_AssetSwapPacks}" FontSize="20" FontWeight="Medium" Margin="0,20,0,0" />
-        <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_AssetEngine_ReplaceAnySoundTextureSkyboxFace}" />
+            <!--  Swap packs  -->
+            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_AssetEngine_AssetSwapPacks}">
+                <controls:SettingsCard.HeaderContent>
+                    <Button Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Content="{x:Static resources:Strings.Menu_Capture_OpenFolder}" Command="{Binding OpenPacksFolderCommand, Mode=OneTime}" />
+                </controls:SettingsCard.HeaderContent>
 
-        <controls:OptionControl Header="{x:Static resources:Strings.Menu_AssetEngine_UseSwapPacks}" Description="{x:Static resources:Strings.Menu_AssetEngine_WorksProxyAloneRoutingEverythingNot}">
-            <ui:ToggleSwitch IsChecked="{Binding SwapsEnabled, Mode=TwoWay}" />
-        </controls:OptionControl>
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_AssetEngine_UseSwapPacks}" Description="Replace any sound, texture, sky or mesh by its asset ID">
+                    <ui:ToggleSwitch IsChecked="{Binding SwapsEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
 
-        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-            <ui:TextBox Width="240" PlaceholderText="{x:Static resources:Strings.Menu_AssetEngine_NameNewPack}" Text="{Binding NewPackName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-            <ui:Button Margin="8,0,0,0" Content="{x:Static resources:Strings.Menu_AssetEngine_Create}" Icon="Add24" AutomationProperties.Name="Create swap pack" Command="{Binding CreatePackCommand, Mode=OneTime}" />
-            <ui:Button Margin="8,0,0,0" Content="{x:Static resources:Strings.Menu_AssetEngine_ImportPack}" Icon="ArrowImport24" Appearance="Secondary" Command="{Binding ImportPackCommand, Mode=OneTime}" />
-            <ui:Button Margin="8,0,0,0" Content="{x:Static resources:Strings.Menu_Capture_OpenFolder}" Icon="Folder24" Appearance="Secondary" Command="{Binding OpenPacksFolderCommand, Mode=OneTime}" />
-        </StackPanel>
+                <StackPanel>
+                    <Border Style="{DynamicResource PhasmaDivider}" />
+                    <TextBlock Style="{StaticResource EmptyLine}" Margin="0,10,0,0" Visibility="{Binding PacksEmptyVisibility, Mode=OneWay}" Text="{x:Static resources:Strings.Menu_AssetEngine_NoPacksYet}" />
 
-        <TextBlock Margin="2,8,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Visibility="{Binding PacksEmptyVisibility, Mode=OneWay}" Text="{x:Static resources:Strings.Menu_AssetEngine_NoPacksYet}" />
+                    <ItemsControl ItemsSource="{Binding Packs, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,10,0,0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                            <TextBlock FontSize="13.5" FontWeight="SemiBold" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Margin="0,2,0,0" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Detail}" />
+                                        </StackPanel>
+                                        <ToggleButton x:Name="PackDetailsToggle" Grid.Column="1" Margin="8,0,8,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaIconButton}" ToolTip="Show the replacements">
+                                            <ui:SymbolIcon Symbol="ChevronDown24" FontSize="14" />
+                                        </ToggleButton>
+                                        <ui:ToggleSwitch Grid.Column="2" VerticalAlignment="Center" IsChecked="{Binding Enabled, Mode=TwoWay}" />
+                                    </Grid>
 
-        <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding Packs, Mode=OneWay}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <ui:CardExpander Margin="0,0,0,6">
-                        <ui:CardExpander.Header>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                    <TextBlock FontSize="13" FontWeight="SemiBold" Text="{Binding Name}" />
-                                    <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Detail}" />
+                                    <Border Margin="0,8,0,0" Padding="10" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="{DynamicResource PhasmaHoverBrush}"
+                                            Visibility="{Binding IsChecked, ElementName=PackDetailsToggle, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <StackPanel>
+                                            <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Only in these games (place IDs). Leave empty for every game." />
+                                            <ui:TextBox Margin="0,6,0,0" PlaceholderText="{x:Static resources:Strings.Menu_AssetEngine_EveryGame}" Text="{Binding Places, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+
+                                            <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding Swaps}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="0,2">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Grid.Column="0" FontFamily="Consolas" FontSize="12" VerticalAlignment="Center" Text="{Binding Text}" TextTrimming="CharacterEllipsis" />
+                                                            <Button Grid.Column="1" Padding="4" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Menu_AssetEngine_RemoveReplacement}"
+                                                                    Command="{Binding DataContext.RemoveSwapCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}">
+                                                                <ui:SymbolIcon Symbol="Delete24" FontSize="13" />
+                                                            </Button>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+
+                                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                                <Button Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Menu_AssetEngine_Export}"
+                                                        Command="{Binding DataContext.ExportPackCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}" />
+                                                <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Foreground="{DynamicResource PhasmaBadBrush}" Content="{x:Static resources:Strings.Menu_AssetEngine_DeletePack}"
+                                                        Command="{Binding DataContext.DeletePackCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
                                 </StackPanel>
-                                <ui:ToggleSwitch Grid.Column="1" Margin="0,0,12,0" IsChecked="{Binding Enabled, Mode=TwoWay}" />
-                            </Grid>
-                        </ui:CardExpander.Header>
-                        <StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock VerticalAlignment="Center" Margin="0,0,8,0" Text="{x:Static resources:Strings.Menu_AssetEngine_OnlyTheseGamesPlaceIDsEmpty}" />
-                                <ui:TextBox Width="300" PlaceholderText="{x:Static resources:Strings.Menu_AssetEngine_EveryGame}" Text="{Binding Places, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
-                            </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
 
-                            <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding Swaps}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Margin="0,2">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" FontFamily="Consolas" FontSize="12" VerticalAlignment="Center" Text="{Binding Text}" TextTrimming="CharacterEllipsis" />
-                                            <ui:Button Grid.Column="1" Padding="4" Appearance="Transparent" Icon="Delete16" ToolTip="{x:Static resources:Strings.Menu_AssetEngine_RemoveReplacement}"
-                                                       Command="{Binding DataContext.RemoveSwapCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                    <WrapPanel Margin="0,12,0,0">
+                        <ui:TextBox Width="160" Margin="0,0,6,6" PlaceholderText="{x:Static resources:Strings.Menu_AssetEngine_NameNewPack}" Text="{Binding NewPackName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <Button Margin="0,0,6,6" Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Menu_AssetEngine_Create}" AutomationProperties.Name="Create swap pack" Command="{Binding CreatePackCommand, Mode=OneTime}" />
+                        <Button Margin="0,0,0,6" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Content="{x:Static resources:Strings.Menu_AssetEngine_ImportPack}" Command="{Binding ImportPackCommand, Mode=OneTime}" />
+                    </WrapPanel>
 
-                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                <ui:Button Content="{x:Static resources:Strings.Menu_AssetEngine_Export}" Icon="ArrowExportLtr24" Appearance="Secondary"
-                                           Command="{Binding DataContext.ExportPackCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}" />
-                                <ui:Button Margin="8,0,0,0" Content="{x:Static resources:Strings.Menu_AssetEngine_DeletePack}" Icon="Delete24" Appearance="Secondary"
-                                           Command="{Binding DataContext.DeletePackCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}" />
-                            </StackPanel>
-                        </StackPanel>
-                    </ui:CardExpander>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+                    <!--  Add a replacement to a pack  -->
+                    <Border Style="{DynamicResource PhasmaDivider}" Margin="0,6,0,0" />
+                    <TextBlock Margin="0,10,0,6" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_AssetEngine_AddReplacement}" />
+                    <WrapPanel>
+                        <ComboBox Width="150" Margin="0,0,6,6" ItemsSource="{Binding Packs, Mode=OneWay}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedPack, Mode=TwoWay}" />
+                        <ui:TextBox Width="120" Margin="0,0,6,6" PlaceholderText="{x:Static resources:Strings.Menu_DeveloperTools_AssetID}" Text="{Binding SwapAssetId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <ui:TextBox Width="140" Margin="0,0,6,6" PlaceholderText="{x:Static resources:Strings.Menu_AssetEngine_NoteOptional}" Text="{Binding SwapNote, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <Button Margin="0,0,0,6" Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Menu_AssetEngine_ChooseFile}" Command="{Binding AddSwapCommand, Mode=OneTime}" />
+                    </WrapPanel>
+                    <TextBlock Style="{StaticResource StatusLine}" Text="{Binding PackStatus, Mode=OneWay}" />
+                </StackPanel>
+            </controls:SettingsCard>
 
-        <Border Margin="0,4,0,0" Padding="12,10" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
-            <StackPanel>
-                <TextBlock FontSize="13" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_AssetEngine_AddReplacement}" />
-                <WrapPanel Margin="0,6,0,0">
-                    <ComboBox Width="200" Margin="0,0,8,6" ItemsSource="{Binding Packs, Mode=OneWay}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedPack, Mode=TwoWay}" />
-                    <ui:TextBox Width="170" Margin="0,0,8,6" PlaceholderText="{x:Static resources:Strings.Menu_DeveloperTools_AssetID}" Text="{Binding SwapAssetId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <ui:TextBox Width="220" Margin="0,0,8,6" PlaceholderText="{x:Static resources:Strings.Menu_AssetEngine_NoteOptional}" Text="{Binding SwapNote, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <ui:Button Margin="0,0,0,6" Content="{x:Static resources:Strings.Menu_AssetEngine_ChooseFile}" Icon="DocumentAdd24" Command="{Binding AddSwapCommand, Mode=OneTime}" />
-                </WrapPanel>
-            </StackPanel>
-        </Border>
-        <TextBlock Margin="0,4,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding PackStatus, Mode=OneWay}" />
+            <!--  Server picker and traffic report  -->
+            <controls:SettingsCard Header="Join time server picker">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_AssetEngine_LetMeChooseServerWhenI}" Description="Holds the join for a moment and lists servers with region and ping">
+                    <ui:ToggleSwitch IsChecked="{Binding ServerPickerEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
+                <TextBlock Style="{StaticResource StatusLine}" Text="{Binding PickerStatus, Mode=OneWay}" />
 
-        <TextBlock Text="{x:Static resources:Strings.Menu_AssetEngine_JoinTimeServerPicker}" FontSize="20" FontWeight="Medium" Margin="0,20,0,0" />
-        <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_AssetEngine_WhenGameJoinedWithoutNamingServer}" />
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_AssetEngine_KeepTrafficReport}" Description="Downloads, cache savings and slow servers per game">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Margin="0,0,10,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Content="{x:Static resources:Strings.Common_Reset}" Command="{Binding ClearTrafficCommand, Mode=OneTime}" />
+                        <ui:ToggleSwitch IsChecked="{Binding TrafficEnabled, Mode=TwoWay}" />
+                    </StackPanel>
+                </controls:OptionControl>
 
-        <controls:OptionControl Header="{x:Static resources:Strings.Menu_AssetEngine_LetMeChooseServerWhenI}">
-            <ui:ToggleSwitch IsChecked="{Binding ServerPickerEnabled, Mode=TwoWay}" />
-        </controls:OptionControl>
-        <TextBlock Margin="0,2,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding PickerStatus, Mode=OneWay}" />
-
-        <TextBlock Text="{x:Static resources:Strings.Menu_AssetEngine_TrafficReport}" FontSize="20" FontWeight="Medium" Margin="0,20,0,0" />
-        <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_AssetEngine_PerGameHowMuchWasDownloaded}" />
-
-        <controls:OptionControl Header="{x:Static resources:Strings.Menu_AssetEngine_KeepTrafficReport}">
-            <StackPanel Orientation="Horizontal">
-                <ui:Button Margin="0,0,12,0" Content="{x:Static resources:Strings.Common_Reset}" Icon="Delete24" Appearance="Secondary" Command="{Binding ClearTrafficCommand, Mode=OneTime}" />
-                <ui:ToggleSwitch IsChecked="{Binding TrafficEnabled, Mode=TwoWay}" />
-            </StackPanel>
-        </controls:OptionControl>
-
-        <TextBlock Margin="2,8,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Visibility="{Binding TrafficEmptyVisibility, Mode=OneWay}" Text="{x:Static resources:Strings.Menu_AssetEngine_NothingCountedYet}" />
-
-        <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding Traffic, Mode=OneWay}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Border Margin="0,0,0,6" Padding="12,10" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
-                        <StackPanel>
-                            <TextBlock FontSize="13" FontWeight="SemiBold" Text="{Binding Name}" />
-                            <TextBlock FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap" Text="{Binding Numbers}" />
-                            <TextBlock FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Types}" />
-                            <TextBlock FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Hosts}" />
-                        </StackPanel>
-                    </Border>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+                <StackPanel>
+                    <TextBlock Style="{StaticResource EmptyLine}" Visibility="{Binding TrafficEmptyVisibility, Mode=OneWay}" Text="{x:Static resources:Strings.Menu_AssetEngine_NothingCountedYet}" />
+                    <ItemsControl ItemsSource="{Binding Traffic, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,0,0,8" Padding="10,8" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="{DynamicResource PhasmaHoverBrush}">
+                                    <StackPanel>
+                                        <TextBlock FontSize="13" FontWeight="SemiBold" Text="{Binding Name}" />
+                                        <TextBlock FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap" Text="{Binding Numbers}" />
+                                        <TextBlock FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Types}" />
+                                        <TextBlock FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Hosts}" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </controls:SettingsCard>
+        </controls:CardColumns>
     </StackPanel>
 </ui:UiPage>

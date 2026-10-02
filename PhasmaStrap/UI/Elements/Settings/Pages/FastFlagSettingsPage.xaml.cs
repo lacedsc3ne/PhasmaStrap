@@ -11,7 +11,29 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
         public FastFlagSettingsPage()
         {
             InitializeComponent();
+
+            Host.SectionChanged += (_, _) => UpdateHeader();
+            UpdateHeader();
         }
+
+        // The header button belongs to the Roblox FFlags tab, as in the mockups.
+        private void UpdateHeader()
+        {
+            if (_editorHeaderButton is null)
+                return;
+
+            _editorHeaderButton.Visibility = Host.CurrentSection is null || Host.CurrentSection == typeof(FastFlagsPage) ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private System.Windows.Controls.Button? _editorHeaderButton;
+
+        private void EditorHeaderButton_Loaded(object sender, RoutedEventArgs e)
+        {
+            _editorHeaderButton = sender as System.Windows.Controls.Button;
+            UpdateHeader();
+        }
+
+        private void EditorHeaderButton_Click(object sender, RoutedEventArgs e) => Host.Show(typeof(FastFlagEditorPage));
 
         public SectionHost SectionHost => Host;
 

@@ -10,49 +10,129 @@
       d:DataContext="{d:DesignInstance dmodels:HistoryViewModel, IsDesignTimeCreatable=True}"
       Title="HistoryPage"
       Scrollable="True">
-    <StackPanel Margin="0,0,14,14">
-        <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_History_EveryGameYouVePlayedThrough}" />
+    <ui:UiPage.Resources>
+        <!--  Thin bar for the Most played card  -->
+        <Style x:Key="ShareBar" TargetType="{x:Type ProgressBar}">
+            <Setter Property="Height" Value="6" />
+            <Setter Property="Minimum" Value="0" />
+            <Setter Property="Maximum" Value="1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ProgressBar}">
+                        <Grid>
+                            <Border x:Name="PART_Track" CornerRadius="3" Background="{DynamicResource PhasmaSelectedBrush}" />
+                            <Border x:Name="PART_Indicator" HorizontalAlignment="Left" CornerRadius="3" Background="{DynamicResource PhasmaAccentBrush}" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </ui:UiPage.Resources>
 
-        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-            <TextBlock VerticalAlignment="Center" Text="{Binding StatusText, Mode=OneWay}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-            <ui:Button Margin="12,0,0,0" Content="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" Icon="ArrowClockwise24" Command="{Binding RefreshCommand, Mode=OneTime}" />
+    <Grid Margin="0,8,14,14">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="300" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0" Margin="0,0,16,0">
+            <Grid Margin="0,0,0,12">
+                <TextBlock VerticalAlignment="Center" Text="{Binding SummaryText, Mode=OneWay}" Style="{DynamicResource PhasmaSubtle}" FontSize="12.5" />
+                <Button HorizontalAlignment="Right" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Command="{Binding RefreshCommand, Mode=OneTime}">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="13" Margin="0,0,6,0" />
+                        <TextBlock Text="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" FontSize="12.5" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <!--  Empty state  -->
+            <Border Padding="26,22" Style="{DynamicResource PhasmaCard}" Visibility="{Binding EmptyVisibility}">
+                <StackPanel>
+                    <ui:SymbolIcon HorizontalAlignment="Left" Symbol="History24" FontSize="22" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    <TextBlock Margin="0,10,0,0" Text="{x:Static resources:Strings.Menu_Home_NoHistoryYet}" Style="{DynamicResource PhasmaHeading}" />
+                    <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" Style="{DynamicResource PhasmaSubtle}" Text="{Binding StatusText, Mode=OneWay}" />
+                </StackPanel>
+            </Border>
+
+            <ItemsControl ItemsSource="{Binding Entries, Mode=OneWay}" Focusable="False">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="0,0,0,8" Padding="14,10" Style="{DynamicResource PhasmaCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" Width="44" Height="38" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="{DynamicResource PhasmaSelectedBrush}">
+                                    <Border CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}">
+                                        <Border.Background>
+                                            <ImageBrush ImageSource="{Binding IconUrl, Converter={StaticResource ImageUrlConverter}, ConverterParameter=96}" Stretch="UniformToFill" />
+                                        </Border.Background>
+                                    </Border>
+                                </Border>
+
+                                <StackPanel Grid.Column="1" Margin="14,0,12,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding DisplayName}" FontSize="13.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock FontSize="11.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis">
+                                        <Run Text="{Binding TotalTimeText, Mode=OneWay}" />
+                                        <Run Text="{x:Static resources:Strings.Menu_History_PlayedLastPlayed}" />
+                                        <Run Text="{Binding LastPlayedText, Mode=OneWay}" />
+                                    </TextBlock>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button Margin="0,0,8,0" Style="{DynamicResource PhasmaSoftButton}"
+                                            Command="{Binding DataContext.CopyLinkCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:SymbolIcon Symbol="Link24" FontSize="13" Margin="0,0,6,0" />
+                                            <TextBlock Text="{x:Static resources:Strings.Menu_History_CopyLink}" FontSize="12.5" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Style="{DynamicResource PhasmaAccentButton}"
+                                            Command="{Binding DataContext.LaunchCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:SymbolIcon Symbol="Play24" Filled="True" FontSize="12" Margin="0,0,6,0" Foreground="{DynamicResource PhasmaAccentTextBrush}" />
+                                            <TextBlock Text="{x:Static resources:Strings.Common_Launch}" FontSize="12.5" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </StackPanel>
 
-        <ItemsControl Margin="0,12,0,0" ItemsSource="{Binding Entries, Mode=OneWay}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <ui:Card Margin="0,0,0,6" Padding="0">
-                        <Grid VerticalAlignment="Center">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="1">
+            <Border Padding="14,12" Style="{DynamicResource PhasmaCard}" Background="{DynamicResource PhasmaPanelBrush}">
+                <DockPanel>
+                    <ui:SymbolIcon DockPanel.Dock="Left" Margin="0,1,10,0" VerticalAlignment="Top" Symbol="Info24" FontSize="14" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    <TextBlock TextWrapping="Wrap" FontSize="11.5" LineHeight="17" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               Text="{x:Static resources:Strings.Menu_History_EveryGameYouVePlayedThrough}" />
+                </DockPanel>
+            </Border>
 
-                            <Border Grid.Column="0" Width="64" Height="64" CornerRadius="4">
-                                <Border.Background>
-                                    <ImageBrush ImageSource="{Binding IconUrl, IsAsync=True}" />
-                                </Border.Background>
-                            </Border>
-
-                            <StackPanel Grid.Column="1" Margin="16,8,12,8" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding DisplayName}" FontSize="16" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
-                                <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}">
-                                    <Run Text="{Binding TotalTimeText, Mode=OneWay}" />
-                                    <Run Text="{x:Static resources:Strings.Menu_History_PlayedLastPlayed}" />
-                                    <Run Text="{Binding LastPlayedText, Mode=OneWay}" />
-                                </TextBlock>
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,12,0">
-                                <ui:Button Margin="0,0,8,0" Content="{x:Static resources:Strings.Menu_History_CopyLink}" Command="{Binding DataContext.CopyLinkCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
-                                <ui:Button Content="{x:Static resources:Strings.Common_Launch}" Icon="Play28" IconFilled="True" Appearance="Success" Foreground="White" IconForeground="White"
-                                           Command="{Binding DataContext.LaunchCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
-                            </StackPanel>
-                        </Grid>
-                    </ui:Card>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-    </StackPanel>
+            <Border Margin="0,12,0,0" Padding="16,14" Style="{DynamicResource PhasmaCard}" Visibility="{Binding ListVisibility}">
+                <StackPanel>
+                    <TextBlock Margin="0,0,0,10" Text="Most played" FontSize="13.5" Style="{DynamicResource PhasmaHeading}" />
+                    <ItemsControl ItemsSource="{Binding MostPlayed}" Focusable="False">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type dmodels:MostPlayedRow}">
+                                <StackPanel Margin="0,0,0,10">
+                                    <Grid>
+                                        <TextBlock Margin="0,0,44,0" Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock HorizontalAlignment="Right" Text="{Binding HoursText}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    </Grid>
+                                    <ProgressBar Margin="0,6,0,0" Style="{StaticResource ShareBar}" Value="{Binding Fraction, Mode=OneWay}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Grid>
 </ui:UiPage>

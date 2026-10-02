@@ -320,17 +320,27 @@ namespace PhasmaStrap
                     LaunchGame game = App.Settings.Prop.UseFastFlagManager ? await ResolveLaunchGameAsync() : LaunchGame.Unknown;
                     Utility.FlagProfile? profile = game.Known ? Utility.FlagLayers.ProfileFor(App.FlagProfiles.Prop, game.PlaceId, game.UniverseId) : null;
 
-                    if (!game.Known && App.Settings.Prop.UseFastFlagManager)
+                    // "Launch with flag profile" from the Games pages: a profile for this launch only.
+                    Utility.FlagProfileSession.OneTimeRequest? oneTimeRequest = null;
+                    Utility.FlagProfile? oneTimeProfile = null;
+                    bool oneTime = App.Settings.Prop.UseFastFlagManager
+                        && Utility.FlagProfileSession.TakeOneTime(App.FlagProfiles.Prop, out oneTimeRequest, out oneTimeProfile);
+                    if (oneTime)
+                        profile = oneTimeProfile;
+                    else
+                        oneTimeRequest = null;
+
+                    if (!game.Known && !oneTime && App.Settings.Prop.UseFastFlagManager)
                         Utility.FlagProfileSession.NoteLaunchWithoutGame(App.FlagProfiles.Prop);
 
                     var wanted = Utility.FlagProfileSession.Wanted.Of(profile);
 
-                    bool startsNewClient = await Utility.FlagProfileSession.PrepareLaunchAsync(wanted, game.Known);
+                    bool startsNewClient = await Utility.FlagProfileSession.PrepareLaunchAsync(wanted, game.Known || oneTime);
 
                     bool flagsWritten = await WriteLaunchFlagsAsync(profile);
 
                     if (startsNewClient || flagsWritten)
-                        Utility.FlagProfileSession.RecordLaunch(flagsWritten ? wanted : Utility.FlagProfileSession.Wanted.None);
+                        Utility.FlagProfileSession.RecordLaunch(flagsWritten ? wanted : Utility.FlagProfileSession.Wanted.None, flagsWritten ? oneTimeRequest : null);
 
                     if (App.Settings.Prop.AssetWarpEnabled && App.Settings.Prop.AssetWarpPreloadEnabled)
                     {
@@ -338,6 +348,15 @@ namespace PhasmaStrap
                         _ = Networking.AssetPreloadCache.PreloadRecentGamesAsync(
                             Integrations.PlayTimeStore.GetAll().OrderByDescending(e => e.LastPlayed).Select(e => e.UniverseId).Where(id => id > 0));
                     }
+                }
+
+                if (_launchMode == LaunchMode.Player)
+                {
+                    // Deployment > "Allow more than one Roblox" and "Fullscreen on launch"
+                    Utility.RobloxMultiInstance.Hold();
+
+                    if (App.Settings.Prop.FullscreenOnLaunch)
+                        ApplyFullscreenOnLaunch();
                 }
 
                 StartRoblox();
@@ -857,6 +876,40 @@ namespace PhasmaStrap
             {
                 App.Logger.WriteLine(LOG_IDENT, $"Could not write this launch's flags: {ex.Message}");
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Turns on Roblox's own Fullscreen setting in GlobalBasicSettings before it starts, so the game opens fullscreen.
+        /// The resolution override (Performance) still applies on join. Skipped while a Roblox is running, as it rewrites the file on exit.
+        /// </summary>
+        private static void ApplyFullscreenOnLaunch()
+        {
+            const string LOG_IDENT = "Bootstrapper::ApplyFullscreenOnLaunch";
+
+            try
+            {
+                if (Process.GetProcessesByName(App.RobloxPlayerAppName) is { Length: > 0 } running)
+                {
+                    foreach (Process process in running)
+                        process.Dispose();
+
+                    App.Logger.WriteLine(LOG_IDENT, "Roblox is already running, leaving its display setting alone");
+                    return;
+                }
+
+                var gbs = new GBSEditor();
+                gbs.Load();
+
+                if (gbs.GetBool("Fullscreen"))
+                    return;
+
+                gbs.SetBool("Fullscreen", true);
+                App.Logger.WriteLine(LOG_IDENT, gbs.Save() ? "Roblox will open fullscreen" : "Could not save Roblox's display setting");
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not set fullscreen: {ex.Message}");
             }
         }
 

@@ -11,46 +11,186 @@
       d:DataContext="{d:DesignInstance dmodels:DiagnosticsViewModel, IsDesignTimeCreatable=False}"
       Title="DiagnosticsPage"
       Scrollable="True">
+    <ui:UiPage.Resources>
+        <!--  Tabs drawn as flat pills. Kept as a real TabControl so settings search can still switch tabs.  -->
+        <Style x:Key="DiagTabItem" TargetType="{x:Type TabItem}">
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="Margin" Value="0,0,4,0" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource PhasmaFocusVisual}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TabItem}">
+                        <Border x:Name="Fill" Padding="{TemplateBinding Padding}" Background="Transparent"
+                                CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" SnapsToDevicePixels="True">
+                            <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaHoverBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaSelectedBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DiagTabControl" TargetType="{x:Type TabControl}">
+            <Setter Property="ItemContainerStyle" Value="{StaticResource DiagTabItem}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TabControl}">
+                        <Grid KeyboardNavigation.TabNavigation="Local">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <TabPanel Grid.Row="0" HorizontalAlignment="Left" IsItemsHost="True" KeyboardNavigation.TabIndex="1" />
+                            <ContentPresenter x:Name="PART_SelectedContentHost" Grid.Row="1" Margin="0,14,0,0" ContentSource="SelectedContent" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--  A small info mark that shows the full explanation on hover  -->
+        <Style x:Key="InfoMark" TargetType="ui:SymbolIcon">
+            <Setter Property="Symbol" Value="Info20" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Margin" Value="8,0,0,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Cursor" Value="Help" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+            <Setter Property="ToolTipService.ShowDuration" Value="60000" />
+        </Style>
+
+        <!--  Bar charts: one Border per bar, bottom aligned, coloured by what the bar means  -->
+        <ItemsPanelTemplate x:Key="ChartBarsPanel">
+            <UniformGrid Rows="1" />
+        </ItemsPanelTemplate>
+
+        <DataTemplate x:Key="PingBarTemplate" DataType="{x:Type dmodels:DiagnosticsBar}">
+            <Border Margin="1,0,1,0" VerticalAlignment="Bottom" CornerRadius="2" Height="{Binding Height, Mode=OneTime}" ToolTip="{Binding Tip, Mode=OneTime}">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="{DynamicResource PhasmaGoodBrush}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Kind, Mode=OneTime}" Value="Spike">
+                                <Setter Property="Background" Value="{DynamicResource PhasmaWarnBrush}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Kind, Mode=OneTime}" Value="Lost">
+                                <Setter Property="Background" Value="{DynamicResource PhasmaBadBrush}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="FrameBarTemplate" DataType="{x:Type dmodels:DiagnosticsBar}">
+            <Border Margin="1,0,1,0" VerticalAlignment="Bottom" CornerRadius="2" Height="{Binding Height, Mode=OneTime}" ToolTip="{Binding Tip, Mode=OneTime}">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="{DynamicResource PhasmaStrokeStrongBrush}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Kind, Mode=OneTime}" Value="Spike">
+                                <Setter Property="Background" Value="{DynamicResource PhasmaBadBrush}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Kind, Mode=OneTime}" Value="Lost">
+                                <Setter Property="Background" Value="{DynamicResource PhasmaBadBrush}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+            </Border>
+        </DataTemplate>
+    </ui:UiPage.Resources>
+
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Text="{x:Static resources:Strings.Menu_PhasmaStrap_Section_Diagnostics_Header}" FontSize="20" FontWeight="Medium" />
-        <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Diagnostics_ToolsFindOutWhatWrongSay}" />
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Style="{DynamicResource PhasmaPageTitle}" VerticalAlignment="Center" Text="{x:Static resources:Strings.Menu_PhasmaStrap_Section_Diagnostics_Header}" />
+            <Border Style="{DynamicResource PhasmaTagNeutral}" Margin="12,0,0,0">
+                <TextBlock FontSize="11" Text="PhasmaStrap" />
+            </Border>
+        </StackPanel>
+        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="Tools that find out what is wrong and say it in plain words."
+                   ToolTip="{x:Static resources:Strings.Menu_Diagnostics_ToolsFindOutWhatWrongSay}" />
 
-        <TabControl Margin="0,12,0,0" x:Name="Tabs">
+        <TabControl x:Name="Tabs" Style="{StaticResource DiagTabControl}">
 
+            <!--  Health check  -->
             <TabItem>
                 <TabItem.Header>
-                    <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="HeartPulse24" Margin="0,0,6,0" />
-                        <TextBlock Text="{x:Static resources:Strings.Menu_Diagnostics_HealthCheck}" />
-                    </StackPanel>
+                    <TextBlock Text="{x:Static resources:Strings.Menu_Diagnostics_HealthCheck}" />
                 </TabItem.Header>
-                <StackPanel Margin="0,12,0,0">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="14" Text="{Binding HealthSummary, Mode=OneWay}" />
-                        <ui:Button Grid.Column="1" Margin="12,0,0,0" Content="{x:Static resources:Strings.Menu_Diagnostics_RunCheck}" Icon="Play24" Appearance="Primary" AutomationProperties.Name="Run the check"
-                                   Command="{Binding RunHealthCommand, Mode=OneTime}" IsEnabled="{Binding HealthIdle, Mode=OneWay}" />
-                    </Grid>
+                <StackPanel>
+                    <Border Style="{DynamicResource PhasmaCard}" Padding="16,12" Margin="0,0,0,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <!--  Status icon: green tick, amber warning or red error, from the last run of the checks  -->
+                            <ui:SymbolIcon Grid.Column="0" Symbol="{Binding HealthSymbol, Mode=OneWay}" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center">
+                                <ui:SymbolIcon.Style>
+                                    <Style TargetType="ui:SymbolIcon" BasedOn="{StaticResource {x:Type ui:SymbolIcon}}">
+                                        <Setter Property="Foreground" Value="{DynamicResource PhasmaAccentBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HealthOverall, Mode=OneWay}" Value="Good">
+                                                <Setter Property="Foreground" Value="{DynamicResource PhasmaGoodBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding HealthOverall, Mode=OneWay}" Value="Warn">
+                                                <Setter Property="Foreground" Value="{DynamicResource PhasmaWarnBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding HealthOverall, Mode=OneWay}" Value="Bad">
+                                                <Setter Property="Foreground" Value="{DynamicResource PhasmaBadBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding HealthOverall, Mode=OneWay}" Value="Running">
+                                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ui:SymbolIcon.Style>
+                            </ui:SymbolIcon>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="13" FontWeight="SemiBold" Text="{Binding HealthSummary, Mode=OneWay}" />
+                            <Button Grid.Column="2" Margin="12,0,0,0" Style="{DynamicResource PhasmaAccentButton}" AutomationProperties.Name="Run the check"
+                                    Command="{Binding RunHealthCommand, Mode=OneTime}" IsEnabled="{Binding HealthIdle, Mode=OneWay}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14" Margin="0,0,6,0" />
+                                    <TextBlock Text="{x:Static resources:Strings.Menu_Diagnostics_RunCheck}" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </Border>
 
-                    <ItemsControl Margin="0,12,0,0" ItemsSource="{Binding Health, Mode=OneWay}">
+                    <ItemsControl ItemsSource="{Binding Health, Mode=OneWay}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Margin="0,0,0,6" Padding="12,10" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
+                                <Border Style="{DynamicResource PhasmaCard}" Padding="16,12" Margin="0,0,0,10">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <ui:SymbolIcon Grid.Column="0" Symbol="{Binding Symbol}" Foreground="{Binding Color}" FontSize="20" Margin="0,1,12,0" VerticalAlignment="Top" />
-                                        <StackPanel Grid.Column="1">
-                                            <TextBlock FontSize="13" FontWeight="SemiBold" Text="{Binding Title}" />
-                                            <TextBlock FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Detail}" />
+                                        <ui:SymbolIcon Grid.Column="0" Symbol="{Binding Symbol}" Foreground="{Binding Color}" FontSize="16" Margin="0,1,12,0" VerticalAlignment="Center" />
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding Title}" />
+                                            <TextBlock FontSize="11.5" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Detail}" />
                                         </StackPanel>
-                                        <ui:Button Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" Content="{Binding FixLabel}" Icon="Wrench24" Visibility="{Binding FixVisibility}" Command="{Binding FixCommand}" />
+                                        <Button Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaSoftButton}"
+                                                Content="{Binding FixLabel}" Visibility="{Binding FixVisibility}" Command="{Binding FixCommand}" />
                                     </Grid>
                                 </Border>
                             </DataTemplate>
@@ -59,128 +199,168 @@
                 </StackPanel>
             </TabItem>
 
+            <!--  Connection  -->
             <TabItem>
                 <TabItem.Header>
-                    <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="Router24" Margin="0,0,6,0" />
-                        <TextBlock Text="{x:Static resources:Strings.Menu_Diagnostics_Connection}" />
-                    </StackPanel>
+                    <TextBlock Text="{x:Static resources:Strings.Menu_Diagnostics_Connection}" />
                 </TabItem.Header>
-                <StackPanel Margin="0,12,0,0">
-                    <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ServerText, Mode=OneWay}" />
+                <StackPanel>
+                    <Border Style="{DynamicResource PhasmaCard}" Padding="16,12" Margin="0,0,0,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
+                                <TextBlock FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding ServerText, Mode=OneWay}" />
+                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Measured to a machine next to the server, since game servers ignore pings" />
+                                    <ui:SymbolIcon Style="{StaticResource InfoMark}" ToolTip="{x:Static resources:Strings.Menu_Diagnostics_RobloxGameServersIgnorePingsSo}" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <ComboBox MinWidth="130" Padding="10,5,10,5" ItemsSource="{Binding DurationOptions, Mode=OneTime}" SelectedItem="{Binding SelectedDuration, Mode=TwoWay}" IsEnabled="{Binding ConnectionIdle, Mode=OneWay}" />
+                                <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaAccentButton}" AutomationProperties.Name="Test the connection"
+                                        Command="{Binding RunConnectionCommand, Mode=OneTime}" IsEnabled="{Binding ConnectionIdle, Mode=OneWay}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Router24" FontSize="14" Margin="0,0,6,0" />
+                                        <TextBlock Text="{x:Static resources:Strings.Menu_Diagnostics_TestConnection}" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding CancelConnectionCommand, Mode=OneTime}" Visibility="{Binding ConnectionBusyVisibility, Mode=OneWay}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Stop24" FontSize="14" Margin="0,0,6,0" />
+                                        <TextBlock Text="{x:Static resources:Strings.Menu_Diagnostics_Stop}" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.ColumnSpan="2">
+                                <ProgressBar Margin="0,10,0,0" Height="4" Minimum="0" Maximum="1" Value="{Binding ConnectionProgress, Mode=OneWay}" Visibility="{Binding ConnectionBusyVisibility, Mode=OneWay}" />
+                                <TextBlock Margin="0,6,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ConnectionStatus, Mode=OneWay}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
 
-                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                        <ComboBox Width="150" ItemsSource="{Binding DurationOptions, Mode=OneTime}" SelectedItem="{Binding SelectedDuration, Mode=TwoWay}" IsEnabled="{Binding ConnectionIdle, Mode=OneWay}" />
-                        <ui:Button Margin="8,0,0,0" Content="{x:Static resources:Strings.Menu_Diagnostics_TestConnection}" Icon="Play24" Appearance="Primary" AutomationProperties.Name="Test the connection"
-                                   Command="{Binding RunConnectionCommand, Mode=OneTime}" IsEnabled="{Binding ConnectionIdle, Mode=OneWay}" />
-                        <ui:Button Margin="8,0,0,0" Content="{x:Static resources:Strings.Menu_Diagnostics_Stop}" Icon="Stop24" Appearance="Secondary" Command="{Binding CancelConnectionCommand, Mode=OneTime}" Visibility="{Binding ConnectionBusyVisibility, Mode=OneWay}" />
-                    </StackPanel>
-
-                    <ProgressBar Margin="0,10,0,0" Height="4" Minimum="0" Maximum="1" Value="{Binding ConnectionProgress, Mode=OneWay}" Visibility="{Binding ConnectionBusyVisibility, Mode=OneWay}" />
-                    <TextBlock Margin="0,6,0,0" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ConnectionStatus, Mode=OneWay}" />
-
-                    <Border Margin="0,12,0,0" Padding="14,12" CornerRadius="8" BorderThickness="1" Visibility="{Binding ConnectionVerdictVisibility, Mode=OneWay}"
-                            BorderBrush="{DynamicResource SystemAccentColorSecondaryBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
+                    <Border Style="{DynamicResource PhasmaCard}" Padding="16,14">
                         <StackPanel>
-                            <TextBlock FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding ConnectionVerdict, Mode=OneWay}" />
-                            <ItemsControl Margin="0,6,0,0" ItemsSource="{Binding ConnectionFindings, Mode=OneWay}">
+                            <StackPanel Visibility="{Binding ConnectionVerdictVisibility, Mode=OneWay}">
+                                <TextBlock FontSize="13.5" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{DynamicResource PhasmaGoodBrush}" Text="{Binding ConnectionVerdict, Mode=OneWay}" />
+                                <ItemsControl Margin="0,4,0,0" ItemsSource="{Binding ConnectionFindings, Mode=OneWay}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Margin="0,3,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+
+                            <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding PingRows, Mode=OneWay}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <TextBlock Margin="0,3,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding}" />
+                                        <!--  One bar per stretch of pings: green is normal, amber a spike, red a ping that got no answer  -->
+                                        <StackPanel Margin="0,6,0,6">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" FontSize="12.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"><Run Text="{Binding Label, Mode=OneWay}" /><Run Text="   " /><Run FontWeight="Normal" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Address, Mode=OneWay}" /></TextBlock>
+                                                <TextBlock Grid.Column="1" Margin="12,0,0,0" FontSize="11.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Numbers}" />
+                                            </Grid>
+                                            <ItemsControl Margin="0,8,0,0" Height="48" Focusable="False" ItemsSource="{Binding Bars, Mode=OneTime}"
+                                                          ItemsPanel="{StaticResource ChartBarsPanel}" ItemTemplate="{StaticResource PingBarTemplate}" />
+                                        </StackPanel>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+
+                            <Expander Margin="0,8,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+                                <Expander.Header>
+                                    <TextBlock FontSize="12.5" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_Diagnostics_RouteStationByStation}" />
+                                </Expander.Header>
+                                <ItemsControl Margin="0,6,0,0" ItemsSource="{Binding RouteRows, Mode=OneWay}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock FontFamily="Consolas" FontSize="12" Margin="0,1" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Expander>
                         </StackPanel>
                     </Border>
-
-                    <ItemsControl Margin="0,10,0,0" ItemsSource="{Binding PingRows, Mode=OneWay}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Margin="0,0,0,6" Padding="12,10" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                            <TextBlock FontSize="13" FontWeight="SemiBold"><Run Text="{Binding Label, Mode=OneWay}" /><Run Text="   " /><Run FontWeight="Normal" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Address, Mode=OneWay}" /></TextBlock>
-                                            <TextBlock FontSize="12" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Numbers}" />
-                                        </StackPanel>
-                                        <Canvas Grid.Column="1" Width="300" Height="40" ClipToBounds="True" VerticalAlignment="Center">
-                                            <Polyline Points="{Binding Spark}" Stroke="{DynamicResource SystemAccentColorSecondaryBrush}" StrokeThickness="1.2" StrokeLineJoin="Round" />
-                                        </Canvas>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-
-                    <ui:CardExpander Margin="0,4,0,0" Header="{x:Static resources:Strings.Menu_Diagnostics_RouteStationByStation}">
-                        <ItemsControl ItemsSource="{Binding RouteRows, Mode=OneWay}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock FontFamily="Consolas" FontSize="12" Margin="0,1" Text="{Binding}" />
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ui:CardExpander>
-
-                    <TextBlock Margin="2,10,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Diagnostics_RobloxGameServersIgnorePingsSo}" />
                 </StackPanel>
             </TabItem>
 
+            <!--  Crashes  -->
             <TabItem>
                 <TabItem.Header>
-                    <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="Bug24" Margin="0,0,6,0" />
-                        <TextBlock Text="{x:Static resources:Strings.Menu_Diagnostics_Crashes}" />
-                    </StackPanel>
+                    <TextBlock Text="{x:Static resources:Strings.Menu_Diagnostics_Crashes}" />
                 </TabItem.Header>
-                <StackPanel Margin="0,12,0,0">
-                    <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Diagnostics_WhenRobloxClosesWithoutItsNormal}" />
+                <StackPanel>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Style="{DynamicResource PhasmaAccentButton}" AutomationProperties.Name="Analyse the last session" Command="{Binding AnalyzeLastSessionCommand, Mode=OneTime}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Search24" FontSize="14" Margin="0,0,6,0" />
+                                    <TextBlock Text="{x:Static resources:Strings.Menu_Diagnostics_AnalyseLastSession}" />
+                                </StackPanel>
+                            </Button>
+                            <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" Command="{Binding RefreshCrashesCommand, Mode=OneTime}">
+                                <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14" />
+                            </Button>
+                            <ui:SymbolIcon Style="{StaticResource InfoMark}" ToolTip="{x:Static resources:Strings.Menu_Diagnostics_WhenRobloxClosesWithoutItsNormal}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" ToolTip="{x:Static resources:Strings.Menu_Diagnostics_RunsAnalysisWhenRobloxEndsWithout}">
+                            <TextBlock VerticalAlignment="Center" Margin="0,0,10,0" FontSize="12.5" Text="{x:Static resources:Strings.Menu_Diagnostics_LookIntoUnexpectedClosesAutomatically}" />
+                            <ui:ToggleSwitch IsChecked="{Binding CrashAnalyzerEnabled, Mode=TwoWay}" />
+                        </StackPanel>
+                    </Grid>
 
-                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                        <ui:Button Content="{x:Static resources:Strings.Menu_Diagnostics_AnalyseLastSession}" Icon="Search24" Appearance="Primary" AutomationProperties.Name="Analyse the last session" Command="{Binding AnalyzeLastSessionCommand, Mode=OneTime}" />
-                        <ui:Button Margin="8,0,0,0" Content="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" Icon="ArrowClockwise24" Appearance="Secondary" Command="{Binding RefreshCrashesCommand, Mode=OneTime}" />
-                    </StackPanel>
-                    <TextBlock Margin="0,6,0,0" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding CrashStatus, Mode=OneWay}" />
+                    <TextBlock Margin="0,0,0,8" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding CrashStatus, Mode=OneWay}" />
 
-                    <TextBlock Margin="2,14,0,6" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Visibility="{Binding CrashesEmptyVisibility, Mode=OneWay}" Text="{x:Static resources:Strings.Menu_Diagnostics_NoCrashesRecord}" />
+                    <Border Style="{DynamicResource PhasmaCard}" Padding="16,22" Visibility="{Binding CrashesEmptyVisibility, Mode=OneWay}">
+                        <TextBlock HorizontalAlignment="Center" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Diagnostics_NoCrashesRecord}" />
+                    </Border>
 
-                    <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding Crashes, Mode=OneWay}">
+                    <ItemsControl ItemsSource="{Binding Crashes, Mode=OneWay}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Margin="0,0,0,8" Padding="14,12" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
+                                <Border Style="{DynamicResource PhasmaCard}" Padding="16,14" Margin="0,0,0,10">
                                     <StackPanel>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding When}" />
-                                            <Border Grid.Column="1" Padding="8,2" CornerRadius="9" Background="{Binding ConfidenceColor}" Visibility="{Binding ConfidenceVisibility}">
-                                                <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="#101216" Text="{Binding Confidence}" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" Text="{Binding When}" />
+                                            <Border Margin="10,0,0,0" Padding="7,2" CornerRadius="6" VerticalAlignment="Center" Background="{Binding ConfidenceColor}" Visibility="{Binding ConfidenceVisibility}">
+                                                <TextBlock FontSize="10.5" FontWeight="SemiBold" Foreground="#101216" Text="{Binding Confidence}" />
                                             </Border>
-                                        </Grid>
-                                        <TextBlock Margin="0,4,0,0" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding Cause}" />
+                                        </StackPanel>
+                                        <TextBlock Margin="0,6,0,0" FontSize="12.5" TextWrapping="Wrap" Text="{Binding Cause}" />
 
-                                        <StackPanel Margin="0,8,0,0" Visibility="{Binding SuggestionsVisibility}">
-                                            <TextBlock FontSize="12" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_Diagnostics_WhatTry}" />
+                                        <StackPanel Margin="0,10,0,0" Visibility="{Binding SuggestionsVisibility}">
+                                            <TextBlock FontSize="12.5" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_Diagnostics_WhatTry}" />
                                             <ItemsControl ItemsSource="{Binding Suggestions}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
-                                                        <TextBlock Margin="0,3,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding StringFormat='•  {0}'}" />
+                                                        <TextBlock Margin="0,4,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding StringFormat='•  {0}'}" />
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
                                         </StackPanel>
 
-                                        <StackPanel Margin="0,8,0,0" Visibility="{Binding EvidenceVisibility}">
-                                            <TextBlock FontSize="12" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_Diagnostics_Evidence}" />
+                                        <StackPanel Margin="0,10,0,0" Visibility="{Binding EvidenceVisibility}">
+                                            <TextBlock FontSize="12.5" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_Diagnostics_Evidence}" />
                                             <ItemsControl ItemsSource="{Binding Evidence}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
-                                                        <TextBlock Margin="0,3,0,0" FontSize="11" FontFamily="Consolas" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding}" />
+                                                        <TextBlock Margin="0,4,0,0" FontSize="11" FontFamily="Consolas" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding}" />
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
@@ -190,59 +370,88 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-
-                    <controls:OptionControl Margin="0,8,0,0" Header="{x:Static resources:Strings.Menu_Diagnostics_LookIntoUnexpectedClosesAutomatically}" Description="{x:Static resources:Strings.Menu_Diagnostics_RunsAnalysisWhenRobloxEndsWithout}">
-                        <ui:ToggleSwitch IsChecked="{Binding CrashAnalyzerEnabled, Mode=TwoWay}" />
-                    </controls:OptionControl>
                 </StackPanel>
             </TabItem>
 
+            <!--  Stutter  -->
             <TabItem>
                 <TabItem.Header>
-                    <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="Pulse24" Margin="0,0,6,0" />
-                        <TextBlock Text="{x:Static resources:Strings.Menu_Diagnostics_Stutter}" />
-                    </StackPanel>
+                    <TextBlock Text="{x:Static resources:Strings.Menu_Diagnostics_Stutter}" />
                 </TabItem.Header>
-                <StackPanel Margin="0,12,0,0">
-                    <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Diagnostics_TimesEveryFrameGameWhileWatches}" />
+                <StackPanel>
+                    <Border Style="{DynamicResource PhasmaCard}" Padding="16,12" Margin="0,0,0,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                                <TextBlock FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center" Text="Times every frame for a while and says what was going on when it hitched" />
+                                <ui:SymbolIcon Style="{StaticResource InfoMark}" ToolTip="{x:Static resources:Strings.Menu_Diagnostics_TimesEveryFrameGameWhileWatches}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <ComboBox MinWidth="120" Padding="10,5,10,5" ItemsSource="{Binding MeasureOptions, Mode=OneTime}" SelectedItem="{Binding SelectedMeasure, Mode=TwoWay}" IsEnabled="{Binding MeasureIdle, Mode=OneWay}" />
+                                <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaAccentButton}" AutomationProperties.Name="Measure my game"
+                                        Command="{Binding RequestMeasureCommand, Mode=OneTime}" IsEnabled="{Binding MeasureIdle, Mode=OneWay}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Gauge24" FontSize="14" Margin="0,0,6,0" />
+                                        <TextBlock Text="{x:Static resources:Strings.Menu_Diagnostics_MeasureMyGame}" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaSoftButton}" AutomationProperties.Name="Cancel the measurement"
+                                        Command="{Binding CancelMeasureCommand, Mode=OneTime}" Visibility="{Binding MeasurePendingVisibility, Mode=OneWay}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Dismiss24" FontSize="14" Margin="0,0,6,0" />
+                                        <TextBlock Text="{x:Static resources:Strings.Common_Cancel}" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.ColumnSpan="2">
+                                <ProgressBar Margin="0,10,0,0" Height="4" Minimum="0" Maximum="1" Value="{Binding MeasureProgress, Mode=OneWay}" Visibility="{Binding MeasurePendingVisibility, Mode=OneWay}" />
+                                <TextBlock Margin="0,6,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding MeasureStatusText, Mode=OneWay}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
 
-                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                        <ComboBox Width="150" ItemsSource="{Binding MeasureOptions, Mode=OneTime}" SelectedItem="{Binding SelectedMeasure, Mode=TwoWay}" IsEnabled="{Binding MeasureIdle, Mode=OneWay}" />
-                        <ui:Button Margin="8,0,0,0" Content="{x:Static resources:Strings.Menu_Diagnostics_MeasureMyGame}" Icon="Play24" Appearance="Primary" AutomationProperties.Name="Measure my game" Command="{Binding RequestMeasureCommand, Mode=OneTime}" IsEnabled="{Binding MeasureIdle, Mode=OneWay}" />
-                        <ui:Button Margin="8,0,0,0" Content="{x:Static resources:Strings.Common_Cancel}" Icon="Dismiss24" Appearance="Secondary" AutomationProperties.Name="Cancel the measurement" Command="{Binding CancelMeasureCommand, Mode=OneTime}" Visibility="{Binding MeasurePendingVisibility, Mode=OneWay}" />
-                    </StackPanel>
+                    <Border Style="{DynamicResource PhasmaCard}" Padding="16,22" Visibility="{Binding RunsEmptyVisibility, Mode=OneWay}">
+                        <TextBlock HorizontalAlignment="Center" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Diagnostics_NothingMeasuredYet}" />
+                    </Border>
 
-                    <ProgressBar Margin="0,10,0,0" Height="4" Minimum="0" Maximum="1" Value="{Binding MeasureProgress, Mode=OneWay}" Visibility="{Binding MeasurePendingVisibility, Mode=OneWay}" />
-                    <TextBlock Margin="0,6,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding MeasureStatusText, Mode=OneWay}" />
-
-                    <TextBlock Margin="2,14,0,6" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Visibility="{Binding RunsEmptyVisibility, Mode=OneWay}" Text="{x:Static resources:Strings.Menu_Diagnostics_NothingMeasuredYet}" />
-
-                    <ItemsControl Margin="0,10,0,0" ItemsSource="{Binding Runs, Mode=OneWay}">
+                    <ItemsControl ItemsSource="{Binding Runs, Mode=OneWay}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Margin="0,0,0,8" Padding="14,12" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
+                                <Border Style="{DynamicResource PhasmaCard}" Padding="16,14" Margin="0,0,0,10">
                                     <StackPanel>
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" FontSize="12" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
-                                            <ui:Button Grid.Column="1" Padding="4" Appearance="Transparent" Icon="Delete16" ToolTip="{x:Static resources:Strings.Menu_Diagnostics_DeleteMeasurement}" AutomationProperties.Name="Delete measurement"
-                                                       Command="{Binding DataContext.DeleteRunCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}" />
+                                            <TextBlock Grid.Column="0" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
+                                            <Button Grid.Column="1" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Menu_Diagnostics_DeleteMeasurement}" AutomationProperties.Name="Delete measurement"
+                                                    Command="{Binding DataContext.DeleteRunCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}">
+                                                <ui:SymbolIcon Symbol="Delete24" FontSize="14" />
+                                            </Button>
                                         </Grid>
-                                        <TextBlock Margin="0,2,0,0" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding Verdict}" />
-                                        <TextBlock Margin="0,4,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Numbers}" />
+                                        <TextBlock Margin="0,6,0,0" FontSize="12.5" TextWrapping="Wrap" Text="{Binding Verdict}" />
 
-                                        <Viewbox Margin="0,10,0,0" Stretch="Fill" Height="70" HorizontalAlignment="Stretch">
-                                            <Canvas Width="900" Height="70" ClipToBounds="True">
-                                                <Polyline Points="{Binding Graph}" Stroke="{DynamicResource SystemAccentColorSecondaryBrush}" StrokeThickness="1.4" StrokeLineJoin="Round" />
-                                            </Canvas>
-                                        </Viewbox>
-                                        <TextBlock FontSize="10" HorizontalAlignment="Right" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding GraphScale}" />
+                                        <!--  Slowest frame of each stretch of the run. Red bars are the moments it stuttered.  -->
+                                        <ItemsControl Margin="0,12,0,0" Height="48" Focusable="False" ItemsSource="{Binding Bars, Mode=OneTime}"
+                                                      ItemsPanel="{StaticResource ChartBarsPanel}" ItemTemplate="{StaticResource FrameBarTemplate}" />
+                                        <Grid Margin="0,4,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Numbers}" />
+                                            <TextBlock Grid.Column="1" Margin="10,0,0,0" FontSize="10" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding GraphScale}" />
+                                        </Grid>
 
-                                        <ItemsControl Margin="0,4,0,0" ItemsSource="{Binding Findings}" Visibility="{Binding FindingsVisibility}">
+                                        <ItemsControl Margin="0,6,0,0" ItemsSource="{Binding Findings}" Visibility="{Binding FindingsVisibility}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
                                                     <TextBlock Margin="0,4,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding StringFormat='•  {0}'}" />
@@ -257,115 +466,143 @@
                 </StackPanel>
             </TabItem>
 
+            <!--  FastFlag auto tuner  -->
             <TabItem>
                 <TabItem.Header>
-                    <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="Beaker24" Margin="0,0,6,0" />
-                        <TextBlock Text="{x:Static resources:Strings.Menu_Diagnostics_FastFlagAutoTuner}" />
-                    </StackPanel>
+                    <TextBlock Text="{x:Static resources:Strings.Menu_Diagnostics_FastFlagAutoTuner}" />
                 </TabItem.Header>
-                <StackPanel Margin="0,12,0,0">
-                    <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Diagnostics_FindsOutWhetherFastFlagSetReally}" />
-
-                    <StackPanel Margin="0,12,0,0" Visibility="{Binding TunerSetupVisibility, Mode=OneWay}">
-                        <TextBlock FontSize="14" FontWeight="Medium" Text="{x:Static resources:Strings.Menu_Diagnostics_WhichFlagSetsShouldBeCompared}" />
-                        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Diagnostics_TwoFourOtherSetsHaveExist}" />
-
-                        <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding TunerCandidates, Mode=OneWay}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <CheckBox Margin="0,0,0,4" IsChecked="{Binding IsSelected, Mode=TwoWay}">
-                                        <StackPanel>
-                                            <TextBlock FontSize="13" Text="{Binding Title}" />
-                                            <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Detail}" />
-                                        </StackPanel>
-                                    </CheckBox>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
-                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                            <ComboBox Width="230" ItemsSource="{Binding TunerRoundOptions, Mode=OneTime}" SelectedItem="{Binding SelectedTunerRounds, Mode=TwoWay}" />
-                            <ComboBox Width="190" Margin="8,0,0,0" ItemsSource="{Binding TunerLengthOptions, Mode=OneTime}" SelectedItem="{Binding SelectedTunerLength, Mode=TwoWay}" />
-                            <ui:Button Margin="8,0,0,0" Content="{x:Static resources:Strings.Menu_Diagnostics_StartExperiment}" Icon="Beaker24" Appearance="Primary" AutomationProperties.Name="Start the experiment" Command="{Binding StartTunerCommand, Mode=OneTime}" />
-                        </StackPanel>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <TextBlock FontSize="12.5" TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   Text="Finds out whether a flag set really makes the game run better, by measuring. Each run needs Roblox to restart." />
+                        <ui:SymbolIcon Style="{StaticResource InfoMark}" ToolTip="{x:Static resources:Strings.Menu_Diagnostics_FindsOutWhetherFastFlagSetReally}" />
                     </StackPanel>
 
-                    <StackPanel Margin="0,12,0,0" Visibility="{Binding TunerRunningVisibility, Mode=OneWay}">
-                        <ItemsControl ItemsSource="{Binding TunerSteps, Mode=OneWay}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                        <ui:SymbolIcon Symbol="{Binding Symbol}" Foreground="{Binding Color}" FontSize="18" Margin="0,0,8,0" />
-                                        <TextBlock FontSize="13" VerticalAlignment="Center" Text="{Binding Text}" />
+                    <controls:CardColumns>
+                        <!--  Setup: pick the sets and start  -->
+                        <controls:SettingsCard Header="Flag sets to compare" Description="{x:Static resources:Strings.Menu_Diagnostics_TwoFourOtherSetsHaveExist}"
+                                               Visibility="{Binding TunerSetupVisibility, Mode=OneWay}">
+                            <StackPanel Margin="0,0,0,12">
+                                <ItemsControl ItemsSource="{Binding TunerCandidates, Mode=OneWay}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <CheckBox Margin="0,0,0,4" IsChecked="{Binding IsSelected, Mode=TwoWay}">
+                                                <StackPanel>
+                                                    <TextBlock FontSize="12.5" Text="{Binding Title}" />
+                                                    <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Detail}" />
+                                                </StackPanel>
+                                            </CheckBox>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <WrapPanel Margin="0,8,0,0">
+                                    <ComboBox MinWidth="150" Margin="0,0,8,8" Padding="10,5,10,5" ItemsSource="{Binding TunerRoundOptions, Mode=OneTime}" SelectedItem="{Binding SelectedTunerRounds, Mode=TwoWay}" />
+                                    <ComboBox MinWidth="130" Margin="0,0,8,8" Padding="10,5,10,5" ItemsSource="{Binding TunerLengthOptions, Mode=OneTime}" SelectedItem="{Binding SelectedTunerLength, Mode=TwoWay}" />
+                                </WrapPanel>
+                                <Button HorizontalAlignment="Stretch" Style="{DynamicResource PhasmaAccentButton}" AutomationProperties.Name="Start the experiment" Command="{Binding StartTunerCommand, Mode=OneTime}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Play24" FontSize="14" Margin="0,0,6,0" />
+                                        <TextBlock Text="{x:Static resources:Strings.Menu_Diagnostics_StartExperiment}" />
                                     </StackPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
-                        <Border Margin="0,8,0,0" Padding="14,12" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource SystemAccentColorSecondaryBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
-                            <StackPanel>
-                                <TextBlock FontSize="13" TextWrapping="Wrap" Text="{Binding TunerNextText, Mode=OneWay}" />
-                                <ui:Button Margin="0,8,0,0" Content="{Binding TunerArmLabel, Mode=OneWay}" Icon="Flag24" Appearance="Primary" AutomationProperties.Name="Arm the next run" Visibility="{Binding TunerArmVisibility, Mode=OneWay}" Command="{Binding ArmTunerCommand, Mode=OneTime}" />
-                                <TextBlock Margin="0,6,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding MeasureStatusText, Mode=OneWay}" />
+                                </Button>
                             </StackPanel>
-                        </Border>
+                        </controls:SettingsCard>
 
-                        <StackPanel Margin="0,12,0,0" Visibility="{Binding TunerResultsVisibility, Mode=OneWay}">
-                            <TextBlock FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding TunerVerdict, Mode=OneWay}" />
+                        <!--  Running: steps, next run, results and finish  -->
+                        <controls:SettingsCard controls:CardColumns.FullRow="True" Header="" Visibility="{Binding TunerRunningVisibility, Mode=OneWay}">
+                            <StackPanel Margin="0,0,0,12">
+                                <ItemsControl ItemsSource="{Binding TunerSteps, Mode=OneWay}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                                <ui:SymbolIcon Symbol="{Binding Symbol}" Foreground="{Binding Color}" FontSize="16" Margin="0,0,8,0" />
+                                                <TextBlock FontSize="12.5" VerticalAlignment="Center" Text="{Binding Text}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
 
-                            <Grid Margin="0,8,0,2">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="120" />
-                                    <ColumnDefinition Width="120" />
-                                    <ColumnDefinition Width="110" />
-                                    <ColumnDefinition Width="150" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Diagnostics_FLAGSET}" />
-                                <TextBlock Grid.Column="1" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Diagnostics_SLOWEST1}" />
-                                <TextBlock Grid.Column="2" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Diagnostics_AVERAGE}" />
-                                <TextBlock Grid.Column="3" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Diagnostics_STUTTERS}" />
-                                <TextBlock Grid.Column="4" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Diagnostics_RUNS}" />
-                            </Grid>
-                            <ItemsControl ItemsSource="{Binding TunerResults, Mode=OneWay}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Margin="0,2">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="120" />
-                                                <ColumnDefinition Width="120" />
-                                                <ColumnDefinition Width="110" />
-                                                <ColumnDefinition Width="150" />
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" FontSize="13" FontWeight="{Binding Weight}" Text="{Binding Variant}" TextTrimming="CharacterEllipsis" />
-                                            <TextBlock Grid.Column="1" FontSize="13" FontWeight="{Binding Weight}" Text="{Binding Low}" />
-                                            <TextBlock Grid.Column="2" FontSize="13" Text="{Binding Average}" />
-                                            <TextBlock Grid.Column="3" FontSize="13" Text="{Binding Stutters}" />
-                                            <TextBlock Grid.Column="4" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Runs}" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                                <Border Margin="0,8,0,0" Padding="14,12" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" BorderThickness="1"
+                                        BorderBrush="{DynamicResource PhasmaAccentStrokeBrush}" Background="{DynamicResource PhasmaAccentSoftBrush}">
+                                    <StackPanel>
+                                        <TextBlock FontSize="12.5" TextWrapping="Wrap" Text="{Binding TunerNextText, Mode=OneWay}" />
+                                        <Button Margin="0,8,0,0" HorizontalAlignment="Left" Style="{DynamicResource PhasmaAccentButton}" AutomationProperties.Name="Arm the next run"
+                                                Visibility="{Binding TunerArmVisibility, Mode=OneWay}" Command="{Binding ArmTunerCommand, Mode=OneTime}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="Flag24" FontSize="14" Margin="0,0,6,0" />
+                                                <TextBlock Text="{Binding TunerArmLabel, Mode=OneWay}" />
+                                            </StackPanel>
+                                        </Button>
+                                        <TextBlock Margin="0,6,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding MeasureStatusText, Mode=OneWay}" />
+                                    </StackPanel>
+                                </Border>
 
-                            <ItemsControl Margin="0,6,0,0" ItemsSource="{Binding TunerNotes, Mode=OneWay}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Margin="0,4,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding StringFormat='•  {0}'}" />
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
+                                <StackPanel Margin="0,12,0,0" Visibility="{Binding TunerResultsVisibility, Mode=OneWay}">
+                                    <TextBlock FontSize="13.5" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{DynamicResource PhasmaGoodBrush}" Text="{Binding TunerVerdict, Mode=OneWay}" />
 
-                        <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
-                            <TextBlock VerticalAlignment="Center" Margin="0,0,8,0" Text="{x:Static resources:Strings.Menu_Diagnostics_EndExperimentKeep}" />
-                            <ComboBox Width="320" ItemsSource="{Binding TunerKeepOptions, Mode=OneWay}" SelectedItem="{Binding SelectedTunerKeep, Mode=TwoWay}" />
-                            <ui:Button Margin="8,0,0,0" Content="{x:Static resources:Strings.Menu_Diagnostics_Finish}" Icon="Checkmark24" AutomationProperties.Name="Finish the experiment" Command="{Binding FinishTunerCommand, Mode=OneTime}" />
-                        </StackPanel>
-                    </StackPanel>
+                                    <Grid Margin="0,10,0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="90" />
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="120" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{DynamicResource PhasmaCaption}" Text="{x:Static resources:Strings.Menu_Diagnostics_FLAGSET}" />
+                                        <TextBlock Grid.Column="1" Style="{DynamicResource PhasmaCaption}" Text="{x:Static resources:Strings.Menu_Diagnostics_SLOWEST1}" />
+                                        <TextBlock Grid.Column="2" Style="{DynamicResource PhasmaCaption}" Text="{x:Static resources:Strings.Menu_Diagnostics_AVERAGE}" />
+                                        <TextBlock Grid.Column="3" Style="{DynamicResource PhasmaCaption}" Text="{x:Static resources:Strings.Menu_Diagnostics_STUTTERS}" />
+                                        <TextBlock Grid.Column="4" Style="{DynamicResource PhasmaCaption}" Text="{x:Static resources:Strings.Menu_Diagnostics_RUNS}" />
+                                    </Grid>
+                                    <ItemsControl ItemsSource="{Binding TunerResults, Mode=OneWay}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel>
+                                                    <Border Style="{DynamicResource PhasmaDivider}" />
+                                                    <Grid Margin="0,8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="100" />
+                                                            <ColumnDefinition Width="90" />
+                                                            <ColumnDefinition Width="80" />
+                                                            <ColumnDefinition Width="120" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Grid.Column="0" FontSize="12.5" FontWeight="{Binding Weight}" Text="{Binding Variant}" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Grid.Column="1" FontSize="12.5" FontWeight="{Binding Weight}" Text="{Binding Low}" />
+                                                        <TextBlock Grid.Column="2" FontSize="12.5" Text="{Binding Average}" />
+                                                        <TextBlock Grid.Column="3" FontSize="12.5" Text="{Binding Stutters}" />
+                                                        <TextBlock Grid.Column="4" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Runs}" />
+                                                    </Grid>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
 
-                    <TextBlock Margin="0,8,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding TunerMessage, Mode=OneWay}" />
+                                    <ItemsControl Margin="0,6,0,0" ItemsSource="{Binding TunerNotes, Mode=OneWay}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Margin="0,4,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding StringFormat='•  {0}'}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+
+                                <WrapPanel Margin="0,14,0,0">
+                                    <TextBlock VerticalAlignment="Center" Margin="0,0,8,0" FontSize="12.5" Text="{x:Static resources:Strings.Menu_Diagnostics_EndExperimentKeep}" />
+                                    <ComboBox MinWidth="200" Padding="10,5,10,5" ItemsSource="{Binding TunerKeepOptions, Mode=OneWay}" SelectedItem="{Binding SelectedTunerKeep, Mode=TwoWay}" />
+                                    <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaSoftButton}" AutomationProperties.Name="Finish the experiment" Command="{Binding FinishTunerCommand, Mode=OneTime}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:SymbolIcon Symbol="Checkmark24" FontSize="14" Margin="0,0,6,0" />
+                                            <TextBlock Text="{x:Static resources:Strings.Menu_Diagnostics_Finish}" />
+                                        </StackPanel>
+                                    </Button>
+                                </WrapPanel>
+                            </StackPanel>
+                        </controls:SettingsCard>
+                    </controls:CardColumns>
+
+                    <TextBlock Margin="0,8,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding TunerMessage, Mode=OneWay}" />
                 </StackPanel>
             </TabItem>
         </TabControl>

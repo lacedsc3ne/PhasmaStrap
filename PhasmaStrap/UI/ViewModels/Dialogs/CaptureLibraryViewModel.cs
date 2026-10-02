@@ -72,6 +72,9 @@ namespace PhasmaStrap.UI.ViewModels.Dialogs
         public Visibility PlaceholderVisibility => _thumbnail is null ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    /// <summary>Limits the library to captures taken between two local times, e.g. one session from the Activity page.</summary>
+    public sealed record CaptureTimeFilter(DateTime FromLocal, DateTime ToLocal, string Label);
+
     public sealed class CaptureRow
     {
         public List<CaptureItem> Items { get; init; } = new();
@@ -150,8 +153,30 @@ namespace PhasmaStrap.UI.ViewModels.Dialogs
             ? (_tab == ScreenshotsTab ? "No screenshots yet - press your screenshot hotkey in a game." : "No clips yet - press your Instant Replay hotkey in a game.")
             : "Nothing matches these filters.";
 
+        private CaptureTimeFilter? _range;
+
+        /// <summary>Shows only what was taken in this time range (null shows everything again). Other filters are reset so nothing hides it.</summary>
+        public void SetRange(CaptureTimeFilter? range)
+        {
+            _range = range;
+
+            if (range is not null)
+            {
+                _search = "";
+                _game = AllGames;
+                _dateIndex = _typeIndex = 0;
+                OnPropertyChanged(nameof(Search));
+                OnPropertyChanged(nameof(Game));
+                OnPropertyChanged(nameof(DateIndex));
+                OnPropertyChanged(nameof(TypeIndex));
+            }
+
+            Apply();
+        }
+
         public ICommand ClearFiltersCommand => new RelayCommand(() =>
         {
+            _range = null;
             _search = "";
             _game = AllGames;
             _dateIndex = _typeIndex = _sortIndex = 0;
@@ -226,6 +251,9 @@ namespace PhasmaStrap.UI.ViewModels.Dialogs
             else if (_game != AllGames)
                 items = items.Where(i => string.Equals(i.Game, _game, StringComparison.OrdinalIgnoreCase));
 
+            if (_range is { } range)
+                items = items.Where(i => i.File.Taken >= range.FromLocal && i.File.Taken <= range.ToLocal);
+
             DateTime now = DateTime.Now;
             items = _dateIndex switch
             {
@@ -260,6 +288,9 @@ namespace PhasmaStrap.UI.ViewModels.Dialogs
             Summary = _shown.Count == total
                 ? $"{total} · {bytes / 1048576.0:0} MB"
                 : $"Showing {_shown.Count} of {total}";
+
+            if (_range is { } shownRange)
+                Summary += $" · from {shownRange.Label}, {shownRange.FromLocal:d MMM HH:mm} to {shownRange.ToLocal:HH:mm}";
 
             OnPropertyChanged(nameof(EmptyVisibility));
             OnPropertyChanged(nameof(EmptyText));

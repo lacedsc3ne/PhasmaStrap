@@ -132,6 +132,45 @@ namespace PhasmaStrap.Utility
             return new ManagedModStatistics(count, total);
         }
 
+        /// <summary>
+        /// Writes every file of a mod into a .zip at <paramref name="destination"/>, keeping its folder layout.
+        /// Goes through a temporary file so a failed export never leaves half a zip behind. Returns how many files went in.
+        /// </summary>
+        public static int ExportZip(string id, string destination)
+        {
+            string folder = GetFolder(id);
+            if (!Directory.Exists(folder))
+                throw new DirectoryNotFoundException("The mod's folder no longer exists.");
+
+            string temporary = destination + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            int count = 0;
+
+            try
+            {
+                using (FileStream stream = new(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                using (System.IO.Compression.ZipArchive archive = new(stream, System.IO.Compression.ZipArchiveMode.Create))
+                {
+                    foreach (string file in EnumeratePackageFiles(folder))
+                    {
+                        string relative = Path.GetRelativePath(folder, file);
+                        if (!IsSafeRelativePath(relative))
+                            continue;
+
+                        System.IO.Compression.ZipFileExtensions.CreateEntryFromFile(archive, file, relative.Replace('\\', '/'), System.IO.Compression.CompressionLevel.Optimal);
+                        count++;
+                    }
+                }
+
+                File.Move(temporary, destination, true);
+                return count;
+            }
+            finally
+            {
+                if (File.Exists(temporary))
+                    File.Delete(temporary);
+            }
+        }
+
         public static ManagedModScanResult ScanEnabledFiles()
         {
             lock (Sync)

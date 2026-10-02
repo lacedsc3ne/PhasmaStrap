@@ -74,10 +74,38 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             App.PendingSettingTasks.Clear();
 
             RequestSaveNoticeEvent?.Invoke(this, EventArgs.Empty);
+
+            // "Back up on its own": after you change something, at most hourly
+            _ = PhasmaStrap.Utility.PhasmaAccount.MaybeAutoBackUpAsync();
         }
 
         private void SaveAndLaunch()
         {
+            // Deployment > "Close PhasmaStrap": close this window (the default), hide it to the tray, or keep it open
+            string mode = App.Settings.Prop.SettingsWindowOnLaunch;
+
+            if (mode is "Tray" or "KeepOpen" && !App.LaunchSettings.TestModeFlag.Active)
+            {
+                SaveSettings();
+
+                try
+                {
+                    // Same as launching after close, but in a new process so this window can stay
+                    Process.Start(Paths.Process, "-player");
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine("MainWindowViewModel::SaveAndLaunch", $"Could not start Roblox: {ex.Message}");
+                    Frontend.ShowMessageBox($"Could not start Roblox: {ex.Message}", MessageBoxImage.Error);
+                    return;
+                }
+
+                if (mode == "Tray")
+                    Application.Current?.Windows.OfType<PhasmaStrap.UI.Elements.Settings.MainWindow>().FirstOrDefault()?.HideToTray();
+
+                return;
+            }
+
             SaveSettings();
             LaunchAfterClose = true;
             CloseWindow();

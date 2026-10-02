@@ -13,85 +13,94 @@
       Title="ReleasesPage"
       Scrollable="True">
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Text="{x:Static resources:Strings.Menu_Releases_Title}" FontSize="20" FontWeight="Medium" />
-        <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Releases_Description}" />
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+            <TextBlock Style="{DynamicResource PhasmaPageTitle}" VerticalAlignment="Center" Text="News" />
+            <Border Style="{DynamicResource PhasmaTagNeutral}" Margin="12,0,0,0">
+                <TextBlock FontSize="11" Text="PhasmaStrap" />
+            </Border>
+        </StackPanel>
 
-        <Border Margin="0,12,0,0" Padding="18,16" CornerRadius="8" BorderThickness="1"
-                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
+        <!--  Update status, search and refresh  -->
+        <Border Style="{DynamicResource PhasmaCard}" Padding="16,14">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <ui:SymbolIcon Grid.Column="0" Symbol="ArrowSync24" FontSize="24" Margin="0,0,14,0" VerticalAlignment="Center"
-                               Foreground="{DynamicResource AccentFillColorDefaultBrush}" />
+                <Border Grid.Column="0" Width="40" Height="40" Margin="0,0,14,0" VerticalAlignment="Center" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="{DynamicResource PhasmaAccentSoftBrush}">
+                    <ui:SymbolIcon Symbol="ArrowSync24" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource PhasmaAccentBrush}" />
+                </Border>
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,16,0">
-                    <TextBlock FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding UpdateHeadline, Mode=OneWay}" />
-                    <TextBlock Margin="0,2,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding UpdateDetail, Mode=OneWay}" />
+                    <TextBlock FontSize="13.5" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding UpdateHeadline, Mode=OneWay}" />
+                    <TextBlock Margin="0,2,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding UpdateDetail, Mode=OneWay}" />
+                    <TextBlock Margin="0,2,0,0" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding StatusText, Mode=OneWay}" />
                 </StackPanel>
 
-                <ui:Button Grid.Column="2" VerticalAlignment="Center" MinWidth="110" Icon="ArrowDownload24" Appearance="Primary"
-                           Content="Update" Visibility="{Binding UpdateActionVisibility, Mode=OneWay}" Command="{Binding UpdateCommand, Mode=OneTime}" />
+                <Button Grid.Column="2" Margin="0,0,10,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaAccentButton}"
+                        Visibility="{Binding UpdateActionVisibility, Mode=OneWay}" Command="{Binding UpdateCommand, Mode=OneTime}">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="ArrowDownload24" FontSize="14" Margin="0,0,6,0" />
+                        <TextBlock Text="Update" />
+                    </StackPanel>
+                </Button>
+
+                <ui:TextBox Grid.Column="3" Width="220" VerticalAlignment="Center" Icon="Search24" PlaceholderText="{x:Static resources:Strings.Menu_Releases_SearchPlaceholder}"
+                            Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                <Button Grid.Column="4" Margin="8,0,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaIconButton}"
+                        ToolTip="{x:Static resources:Strings.Menu_Releases_Refresh}" Command="{Binding RefreshCommand, Mode=OneTime}">
+                    <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14" />
+                </Button>
             </Grid>
         </Border>
 
-        <Border Margin="0,12,0,0" Padding="16,14" CornerRadius="8" BorderThickness="1" Visibility="{Binding WhatsNewVisibility}"
-                BorderBrush="{DynamicResource AccentFillColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
-            <StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <ui:SymbolIcon Symbol="Sparkle24" FontSize="18" Margin="0,0,8,0" Foreground="{DynamicResource AccentFillColorDefaultBrush}" />
-                    <TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding WhatsNewTitle, Mode=OneTime}" />
-                </StackPanel>
-                <controls:MarkdownTextBlock Margin="0,10,0,0" TextWrapping="Wrap" MarkdownText="{Binding WhatsNew}" />
-            </StackPanel>
-        </Border>
+        <!--  Notes for the version you have  -->
+        <controls:SettingsCard Margin="0,12,0,0" Header="{Binding WhatsNewTitle, Mode=OneTime}" Visibility="{Binding WhatsNewVisibility}">
+            <controls:MarkdownTextBlock Margin="0,0,0,10" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" MarkdownText="{Binding WhatsNew}" />
+        </controls:SettingsCard>
 
-        <Grid Margin="0,16,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-
-            <ui:TextBox Grid.Column="0" Icon="Search24" PlaceholderText="{x:Static resources:Strings.Menu_Releases_SearchPlaceholder}"
-                        Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-
-            <ui:Button Grid.Column="1" Margin="12,0,0,0" Content="{x:Static resources:Strings.Menu_Releases_Refresh}" Icon="ArrowClockwise24"
-                       Command="{Binding RefreshCommand, Mode=OneTime}" />
-        </Grid>
-
-        <TextBlock Margin="0,10,0,0" Text="{Binding StatusText, Mode=OneWay}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-
+        <!--  Releases list and the selected release  -->
         <Grid Margin="0,12,0,0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="280" />
+                <ColumnDefinition Width="230" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <ListBox Grid.Column="0" VerticalAlignment="Top" MaxHeight="620" HorizontalContentAlignment="Stretch"
-                     controls:ScrollBubbling.Enabled="True"
-                     ItemsSource="{Binding Releases, Mode=OneWay}"
-                     SelectedItem="{Binding SelectedRelease, Mode=TwoWay}">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel Margin="0,4">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
-                                <Border Margin="8,0,0,0" Padding="6,1" CornerRadius="4" Background="{DynamicResource AccentFillColorDefaultBrush}"
-                                        VerticalAlignment="Center" Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVisibilityConverter}}">
-                                    <TextBlock Text="{x:Static resources:Strings.Menu_Releases_Installed}" FontSize="10" Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+            <Border Grid.Column="0" Style="{DynamicResource PhasmaCard}" Padding="6" VerticalAlignment="Top">
+                <ListBox VerticalAlignment="Top" MaxHeight="620" HorizontalContentAlignment="Stretch"
+                         Background="Transparent" BorderThickness="0" Padding="0"
+                         ItemContainerStyle="{DynamicResource PhasmaListItem}"
+                         controls:ScrollBubbling.Enabled="True"
+                         ItemsSource="{Binding Releases, Mode=OneWay}"
+                         SelectedItem="{Binding SelectedRelease, Mode=TwoWay}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    <TextBlock Margin="0,2,0,0" FontSize="11" Text="{Binding PublishedText}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                </StackPanel>
+                                <Border Grid.Column="1" Margin="8,0,0,0" Style="{DynamicResource PhasmaTag}"
+                                        Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <TextBlock Text="{x:Static resources:Strings.Menu_Releases_Installed}" FontSize="10" />
                                 </Border>
-                            </StackPanel>
-                            <TextBlock Margin="0,2,0,0" FontSize="11" Text="{Binding PublishedText}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                        </StackPanel>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
 
             <Grid Grid.Column="1" Margin="12,0,0,0">
-                <ui:Card VerticalAlignment="Top" Visibility="{Binding DetailVisibility, Mode=OneWay}">
+                <Border Style="{DynamicResource PhasmaCard}" Padding="18,16" VerticalAlignment="Top" Visibility="{Binding DetailVisibility, Mode=OneWay}">
                     <StackPanel DataContext="{Binding SelectedRelease, Mode=OneWay}">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -99,21 +108,28 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                <TextBlock Text="{Binding Name}" FontSize="18" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
-                                <Border Margin="8,0,0,0" Padding="6,2" CornerRadius="4" Background="{DynamicResource AccentFillColorDefaultBrush}"
-                                        VerticalAlignment="Center" Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVisibilityConverter}}">
-                                    <TextBlock Text="{x:Static resources:Strings.Menu_Releases_Installed}" FontSize="11" Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+                            <WrapPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Style="{DynamicResource PhasmaHeading}" VerticalAlignment="Center" Text="{Binding Name}" />
+                                <Border Margin="10,0,0,0" Style="{DynamicResource PhasmaTag}"
+                                        Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <TextBlock Text="{x:Static resources:Strings.Menu_Releases_Installed}" FontSize="11" />
                                 </Border>
-                            </StackPanel>
+                                <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" FontSize="11.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding PublishedText}" />
+                            </WrapPanel>
 
-                            <TextBlock Grid.Column="1" Text="{Binding PublishedText}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" />
+                            <Button Grid.Column="1" VerticalAlignment="Center" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold"
+                                    Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="{Binding HtmlUrl}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Open24" FontSize="14" Margin="0,0,6,0" />
+                                    <TextBlock Text="{x:Static resources:Strings.Menu_Releases_ViewOnGitHub}" />
+                                </StackPanel>
+                            </Button>
                         </Grid>
 
-                        <controls:MarkdownTextBlock Margin="0,10,0,0" TextWrapping="Wrap" MarkdownText="{Binding Body}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <controls:MarkdownTextBlock Margin="0,12,0,0" FontSize="12.5" TextWrapping="Wrap" MarkdownText="{Binding Body}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
 
-                        <StackPanel Margin="0,14,0,0" Visibility="{Binding AssetsVisibility, Mode=OneWay}">
-                            <TextBlock FontSize="14" FontWeight="Medium">
+                        <StackPanel Margin="0,16,0,0" Visibility="{Binding AssetsVisibility, Mode=OneWay}">
+                            <TextBlock FontSize="13" FontWeight="SemiBold">
                                 <Run Text="{Binding AssetCount, Mode=OneWay}" />
                                 <Run Text="{x:Static resources:Strings.Menu_Releases_Assets}" />
                             </TextBlock>
@@ -121,32 +137,37 @@
                             <ItemsControl Margin="0,6,0,0" ItemsSource="{Binding Assets, Mode=OneWay}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Margin="0,0,0,6" Padding="12,8" CornerRadius="6" Background="{DynamicResource ControlFillColorDefaultBrush}">
-                                            <Grid>
+                                        <StackPanel>
+                                            <Border Style="{DynamicResource PhasmaDivider}" />
+                                            <Grid Margin="0,7,0,7">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*" />
                                                     <ColumnDefinition Width="Auto" />
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="13" TextTrimming="CharacterEllipsis" Text="{Binding Name}" />
-                                                <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding SizeText}" />
-                                                <ui:Button Grid.Column="2" Padding="8,4" Appearance="Secondary" Icon="ArrowDownload24" Content="Download"
-                                                           Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="{Binding DownloadUrl}" />
+                                                <TextBlock Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0" FontFamily="Consolas" FontSize="12" TextTrimming="CharacterEllipsis" Text="{Binding Name}" />
+                                                <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="0,0,10,0" FontSize="11.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding SizeText}" />
+                                                <Button Grid.Column="2" Style="{DynamicResource PhasmaSoftButton}"
+                                                        Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="{Binding DownloadUrl}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <ui:SymbolIcon Symbol="ArrowDownload24" FontSize="14" Margin="0,0,6,0" />
+                                                        <TextBlock Text="Download" />
+                                                    </StackPanel>
+                                                </Button>
                                             </Grid>
-                                        </Border>
+                                        </StackPanel>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </StackPanel>
-
-                        <ui:Hyperlink Margin="0,8,0,0" HorizontalAlignment="Left" Content="{x:Static resources:Strings.Menu_Releases_ViewOnGitHub}"
-                                      Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="{Binding HtmlUrl}" />
                     </StackPanel>
-                </ui:Card>
+                </Border>
 
-                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"
-                           Foreground="{DynamicResource TextFillColorTertiaryBrush}" Visibility="{Binding NoSelectionVisibility, Mode=OneWay}"
-                           Text="Pick a release on the left to read its notes and downloads." />
+                <Border Style="{DynamicResource PhasmaCard}" Padding="18,30" VerticalAlignment="Top" Visibility="{Binding NoSelectionVisibility, Mode=OneWay}">
+                    <TextBlock HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" FontSize="12.5"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                               Text="Pick a release on the left to read its notes and downloads." />
+                </Border>
             </Grid>
         </Grid>
     </StackPanel>

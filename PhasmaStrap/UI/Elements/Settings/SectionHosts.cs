@@ -30,8 +30,11 @@ namespace PhasmaStrap.UI.Elements.Settings
                 typeof(BehaviourPage), typeof(ModsPage), typeof(ClassicClientPage),
                 typeof(AppearancePage), typeof(NotificationsPage), typeof(HotkeysPage), typeof(ShortcutsPage),
                 typeof(PhasmaStrapPage), typeof(IntegrationsPage), typeof(ReleasesPage), typeof(DeveloperToolsPage));
+            Add(typeof(SettingsPage),
+                typeof(RobloxVersionsPage), typeof(ChannelPage), typeof(ExtensionsPage), typeof(BootstrapperStylePage),
+                typeof(GameChatPage), typeof(DiagnosticsPage));
             Add(typeof(FastFlagSettingsPage), typeof(FastFlagsPage), typeof(FastFlagEditorPage), typeof(FastFlagGamesPage), typeof(AssetWarpPage));
-            Add(typeof(CapturePage), typeof(CaptureScreenshotsPage), typeof(CaptureReplayPage), typeof(CaptureStoragePage));
+            Add(typeof(CapturePage), typeof(CaptureScreenshotsPage), typeof(CaptureReplayPage), typeof(CaptureStoragePage), typeof(CaptureLibraryPage));
 
             return map;
         }

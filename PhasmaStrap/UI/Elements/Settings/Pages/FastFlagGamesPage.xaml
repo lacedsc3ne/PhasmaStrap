@@ -15,86 +15,138 @@
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </ui:UiPage.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="0,0,14,14">
-            <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagGames_PerGameFlags}" FontSize="20" FontWeight="Medium" />
-            <TextBlock Margin="0,4,0,0" FontSize="14" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                       Text="{x:Static resources:Strings.Menu_FastFlagGames_GiveGameItsOwnFlagsWhen}" />
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="380" />
+        </Grid.ColumnDefinitions>
 
-            <ui:InfoBar Margin="0,12,0,0" Padding="8" Severity="Warning" IsOpen="True" IsClosable="False" Visibility="{Binding ManagerDisabledVisibility, Mode=OneTime}"
-                        Title="{x:Static resources:Strings.Menu_FastFlagEditor_PhasmaStrapIsnTManagingFastFlagsRight}"
-                        Message="{x:Static resources:Strings.Menu_FastFlagEditor_AllowPhasmaStrapManageFFlagsOffEngine}" />
+        <!--  Left: the games that have their own flags  -->
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="0,0,20,14">
+                <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="{x:Static resources:Strings.Menu_FastFlagGames_Games}" />
+                <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="When you launch one through PhasmaStrap it starts with your flags plus the changes in its profile." />
 
-            <Border Margin="0,12,0,0" Padding="12,8" CornerRadius="6" Background="{DynamicResource ControlFillColorSecondaryBrush}" Visibility="{Binding StatusVisibility}">
-                <TextBlock TextWrapping="Wrap" Text="{Binding Status}" />
-            </Border>
-
-            <TextBlock Margin="0,20,0,8" FontSize="20" FontWeight="Medium" Text="{x:Static resources:Strings.Menu_FastFlagGames_Games}" />
-
-            <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Visibility="{Binding NoRulesVisibility}"
-                       Text="{x:Static resources:Strings.Menu_FastFlagGames_NoGameHasItsOwnFlags}" />
-
-            <ItemsControl ItemsSource="{Binding Rules}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Margin="0,0,0,8" Padding="12,10" CornerRadius="8" BorderThickness="1"
-                                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <Border Grid.Column="0" Width="48" Height="48" CornerRadius="6" ClipToBounds="True" Background="{DynamicResource ControlFillColorSecondaryBrush}">
-                                    <Image Source="{Binding IconUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
-                                </Border>
-
-                                <StackPanel Grid.Column="1" Margin="12,0,12,0" VerticalAlignment="Center">
-                                    <TextBlock FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding Title}" />
-                                    <TextBlock FontSize="12" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Subtitle}" />
-                                    <TextBlock FontSize="12" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding ProfileSummary}" />
-                                </StackPanel>
-
-                                <WrapPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                    <ComboBox Width="190" Margin="0,2,8,2" ToolTip="{x:Static resources:Strings.Menu_FastFlagGames_ProfileGameUses}"
-                                              ItemsSource="{Binding Profiles}" DisplayMemberPath="Name" SelectedValuePath="Id" SelectedValue="{Binding ProfileId, Mode=TwoWay}" />
-                                    <ui:Button Margin="0,2,6,2" Padding="10,6" Icon="Edit16" Content="{x:Static resources:Strings.Menu_FastFlagEditor_EditFlags}" ToolTip="{x:Static resources:Strings.Menu_FastFlagGames_OpenGameSProfileFastFlag}"
-                                               Command="{Binding DataContext.EditProfileCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
-                                    <ui:Button Margin="0,2,6,2" Padding="8,6" Icon="Eye24" ToolTip="{x:Static resources:Strings.Menu_FastFlagGames_SeeEveryFlagGameStarts}"
-                                               Command="{Binding DataContext.PreviewCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
-                                    <ui:Button Margin="0,2,0,2" Padding="8,6" Icon="Delete24" Appearance="Transparent" ToolTip="{x:Static resources:Strings.Menu_FastFlagGames_StopGivingGameItsOwnFlags}"
-                                               Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
-                                </WrapPanel>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-
-            <TextBlock Margin="0,20,0,8" FontSize="20" FontWeight="Medium" Text="{x:Static resources:Strings.Menu_FastFlagGames_AddGame}" />
-
-            <Border Padding="14,12" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}">
-                <StackPanel>
+                <Border Margin="0,0,0,12" Padding="14,10" CornerRadius="{DynamicResource PhasmaCornerRadius}" BorderThickness="1"
+                        BorderBrush="{DynamicResource PhasmaWarnBrush}" Background="{DynamicResource PhasmaPanelRaisedBrush}"
+                        Visibility="{Binding ManagerDisabledVisibility, Mode=OneTime}">
                     <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Warning24" FontSize="16" Margin="0,1,10,0" VerticalAlignment="Top" Foreground="{DynamicResource PhasmaWarnBrush}" />
+                        <StackPanel Grid.Column="1">
+                            <TextBlock FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" Text="{x:Static resources:Strings.Menu_FastFlagEditor_PhasmaStrapIsnTManagingFastFlagsRight}" />
+                            <TextBlock Margin="0,2,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_FastFlagEditor_AllowPhasmaStrapManageFFlagsOffEngine}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border Margin="0,0,0,12" Padding="12,8" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="{DynamicResource PhasmaSelectedBrush}" Visibility="{Binding StatusVisibility}">
+                    <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding Status}" />
+                </Border>
+
+                <!--  Empty state  -->
+                <Border Margin="0,0,0,10" Padding="20,26" Style="{DynamicResource PhasmaCard}" Visibility="{Binding NoRulesVisibility}">
+                    <StackPanel HorizontalAlignment="Center">
+                        <ui:SymbolIcon Symbol="Flag24" FontSize="30" Opacity="0.35" HorizontalAlignment="Center" />
+                        <TextBlock Margin="0,10,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" FontSize="13"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_FastFlagGames_NoGameHasItsOwnFlags}" />
+                    </StackPanel>
+                </Border>
+
+                <ItemsControl x:Name="RulesList" ItemsSource="{Binding Rules}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,0,10" Padding="14,10" Style="{DynamicResource PhasmaCard}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border Grid.Column="0" Width="40" Height="40" Style="{DynamicResource PhasmaThumb}" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}">
+                                        <Image Source="{Binding IconUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                                    </Border>
+
+                                    <StackPanel Grid.Column="1" Margin="12,0,12,0" VerticalAlignment="Center">
+                                        <TextBlock FontSize="13.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding Title}" />
+                                        <TextBlock FontSize="11.5" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Subtitle}" />
+                                        <TextBlock FontSize="11.5" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding ProfileSummary}" />
+                                    </StackPanel>
+
+                                    <WrapPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                        <ComboBox Width="150" Margin="0,2,8,2" ToolTip="{x:Static resources:Strings.Menu_FastFlagGames_ProfileGameUses}"
+                                                  ItemsSource="{Binding Profiles}" DisplayMemberPath="Name" SelectedValuePath="Id" SelectedValue="{Binding ProfileId, Mode=TwoWay}" />
+                                        <Button Margin="0,2,6,2" Style="{DynamicResource PhasmaSoftButton}" ToolTip="{x:Static resources:Strings.Menu_FastFlagGames_OpenGameSProfileFastFlag}"
+                                                Command="{Binding DataContext.EditProfileCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="Code24" FontSize="14" Margin="0,0,6,0" />
+                                                <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_EditFlags}" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Margin="0,2,6,2" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Menu_FastFlagGames_SeeEveryFlagGameStarts}"
+                                                AutomationProperties.Name="{x:Static resources:Strings.Menu_FastFlagGames_SeeEveryFlagGameStarts}"
+                                                Command="{Binding DataContext.PreviewCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                            <ui:SymbolIcon Symbol="Eye24" FontSize="15" />
+                                        </Button>
+                                        <Button Margin="0,2,0,2" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Menu_FastFlagGames_StopGivingGameItsOwnFlags}"
+                                                AutomationProperties.Name="{x:Static resources:Strings.Menu_FastFlagGames_StopGivingGameItsOwnFlags}"
+                                                Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                            <ui:SymbolIcon Symbol="Dismiss24" FontSize="15" />
+                                        </Button>
+                                    </WrapPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <controls:SettingsCard Margin="0,6,0,0" Header="{x:Static resources:Strings.Menu_FastFlagGames_WhenRobloxAlreadyOpen}"
+                                       Description="Roblox only reads FastFlags when it starts. Joining from inside Roblox keeps the flags it started with.">
+                    <TextBlock Margin="0,0,0,10" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource PhasmaWarnBrush}" Visibility="{Binding TrackingOffVisibility, Mode=OneTime}"
+                               Text="{x:Static resources:Strings.Menu_FastFlagGames_ActivityTrackingOffIntegrationsPageSo}" />
+
+                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_FastFlagGames_CloseRobloxFirstWhenLaunchNeeds}"
+                                            Description="{x:Static resources:Strings.Menu_FastFlagGames_WhenYouClickPlayWebsiteLink}">
+                        <ui:ToggleSwitch IsChecked="{Binding CloseRunningRoblox, Mode=TwoWay}" />
+                    </controls:OptionControl>
+                </controls:SettingsCard>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!--  Right: add a game  -->
+        <Border Grid.Column="1" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="18,0,14,14">
+                    <TextBlock Style="{DynamicResource PhasmaHeading}" FontSize="14" Text="{x:Static resources:Strings.Menu_FastFlagGames_AddGame}" />
+
+                    <Grid Margin="0,12,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <ui:TextBox x:Name="SearchBox" Grid.Column="0" Icon="Search24" PlaceholderText="{x:Static resources:Strings.Menu_FastFlagGames_GameNameGameLinkPlaceID}"
+                        <ui:TextBox x:Name="SearchBox" Grid.Column="0" PlaceholderText="{x:Static resources:Strings.Menu_FastFlagGames_GameNameGameLinkPlaceID}"
                                     Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" KeyDown="SearchBox_KeyDown" />
-                        <ui:Button Grid.Column="1" Margin="8,0,0,0" Icon="Search24" Content="{x:Static resources:Strings.Menu_FastFlagGames_Find}" Appearance="Primary" Command="{Binding SearchCommand, Mode=OneTime}" />
+                        <Button Grid.Column="1" Margin="8,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding SearchCommand, Mode=OneTime}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Search24" FontSize="14" Margin="0,0,6,0" />
+                                <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagGames_Find}" />
+                            </StackPanel>
+                        </Button>
                     </Grid>
 
-                    <DockPanel Margin="0,12,0,6">
+                    <DockPanel Margin="0,12,0,8">
                         <ui:ProgressRing DockPanel.Dock="Right" Width="16" Height="16" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        <TextBlock FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ResultsHeader}" />
+                        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ResultsHeader}" />
                     </DockPanel>
 
                     <ItemsControl ItemsSource="{Binding Results}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <WrapPanel />
+                                <UniformGrid Columns="3" />
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
@@ -103,25 +155,25 @@
                                         Command="{Binding DataContext.SelectGameCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
                                     <Button.Template>
                                         <ControlTemplate TargetType="Button">
-                                            <Border x:Name="Tile" Width="132" Padding="6" CornerRadius="6" BorderThickness="1"
-                                                    Background="{DynamicResource ControlFillColorSecondaryBrush}" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                                            <Border x:Name="Tile" Padding="6" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" BorderThickness="1"
+                                                    Background="{DynamicResource PhasmaHoverBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
                                                 <ContentPresenter />
                                             </Border>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="Tile" Property="Background" Value="{DynamicResource ControlFillColorTertiaryBrush}" />
+                                                    <Setter TargetName="Tile" Property="Background" Value="{DynamicResource PhasmaSelectedBrush}" />
                                                 </Trigger>
                                                 <Trigger Property="IsKeyboardFocused" Value="True">
-                                                    <Setter TargetName="Tile" Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+                                                    <Setter TargetName="Tile" Property="BorderBrush" Value="{DynamicResource PhasmaAccentBrush}" />
                                                 </Trigger>
                                             </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                     <StackPanel>
-                                        <Border Width="118" Height="118" CornerRadius="4" ClipToBounds="True" Background="{DynamicResource ControlFillColorDefaultBrush}">
+                                        <Border Height="86" Style="{DynamicResource PhasmaThumb}" CornerRadius="6">
                                             <Image Source="{Binding IconUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
                                         </Border>
-                                        <TextBlock Margin="0,6,0,0" FontSize="12" Height="32" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{Binding Name}" />
+                                        <TextBlock Margin="0,6,0,0" FontSize="12" FontWeight="SemiBold" Height="32" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{Binding Name}" />
                                         <TextBlock FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Tag}" />
                                     </StackPanel>
                                 </Button>
@@ -129,57 +181,55 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <Border Margin="0,8,0,0" Padding="14,12" CornerRadius="8" BorderThickness="1" Visibility="{Binding SelectedVisibility}"
-                            BorderBrush="{DynamicResource AccentFillColorDefaultBrush}" Background="{DynamicResource ControlFillColorSecondaryBrush}">
-                        <StackPanel>
+                    <!--  The picked game and how to apply it  -->
+                    <StackPanel Margin="0,4,0,0" Visibility="{Binding SelectedVisibility}">
+                        <Border Padding="10" Style="{DynamicResource PhasmaCard}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <Border Grid.Column="0" Width="40" Height="40" CornerRadius="6" ClipToBounds="True" Background="{DynamicResource ControlFillColorDefaultBrush}">
+                                <Border Grid.Column="0" Width="34" Height="34" Style="{DynamicResource PhasmaThumb}" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}">
                                     <Image Source="{Binding Selected.IconUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill" />
                                 </Border>
-                                <TextBlock Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" FontSize="15" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding Selected.Name}" />
-                                <ui:Button Grid.Column="2" Padding="6" Icon="Dismiss16" Appearance="Transparent" ToolTip="{x:Static resources:Strings.Menu_FastFlagGames_PickAnotherGame}" Command="{Binding CancelAddCommand, Mode=OneTime}" />
+                                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding Selected.Name}" />
+                                    <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Selected" />
+                                </StackPanel>
+                                <Button Grid.Column="2" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Menu_FastFlagGames_PickAnotherGame}"
+                                        AutomationProperties.Name="{x:Static resources:Strings.Menu_FastFlagGames_PickAnotherGame}" Command="{Binding CancelAddCommand, Mode=OneTime}">
+                                    <ui:SymbolIcon Symbol="Dismiss24" FontSize="14" />
+                                </Button>
                             </Grid>
+                        </Border>
 
-                            <TextBlock Margin="0,14,0,4" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_FastFlagGames_WhereShouldApply}" />
-                            <RadioButton GroupName="FlagRuleScope" Content="{x:Static resources:Strings.Menu_FastFlagGames_WholeGameEveryPlaceRecommended}" IsChecked="{Binding WholeGame, Mode=TwoWay}" />
-                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                <RadioButton GroupName="FlagRuleScope" VerticalAlignment="Center" Content="{x:Static resources:Strings.Menu_FastFlagGames_OnlyOnePlace}" IsChecked="{Binding OnePlace, Mode=TwoWay}" />
-                                <ComboBox Width="260" Margin="8,0,0,0" IsEnabled="{Binding OnePlace}" ItemsSource="{Binding Places}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedPlace, Mode=TwoWay}" />
-                                <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding PlacesStatus}" />
+                        <TextBlock Margin="0,14,0,6" FontSize="13" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_FastFlagGames_WhereShouldApply}" />
+                        <RadioButton GroupName="FlagRuleScope" Content="The whole game, every place in it" IsChecked="{Binding WholeGame, Mode=TwoWay}" />
+                        <DockPanel Margin="0,6,0,0">
+                            <RadioButton DockPanel.Dock="Left" GroupName="FlagRuleScope" VerticalAlignment="Center" Content="Only one place" IsChecked="{Binding OnePlace, Mode=TwoWay}" />
+                            <ComboBox Margin="8,0,0,0" IsEnabled="{Binding OnePlace}" ItemsSource="{Binding Places}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedPlace, Mode=TwoWay}" />
+                        </DockPanel>
+                        <TextBlock Margin="0,4,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding PlacesStatus}" />
+                        <TextBlock Margin="0,4,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                   Text="{x:Static resources:Strings.Menu_FastFlagGames_MostGamesAreMadeSeveralPlaces}" />
+
+                        <TextBlock Margin="0,14,0,6" FontSize="13" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_FastFlagGames_WhichFlags}" />
+                        <ComboBox ItemsSource="{Binding AddProfileOptions}" DisplayMemberPath="Name" SelectedValuePath="Id" SelectedValue="{Binding AddProfileId, Mode=TwoWay}" />
+                        <TextBlock Margin="0,6,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                   Text="{x:Static resources:Strings.Menu_FastFlagGames_NewProfileStartsEmptyOpensFast}" />
+
+                        <TextBlock Margin="0,10,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource PhasmaWarnBrush}" Visibility="{Binding ExistingNoteVisibility}" Text="{Binding ExistingNote}" />
+
+                        <Button Margin="0,14,0,0" HorizontalAlignment="Stretch" Style="{DynamicResource PhasmaAccentButton}" Command="{Binding AddCommand, Mode=OneTime}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Flag24" FontSize="14" Margin="0,0,6,0" />
+                                <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagGames_GiveGameItsOwnFlags}" />
                             </StackPanel>
-                            <TextBlock Margin="0,4,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                                       Text="{x:Static resources:Strings.Menu_FastFlagGames_MostGamesAreMadeSeveralPlaces}" />
-
-                            <TextBlock Margin="0,14,0,4" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_FastFlagGames_WhichFlags}" />
-                            <ComboBox Width="320" HorizontalAlignment="Left" ItemsSource="{Binding AddProfileOptions}" DisplayMemberPath="Name" SelectedValuePath="Id" SelectedValue="{Binding AddProfileId, Mode=TwoWay}" />
-                            <TextBlock Margin="0,4,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                                       Text="{x:Static resources:Strings.Menu_FastFlagGames_NewProfileStartsEmptyOpensFast}" />
-
-                            <TextBlock Margin="0,10,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource SystemFillColorCautionBrush}" Visibility="{Binding ExistingNoteVisibility}" Text="{Binding ExistingNote}" />
-
-                            <ui:Button Margin="0,14,0,0" Icon="Checkmark24" Appearance="Primary" Content="{x:Static resources:Strings.Menu_FastFlagGames_GiveGameItsOwnFlags}" Command="{Binding AddCommand, Mode=OneTime}" />
-                        </StackPanel>
-                    </Border>
+                        </Button>
+                    </StackPanel>
                 </StackPanel>
-            </Border>
-
-            <TextBlock Margin="0,20,0,8" FontSize="20" FontWeight="Medium" Text="{x:Static resources:Strings.Menu_FastFlagGames_WhenRobloxAlreadyOpen}" />
-
-            <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                       Text="{x:Static resources:Strings.Menu_FastFlagGames_RobloxOnlyReadsFastFlagsWhenStarts}" />
-
-            <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource SystemFillColorCautionBrush}" Visibility="{Binding TrackingOffVisibility, Mode=OneTime}"
-                       Text="{x:Static resources:Strings.Menu_FastFlagGames_ActivityTrackingOffIntegrationsPageSo}" />
-
-            <controls:OptionControl Header="{x:Static resources:Strings.Menu_FastFlagGames_CloseRobloxFirstWhenLaunchNeeds}"
-                                    Description="{x:Static resources:Strings.Menu_FastFlagGames_WhenYouClickPlayWebsiteLink}">
-                <ui:ToggleSwitch IsChecked="{Binding CloseRunningRoblox, Mode=TwoWay}" />
-            </controls:OptionControl>
-        </StackPanel>
-    </ScrollViewer>
+            </ScrollViewer>
+        </Border>
+    </Grid>
 </ui:UiPage>

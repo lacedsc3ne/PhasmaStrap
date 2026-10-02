@@ -103,6 +103,10 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         private void RefreshAll() => OnPropertyChanged(string.Empty);
 
+        /// <summary>Label on the right half of the preview: the chosen preset, or RiShade for hand tuned settings.</summary>
+        public string PreviewEffectLabel =>
+            !string.IsNullOrEmpty(_selectedPreset) && _selectedPreset != RiShadeSettings.PresetNames[0] ? _selectedPreset : "RiShade";
+
         public bool GradeEnabled { get => Prop.GradeEnabled; set { Prop.GradeEnabled = value; OnPropertyChanged(nameof(GradeEnabled)); } }
         public float Brightness { get => Prop.Brightness; set { Prop.Brightness = value; OnPropertyChanged(nameof(Brightness)); } }
         public float Gamma { get => Prop.Gamma; set { Prop.Gamma = value; OnPropertyChanged(nameof(Gamma)); } }

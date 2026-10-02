@@ -52,6 +52,7 @@ namespace PhasmaStrap
         private PackageManifest _versionPackageManifest = null!;
 
         private bool _usingKeptVersion;
+        private readonly List<Task> _preloads = new();
         private string _versionManifestText = "";
         private bool _channelFetched = false;
 
@@ -344,9 +345,9 @@ namespace PhasmaStrap
 
                     if (App.Settings.Prop.AssetWarpEnabled && App.Settings.Prop.AssetWarpPreloadEnabled)
                     {
-                        _ = Networking.AssetPreloadCache.PreloadAvatarAsync();
-                        _ = Networking.AssetPreloadCache.PreloadRecentGamesAsync(
-                            Integrations.PlayTimeStore.GetAll().OrderByDescending(e => e.LastPlayed).Select(e => e.UniverseId).Where(id => id > 0));
+                        _preloads.Add(Networking.AssetPreloadCache.PreloadAvatarAsync());
+                        _preloads.Add(Networking.AssetPreloadCache.PreloadRecentGamesAsync(
+                            Integrations.PlayTimeStore.GetAll().OrderByDescending(e => e.LastPlayed).Select(e => e.UniverseId).Where(id => id > 0)));
                     }
                 }
 
@@ -364,13 +365,14 @@ namespace PhasmaStrap
 
                 StartRoblox();
 
-                if (App.Settings.Prop.DisableRobloxCrashHandler)
-                    _ = DisableCrashHandlerIfNeeded();
             }
 
             await mutex.ReleaseAsync();
 
             Dialog?.CloseBootstrapper();
+
+            if (_preloads.Count > 0)
+                await Task.WhenAny(Task.WhenAll(_preloads), Task.Delay(TimeSpan.FromSeconds(6)));
         }
 
         private RegistryKey GetChannelRegistryKey() => Registry.CurrentUser.CreateSubKey($"SOFTWARE\\ROBLOX Corporation\\Environments\\{AppData.RegistryName}\\Channel");
@@ -1008,7 +1010,6 @@ namespace PhasmaStrap
             if (IsStudioLaunch)
                 return;
 
-            if (App.Settings.Prop.EnableActivityTracking || App.LaunchSettings.TestModeFlag.Active)
             {
                 using var ipl = new InterProcessLock("Watcher", TimeSpan.FromSeconds(5));
 
@@ -1031,43 +1032,6 @@ namespace PhasmaStrap
             }
 
             Thread.Sleep(1000);
-        }
-
-        private async Task DisableCrashHandlerIfNeeded()
-        {
-            const string LOG_IDENT = "Bootstrapper::DisableCrashHandlerIfNeeded";
-
-            try
-            {
-                await Task.Delay(800);
-
-                foreach (var process in Process.GetProcessesByName("RobloxCrashHandler"))
-                {
-                    try
-                    {
-                        if (!process.HasExited)
-                        {
-                            process.CloseMainWindow();
-                            if (!process.WaitForExit(1000))
-                                process.Kill();
-
-                            App.Logger.WriteLine(LOG_IDENT, $"Terminated RobloxCrashHandler {process.Id}");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        App.Logger.WriteLine(LOG_IDENT, $"Failed to close RobloxCrashHandler {process.Id}: {ex.Message}");
-                    }
-                    finally
-                    {
-                        process.Dispose();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                App.Logger.WriteException(LOG_IDENT, ex);
-            }
         }
 
         private bool ShouldRunAsAdmin()

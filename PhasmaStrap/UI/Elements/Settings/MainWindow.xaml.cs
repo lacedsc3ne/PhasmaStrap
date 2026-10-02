@@ -1018,7 +1018,7 @@ namespace PhasmaStrap.UI.Elements.Settings
         {
             Type host = SectionHosts.Resolve(pageType);
 
-            if (!RootNavigation.Navigate(host))
+            if (RootFrame.Content?.GetType() != host && !RootNavigation.Navigate(host))
                 return false;
 
             if (host != pageType)

@@ -120,6 +120,12 @@ namespace PhasmaStrap
         {
             e.Handled = true;
 
+            if (Utility.PageAudit.Running)
+            {
+                Utility.PageAudit.Crashed(e.Exception);
+                return;
+            }
+
             Logger.WriteLine("App::GlobalExceptionHandler", "An exception occurred");
 
             FinalizeExceptionHandling(e.Exception);

@@ -304,6 +304,9 @@ namespace PhasmaStrap
                     };
                 }
 
+                if (uiTest && Environment.GetEnvironmentVariable("PHASMASTRAP_UITEST_AUDIT") == "1")
+                    window.Loaded += (_, _) => Utility.PageAudit.Run(window);
+
                 if (interlock.IsAcquired)
                     Utility.SettingsLinkPipe.Listen(received => window.Dispatcher.BeginInvoke(new Action(() => window.OpenSettingLink(received))));
 

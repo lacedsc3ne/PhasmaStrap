@@ -127,12 +127,6 @@ namespace PhasmaStrap
                 if (App.Settings.Prop.GameChatEnabled)
                     GameChat = new(ActivityWatcher, _watcherData.ProcessId);
 
-                if (App.Settings.Prop.SoftKeyEnabled)
-                {
-                    _softKey = new SoftKey(_watcherData.ProcessId, App.Settings.Prop.SoftKeyProfile);
-                    _softKey.Start();
-                }
-
                 if (App.Settings.Prop.CustomIntegrations.Count > 0)
                     IntegrationWatcher = new(ActivityWatcher);
 
@@ -237,6 +231,15 @@ namespace PhasmaStrap
                     ActivityWatcher.OnGameJoin += (_, _) => SystemPerformanceBoost.OnGameJoin();
                     ActivityWatcher.OnGameLeave += (_, _) => SystemPerformanceBoost.OnGameLeave();
                 }
+            }
+
+            if (App.Settings.Prop.DisableRobloxCrashHandler)
+                _ = Utility.CrashHandlerStopper.RunAsync(Utility.PartyLauncher.RobloxRunning);
+
+            if (App.Settings.Prop.SoftKeyEnabled)
+            {
+                _softKey = new SoftKey(_watcherData.ProcessId, App.Settings.Prop.SoftKeyProfile);
+                _softKey.Start();
             }
 
             if (RobloxWindowCustomizer.IsEnabled)

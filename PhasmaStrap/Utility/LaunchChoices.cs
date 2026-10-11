@@ -55,7 +55,7 @@ namespace PhasmaStrap.Utility
         /// <summary>
         /// "Ask which account": shows the saved accounts first and switches the Roblox login to the one picked.
         /// Skipped for website links (their ticket is for the account signed in on the site), with fewer than two saved
-        /// accounts, and while a Roblox is open unless "Multi instance" is on.
+        /// accounts, and while a Roblox is open.
         /// </summary>
         public static bool AskWhichAccount(string? launchArgs)
         {
@@ -66,18 +66,15 @@ namespace PhasmaStrap.Utility
             if (accounts.Count < 2)
                 return true;
 
-            if (!App.Settings.Prop.AllowMultipleRoblox)
-            {
-                Process[] running = Process.GetProcessesByName(App.RobloxPlayerAppName);
-                bool open = running.Length > 0;
-                foreach (Process process in running)
-                    process.Dispose();
+            Process[] running = Process.GetProcessesByName(App.RobloxPlayerAppName);
+            bool open = running.Length > 0;
+            foreach (Process process in running)
+                process.Dispose();
 
-                if (open)
-                {
-                    App.Logger.WriteLine(LOG_IDENT, "Roblox is open, launching on the current account without asking");
-                    return true;
-                }
+            if (open)
+            {
+                App.Logger.WriteLine(LOG_IDENT, "Roblox is open, launching on the current account without asking");
+                return true;
             }
 
             var dialog = new UI.Elements.Dialogs.LaunchAccountPickerDialog(accounts);

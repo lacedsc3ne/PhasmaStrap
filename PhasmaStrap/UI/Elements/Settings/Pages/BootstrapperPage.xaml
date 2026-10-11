@@ -147,10 +147,6 @@
                     <ComboBox Padding="10,5,10,5" MinWidth="150" ItemsSource="{Binding SettingsWindowOnLaunchOptions, Mode=OneTime}" SelectedItem="{Binding SettingsWindowOnLaunch, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="Multi instance" Description="Run more than one Roblox at once, for alts">
-                    <ui:ToggleSwitch IsChecked="{Binding AllowMultipleRoblox, Mode=TwoWay}" />
-                </controls:OptionControl>
-
                 <controls:OptionControl Header="Ask which account" Description="Shows the account picker first. Needs two saved accounts.">
                     <ui:ToggleSwitch IsChecked="{Binding AskAccountOnLaunch, Mode=TwoWay}" />
                 </controls:OptionControl>

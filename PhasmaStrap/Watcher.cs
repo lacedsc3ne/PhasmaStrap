@@ -595,9 +595,6 @@ namespace PhasmaStrap
 
             ActivityWatcher?.Start();
 
-            // "Multi instance": keep Roblox's singleton mutex while this Roblox runs
-            RobloxMultiInstance.Hold();
-
             await WaitForRobloxExitAsync();
 
             bool possibleCrash = ActivityWatcher is not null && ActivityWatcher.InGame;
@@ -753,7 +750,6 @@ namespace PhasmaStrap
             Step("window customizer", RobloxWindowCustomizer.Shutdown);
             Step("process optimizer", StopProcessOptimizer);
             Step("memory manager", MemoryManager.Shutdown);
-            Step("multi instance", RobloxMultiInstance.Release);
             Step("hotkeys", () => _hotkeys?.Dispose());
             Step("instant replay", _instantReplay.Dispose);
             Step("activity watcher", () => ActivityWatcher?.Dispose());

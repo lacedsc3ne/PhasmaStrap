@@ -353,9 +353,6 @@ namespace PhasmaStrap
 
                 if (_launchMode == LaunchMode.Player)
                 {
-                    // Deployment > "Multi instance" and "Fullscreen on launch"
-                    Utility.RobloxMultiInstance.Hold();
-
                     if (App.Settings.Prop.FullscreenOnLaunch)
                         ApplyFullscreenOnLaunch();
                 }

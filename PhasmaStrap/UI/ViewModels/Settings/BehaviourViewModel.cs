@@ -200,13 +200,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             _ => "Closes when Roblox starts",
         };
 
-        /// <summary>"Multi instance": holds Roblox's singleton mutex so a new launch does not close the one running.</summary>
-        public bool AllowMultipleRoblox
-        {
-            get => App.Settings.Prop.AllowMultipleRoblox;
-            set { App.Settings.Prop.AllowMultipleRoblox = value; OnPropertyChanged(nameof(AllowMultipleRoblox)); RefreshSummaries(); }
-        }
-
         /// <summary>"Ask which account": the saved accounts picker before each launch from PhasmaStrap.</summary>
         public bool AskAccountOnLaunch
         {
@@ -575,11 +568,9 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        public string LaunchSummaryConfirm => AllowMultipleRoblox
-            ? "A new launch opens another Roblox next to the one already running."
-            : ConfirmLaunches
-                ? "You will be asked to confirm before each launch."
-                : "Launches start straight away, with no confirmation prompt.";
+        public string LaunchSummaryConfirm => ConfirmLaunches
+            ? "You will be asked to confirm before each launch."
+            : "Launches start straight away, with no confirmation prompt.";
 
         public string LaunchSummaryUpdates
         {

@@ -385,7 +385,6 @@ namespace PhasmaStrap.Models.Persistable
 
         // Deployment page, "When you press Play".
         public string SettingsWindowOnLaunch { get; set; } = "Close";
-        public bool AllowMultipleRoblox { get; set; } = false;
         public bool AskAccountOnLaunch { get; set; } = false;
         public bool ConfirmWebsiteJoins { get; set; } = false;
         public bool FullscreenOnLaunch { get; set; } = false;

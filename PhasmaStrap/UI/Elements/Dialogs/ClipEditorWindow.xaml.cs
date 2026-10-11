@@ -44,6 +44,9 @@ namespace PhasmaStrap.UI.Elements.Dialogs
         private CancellationTokenSource? _thumbCancel;
         private Task _thumbTask = Task.CompletedTask;
         private CancellationTokenSource? _stillCancel;
+        private CancellationTokenSource? _saveCancel;
+        private bool _closeAfterSave;
+        private string _busyLabel = "";
 
         public bool Saved { get; private set; }
 
@@ -59,7 +62,77 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             _timer = new DispatcherTimer(DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(33) };
             _timer.Tick += (_, _) => Tick();
 
-            Loaded += async (_, _) => await LoadAsync();
+            Loaded += async (_, _) =>
+            {
+                await LoadAsync();
+
+                if (Environment.GetEnvironmentVariable("PHASMASTRAP_UITEST_BACKGROUND") == "1" && Environment.GetEnvironmentVariable("PHASMASTRAP_UITEST_CLIPSAVE") is string test)
+                    await RunSaveTestAsync(test);
+            };
+        }
+
+        private async Task RunSaveTestAsync(string test)
+        {
+            await Task.Delay(2500);
+
+            if (_info is null)
+            {
+                App.Logger.WriteLine(LOG_IDENT, "Save test: the clip did not load");
+                Close();
+                return;
+            }
+
+            if (test.Contains("trim"))
+            {
+                SetStart(TimeSpan.FromSeconds(Math.Min(1, _duration.TotalSeconds / 4)));
+                SetEnd(_duration - TimeSpan.FromSeconds(Math.Min(1, _duration.TotalSeconds / 4)));
+            }
+
+            if (test.Contains("short") && _duration > TimeSpan.FromSeconds(12))
+            {
+                SetEnd(_duration / 2 + TimeSpan.FromSeconds(5));
+                SetStart(_duration / 2 - TimeSpan.FromSeconds(5));
+            }
+
+            if (test.Contains("crop"))
+            {
+                _crop = new Rect(_info.Width / 8.0, _info.Height / 8.0, _info.Width / 2.0, _info.Height / 2.0);
+                DrawCrop();
+            }
+
+            if (test.Contains("speed"))
+                SpeedBox.SelectedIndex = 4;
+
+            if (test.Contains("gif"))
+            {
+                ExportGif_Click(this, new RoutedEventArgs());
+                while (_busy)
+                    await Task.Delay(100);
+            }
+            else if (test.Contains("cancel"))
+            {
+                Task saving = ExportAsync(overwrite: test.Contains("overwrite"));
+                await Task.Delay(700);
+                CancelSave();
+                await saving;
+            }
+            else
+            {
+                await ExportAsync(overwrite: test.Contains("overwrite"));
+            }
+
+            App.Logger.WriteLine(LOG_IDENT, $"Save test '{test}' finished, status: {StatusText.Text}");
+
+            if (test.Contains("twice"))
+            {
+                if (test.Contains("trim"))
+                    SetEnd(_duration - TimeSpan.FromSeconds(Math.Min(1, _duration.TotalSeconds / 4)));
+
+                await ExportAsync(overwrite: test.Contains("overwrite"));
+                App.Logger.WriteLine(LOG_IDENT, $"Save test second save finished, status: {StatusText.Text}");
+            }
+
+            Close();
         }
 
         private async Task LoadAsync()
@@ -537,17 +610,52 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             StatusText.Text = $"Selected {selection.TotalSeconds:0.0}s of {_duration.TotalSeconds:0.0}s  ·  {size}{speed}" + (extra is null ? "" : $"  ·  {extra}");
         }
 
-        private void SetBusy(bool busy)
+        private void SetBusy(bool busy, string label = "")
         {
             _busy = busy;
+            _busyLabel = label;
             FooterButtons.IsEnabled = !busy;
             GifTools.IsEnabled = !busy;
             Timeline.IsEnabled = !busy;
             ExportProgress.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
             ExportProgress.Value = 0;
+            CancelSaveButton.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
+            CancelSaveButton.IsEnabled = true;
 
             if (busy)
+            {
+                _saveCancel?.Dispose();
+                _saveCancel = new CancellationTokenSource();
                 SetPlaying(false);
+                UpdateStatus($"{label}...");
+            }
+        }
+
+        private void ShowProgress(double value)
+        {
+            ExportProgress.Value = value;
+
+            if (_busy && _saveCancel?.IsCancellationRequested != true)
+                UpdateStatus($"{_busyLabel}... {value * 100:0}%");
+        }
+
+        private void CancelSave_Click(object sender, RoutedEventArgs e) => CancelSave();
+
+        private void CancelSave()
+        {
+            if (!_busy || _saveCancel is null || _saveCancel.IsCancellationRequested)
+                return;
+
+            _saveCancel.Cancel();
+            CancelSaveButton.IsEnabled = false;
+            UpdateStatus("stopping...");
+            App.Logger.WriteLine(LOG_IDENT, "Save cancelled");
+        }
+
+        private void FinishedBusy()
+        {
+            if (_closeAfterSave)
+                Dispatcher.BeginInvoke(new Action(Close));
         }
 
         private ClipEditOptions BuildOptions()
@@ -602,9 +710,10 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             ClipEditOptions options = BuildOptions();
             string destination = overwrite ? _path + ".editing.mp4" : UniqueCopyPath();
 
-            SetBusy(true);
-            UpdateStatus("saving...");
-            App.Logger.WriteLine(LOG_IDENT, $"Saving {(overwrite ? "over the original" : "a copy")}: {_path}");
+            SetBusy(true, "saving");
+            CancellationToken cancel = _saveCancel!.Token;
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            App.Logger.WriteLine(LOG_IDENT, $"Saving {(overwrite ? "over the original" : "a copy")}{(ClipProcessor.CanCopy(options) ? " without re-encoding" : "")}: {_path}");
 
             try
             {
@@ -624,40 +733,52 @@ namespace PhasmaStrap.UI.Elements.Dialogs
                 }
 
                 await Task.Run(() => ClipProcessor.Export(_path, destination, options,
-                    progress => Dispatcher.BeginInvoke(new Action(() => ExportProgress.Value = progress))));
+                    progress => Dispatcher.BeginInvoke(new Action(() => ShowProgress(progress))), cancel), cancel);
 
                 if (overwrite)
                 {
                     await ReplaceOriginalAsync(destination);
                     Saved = true;
-                    App.Logger.WriteLine(LOG_IDENT, $"Replaced {_path}");
+                    App.Logger.WriteLine(LOG_IDENT, $"Replaced {_path} in {clock.Elapsed.TotalSeconds:0.0}s");
 
                     _crop = null;
                     DrawCrop();
                     SpeedBox.SelectedIndex = 2;
                     SetBusy(false);
+
+                    if (_closeAfterSave)
+                    {
+                        FinishedBusy();
+                        return;
+                    }
+
                     await LoadAsync();
                     UpdateStatus("saved");
                     return;
                 }
 
                 Saved = true;
-                App.Logger.WriteLine(LOG_IDENT, $"Saved copy {destination}");
+                App.Logger.WriteLine(LOG_IDENT, $"Saved copy {destination} in {clock.Elapsed.TotalSeconds:0.0}s");
                 SetBusy(false);
                 UpdateStatus($"saved {System.IO.Path.GetFileName(destination)}");
+                FinishedBusy();
             }
             catch (Exception ex)
             {
-                App.Logger.WriteLine(LOG_IDENT, $"Export failed: {ex}");
+                bool cancelled = ex is OperationCanceledException;
 
-                try { if (overwrite && File.Exists(destination)) File.Delete(destination); } catch { }
+                if (!cancelled)
+                    App.Logger.WriteLine(LOG_IDENT, $"Export failed: {ex}");
+
+                try { if (File.Exists(destination) && (overwrite || cancelled)) File.Delete(destination); } catch { }
 
                 SetBusy(false);
 
                 if (overwrite && !_opened)
                     OpenPlayer();
 
-                UpdateStatus($"saving failed: {ex.Message}");
+                UpdateStatus(cancelled ? "saving cancelled, nothing was changed" : $"saving failed: {ex.Message}");
+                FinishedBusy();
             }
         }
 
@@ -699,13 +820,13 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             for (int n = 2; File.Exists(destination); n++)
                 destination = System.IO.Path.Combine(directory, $"{stem}_{n}.gif");
 
-            SetBusy(true);
-            UpdateStatus("making the GIF...");
+            SetBusy(true, "making the GIF");
+            CancellationToken cancel = _saveCancel!.Token;
 
             try
             {
                 await Task.Run(() => ClipProcessor.ExportGif(_path, destination, options, gif,
-                    progress => Dispatcher.BeginInvoke(new Action(() => ExportProgress.Value = progress))));
+                    progress => Dispatcher.BeginInvoke(new Action(() => ShowProgress(progress))), cancel), cancel);
 
                 double megabytes = new FileInfo(destination).Length / 1048576.0;
 
@@ -718,12 +839,20 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
                 string note = megabytes > 10 ? " - over Discord's 10 MB limit; try a smaller width, fewer fps or a shorter trim" : "";
                 UpdateStatus($"saved {System.IO.Path.GetFileName(destination)} ({megabytes:0.0} MB){(copied ? ", copied - paste it with Ctrl+V" : "")}{note}");
+                FinishedBusy();
             }
             catch (Exception ex)
             {
-                App.Logger.WriteLine(LOG_IDENT, $"GIF export failed: {ex}");
+                bool cancelled = ex is OperationCanceledException;
+
+                if (!cancelled)
+                    App.Logger.WriteLine(LOG_IDENT, $"GIF export failed: {ex}");
+
+                try { if (cancelled && File.Exists(destination)) File.Delete(destination); } catch { }
+
                 SetBusy(false);
-                UpdateStatus($"couldn't make the GIF: {ex.Message}");
+                UpdateStatus(cancelled ? "GIF cancelled" : $"couldn't make the GIF: {ex.Message}");
+                FinishedBusy();
             }
         }
 
@@ -772,6 +901,8 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             if (_busy)
             {
                 e.Cancel = true;
+                _closeAfterSave = true;
+                CancelSave();
                 return;
             }
 
@@ -791,6 +922,13 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
+            if (_busy && e.Key == Key.Escape)
+            {
+                CancelSave();
+                e.Handled = true;
+                return;
+            }
+
             if (_busy || _info is null)
                 return;
 

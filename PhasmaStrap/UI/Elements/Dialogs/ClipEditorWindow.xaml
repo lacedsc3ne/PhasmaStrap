@@ -143,11 +143,14 @@
                 <TextBlock x:Name="StatusText" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
                 <ProgressBar x:Name="ExportProgress" Height="4" Margin="0,6,16,0" Minimum="0" Maximum="1" Visibility="Collapsed" />
             </StackPanel>
-            <StackPanel x:Name="FooterButtons" Grid.Column="1" Orientation="Horizontal">
-                <ui:Button Margin="0,0,8,0" Focusable="False" Content="Save frame" Icon="Camera24" ToolTip="Save the frame on screen as a screenshot - it shows up in the gallery above, where you can edit it" Click="SaveFrame_Click" />
-                <ui:Button Margin="0,0,8,0" Focusable="False" Content="Save as copy" Icon="Save24" ToolTip="Keep the original and write the edited clip next to it (Ctrl+S)" Click="SaveCopy_Click" />
-                <ui:Button Margin="0,0,8,0" Focusable="False" Content="Save" Icon="Save24" Appearance="Primary" ToolTip="Replace the original clip with the edited one" Click="Save_Click" />
-                <ui:Button Focusable="False" Content="Close" Click="Close_Click" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <ui:Button x:Name="CancelSaveButton" Margin="0,0,8,0" Focusable="False" Content="Cancel" Icon="Dismiss24" Visibility="Collapsed" ToolTip="Stop saving and keep the clip as it was" Click="CancelSave_Click" />
+                <StackPanel x:Name="FooterButtons" Orientation="Horizontal">
+                    <ui:Button Margin="0,0,8,0" Focusable="False" Content="Save frame" Icon="Camera24" ToolTip="Save the frame on screen as a screenshot - it shows up in the gallery above, where you can edit it" Click="SaveFrame_Click" />
+                    <ui:Button Margin="0,0,8,0" Focusable="False" Content="Save as copy" Icon="Save24" ToolTip="Keep the original and write the edited clip next to it (Ctrl+S)" Click="SaveCopy_Click" />
+                    <ui:Button Margin="0,0,8,0" Focusable="False" Content="Save" Icon="Save24" Appearance="Primary" ToolTip="Replace the original clip with the edited one" Click="Save_Click" />
+                    <ui:Button Focusable="False" Content="Close" Click="Close_Click" />
+                </StackPanel>
             </StackPanel>
         </Grid>
     </Grid>

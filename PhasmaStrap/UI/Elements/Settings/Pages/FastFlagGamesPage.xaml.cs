@@ -49,6 +49,8 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             App.FlagProfiles.Edited += OnProfilesEdited;
 
             _viewModel.Reload();
+            _viewModel.OnPropertyChanged(nameof(FastFlagGamesViewModel.ManagerDisabledVisibility));
+            _viewModel.OnPropertyChanged(nameof(FastFlagGamesViewModel.TrackingOffVisibility));
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e) => App.FlagProfiles.Edited -= OnProfilesEdited;

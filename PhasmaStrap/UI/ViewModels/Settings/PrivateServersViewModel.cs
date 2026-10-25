@@ -372,9 +372,16 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 Status = servers.Count == 0 ? "This account has no private servers." : $"{rows.Count(r => r.Server.Owned)} of your own, {rows.Count(r => !r.Server.Owned)} shared with you.";
                 _ = LoadFriendsAsync();
 
-                var games = await PhasmaStrap.Utility.GameLookup.WithIconsAsync(servers.Where(s => s.UniverseId > 0).Select(s => new PhasmaStrap.Utility.GameInfo(s.UniverseId, s.PlaceId, s.GameName)).DistinctBy(g => g.UniverseId).ToList());
-                foreach (PrivateServerRow row in rows)
-                    row.IconUrl = games.FirstOrDefault(g => g.UniverseId == row.Server.UniverseId)?.IconUrl is { Length: > 0 } icon ? icon : null;
+                try
+                {
+                    var games = await PhasmaStrap.Utility.GameLookup.WithIconsAsync(servers.Where(s => s.UniverseId > 0).Select(s => new PhasmaStrap.Utility.GameInfo(s.UniverseId, s.PlaceId, s.GameName)).DistinctBy(g => g.UniverseId).ToList());
+                    foreach (PrivateServerRow row in rows)
+                        row.IconUrl = games.FirstOrDefault(g => g.UniverseId == row.Server.UniverseId)?.IconUrl is { Length: > 0 } icon ? icon : null;
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine("PrivateServersViewModel::Load", $"Could not load game icons: {ex.Message}");
+                }
             }
             catch (PrivateServers.NotSignedInException)
             {

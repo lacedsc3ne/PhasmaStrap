@@ -17,10 +17,13 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
         private CancellationTokenSource? _previewCts;
 
+        private bool _closed;
+
         public GoogleFontsDialog()
         {
             InitializeComponent();
             Loaded += GoogleFontsDialog_Loaded;
+            Closed += (_, _) => _closed = true;
         }
 
         private async void GoogleFontsDialog_Loaded(object sender, RoutedEventArgs e)
@@ -110,6 +113,13 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             try
             {
                 string path = await GoogleFontsService.DownloadAsync(font, CancellationToken.None);
+
+                if (_closed)
+                {
+                    App.Logger.WriteLine("GoogleFontsDialog::Apply", $"Downloaded {path} after the window was closed, not applying it");
+                    return;
+                }
+
                 SelectedFontPath = path;
 
                 if (ApplyToAppCheckBox.IsChecked == true)

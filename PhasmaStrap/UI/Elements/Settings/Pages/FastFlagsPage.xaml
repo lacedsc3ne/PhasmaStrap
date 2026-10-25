@@ -11,7 +11,8 @@
       d:DesignHeight="1500" d:DesignWidth="800"
       Title="FastFlagsPage"
       Scrollable="True"
-      Loaded="Page_Loaded">
+      Loaded="Page_Loaded"
+      Unloaded="Page_Unloaded">
     <ui:UiPage.Resources>
         <!--  Engine preset chips. RadioButtons so a click on the active one keeps it lit; the trigger follows ActiveEnginePreset.  -->
         <Style x:Key="PresetChip" TargetType="RadioButton" BasedOn="{StaticResource PhasmaChip}">
@@ -204,6 +205,10 @@
                         <controls:OptionControl Header="Match my monitor" Description="{Binding MatchMonitorDescription, Mode=OneTime}">
                             <ui:ToggleSwitch IsChecked="{Binding MatchMonitorFramerate, Mode=TwoWay}" />
                         </controls:OptionControl>
+
+                        <TextBlock Margin="16,0,16,8" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                                   Text="{Binding HighFramerateWarning, Mode=OneTime}"
+                                   Visibility="{Binding ShowHighFramerateWarning, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                         <controls:OptionControl Header="{x:Static resources:Strings.Menu_FastFlags_FRMQualityLevel_Title}" Description="{x:Static resources:Strings.Menu_FastFlags_FRMQualityLevel_Description}">
                             <ComboBox Padding="10,5,10,5" Width="130" ItemsSource="{Binding QualityLevels.Keys, Mode=OneTime}" Text="{Binding SelectedQualityLevel, Mode=TwoWay}">

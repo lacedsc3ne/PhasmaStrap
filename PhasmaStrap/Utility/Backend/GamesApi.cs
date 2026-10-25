@@ -188,6 +188,12 @@ namespace PhasmaStrap.Utility.Backend
 
                 lock (_lock)
                 {
+                    if (_stats.Count > 2000)
+                    {
+                        foreach (string stale in _stats.Where(kv => DateTime.UtcNow - kv.Value.At >= StatsTtl).Select(kv => kv.Key).ToList())
+                            _stats.Remove(stale);
+                    }
+
                     var answered = response.Servers.Where(s => s.JobId.Length > 0).GroupBy(s => s.JobId, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
                     foreach (ServerListItem server in batch)

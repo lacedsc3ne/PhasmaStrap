@@ -40,7 +40,9 @@ namespace PhasmaStrap.Utility
         private static void Save(TunerExperiment experiment)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(StatePath)!);
-            File.WriteAllText(StatePath, JsonSerializer.Serialize(experiment, new JsonSerializerOptions { WriteIndented = true }));
+            string temp = StatePath + ".tmp";
+            File.WriteAllText(temp, JsonSerializer.Serialize(experiment, new JsonSerializerOptions { WriteIndented = true }));
+            File.Move(temp, StatePath, true);
         }
 
         public static TunerExperiment Start(List<TunerVariant> variants, int rounds, int secondsPerRun)
@@ -114,7 +116,7 @@ namespace PhasmaStrap.Utility
             App.Logger.WriteLine(LOG_IDENT, $"Armed '{variant.Name}' round {round}: {snapshot.Flags.Count} flag(s) in place, measurement ordered");
         }
 
-        public static void Finish(TunerExperiment experiment, TunerVariant? keep)
+        public static bool Finish(TunerExperiment experiment, TunerVariant? keep)
         {
             FastFlagSnapshot? snapshot = keep is null
                 ? FastFlagSnapshotManager.List().FirstOrDefault(s => s.Name == experiment.BackupSnapshot)
@@ -126,7 +128,15 @@ namespace PhasmaStrap.Utility
             PerformanceRuns.ClearRequest();
 
             try { File.Delete(StatePath); } catch { }
+
+            if (snapshot is null)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Experiment {experiment.Id} finished, but the snapshot for {(keep is null ? $"the original set '{experiment.BackupSnapshot}'" : keep.Name)} was missing, flags left as they were");
+                return false;
+            }
+
             App.Logger.WriteLine(LOG_IDENT, $"Experiment {experiment.Id} finished, flags in place: {(keep is null ? "the original set" : keep.Name)}");
+            return true;
         }
     }
 }

@@ -41,6 +41,10 @@ public class GBSEditor
 
     private bool _repairedOnLoad;
 
+    private bool _unreadable;
+
+    private const int LoadAttempts = 3;
+
     public XDocument? Document { get; set; }
 
     public Dictionary<string, string> PresetPaths { get; } = new()
@@ -276,25 +280,54 @@ public class GBSEditor
 
         XDocument? loaded = null;
         _repairedOnLoad = false;
+        _unreadable = false;
 
-        try
+        for (int attempt = 1; attempt <= LoadAttempts; attempt++)
         {
-            if (File.Exists(FileLocation))
+            try
             {
-                _loadedWriteTimeUtc = File.GetLastWriteTimeUtc(FileLocation);
-                loaded = XDocument.Load(FileLocation);
+                if (File.Exists(FileLocation))
+                {
+                    _loadedWriteTimeUtc = File.GetLastWriteTimeUtc(FileLocation);
+                    loaded = XDocument.Load(FileLocation);
+                }
+                else
+                {
+                    _loadedWriteTimeUtc = DateTime.MinValue;
+                }
+
+                break;
             }
-            else
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                _loadedWriteTimeUtc = DateTime.MinValue;
+                App.Logger.WriteLine("GBSEditor::Load", $"Could not read the settings file (attempt {attempt} of {LoadAttempts}): {ex.Message}");
+
+                if (attempt == LoadAttempts)
+                {
+                    App.Logger.WriteLine("GBSEditor::Load", "Giving up for now, the settings file will not be written until it can be read");
+                    loaded = null;
+                    _unreadable = true;
+                    _loadedWriteTimeUtc = DateTime.MinValue;
+                }
+                else
+                {
+                    Thread.Sleep(150);
+                }
             }
-        }
-        catch (Exception ex)
-        {
-            App.Logger.WriteLine("GBSEditor::Load", "Failed to load, the settings file will be rebuilt");
-            App.Logger.WriteException("GBSEditor::Load", ex);
-            loaded = null;
-            _repairedOnLoad = true;
+            catch (Exception ex)
+            {
+                if (attempt < LoadAttempts)
+                {
+                    App.Logger.WriteLine("GBSEditor::Load", $"The settings file could not be parsed (attempt {attempt} of {LoadAttempts}), Roblox may still be writing it: {ex.Message}");
+                    Thread.Sleep(150);
+                    continue;
+                }
+
+                App.Logger.WriteLine("GBSEditor::Load", "Failed to load, the settings file will be rebuilt and the old one kept as a backup");
+                App.Logger.WriteException("GBSEditor::Load", ex);
+                loaded = null;
+                _repairedOnLoad = true;
+            }
         }
 
         if (loaded is null)
@@ -406,6 +439,18 @@ public class GBSEditor
             return false;
         }
 
+        if (_unreadable && File.Exists(location))
+        {
+            App.Logger.WriteLine("GBSEditor::Save", $"Not saving, {location} could not be read so writing now would wipe Roblox's settings");
+            return false;
+        }
+
+        if (_repairedOnLoad && File.Exists(location) && !KeepBackup(location))
+        {
+            App.Logger.WriteLine("GBSEditor::Save", "Not saving the rebuilt settings because a backup of the old file could not be made");
+            return false;
+        }
+
         string tempPath = Path.Combine(directory, Path.GetFileName(location) + "." + Guid.NewGuid().ToString("N") + ".tmp");
         bool restoreReadOnly = PreviousReadOnlyState;
 
@@ -433,6 +478,7 @@ public class GBSEditor
             }
 
             _loadedWriteTimeUtc = File.GetLastWriteTimeUtc(location);
+            _repairedOnLoad = false;
             App.Logger.WriteLine("GBSEditor::Save", "Save complete!");
             return true;
         }
@@ -515,6 +561,25 @@ public class GBSEditor
         XElement properties = new("Properties");
         item.Add(properties);
         return properties;
+    }
+
+    private static bool KeepBackup(string location)
+    {
+        string backupPath = location + ".bak";
+
+        try
+        {
+            File.Copy(location, backupPath, true);
+            File.SetAttributes(backupPath, File.GetAttributes(backupPath) & ~FileAttributes.ReadOnly);
+            App.Logger.WriteLine("GBSEditor::KeepBackup", $"Kept the old settings file at {backupPath}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            App.Logger.WriteLine("GBSEditor::KeepBackup", $"Could not copy {location} to {backupPath}");
+            App.Logger.WriteException("GBSEditor::KeepBackup", ex);
+            return false;
+        }
     }
 
     private static void DeleteTemporaryFile(string path)

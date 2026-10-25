@@ -10,7 +10,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 {
     public class FastFlagsViewModel : NotifyPropertyChangedViewModel
     {
-        private Dictionary<string, object>? _preResetFlags;
+        private static Dictionary<string, object>? _preResetFlags;
 
         private static readonly string[] LODLevels = { "L0", "L12", "L23", "L34" };
 
@@ -655,6 +655,9 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
                 int clamped = Math.Clamp(value, 0, 100);
                 App.FastFlags.SetPreset("Rendering.FrameRateBufferPercentage", clamped >= 1 ? clamped.ToString() : null);
+
+                if (clamped != value)
+                    OnPropertyChanged(nameof(FPSBufferPercentage));
             }
         }
 
@@ -669,16 +672,18 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 App.FastFlags.SetPreset("Rendering.Framerate", value == 0 ? null : value.ToString());
 
                 if (value > 240)
-                {
-                    Frontend.ShowMessageBox("Going above 240 FPS is not recommended, as this may cause latency issues.", MessageBoxImage.Exclamation);
                     App.FastFlags.SetPreset("Rendering.LimitFramerate", "False");
-                }
                 else
-                {
                     App.FastFlags.SetPreset("Rendering.LimitFramerate", null);
-                }
+
+                App.Logger.WriteLine("FastFlagsViewModel", $"Frame rate limit flag set to {value}");
+                OnPropertyChanged(nameof(ShowHighFramerateWarning));
             }
         }
+
+        public bool ShowHighFramerateWarning => FramerateLimit > 240 && !MatchMonitorFramerate;
+
+        public string HighFramerateWarning => "Going above 240 FPS is not recommended, as it may add input delay.";
 
         private static int MonitorRefreshRate
         {
@@ -704,6 +709,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
                 OnPropertyChanged(nameof(FramerateLimit));
                 OnPropertyChanged(nameof(MatchMonitorFramerate));
+                OnPropertyChanged(nameof(ShowHighFramerateWarning));
             }
         }
 
@@ -750,6 +756,9 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                     return;
 
                 App.FastFlags.SetPreset("UI.Hide", value > 0 ? value.ToString() : null);
+
+                if (HideGUI != value)
+                    OnPropertyChanged(nameof(HideGUI));
             }
         }
 
@@ -854,6 +863,9 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
                 int clamped = Math.Clamp(value, 0, 1500);
                 App.FastFlags.SetPreset("Network.Mtusize", clamped >= 576 ? clamped.ToString() : null);
+
+                if (MtuSize != value)
+                    OnPropertyChanged(nameof(MtuSize));
             }
         }
 
@@ -1267,14 +1279,30 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             set
             {
+                if (value == (_preResetFlags is not null))
+                    return;
+
                 if (value)
                 {
+                    MessageBoxResult confirm = Frontend.ShowMessageBox(
+                        "This clears all your FastFlags. Turn this off again before closing PhasmaStrap to bring them back. Continue?",
+                        MessageBoxImage.Warning,
+                        MessageBoxButton.YesNo);
+
+                    if (confirm != MessageBoxResult.Yes)
+                    {
+                        OnPropertyChanged(nameof(ResetConfiguration));
+                        return;
+                    }
+
                     _preResetFlags = new(App.FastFlags.Prop);
                     App.FastFlags.Prop.Clear();
+                    App.Logger.WriteLine("FastFlagsViewModel", $"Reset configuration on, backed up {_preResetFlags.Count} flag(s)");
                 }
                 else
                 {
                     App.FastFlags.Prop = _preResetFlags!;
+                    App.Logger.WriteLine("FastFlagsViewModel", $"Reset configuration off, restored {_preResetFlags!.Count} flag(s)");
                     _preResetFlags = null;
                 }
 

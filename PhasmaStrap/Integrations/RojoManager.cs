@@ -71,15 +71,15 @@ namespace PhasmaStrap.Integrations
 
             if (IsServing)
             {
-                progress?.Invoke("Stop rojo serve before updating.");
-                return false;
+                App.Logger.WriteLine(LOG_IDENT, "Update skipped because rojo serve is running");
+                throw new InvalidOperationException("Stop Rojo serve before updating.");
             }
 
             var (tag, url, digest, size) = await ResolveLatestAsync(ct);
             if (string.IsNullOrEmpty(tag) || string.IsNullOrEmpty(url))
             {
-                progress?.Invoke("Could not check for updates.");
-                return false;
+                App.Logger.WriteLine(LOG_IDENT, $"Update check found no release (tag \"{tag}\", url \"{url}\")");
+                throw new InvalidOperationException("Could not check for Rojo updates.");
             }
 
             string current = InstalledVersion ?? "";
@@ -193,11 +193,12 @@ namespace PhasmaStrap.Integrations
 
         private static async Task DownloadAsync(string url, string outputPath, string digest, long size, string label, Action<string>? progress, CancellationToken ct)
         {
-            var response = await App.HttpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
+            using var response = await App.HttpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
             response.EnsureSuccessStatusCode();
 
             var buffer = new byte[8192];
             long totalRead = 0;
+            int lastPercent = -1;
 
             await using (var stream = await response.Content.ReadAsStreamAsync(ct))
             await using (var fileStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.None))
@@ -213,7 +214,11 @@ namespace PhasmaStrap.Integrations
                     totalRead += bytesRead;
                     long total = size > 0 ? size : totalRead;
                     int percent = total > 0 ? (int)(totalRead * 100 / total) : 0;
-                    progress?.Invoke($"{label} ({percent}%)");
+                    if (percent != lastPercent)
+                    {
+                        lastPercent = percent;
+                        progress?.Invoke($"{label} ({percent}%)");
+                    }
                 }
             }
 

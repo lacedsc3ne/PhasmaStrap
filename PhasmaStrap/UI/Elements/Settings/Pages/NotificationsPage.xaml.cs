@@ -18,6 +18,7 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
             _viewModel.Attach();
+            _viewModel.OnPropertyChanged(nameof(NotificationsViewModel.DoNotDisturbEnabled));
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e)

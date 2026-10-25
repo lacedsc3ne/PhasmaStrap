@@ -413,9 +413,30 @@ namespace PhasmaStrap.Utility
                 return;
 
             _following = true;
-            JoinRequested += (_, join) => PartyLauncher.Follow(join);
-            LeaderOffered += (_, offer) => ShowLeaderOffer(offer);
-            BecameLeader += (_, _) => UI.NotificationCenter.Notify("You're leading the party now", "Everyone follows you into the games you launch.", UI.NotificationCategory.General);
+            JoinRequested += (_, join) =>
+            {
+                if (HandledHere("join"))
+                    PartyLauncher.Follow(join);
+            };
+            LeaderOffered += (_, offer) =>
+            {
+                if (HandledHere("leader offer"))
+                    ShowLeaderOffer(offer);
+            };
+            BecameLeader += (_, _) =>
+            {
+                if (HandledHere("new leader"))
+                    UI.NotificationCenter.Notify("You're leading the party now", "Everyone follows you into the games you launch.", UI.NotificationCategory.General);
+            };
+        }
+
+        private static bool HandledHere(string what)
+        {
+            if (PartyBackground.OwnsPartyHere())
+                return true;
+
+            App.Logger.WriteLine(LOG_IDENT, $"Leaving the party {what} to the party watcher");
+            return false;
         }
 
         private static void ShowLeaderOffer(PartyLeaderOffer offer)

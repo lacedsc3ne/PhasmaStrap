@@ -276,7 +276,7 @@ Click for more information</value>
     <value>Type</value>
   </data>
   <data name="Dialog.AddFastFlag.Title" xml:space="preserve">
-    <value>Add Fast Flag</value>
+    <value>Add FastFlag</value>
   </data>
   <data name="Dialog.ChannelLists.Title" xml:space="preserve">
     <value>Available Channels</value>
@@ -568,7 +568,7 @@ There are {0} conflicting flag definitions:
     <value>Delete selected</value>
   </data>
   <data name="Menu.FastFlagEditor.Description" xml:space="preserve">
-    <value>Manage your own Fast Flags. Double click a column to edit.</value>
+    <value>Manage your own FastFlags. Double click a column to edit.</value>
   </data>
   <data name="Menu.FastFlagEditor.ExportJson" xml:space="preserve">
     <value>Export JSON</value>
@@ -601,13 +601,13 @@ Are you sure you want to continue?</value>
     <value>Show preset flags</value>
   </data>
   <data name="Menu.FastFlagEditor.Title" xml:space="preserve">
-    <value>Fast Flag Editor</value>
+    <value>FastFlag editor</value>
   </data>
   <data name="Menu.FastFlags.Description" xml:space="preserve">
     <value>Control how specific Roblox engine parameters and features are configured.</value>
   </data>
   <data name="Menu.FastFlags.Editor.Description" xml:space="preserve">
-    <value>Manage your own Fast Flags. Use with caution.</value>
+    <value>Manage your own FastFlags. Use with caution.</value>
     <comment>Title is Menu.FastFlagEditor.Title</comment>
   </data>
   <data name="Menu.FastFlags.Presets.D3DExclusiveFullscreenInfo" xml:space="preserve">
@@ -1222,7 +1222,7 @@ Selecting 'No' will ignore this warning and continue installation.</value>
     <value>Rendering and Graphics</value>
   </data>
   <data name="Menu.FastFlags.ManagerEnabled.Title" xml:space="preserve">
-    <value>Allow PhasmaStrap to manage Fast Flags</value>
+    <value>Allow PhasmaStrap to manage FastFlags</value>
   </data>
   <data name="Menu.FastFlags.ManagerEnabled.Description" xml:space="preserve">
     <value>Disabling this will prevent anything configured here from being applied to Roblox.</value>
@@ -1477,7 +1477,7 @@ Every person here is ranked by their overall pledge.</value>
     <value>Your Settings could not be loaded. They have been reset to the default configuration.</value>
   </data>
   <data name="JsonManager.FastFlagsLoadFailed" xml:space="preserve">
-    <value>Your Fast Flags could not be loaded. They have been reset to the default configuration.</value>
+    <value>Your FastFlags could not be loaded. They have been reset to the default configuration.</value>
   </data>
   <data name="ContextMenu.GameHistory.Title" xml:space="preserve">
     <value>Game history</value>
@@ -1902,7 +1902,7 @@ Defaulting to {1}.</value>
     <value>Roblox Community</value>
   </data>
   <data name="Menu.FastFlagEditor.AllowlistInformation" xml:space="preserve">
-    <value>Due to the [Fast Flag allowlist update]({0}), most custom Fast Flags will have no effect on the Roblox player.</value>
+    <value>Due to the [FastFlag allowlist update]({0}), most custom FastFlags will have no effect on the Roblox player.</value>
   </data>
   <data name="Menu.ServerBrowser.ExcludedPlaces.Title" xml:space="preserve">
     <value>Excluded places</value>
@@ -2088,7 +2088,7 @@ Defaulting to {1}.</value>
     <value>Custom effects: drop raw HLSL pixel shaders (entry point PSCustom, scene texture on t0) into the Integrations\RiShade\Effects folder and they'll be compiled and chained in automatically.</value>
   </data>
   <data name="Menu.RiShade.NotPorted" xml:space="preserve">
-    <value>Not ported from Voidstrap: depth of field, screen space reflections, ambient occlusion, global illumination, fog, eye adaptation, ReShade .fx preset importing, and the in-game F8 tweak panel. Capture uses desktop duplication rather than per-window Windows.Graphics.Capture, since that needs a CsWinRT projection toolchain this project doesn't have wired up.</value>
+    <value>Some effects are not available yet: depth of field, reflections, ambient occlusion, global lighting, fog, eye adaptation, ReShade preset import and the in game F8 panel.</value>
   </data>
   <data name="Menu.Nvidia.Description" xml:space="preserve">
     <value>Driver-level NVIDIA tweaks applied to a dedicated Roblox profile via NVAPI, separate from Roblox's own FastFlags or in-game settings. NVIDIA GPU required.</value>
@@ -2586,13 +2586,13 @@ Defaulting to {1}.</value>
     <value>FFlag preset values</value>
   </data>
   <data name="Dialog.FFlagSearch.Title" xml:space="preserve">
-    <value>Find Fast Flags</value>
+    <value>Find FastFlags</value>
   </data>
   <data name="Dialog.FFlagSearch.Heading" xml:space="preserve">
-    <value>Fast Flag Search &amp; Validation</value>
+    <value>FastFlag search and validation</value>
   </data>
   <data name="Dialog.FFlagSearch.Description" xml:space="preserve">
-    <value>Search, validate, and browse Fast Flags indexed from public community trackers</value>
+    <value>Search, validate, and browse FastFlags indexed from public community trackers</value>
   </data>
   <data name="Dialog.FFlagSearch.StatusReady" xml:space="preserve">
     <value>Ready</value>
@@ -2944,7 +2944,7 @@ Example:
     <value>Identify</value>
   </data>
   <data name="Menu.Appearance.ColorTheme.Title" xml:space="preserve">
-    <value>Custom color theme</value>
+    <value>Custom colour theme</value>
   </data>
   <data name="Menu.Appearance.ColorTheme.Description" xml:space="preserve">
     <value>Override the colors used throughout PhasmaStrap's own menus and dialogs. This is separate from the custom bootstrapper themes above, which only affect the loading window.</value>
@@ -4856,7 +4856,7 @@ Everything on this page (and the Advanced Editor) reads and writes a dedicated "
     <value>Each entry is a cached asset-resolution response, keyed by a hash of the request - not an asset name, so there's nothing more specific to show per entry than size and when it was last used.</value>
   </data>
   <data name="Menu.Networking.PanicWipe" xml:space="preserve">
-    <value>Panic Wipe</value>
+    <value>Panic wipe</value>
   </data>
   <data name="Menu.Networking.ImmediatelySignsYouOutRobloxClears" xml:space="preserve">
     <value>Immediately signs you out of Roblox and clears every cache/log directory and the AssetWarp preload cache in one action. Different from the Cleanup schedule on the Deployment page, which only runs after Roblox closes and only for whichever directories you've opted into - this runs right now, always covers everything, and always signs you out too.</value>
@@ -4868,7 +4868,7 @@ Everything on this page (and the Advanced Editor) reads and writes a dedicated "
     <value>Wipe</value>
   </data>
   <data name="Menu.Notifications.DoNotDisturb" xml:space="preserve">
-    <value>Do Not Disturb</value>
+    <value>Do not disturb</value>
   </data>
   <data name="Menu.Notifications.SuppressesScreenToastPopupRestSession" xml:space="preserve">
     <value>Suppresses the on-screen toast popup for the rest of this session. Nothing is lost - suppressed notifications still show up in History below.</value>
@@ -5252,7 +5252,7 @@ Everything on this page (and the Advanced Editor) reads and writes a dedicated "
     <value>Only alert for favourites</value>
   </data>
   <data name="Menu.Friends.ToastsOnlyFriendsYouStarredBelow" xml:space="preserve">
-    <value>Toasts only for the friends you starred below.</value>
+    <value>Toasts only for the friends you starred in the list.</value>
   </data>
   <data name="Menu.Friends.SearchNamesNotes" xml:space="preserve">
     <value>Search names and notes</value>
@@ -5618,7 +5618,7 @@ Everything on this page (and the Advanced Editor) reads and writes a dedicated "
     <value>The profile this game uses</value>
   </data>
   <data name="Menu.FastFlagGames.OpenGameSProfileFastFlag" xml:space="preserve">
-    <value>Open this game's profile in the Fast Flag Editor</value>
+    <value>Open this game's profile in the FastFlag editor</value>
   </data>
   <data name="Menu.FastFlagGames.SeeEveryFlagGameStarts" xml:space="preserve">
     <value>See every flag this game starts with</value>
@@ -5654,7 +5654,7 @@ Everything on this page (and the Advanced Editor) reads and writes a dedicated "
     <value>Which flags?</value>
   </data>
   <data name="Menu.FastFlagGames.NewProfileStartsEmptyOpensFast" xml:space="preserve">
-    <value>A new profile starts empty and opens in the Fast Flag Editor, so you can add this game's flags right away. Several games can share one profile.</value>
+    <value>A new profile starts empty and opens in the FastFlag editor, so you can add this game's flags right away. Several games can share one profile.</value>
   </data>
   <data name="Menu.FastFlagGames.GiveGameItsOwnFlags" xml:space="preserve">
     <value>Give this game its own flags</value>

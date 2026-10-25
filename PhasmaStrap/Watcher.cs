@@ -96,7 +96,13 @@ namespace PhasmaStrap
                     }
                 };
 
-                ActivityWatcher.OnConnectionDropped += (_, dropped) => _ = RejoinAfterDropAsync(dropped);
+                ActivityWatcher.OnConnectionDropped += (_, dropped) =>
+                {
+                    Task rejoin = RejoinAfterDropAsync(dropped);
+
+                    if (!rejoin.IsCompleted)
+                        _rejoinAfterDropTask = rejoin;
+                };
                 Utility.ServerRegion.Uptime = () => ActivityWatcher.Data.ServerUptimeText;
 
                 NowPlaying.NameResolved += (_, _) =>
@@ -116,8 +122,16 @@ namespace PhasmaStrap
                     ActivityWatcher.OnAppClose += delegate
                     {
                         App.Logger.WriteLine(LOG_IDENT, "Received desktop app exit, closing Roblox");
-                        using var process = Process.GetProcessById(_watcherData.ProcessId);
-                        process.CloseMainWindow();
+
+                        try
+                        {
+                            using var process = Process.GetProcessById(_watcherData.ProcessId);
+                            process.CloseMainWindow();
+                        }
+                        catch (Exception ex)
+                        {
+                            App.Logger.WriteLine(LOG_IDENT, $"Could not close Roblox ({_watcherData.ProcessId}): {ex.Message}");
+                        }
                     };
                 }
 
@@ -280,7 +294,7 @@ namespace PhasmaStrap
 
         public void CleanRamNow()
         {
-            SystemMemoryCleaner.TrimResult result = SystemMemoryCleaner.TrimAllProcessWorkingSets();
+            SystemMemoryCleaner.TrimResult result = SystemMemoryCleaner.TrimAllProcessWorkingSets(true);
             NotificationCenter.Notify(
                 "RAM cleaned",
                 $"Trimmed {result.ProcessesTrimmed} processes (~{result.BytesFreed / 1048576.0:0.#} MB).",
@@ -290,6 +304,8 @@ namespace PhasmaStrap
 
         public void ToggleHeadsetAudio()
         {
+            ReloadSettingsIfChanged();
+
             bool enabled = !App.Settings.Prop.HeadsetAudioEnabled;
             App.Settings.Prop.HeadsetAudioEnabled = enabled;
             App.Settings.Save();
@@ -298,6 +314,22 @@ namespace PhasmaStrap
                 HeadsetAudio.Start();
             else
                 HeadsetAudio.Stop();
+        }
+
+        private static void ReloadSettingsIfChanged()
+        {
+            try
+            {
+                if (File.Exists(App.Settings.FileLocation) && App.Settings.HasFileOnDiskChanged())
+                {
+                    App.Logger.WriteLine("Watcher::ReloadSettingsIfChanged", "Settings changed on disk, reloading before saving a hotkey change");
+                    App.Settings.Load(alertFailure: false);
+                }
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("Watcher::ReloadSettingsIfChanged", $"Could not check the settings file: {ex.Message}");
+            }
         }
 
         private bool _pickingArea;
@@ -471,6 +503,8 @@ namespace PhasmaStrap
 
         public void ToggleOverlayFocusMode()
         {
+            ReloadSettingsIfChanged();
+
             bool enabled = !App.Settings.Prop.OverlayFocusModeEnabled;
             App.Settings.Prop.OverlayFocusModeEnabled = enabled;
             App.Settings.Save();
@@ -486,6 +520,8 @@ namespace PhasmaStrap
         private SoftKey? _softKey;
 
         private bool _rejoiningAfterDrop;
+
+        private Task? _rejoinAfterDropTask;
 
         private async Task RejoinAfterDropAsync(ActivityWatcher.DroppedConnection dropped)
         {
@@ -597,6 +633,22 @@ namespace PhasmaStrap
 
             await WaitForRobloxExitAsync();
 
+            ReleaseWatcherLock();
+
+            if (_rejoinAfterDropTask is not null)
+            {
+                App.Logger.WriteLine("Watcher::Run", "Waiting for the rejoin after the dropped connection to launch Roblox");
+
+                try
+                {
+                    await _rejoinAfterDropTask;
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine("Watcher::Run", $"Rejoin after the dropped connection failed: {ex.Message}");
+                }
+            }
+
             bool possibleCrash = ActivityWatcher is not null && ActivityWatcher.InGame;
 
             bool intentional = Utility.FlagProfileSession.RestartedRecently || _killedOnPurpose;
@@ -652,6 +704,19 @@ namespace PhasmaStrap
         }
 
         private bool _killedOnPurpose;
+
+        private void ReleaseWatcherLock()
+        {
+            try
+            {
+                App.Current.Dispatcher.Invoke(_lock.Dispose);
+                App.Logger.WriteLine("Watcher::Run", "Roblox has closed, released the watcher lock so a new launch can start its own watcher");
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("Watcher::Run", $"Could not release the watcher lock early: {ex.Message}");
+            }
+        }
 
         private async Task<CrashReport?> AnalyzeExitAsync()
         {
@@ -748,6 +813,7 @@ namespace PhasmaStrap
             Step("headset audio", HeadsetAudio.Shutdown);
             Step("resolution", ForcedResolution.Shutdown);
             Step("window customizer", RobloxWindowCustomizer.Shutdown);
+            Step("performance boost", SystemPerformanceBoost.EndSession);
             Step("process optimizer", StopProcessOptimizer);
             Step("memory manager", MemoryManager.Shutdown);
             Step("hotkeys", () => _hotkeys?.Dispose());

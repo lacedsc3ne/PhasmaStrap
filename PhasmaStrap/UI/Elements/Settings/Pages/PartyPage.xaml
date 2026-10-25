@@ -31,7 +31,7 @@
                     <StackPanel Grid.Column="1">
                         <TextBlock FontSize="13" FontWeight="SemiBold" Text="Not signed in" />
                         <TextBlock Margin="0,2,0,0" Style="{DynamicResource PhasmaSubtle}" TextWrapping="Wrap" TextTrimming="None"
-                                   Text="A party needs a PhasmaStrap account so everyone can be told where to go. Sign in on the PhasmaStrap page." />
+                                   Text="A party needs a PhasmaStrap account so everyone can be told where to go. Sign in under Settings > Account and backup." />
                     </StackPanel>
                 </Grid>
             </Border>

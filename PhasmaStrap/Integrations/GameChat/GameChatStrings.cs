@@ -3,7 +3,7 @@ namespace PhasmaStrap.Integrations.GameChat
     public static class GameChatStrings
     {
         public const string AboutText = "About PhasmaStrap Chat:\nAn in-game chat overlay built into PhasmaStrap.\nMessages are relayed through an optional chat server that you (or your server admin) configure in Settings > Game Chat.\nChat '/help' for a list of commands.";
-        public const string ChatInputBoxText = "Press / key | Ctrl+Shift+C to hide";
+        public const string ChatInputBoxText = "Press / to chat, Ctrl+Shift+C to hide";
         public const string ConnectedSuccessfully = "Connected successfully!";
         public const string ConnectingToServer = "Connecting to server {0}...";
         public const string ConnectionError = "Connection error: {0}";
@@ -46,17 +46,21 @@ namespace PhasmaStrap.Integrations.GameChat
         public const string HelpHeader = "PhasmaStrap Chat commands";
         public const string ViewProfileTooltip = "Click or right click to view {0}'s profile";
         public const string CopiedUserId = "Copied user id {0}.";
-        public const string CtxCopyMessage = "Copy Message";
-        public const string CtxCopyUserId = "Copy User ID";
-        public const string CtxCopyUsername = "Copy Username";
-        public const string CtxViewProfile = "View Profile";
-        public const string CtxMuteUser = "Mute User";
-        public const string CtxUnmuteUser = "Unmute User";
+        public const string CtxCopyMessage = "Copy message";
+        public const string CtxCopyUserId = "Copy user ID";
+        public const string CtxCopyUsername = "Copy username";
+        public const string CtxViewProfile = "View profile";
+        public const string CtxMuteUser = "Mute user";
+        public const string CtxUnmuteUser = "Unmute user";
         public const string CopiedMessage = "Copied message.";
         public const string BugSending = "Sending your bug report...";
         public const string BugSent = "Thanks! Your bug report was sent.";
         public const string BugFailed = "Could not send your bug report. Please try again later.";
         public const string BugCooldown = "Please wait a minute before sending another bug report.";
+        public const string ReportSending = "Sending your report about {0}...";
+        public const string ReportSent = "Thanks! Your report about {0} was sent.";
+        public const string ReportFailed = "Could not send your report. Please try again later.";
+        public const string ReportCooldown = "Please wait a minute before sending another report.";
         public const string BugTooShort = "Please describe the bug in a bit more detail.";
 
         public static readonly (string Token, string Description)[] CommandTokens = new (string, string)[]

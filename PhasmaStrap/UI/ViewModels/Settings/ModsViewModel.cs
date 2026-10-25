@@ -55,8 +55,22 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
                 string type = dialog.FileName.Substring(dialog.FileName.Length-3, 3).ToLowerInvariant();
 
+                byte[] header = new byte[4];
+
+                try
+                {
+                    using FileStream stream = File.OpenRead(dialog.FileName);
+                    stream.Read(header, 0, header.Length);
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine("ModsViewModel::ManageCustomFont", $"Could not read '{dialog.FileName}': {ex.Message}");
+                    Frontend.ShowMessageBox($"That font could not be read:\n{ex.Message}", MessageBoxImage.Error);
+                    return;
+                }
+
                 if (!FontHeaders.ContainsKey(type)
-                    || !FontHeaders.Any(x => File.ReadAllBytes(dialog.FileName).Take(4).SequenceEqual(x.Value)))
+                    || !FontHeaders.Any(x => header.SequenceEqual(x.Value)))
                 {
                     Frontend.ShowMessageBox(Strings.Menu_Mods_Misc_CustomFont_Invalid, MessageBoxImage.Error);
                     return;
@@ -71,7 +85,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         private void BrowseGoogleFonts()
         {
-            var dialog = new UI.Elements.Dialogs.GoogleFontsDialog();
+            var dialog = new UI.Elements.Dialogs.GoogleFontsDialog { Owner = Frontend.ActiveOwner() };
 
             if (dialog.ShowDialog() != true || string.IsNullOrEmpty(dialog.SelectedFontPath))
                 return;
@@ -225,7 +239,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             if (String.IsNullOrEmpty(CustomCursorSetTask.NewState))
                 return;
 
-            new CursorPreviewDialog(CustomCursorSetTask.NewState).ShowDialog();
+            new CursorPreviewDialog(CustomCursorSetTask.NewState) { Owner = Frontend.ActiveOwner() }.ShowDialog();
         }
 
         public ICommand ManageCustomCursorSetCommand => new RelayCommand(ManageCustomCursorSet);
@@ -434,7 +448,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         private void AddCustomCursorSet()
         {
-            var dialog = new TextInputDialog("New Cursor Set", "Name for this cursor set:", "Custom Cursor Set " + (CursorSets.Count + 1));
+            var dialog = new TextInputDialog("New cursor set", "Name for this cursor set:", "Custom cursor set " + (CursorSets.Count + 1)) { Owner = Frontend.ActiveOwner() };
             dialog.ShowDialog();
 
             if (!dialog.Confirmed)
@@ -457,7 +471,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             if (SelectedCursorSet is null)
                 return;
 
-            var dialog = new TextInputDialog("Rename Cursor Set", "New name:", SelectedCursorSet.Name);
+            var dialog = new TextInputDialog("Rename cursor set", "New name:", SelectedCursorSet.Name) { Owner = Frontend.ActiveOwner() };
             dialog.ShowDialog();
 
             if (!dialog.Confirmed)
@@ -621,8 +635,17 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             string path = Path.Combine(SelectedCursorSet.Folder, fileName);
 
-            if (File.Exists(path))
-                File.Delete(path);
+            try
+            {
+                if (File.Exists(path))
+                    File.Delete(path);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("ModsViewModel::RemoveCursorSetFile", $"Could not delete '{path}': {ex.Message}");
+                Frontend.ShowMessageBox("That image could not be removed:\n" + ex.Message, MessageBoxImage.Warning);
+                return;
+            }
 
             SelectedCursorSet.RefreshPreviews();
         }
@@ -834,7 +857,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         private static string? AskForManagedModName(string title, string initial)
         {
-            var dialog = new TextInputDialog(title, "Mod name:", initial);
+            var dialog = new TextInputDialog(title, "Mod name:", initial) { Owner = Frontend.ActiveOwner() };
             dialog.ShowDialog();
             return dialog.Confirmed ? dialog.Value : null;
         }

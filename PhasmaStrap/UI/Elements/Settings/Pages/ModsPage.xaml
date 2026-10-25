@@ -498,7 +498,7 @@
 
             <!--  Home page background  -->
             <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Mods_Overlays_Title}"
-                                   Description="A color or gradient behind PhasmaStrap's own Home page. Not the in game overlays.">
+                                   Description="A colour or gradient behind PhasmaStrap's own Home page. Not the in game overlays.">
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Mods_Overlays_Enable_Title}">
                     <ui:ToggleSwitch IsChecked="{Binding HomepageBackgroundEnabled, Mode=TwoWay}" />
                 </controls:OptionControl>

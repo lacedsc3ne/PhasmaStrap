@@ -34,7 +34,7 @@
                     <ComboBox Padding="10,5,10,5" MinWidth="130" MaxWidth="200" ItemsSource="{Binding Languages, Mode=OneTime}" Text="{Binding SelectedLanguage, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Appearance_ColorTheme_Title}" Description="Overrides colors in PhasmaStrap's own menus">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Appearance_ColorTheme_Title}" Description="Overrides colours in PhasmaStrap's own menus">
                     <StackPanel Orientation="Horizontal">
                         <Button Margin="0,0,10,0" Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Common_Edit}" Command="{Binding EditColorThemeCommand}" />
                         <ui:ToggleSwitch VerticalAlignment="Center" IsChecked="{Binding CustomColorThemeEnabled, Mode=TwoWay}" />
@@ -127,7 +127,7 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Width="170" Margin="0,0,10,10" Padding="3" CornerRadius="{DynamicResource PhasmaCornerRadius}" Background="{DynamicResource PhasmaHoverBrush}" Cursor="Hand">
+                                <Border Width="170" Margin="0,0,10,10" Padding="3" CornerRadius="{DynamicResource PhasmaCornerRadius}" Background="{DynamicResource PhasmaHoverBrush}" Cursor="Hand" Focusable="True">
                                     <Border.Style>
                                         <Style TargetType="Border">
                                             <Setter Property="BorderThickness" Value="2" />
@@ -141,6 +141,8 @@
                                     </Border.Style>
                                     <Border.InputBindings>
                                         <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.SelectBackgroundCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
+                                        <KeyBinding Key="Enter" Command="{Binding DataContext.SelectBackgroundCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
+                                        <KeyBinding Key="Space" Command="{Binding DataContext.SelectBackgroundCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
                                     </Border.InputBindings>
                                     <StackPanel>
                                         <Grid Height="90">

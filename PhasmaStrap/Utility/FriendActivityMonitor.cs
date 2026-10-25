@@ -151,7 +151,7 @@ namespace PhasmaStrap.Utility
                 if (wasType == FriendPresenceType.Offline && now.Type != FriendPresenceType.Offline)
                 {
                     // Friends page > Friend alerts > "When anyone comes online"
-                    if (!App.Settings.Prop.FriendAlertOnline)
+                    if (!App.Settings.Prop.FriendAlertOnline && mode != FriendNotesStore.AlertMode.Online)
                     {
                         if (App.Settings.Prop.FriendAlertGame && now.Type == FriendPresenceType.InGame)
                             NotificationCenter.Notify(

@@ -25,6 +25,7 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
 
             viewModel.OnPropertyChanged(nameof(viewModel.SelectedCustomTheme));
             viewModel.OnPropertyChanged(nameof(viewModel.SelectedCustomThemeName));
+            viewModel.OnPropertyChanged(nameof(viewModel.IsCustomThemeSelected));
         }
     }
 }

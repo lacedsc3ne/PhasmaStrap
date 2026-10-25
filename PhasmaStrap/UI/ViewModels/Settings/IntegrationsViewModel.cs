@@ -31,7 +31,11 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             {
                 App.Settings.Prop.StudioRichPresenceEnabled = value;
 
-                if (value)
+                if (!App.OwnsBackgroundServices)
+                {
+                    App.Logger.WriteLine("IntegrationsViewModel", "Studio presence changed, the PhasmaStrap process running background services will apply it after Save");
+                }
+                else if (value)
                 {
                     App.StudioRichPresence ??= new PhasmaStrap.StudioRichPresence();
                 }
@@ -49,7 +53,25 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             set => App.Settings.Prop.RpcAutoTranslate = value;
         }
 
-        public ICommand OpenCustomRPCCommand => new RelayCommand(() => new RPCTemplatesWindow(this).Show());
+        public ICommand OpenCustomRPCCommand => new RelayCommand(OpenCustomRPC);
+
+        private void OpenCustomRPC()
+        {
+            RPCTemplatesWindow? open = System.Windows.Application.Current.Windows.OfType<RPCTemplatesWindow>().FirstOrDefault();
+
+            if (open is not null)
+            {
+                open.Activate();
+                return;
+            }
+
+            var window = new RPCTemplatesWindow(this)
+            {
+                Owner = System.Windows.Application.Current.Windows.OfType<UI.Elements.Settings.MainWindow>().FirstOrDefault()
+            };
+
+            window.Show();
+        }
 
         public ICommand AccountWindowCommand => new RelayCommand(() => new AccountSwitcherWindow().Show());
 

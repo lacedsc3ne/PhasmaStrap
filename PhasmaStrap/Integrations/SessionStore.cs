@@ -63,11 +63,12 @@ namespace PhasmaStrap.Integrations
         public static SessionStore Shared => _shared ??= new SessionStore(Path.Combine(Paths.PlayTime, "Sessions.json"));
         private static SessionStore? _shared;
 
-        public SessionData Load() => TryLoad(out SessionData data) ? data : new SessionData();
+        public SessionData Load() => TryLoad(out SessionData data, out _) ? data : new SessionData();
 
-        private bool TryLoad(out SessionData result)
+        private bool TryLoad(out SessionData result, out bool unreadable)
         {
             result = new SessionData();
+            unreadable = false;
 
             try
             {
@@ -86,9 +87,15 @@ namespace PhasmaStrap.Integrations
                 result = data;
                 return true;
             }
-            catch (Exception ex)
+            catch (JsonException ex)
             {
                 Log?.Invoke($"Could not read {_path}: {ex.Message}");
+                unreadable = true;
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Log?.Invoke($"Could not open {_path}: {ex.Message}");
                 return false;
             }
         }
@@ -112,8 +119,14 @@ namespace PhasmaStrap.Integrations
                     return;
                 }
 
-                if (!TryLoad(out SessionData data))
+                if (!TryLoad(out SessionData data, out bool unreadable))
                 {
+                    if (!unreadable)
+                    {
+                        Log?.Invoke($"Skipping this save of session {session.Id} so the history in {_path} is not overwritten");
+                        return;
+                    }
+
                     string aside = _path + $".unreadable-{DateTime.Now:yyyyMMdd_HHmmss}";
                     try { File.Move(_path, aside, true); Log?.Invoke($"Kept the unreadable history as {aside}"); } catch { }
                 }
@@ -161,7 +174,7 @@ namespace PhasmaStrap.Integrations
                 catch (AbandonedMutexException) { owned = true; }
 
                 // Never rewrite a file we could not read, or the rest of the history would be lost
-                if (!owned || !TryLoad(out SessionData data))
+                if (!owned || !TryLoad(out SessionData data, out _))
                 {
                     Log?.Invoke("Could not open the session file to delete a session");
                     return;

@@ -90,7 +90,7 @@
                                         <!--  A small caption that folds its group away; Offline starts folded  -->
                                         <ControlTemplate TargetType="GroupItem">
                                             <StackPanel>
-                                                <ToggleButton x:Name="GroupToggle" IsChecked="True" Focusable="False" Cursor="Hand" Margin="0,8,0,4" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
+                                                <ToggleButton x:Name="GroupToggle" IsChecked="True" Cursor="Hand" Margin="0,8,0,4" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
                                                     <ToggleButton.Template>
                                                         <ControlTemplate TargetType="ToggleButton">
                                                             <Border Background="Transparent" Padding="10,2">

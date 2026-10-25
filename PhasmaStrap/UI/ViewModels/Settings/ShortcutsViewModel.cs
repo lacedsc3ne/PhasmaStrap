@@ -56,12 +56,16 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
                 if (value)
                 {
-                    StudioBridge.Start();
+                    if (App.OwnsBackgroundServices)
+                        StudioBridge.Start();
+
                     StudioPluginInstaller.EnsureInstalled(force: true);
                 }
                 else
                 {
-                    StudioBridge.Stop();
+                    if (App.OwnsBackgroundServices)
+                        StudioBridge.Stop();
+
                     StudioPluginInstaller.Uninstall();
                 }
 
@@ -81,7 +85,11 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             {
                 App.Settings.Prop.StudioRichPresenceEnabled = value;
 
-                if (value)
+                if (!App.OwnsBackgroundServices)
+                {
+                    App.Logger.WriteLine("ShortcutsViewModel", "Studio presence changed, the PhasmaStrap process running background services will apply it after Save");
+                }
+                else if (value)
                 {
                     App.StudioRichPresence ??= new StudioRichPresence();
                 }
@@ -286,7 +294,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             if (entry is null || !File.Exists(entry.Path))
                 return;
 
-            var dialog = new PhasmaStrap.UI.Elements.Dialogs.TextInputDialog("Rename shortcut", "New name:", entry.Name);
+            var dialog = new PhasmaStrap.UI.Elements.Dialogs.TextInputDialog("Rename shortcut", "New name:", entry.Name) { Owner = Frontend.ActiveOwner() };
             dialog.ShowDialog();
 
             if (!dialog.Confirmed)

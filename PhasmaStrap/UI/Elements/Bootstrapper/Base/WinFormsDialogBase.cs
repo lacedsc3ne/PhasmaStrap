@@ -13,6 +13,22 @@ namespace PhasmaStrap.UI.Elements.Bootstrapper.Base
 
         private bool _isClosing;
 
+        private IntPtr _taskbarHandle;
+
+        private IntPtr TaskbarHandle
+        {
+            get
+            {
+                if (_taskbarHandle == IntPtr.Zero)
+                {
+                    using Process process = Process.GetCurrentProcess();
+                    _taskbarHandle = process.MainWindowHandle;
+                }
+
+                return _taskbarHandle;
+            }
+        }
+
         #region UI Elements
         protected virtual string _message { get; set; } = "Please wait...";
         protected virtual ProgressBarStyle _progressStyle { get; set; }
@@ -76,7 +92,7 @@ namespace PhasmaStrap.UI.Elements.Bootstrapper.Base
             set
             {
                 _taskbarProgressState = value;
-                TaskbarProgress.SetProgressState(Process.GetCurrentProcess().MainWindowHandle, value);
+                TaskbarProgress.SetProgressState(TaskbarHandle, value);
             }
         }
 
@@ -86,7 +102,7 @@ namespace PhasmaStrap.UI.Elements.Bootstrapper.Base
             set
             {
                 _taskbarProgressValue = value;
-                TaskbarProgress.SetProgressValue(Process.GetCurrentProcess().MainWindowHandle, (int)value, TaskbarProgressMaximum);
+                TaskbarProgress.SetProgressValue(TaskbarHandle, (int)value, TaskbarProgressMaximum);
             }
         }
 

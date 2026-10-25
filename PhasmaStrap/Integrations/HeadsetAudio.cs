@@ -305,6 +305,7 @@ namespace PhasmaStrap.Integrations
                 if (client != null && Marshal.IsComObject(client))
                     Marshal.ReleaseComObject(client);
                 pump?.Dispose();
+                session?.Dispose();
                 device?.Dispose();
                 enumerator?.Dispose();
                 ClearBaseVolume();
@@ -352,14 +353,16 @@ namespace PhasmaStrap.Integrations
                 SessionCollection sessions = device.AudioSessionManager.Sessions;
                 for (int i = 0; i < sessions.Count; i++)
                 {
+                    AudioSessionControl session = sessions[i];
                     try
                     {
-                        if (sessions[i].GetProcessID == pid)
-                            return sessions[i];
+                        if (session.GetProcessID == pid)
+                            return session;
                     }
                     catch
                     {
                     }
+                    session.Dispose();
                 }
             }
             catch
@@ -387,7 +390,7 @@ namespace PhasmaStrap.Integrations
             {
                 using var enumerator = new MMDeviceEnumerator();
                 using MMDevice device = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
-                AudioSessionControl? session = FindSession(device, pid);
+                using AudioSessionControl? session = FindSession(device, pid);
                 if (session != null)
                     TrySetVolume(session, target.Value);
             }

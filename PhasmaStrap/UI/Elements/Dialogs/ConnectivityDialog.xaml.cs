@@ -2,6 +2,7 @@ using System.Media;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
+using System.Windows.Input;
 
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -13,6 +14,15 @@ namespace PhasmaStrap.UI.Elements.Dialogs
         public ConnectivityDialog(string title, string description, MessageBoxImage image, Exception exception)
         {
             InitializeComponent();
+            KeyDown += (_, e) =>
+            {
+                if (e.Key != Key.Escape)
+                    return;
+
+                App.Logger.WriteLine("ConnectivityDialog", "Escape pressed, closing");
+                e.Handled = true;
+                Close();
+            };
 
             string? iconFilename = null;
             SystemSound? sound = null;

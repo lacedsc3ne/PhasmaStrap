@@ -24,14 +24,41 @@ namespace PhasmaStrap.Utility
             if (TryCached(path, out TimeSpan? known))
                 return known;
 
-            Task.Run(() =>
-            {
-                TimeSpan? duration = Get(path);
-                try { done(duration); }
-                catch (Exception ex) { App.Logger.WriteLine(LOG_IDENT, $"Callback failed: {ex.Message}"); }
-            });
+            _requests.Add((path, done));
+            StartWorker();
 
             return null;
+        }
+
+        private static readonly BlockingCollection<(string Path, Action<TimeSpan?> Done)> _requests = new();
+        private static readonly object _workerLock = new();
+        private static Thread? _worker;
+
+        private static void StartWorker()
+        {
+            lock (_workerLock)
+            {
+                if (_worker is not null)
+                    return;
+
+                _worker = new Thread(Work) { IsBackground = true, Name = "ClipDurations" };
+                _worker.Start();
+            }
+        }
+
+        private static void Work()
+        {
+            foreach (var (path, done) in _requests.GetConsumingEnumerable())
+            {
+                try
+                {
+                    done(Get(path));
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Reading the length of {Path.GetFileName(path)} failed: {ex.Message}");
+                }
+            }
         }
 
         private static bool TryCached(string path, out TimeSpan? duration)

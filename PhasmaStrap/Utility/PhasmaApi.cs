@@ -33,12 +33,13 @@ namespace PhasmaStrap.Utility
                 return null;
 
             string key = method + " " + path;
+            string cacheKey = key + " as " + (PhasmaAccount.SignedIn ? App.State.Prop.AccountId : "");
 
             if (cacheFor is not null)
             {
                 lock (_cacheLock)
                 {
-                    if (_cache.TryGetValue(key, out var hit) && DateTime.UtcNow - hit.At < cacheFor.Value)
+                    if (_cache.TryGetValue(cacheKey, out var hit) && DateTime.UtcNow - hit.At < cacheFor.Value)
                         return Parse<T>(hit.Body, allowEmpty);
                 }
             }
@@ -64,7 +65,7 @@ namespace PhasmaStrap.Utility
                 if (cacheFor is not null)
                 {
                     lock (_cacheLock)
-                        _cache[key] = (DateTime.UtcNow, text);
+                        _cache[cacheKey] = (DateTime.UtcNow, text);
                 }
 
                 return Parse<T>(text, allowEmpty);

@@ -176,6 +176,8 @@ namespace PhasmaStrap.Integrations.Overlays
 
                     SyncStreamView();
                     FollowRoblox();
+                    if (_deviceLost)
+                        continue;
                     ReloadSettingsIfChanged();
                     if (OverlaySettings.NeedsCapture)
                         RenderFrame(token);
@@ -209,9 +211,19 @@ namespace PhasmaStrap.Integrations.Overlays
                     lpszClassName = classNamePtr,
                 };
                 _classAtom = Interop.RegisterClassExW(ref wc);
+                if (_classAtom == 0 && Marshal.GetLastWin32Error() == 1410)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, "Overlay window class was left over from an earlier session, registering it again");
+                    Interop.UnregisterClassW(classNamePtr, _hInstance);
+                    _classAtom = Interop.RegisterClassExW(ref wc);
+                }
+                if (_classAtom == 0)
+                    throw new InvalidOperationException($"Could not register the overlay window class (error {Marshal.GetLastWin32Error()})");
 
                 int exStyle = Interop.WS_EX_NOACTIVATE | Interop.WS_EX_TOOLWINDOW | Interop.WS_EX_TRANSPARENT | Interop.WS_EX_TOPMOST | Interop.WS_EX_LAYERED | Interop.WS_EX_NOREDIRECTIONBITMAP;
                 _hwnd = Interop.CreateWindowExW(exStyle, new IntPtr(_classAtom), CaptureWindowName, Interop.WS_POPUP, _rectLeft, _rectTop, _width, _height, IntPtr.Zero, IntPtr.Zero, _hInstance, IntPtr.Zero);
+                if (_hwnd == IntPtr.Zero)
+                    throw new InvalidOperationException($"Could not create the overlay window (error {Marshal.GetLastWin32Error()})");
 
                 Interop.SetLayeredWindowAttributes(_hwnd, 0, 255, Interop.LWA_ALPHA);
 
@@ -708,7 +720,15 @@ namespace PhasmaStrap.Integrations.Overlays
                 _backBufferRtv = null;
                 _backBufferTex?.Dispose();
                 _backBufferTex = null;
-                _swapChain!.ResizeBuffers(3, _width, _height, Format.B8G8R8A8_UNorm, _swapChainFlags);
+                _context!.UnsetRenderTargets();
+                _context.Flush();
+                var resizeResult = _swapChain!.ResizeBuffers(3, _width, _height, Format.B8G8R8A8_UNorm, _swapChainFlags);
+                if (resizeResult.Failure)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Resizing the overlay to {_width}x{_height} failed with {resizeResult.Code:X8}, the session will restart");
+                    _deviceLost = true;
+                    return;
+                }
                 CreateBackBufferRtv();
                 CreateSizedResources();
                 _refreshHz = QueryRefreshHz();
@@ -957,6 +977,7 @@ namespace PhasmaStrap.Integrations.Overlays
                 return;
             }
 
+            WaitForFrameSlot();
             _context!.ClearRenderTargetView(_backBufferRtv!, new Color4(0, 0, 0, 0));
             DrawHud();
             DrawCrosshair();
@@ -1096,6 +1117,7 @@ namespace PhasmaStrap.Integrations.Overlays
                 return;
             }
 
+            WaitForFrameSlot();
             DrawBlit(_psPass!, _backBufferRtv!, finalSrv);
 
             DrawHud();
@@ -1110,9 +1132,18 @@ namespace PhasmaStrap.Integrations.Overlays
         {
             if (_frameGenPipeline == null)
             {
-                _frameGenPipeline = new FrameGeneration.FrameGenPipeline();
-                _frameGenPipeline.Attach(_device!, _context!);
-                _frameGenPipeline.EnsureSize(_width, _height);
+                var pipeline = new FrameGeneration.FrameGenPipeline();
+                try
+                {
+                    pipeline.Attach(_device!, _context!);
+                    pipeline.EnsureSize(_width, _height);
+                }
+                catch
+                {
+                    pipeline.Dispose();
+                    throw;
+                }
+                _frameGenPipeline = pipeline;
                 _fgCapturedFrames = 0;
             }
             _frameGenPipeline.SetQuality(FrameGeneration.FrameGenSettings.QualityIndex);
@@ -1163,8 +1194,17 @@ namespace PhasmaStrap.Integrations.Overlays
         {
             if (_riShadeStage == null)
             {
-                _riShadeStage = new RiShade.RiShadeStage();
-                _riShadeStage.CreatePipeline(_device!, _context!, _width, _height);
+                var stage = new RiShade.RiShadeStage();
+                try
+                {
+                    stage.CreatePipeline(_device!, _context!, _width, _height);
+                }
+                catch
+                {
+                    stage.Dispose();
+                    throw;
+                }
+                _riShadeStage = stage;
             }
             _riShadeStage.EnsureSize(_width, _height);
 
@@ -1178,8 +1218,17 @@ namespace PhasmaStrap.Integrations.Overlays
         {
             if (_antiAliasingStage == null)
             {
-                _antiAliasingStage = new AntiAliasing.AntiAliasingStage();
-                _antiAliasingStage.CreatePipeline(_device!, _context!, _width, _height);
+                var stage = new AntiAliasing.AntiAliasingStage();
+                try
+                {
+                    stage.CreatePipeline(_device!, _context!, _width, _height);
+                }
+                catch
+                {
+                    stage.Dispose();
+                    throw;
+                }
+                _antiAliasingStage = stage;
             }
             _antiAliasingStage.EnsureSize(_width, _height);
 
@@ -1350,6 +1399,20 @@ namespace PhasmaStrap.Integrations.Overlays
             }
         }
 
+        private bool _loggedFrameWaitTimeout;
+
+        private void WaitForFrameSlot()
+        {
+            if (_frameLatencyHandle == IntPtr.Zero)
+                return;
+            uint waitResult = WaitForSingleObjectEx(_frameLatencyHandle, 100, true);
+            if (waitResult != 0 && !_loggedFrameWaitTimeout)
+            {
+                _loggedFrameWaitTimeout = true;
+                App.Logger.WriteLine(LOG_IDENT, $"Waiting for a free overlay frame returned {waitResult:X}, carrying on without it");
+            }
+        }
+
         private bool Present()
         {
             var presentResult = _swapChain!.Present(1, PresentFlags.None);
@@ -1384,14 +1447,19 @@ namespace PhasmaStrap.Integrations.Overlays
                 }
                 if (stamp != _settingsFileTimeUtc)
                 {
+                    if (!App.Settings.Load(alertFailure: false))
+                    {
+                        App.Logger.WriteLine(LOG_IDENT, $"Settings changed on disk at {stamp:O} but could not be read yet, will try again");
+                        return;
+                    }
                     _settingsFileTimeUtc = stamp;
-                    App.Settings.Load();
                     _overlayDirty = true;
                     App.Logger.WriteLine(LOG_IDENT, "Settings changed on disk, reloaded so overlay toggles apply live");
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                App.Logger.WriteLine(LOG_IDENT, $"Settings reload check failed: {ex.Message}");
             }
         }
 
@@ -1464,5 +1532,8 @@ namespace PhasmaStrap.Integrations.Overlays
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool CloseHandle(IntPtr handle);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern uint WaitForSingleObjectEx(IntPtr handle, uint milliseconds, bool alertable);
     }
 }

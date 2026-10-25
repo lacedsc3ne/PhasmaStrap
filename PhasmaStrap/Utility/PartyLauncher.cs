@@ -23,9 +23,23 @@
         public static void Follow(PartyJoin join)
         {
             if (!long.TryParse(join.PlaceId, out long placeId) || placeId <= 0)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Ignoring a party join with place id \"{join.PlaceId}\"");
                 return;
+            }
+
+            if (!string.IsNullOrEmpty(join.JobId) && !Guid.TryParse(join.JobId, out _))
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Ignoring a party join with server id \"{join.JobId}\"");
+                return;
+            }
 
             if (placeId == _lastPlace && join.JobId == _lastJob && DateTime.UtcNow - _lastAt < TimeSpan.FromSeconds(30))
+                return;
+
+            bool inGame = RobloxRunning();
+
+            if (inGame && AlreadyThere(placeId, join.JobId))
                 return;
 
             _lastPlace = placeId;
@@ -33,7 +47,6 @@
             _lastAt = DateTime.UtcNow;
 
             string mode = App.Settings.Prop.PartyJoinMode ?? "AskWhenInGame";
-            bool inGame = RobloxRunning();
             bool withParty = inGame && AlreadyFollowing();
 
             if (mode == "Always" || !inGame || withParty)
@@ -55,6 +68,16 @@
 
         private static long _followedPlace;
         private static string _followedJob = "";
+
+        private static bool AlreadyThere(long placeId, string jobId)
+        {
+            (long place, string job) = PartyService.WhereYouAre();
+
+            if (place != placeId)
+                return false;
+
+            return string.IsNullOrEmpty(jobId) || string.IsNullOrEmpty(job) || string.Equals(job, jobId, StringComparison.OrdinalIgnoreCase);
+        }
 
         private static bool AlreadyFollowing()
         {

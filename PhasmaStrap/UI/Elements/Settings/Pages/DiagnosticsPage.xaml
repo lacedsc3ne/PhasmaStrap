@@ -217,10 +217,9 @@
                             </Grid.RowDefinitions>
                             <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
                                 <TextBlock FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding ServerText, Mode=OneWay}" />
-                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Measured to a machine next to the server, since game servers ignore pings" />
-                                    <ui:SymbolIcon Style="{StaticResource InfoMark}" ToolTip="{x:Static resources:Strings.Menu_Diagnostics_RobloxGameServersIgnorePingsSo}" />
-                                </StackPanel>
+                                <TextBlock Margin="0,2,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                                    <Run Text="Measured to a machine next to the server, since game servers ignore pings" /><InlineUIContainer BaselineAlignment="Center"><ui:SymbolIcon Style="{StaticResource InfoMark}" ToolTip="{x:Static resources:Strings.Menu_Diagnostics_RobloxGameServersIgnorePingsSo}" /></InlineUIContainer>
+                                </TextBlock>
                             </StackPanel>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                 <ComboBox MinWidth="130" Padding="10,5,10,5" ItemsSource="{Binding DurationOptions, Mode=OneTime}" SelectedItem="{Binding SelectedDuration, Mode=TwoWay}" IsEnabled="{Binding ConnectionIdle, Mode=OneWay}" />
@@ -389,10 +388,9 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
-                                <TextBlock FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center" Text="Times every frame for a while and says what was going on when it hitched" />
-                                <ui:SymbolIcon Style="{StaticResource InfoMark}" ToolTip="{x:Static resources:Strings.Menu_Diagnostics_TimesEveryFrameGameWhileWatches}" />
-                            </StackPanel>
+                            <TextBlock Grid.Column="0" Margin="0,0,16,0" FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center">
+                                <Run Text="Times every frame for a while and says what was going on when it hitched" /><InlineUIContainer BaselineAlignment="Center"><ui:SymbolIcon Style="{StaticResource InfoMark}" ToolTip="{x:Static resources:Strings.Menu_Diagnostics_TimesEveryFrameGameWhileWatches}" /></InlineUIContainer>
+                            </TextBlock>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                 <ComboBox MinWidth="120" Padding="10,5,10,5" ItemsSource="{Binding MeasureOptions, Mode=OneTime}" SelectedItem="{Binding SelectedMeasure, Mode=TwoWay}" IsEnabled="{Binding MeasureIdle, Mode=OneWay}" />
                                 <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaAccentButton}" AutomationProperties.Name="Measure my game"
@@ -472,11 +470,9 @@
                     <TextBlock Text="{x:Static resources:Strings.Menu_Diagnostics_FastFlagAutoTuner}" />
                 </TabItem.Header>
                 <StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                        <TextBlock FontSize="12.5" TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                   Text="Finds out whether a flag set really makes the game run better, by measuring. Each run needs Roblox to restart." />
-                        <ui:SymbolIcon Style="{StaticResource InfoMark}" ToolTip="{x:Static resources:Strings.Menu_Diagnostics_FindsOutWhetherFastFlagSetReally}" />
-                    </StackPanel>
+                    <TextBlock Margin="0,0,0,12" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                        <Run Text="Finds out whether a flag set really makes the game run better, by measuring. Each run needs Roblox to restart." /><InlineUIContainer BaselineAlignment="Center"><ui:SymbolIcon Style="{StaticResource InfoMark}" ToolTip="{x:Static resources:Strings.Menu_Diagnostics_FindsOutWhetherFastFlagSetReally}" /></InlineUIContainer>
+                    </TextBlock>
 
                     <controls:CardColumns>
                         <!--  Setup: pick the sets and start  -->

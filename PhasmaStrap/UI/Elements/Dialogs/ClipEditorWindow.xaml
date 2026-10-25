@@ -121,7 +121,7 @@
 
         <!--  Tools  -->
         <Border Grid.Row="3" Margin="22,12,22,0" Padding="12,10,12,2" Style="{DynamicResource PhasmaPanel}">
-            <WrapPanel VerticalAlignment="Center">
+            <WrapPanel x:Name="ToolsPanel" VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal" Margin="0,0,4,8">
                     <Button x:Name="PlayButton" Style="{StaticResource ToolButton}" Click="Play_Click" ToolTip="Play / pause the selection (Space)">
                         <StackPanel Orientation="Horizontal">

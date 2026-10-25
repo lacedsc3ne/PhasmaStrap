@@ -18,7 +18,7 @@ namespace PhasmaStrap.Utility
         public new void Add(T item)
         {
             if (Count >= MaxSize)
-                RemoveAt(Count - 1);
+                RemoveAt(0);
             base.Add(item);
         }
     }

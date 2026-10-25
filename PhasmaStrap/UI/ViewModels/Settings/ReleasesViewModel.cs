@@ -132,9 +132,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 sections.Add((current, text.ToString().Trim()));
 
             string wanted = version.TrimStart('v');
-            return sections.FirstOrDefault(s => s.Version.TrimStart('v') == wanted).Text
-                ?? sections.FirstOrDefault().Text
-                ?? "";
+            return sections.FirstOrDefault(s => s.Version.TrimStart('v') == wanted).Text ?? "";
         }
 
         private List<ReleaseItem> _allReleases = new();

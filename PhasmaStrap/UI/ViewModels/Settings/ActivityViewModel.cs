@@ -315,7 +315,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             DateTime? first = _data.Sessions.Count > 0 ? _data.Sessions.Min(s => s.StartedUtc).ToLocalTime() : null;
             TrackedSinceText = first is null
                 ? "Nothing recorded yet - sessions are written down from the next time you play."
-                : $"Sessions have been written down since {first:d MMMM yyyy}. Play before that only exists as a running total per game (Home page), which is why it is not in these charts.";
+                : $"Sessions have been written down since {first:d MMMM yyyy}. Play before that only exists as a running total per game (Games page), which is why it is not in these charts.";
         }
 
         private static void Fill(ObservableCollection<ChartBar> target, List<SessionStats.Bucket> buckets, Func<SessionStats.Bucket, string> label, Func<SessionStats.Bucket, string> tip)
@@ -434,7 +434,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         private void ClearHistory()
         {
             var answer = Frontend.ShowMessageBox(
-                "Delete the whole session history?\n\nThe timeline, the playtime charts and \"played with\" start again from nothing. Your screenshots and clips are not touched, and neither are the per-game totals on the Home page.",
+                "Delete the whole session history?\n\nThe timeline, the playtime charts and \"played with\" start again from nothing. Your screenshots and clips are not touched, and neither are the per-game totals on the Games page.",
                 MessageBoxImage.Warning, MessageBoxButton.YesNo);
 
             if (answer != MessageBoxResult.Yes)

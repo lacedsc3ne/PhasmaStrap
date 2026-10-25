@@ -6,12 +6,16 @@ namespace PhasmaStrap.Integrations
     public static class PlayTimeStore
     {
         private const string LOG_IDENT = "PlayTimeStore";
+        private const string MutexName = "PhasmaStrap-PlayTimeStore";
         private const int MaxEntries = 500;
         private const double MaxSessionMinutes = 1440.0;
+        private const int DiskCheckIntervalMs = 2000;
 
         private static readonly object _lock = new();
         private static PlayTimeData _data = new();
         private static bool _loaded;
+        private static DateTime _fileStampUtc;
+        private static long _nextDiskCheckMs;
 
         private static readonly JsonSerializerOptions StoreJsonOptions = new()
         {
@@ -24,38 +28,72 @@ namespace PhasmaStrap.Integrations
 
         public static void EnsureLoaded()
         {
-            if (_loaded)
+            if (_loaded && Environment.TickCount64 < Interlocked.Read(ref _nextDiskCheckMs))
                 return;
 
             lock (_lock)
             {
-                if (_loaded)
+                long now = Environment.TickCount64;
+                if (_loaded && now < _nextDiskCheckMs)
                     return;
 
-                Load();
+                Interlocked.Exchange(ref _nextDiskCheckMs, now + DiskCheckIntervalMs);
+
+                if (_loaded && ReadFileStamp() == _fileStampUtc)
+                    return;
+
+                Load(out _);
                 _loaded = true;
             }
         }
 
-        private static void Load()
+        private static DateTime ReadFileStamp()
         {
+            try
+            {
+                return File.Exists(FilePath) ? File.GetLastWriteTimeUtc(FilePath) : default;
+            }
+            catch
+            {
+                return _fileStampUtc;
+            }
+        }
+
+        private static bool Load(out bool unreadable)
+        {
+            unreadable = false;
+
             try
             {
                 if (!File.Exists(FilePath))
                 {
                     Directory.CreateDirectory(FolderPath);
                     _data = new PlayTimeData();
-                    return;
+                    _fileStampUtc = default;
+                    return true;
                 }
 
+                DateTime stamp = File.GetLastWriteTimeUtc(FilePath);
                 PlayTimeData? loaded = JsonSerializer.Deserialize<PlayTimeData>(File.ReadAllText(FilePath), StoreJsonOptions);
                 _data = NormalizeData(loaded ?? new PlayTimeData());
+                _fileStampUtc = stamp;
                 App.Logger.WriteLine(LOG_IDENT, $"Loaded {_data.Places.Count} play time entries");
+                return true;
+            }
+            catch (JsonException ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"{FilePath} could not be read: {ex.Message}");
+                unreadable = true;
+                if (!_loaded)
+                    _data = new PlayTimeData();
+                return false;
             }
             catch (Exception ex)
             {
-                App.Logger.WriteLine(LOG_IDENT, $"Load failed, starting fresh: {ex.Message}");
-                _data = new PlayTimeData();
+                App.Logger.WriteLine(LOG_IDENT, $"Load failed: {ex.Message}");
+                if (!_loaded)
+                    _data = new PlayTimeData();
+                return false;
             }
         }
 
@@ -97,14 +135,12 @@ namespace PhasmaStrap.Integrations
             if (minutes <= 0)
                 return;
 
-            EnsureLoaded();
-
-            lock (_lock)
+            bool saved = ChangeAndSave(data =>
             {
-                if (!_data.Places.TryGetValue(activity.PlaceId, out PlayTimeEntry? entry))
+                if (!data.Places.TryGetValue(activity.PlaceId, out PlayTimeEntry? entry))
                 {
                     entry = new PlayTimeEntry { PlaceId = activity.PlaceId };
-                    _data.Places[activity.PlaceId] = entry;
+                    data.Places[activity.PlaceId] = entry;
                 }
 
                 if (activity.UniverseId > 0)
@@ -123,35 +159,61 @@ namespace PhasmaStrap.Integrations
                 if (!string.IsNullOrEmpty(icon))
                     entry.IconUrl = icon;
 
-                _data = NormalizeData(_data);
-            }
+                return true;
+            });
 
-            SaveNow();
+            App.Logger.WriteLine(LOG_IDENT, saved
+                ? $"Recorded {minutes:0.#} minutes in place {activity.PlaceId}"
+                : $"Could not record {minutes:0.#} minutes in place {activity.PlaceId}");
         }
 
         public static bool Remove(long placeId)
         {
-            EnsureLoaded();
-
-            bool removed;
-            lock (_lock)
-            {
-                removed = _data.Places.Remove(placeId);
-            }
-
-            if (removed)
-                SaveNow();
-
+            bool removed = ChangeAndSave(data => data.Places.Remove(placeId));
+            App.Logger.WriteLine(LOG_IDENT, removed ? $"Removed place {placeId}" : $"Place {placeId} was not removed");
             return removed;
         }
 
-        public static void SaveNow()
+        private static bool ChangeAndSave(Func<PlayTimeData, bool> change)
         {
-            string contents;
+            using var mutex = new Mutex(false, MutexName);
+            bool owned = false;
+
             try
             {
+                try { owned = mutex.WaitOne(3000); }
+                catch (AbandonedMutexException) { owned = true; }
+
+                if (!owned)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, "The play time file is busy, skipping this change");
+                    return false;
+                }
+
+                string contents;
+
                 lock (_lock)
                 {
+                    if (!Load(out bool unreadable))
+                    {
+                        if (!unreadable)
+                        {
+                            App.Logger.WriteLine(LOG_IDENT, "Not saving because the play time file could not be opened, so nothing in it is lost");
+                            return false;
+                        }
+
+                        string aside = FilePath + $".unreadable-{DateTime.Now:yyyyMMdd_HHmmss}";
+                        File.Move(FilePath, aside, true);
+                        App.Logger.WriteLine(LOG_IDENT, $"Kept the unreadable play time file as {aside}");
+                        _data = new PlayTimeData();
+                    }
+
+                    _loaded = true;
+
+                    if (!change(_data))
+                        return false;
+
+                    _data = NormalizeData(_data);
                     contents = JsonSerializer.Serialize(_data, StoreJsonOptions);
                 }
 
@@ -159,17 +221,29 @@ namespace PhasmaStrap.Integrations
                 string tempPath = FilePath + ".tmp";
                 File.WriteAllText(tempPath, contents);
                 File.Move(tempPath, FilePath, overwrite: true);
+
+                lock (_lock)
+                    _fileStampUtc = File.GetLastWriteTimeUtc(FilePath);
+
+                return true;
             }
             catch (Exception ex)
             {
                 App.Logger.WriteLine(LOG_IDENT, $"Save failed: {ex.Message}");
+                return false;
+            }
+            finally
+            {
+                if (owned)
+                {
+                    try { mutex.ReleaseMutex(); } catch { }
+                }
             }
         }
 
         public static void Shutdown()
         {
-            if (_loaded)
-                SaveNow();
+            App.Logger.WriteLine(LOG_IDENT, "Every play time change is saved straight away, nothing left to write");
         }
     }
 }

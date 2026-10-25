@@ -4,11 +4,11 @@ namespace PhasmaStrap.Utility
     {
         public static async Task<T> GetJson<T>(string url)
         {
-            var request = await App.HttpClient.GetAsync(url);
+            using var response = await App.HttpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
 
-            request.EnsureSuccessStatusCode();
+            response.EnsureSuccessStatusCode();
 
-            string json = await request.Content.ReadAsStringAsync();
+            string json = await ReadStringBoundedAsync(response.Content, 16 * 1024 * 1024);
 
             return JsonSerializer.Deserialize<T>(json)!;
         }

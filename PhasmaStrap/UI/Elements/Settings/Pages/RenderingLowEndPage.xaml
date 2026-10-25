@@ -81,7 +81,7 @@
         <controls:CardColumns Margin="0,14,0,0" Columns="3" MinColumnWidth="220">
             <Border Style="{StaticResource LevelTileLight}">
                 <DockPanel LastChildFill="False">
-                    <TextBlock DockPanel.Dock="Top" Style="{DynamicResource PhasmaHeading}" FontSize="16" Text="{x:Static resources:Strings.Enums_Theme_Light}" />
+                    <TextBlock DockPanel.Dock="Top" Style="{DynamicResource PhasmaHeading}" FontSize="16" Text="Light" />
                     <TextBlock DockPanel.Dock="Top" Margin="0,8,0,14" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                Text="Lower graphics and a tuned process. Most games still look normal." />
                     <Button DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" Style="{StaticResource LevelButtonLight}" Content="Use Light"

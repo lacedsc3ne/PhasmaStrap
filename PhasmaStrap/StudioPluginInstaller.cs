@@ -45,7 +45,7 @@ namespace PhasmaStrap
 
             try
             {
-                if (!App.Settings.Prop.StudioPluginEnabled || (!force && !IsStudioRunning()))
+                if (!App.Settings.Prop.StudioPluginEnabled || (!force && !IsStudioRunning() && !File.Exists(PluginFile)))
                     return;
 
                 Directory.CreateDirectory(PluginsFolder);

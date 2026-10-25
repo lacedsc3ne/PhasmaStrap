@@ -268,15 +268,25 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             CleaningRam = true;
             OnPropertyChanged(nameof(CleanRamStatus));
 
-            PhasmaStrap.Utility.SystemMemoryCleaner.TrimResult trim = await Task.Run(PhasmaStrap.Utility.SystemMemoryCleaner.TrimAllProcessWorkingSets);
-            bool purged = await Task.Run(PhasmaStrap.Utility.SystemMemoryCleaner.PurgeStandbyListElevated);
+            try
+            {
+                PhasmaStrap.Utility.SystemMemoryCleaner.TrimResult trim = await Task.Run(PhasmaStrap.Utility.SystemMemoryCleaner.TrimAllProcessWorkingSets);
+                bool purged = await Task.Run(PhasmaStrap.Utility.SystemMemoryCleaner.PurgeStandbyListElevated);
 
-            _lastFreedMb = trim.BytesFreed / 1048576.0;
-            _lastTrimmed = trim.ProcessesTrimmed;
-            _lastPurged = purged;
-            _lastCleanAt = DateTime.Now;
+                _lastFreedMb = trim.BytesFreed / 1048576.0;
+                _lastTrimmed = trim.ProcessesTrimmed;
+                _lastPurged = purged;
+                _lastCleanAt = DateTime.Now;
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("PerformanceViewModel::CleanRam", $"Clean RAM failed: {ex.Message}");
+            }
+            finally
+            {
+                CleaningRam = false;
+            }
 
-            CleaningRam = false;
             OnPropertyChanged(nameof(CleanRamStatus));
             OnPropertyChanged(nameof(CleanRamDetail));
         });
@@ -288,7 +298,9 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             {
                 App.Settings.Prop.AutoCleanRam = value;
 
-                if (value)
+                if (!App.OwnsBackgroundServices)
+                    App.Logger.WriteLine("PerformanceViewModel", "Auto RAM cleaner changed, the PhasmaStrap process running background services will apply it after Save");
+                else if (value)
                     PhasmaStrap.Utility.AutoRamCleaner.Start();
                 else
                     PhasmaStrap.Utility.AutoRamCleaner.Stop();

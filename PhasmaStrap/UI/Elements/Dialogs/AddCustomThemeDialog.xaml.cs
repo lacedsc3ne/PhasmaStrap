@@ -124,7 +124,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
         {
             const string LOG_IDENT = "AddCustomThemeDialog::ValidateImport";
 
-            if (!_viewModel.FilePath.EndsWith(".zip"))
+            if (!_viewModel.FilePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
             {
                 _viewModel.FileError = Strings.CustomTheme_Add_Errors_FileNotZip;
                 return false;
@@ -162,6 +162,14 @@ namespace PhasmaStrap.UI.Elements.Dialogs
                 _viewModel.FileError = Strings.CustomTheme_Add_Errors_ZipInvalidData;
                 return false;
             }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not open {_viewModel.FilePath}");
+                App.Logger.WriteException(LOG_IDENT, ex);
+
+                _viewModel.FileError = Strings.CustomTheme_Add_Errors_Unknown;
+                return false;
+            }
         }
 
         private void CreateNew()
@@ -169,7 +177,18 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             if (!ValidateCreateNew())
                 return;
 
-            CreateCustomTheme(_viewModel.Name, _viewModel.Template);
+            try
+            {
+                CreateCustomTheme(_viewModel.Name, _viewModel.Template);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("AddCustomThemeDialog::CreateNew", $"Could not create the theme {_viewModel.Name}");
+                App.Logger.WriteException("AddCustomThemeDialog::CreateNew", ex);
+
+                _viewModel.NameError = Strings.CustomTheme_Add_Errors_Unknown;
+                return;
+            }
 
             Created = true;
             ThemeName = _viewModel.Name;
@@ -187,12 +206,34 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             string name = GetUniqueName(fileName);
 
             string directory = Path.Combine(Paths.CustomThemes, name);
-            if (Directory.Exists(directory))
-                Directory.Delete(directory, true);
-            Directory.CreateDirectory(directory);
 
-            var fastZip = new ICSharpCode.SharpZipLib.Zip.FastZip();
-            fastZip.ExtractZip(_viewModel.FilePath, directory, null);
+            try
+            {
+                if (Directory.Exists(directory))
+                    Directory.Delete(directory, true);
+                Directory.CreateDirectory(directory);
+
+                var fastZip = new ICSharpCode.SharpZipLib.Zip.FastZip();
+                fastZip.ExtractZip(_viewModel.FilePath, directory, null);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("AddCustomThemeDialog::Import", $"Could not import {_viewModel.FilePath} into {directory}");
+                App.Logger.WriteException("AddCustomThemeDialog::Import", ex);
+
+                try
+                {
+                    if (Directory.Exists(directory))
+                        Directory.Delete(directory, true);
+                }
+                catch (Exception cleanupEx)
+                {
+                    App.Logger.WriteLine("AddCustomThemeDialog::Import", $"Could not remove {directory}: {cleanupEx.Message}");
+                }
+
+                _viewModel.FileError = Strings.CustomTheme_Add_Errors_Unknown;
+                return;
+            }
 
             Created = true;
             ThemeName = name;

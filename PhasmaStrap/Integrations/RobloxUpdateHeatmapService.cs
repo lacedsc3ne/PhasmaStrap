@@ -124,7 +124,7 @@ namespace PhasmaStrap.Integrations
         private static bool TryParseDay(string? isoDate, out DayOfWeek day)
         {
             if (!string.IsNullOrWhiteSpace(isoDate) &&
-                DateTime.TryParse(isoDate, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out DateTime date))
+                DateTime.TryParse(isoDate, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out DateTime date))
             {
                 day = date.DayOfWeek;
                 return true;

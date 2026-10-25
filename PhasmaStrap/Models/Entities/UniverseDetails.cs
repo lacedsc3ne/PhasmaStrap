@@ -2,7 +2,9 @@ namespace PhasmaStrap.Models.Entities
 {
     public class UniverseDetails
     {
-        private static List<UniverseDetails> _cache { get; set; } = new();
+        private const int CacheLimit = 500;
+
+        private static readonly Dictionary<long, UniverseDetails> _cache = new();
 
         public GameDetailResponse Data { get; set; } = null!;
 
@@ -10,12 +12,8 @@ namespace PhasmaStrap.Models.Entities
 
         public static UniverseDetails? LoadFromCache(long id)
         {
-            var cacheQuery = _cache.Where(x => x.Data?.Id == id);
-
-            if (cacheQuery.Any())
-                return cacheQuery.First();
-
-            return null;
+            lock (_cache)
+                return _cache.TryGetValue(id, out UniverseDetails? details) ? details : null;
         }
 
         public static Task FetchSingle(long id) => FetchBulk(id.ToString());
@@ -34,13 +32,29 @@ namespace PhasmaStrap.Models.Entities
 
             foreach (string strId in ids.Split(','))
             {
-                long id = long.Parse(strId);
+                if (!long.TryParse(strId, out long id))
+                    continue;
 
-                _cache.Add(new UniverseDetails
+                GameDetailResponse? data = gameDetailResponse.Data.FirstOrDefault(x => x.Id == id);
+                ThumbnailResponse? thumbnail = universeThumbnailResponse.Data.FirstOrDefault(x => x.TargetId == id);
+
+                if (data is null || thumbnail is null)
                 {
-                    Data = gameDetailResponse.Data.Where(x => x.Id == id).First(),
-                    Thumbnail = universeThumbnailResponse.Data.Where(x => x.TargetId == id).First(),
-                });
+                    App.Logger.WriteLine("UniverseDetails::FetchBulk", $"Roblox returned no details or icon for universe {id}");
+                    continue;
+                }
+
+                lock (_cache)
+                {
+                    if (_cache.Count >= CacheLimit && !_cache.ContainsKey(id))
+                        _cache.Clear();
+
+                    _cache[id] = new UniverseDetails
+                    {
+                        Data = data,
+                        Thumbnail = thumbnail
+                    };
+                }
             }
         }
     }

@@ -120,6 +120,22 @@ namespace PhasmaStrap.UI.Elements.Settings
             return now.Length > 0 && _savedSettingsSnapshot.Length > 0 && now != _savedSettingsSnapshot;
         }
 
+        private bool HasUnsavedChangesOnClose()
+        {
+            if (!string.Equals(App.Settings.LastFileHash, _savedSettingsHash, StringComparison.Ordinal))
+                TakeSettingsSnapshot();
+
+            try
+            {
+                return HasUnsavedChanges();
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("MainWindow::Closing", $"Could not check for unsaved changes: {ex.Message}");
+                return false;
+            }
+        }
+
         private void RefreshUnsavedBar()
         {
             if (!IsVisible || WindowState == System.Windows.WindowState.Minimized)
@@ -426,8 +442,15 @@ namespace PhasmaStrap.UI.Elements.Settings
             DoNotDisturbToggle.IsChecked = App.Settings.Prop.DoNotDisturbEnabled;
         }
 
+        private long _notificationsClosedAt;
+
+        private void NotificationsPopup_Closed(object? sender, EventArgs e) => _notificationsClosedAt = Environment.TickCount64;
+
         private void NotificationsButton_Click(object sender, RoutedEventArgs e)
         {
+            if (!NotificationsPopup.IsOpen && Environment.TickCount64 - _notificationsClosedAt < 300)
+                return;
+
             int count = PhasmaStrap.UI.NotificationCenter.History.Count;
             FillNotifications(Math.Max(0, count - _seenNotifications));
             NotificationsPopup.IsOpen = !NotificationsPopup.IsOpen;
@@ -579,9 +602,17 @@ namespace PhasmaStrap.UI.Elements.Settings
 
         private bool _accountBusy;
 
+        private void PhasmaAccount_Changed(object? sender, EventArgs e)
+        {
+            if (_closed)
+                return;
+
+            Dispatcher.BeginInvoke(new Action(RefreshAccountButton));
+        }
+
         private void InitializeAccountButton()
         {
-            PhasmaStrap.Utility.PhasmaAccount.Changed += (_, _) => Dispatcher.Invoke(RefreshAccountButton);
+            PhasmaStrap.Utility.PhasmaAccount.Changed += PhasmaAccount_Changed;
             RefreshAccountButton();
 
             if (PhasmaStrap.Utility.PhasmaAccount.SignedIn)
@@ -1294,8 +1325,10 @@ namespace PhasmaStrap.UI.Elements.Settings
                 return;
             }
 
-            if (App.FastFlags.Changed || App.FlagProfiles.Changed || App.PendingSettingTasks.Any())
+            if (!viewModel.RestartAfterClose && !viewModel.LaunchAfterClose && HasUnsavedChangesOnClose())
             {
+                App.Logger.WriteLine("MainWindow::Closing", "Unsaved changes found, asking before closing");
+
                 var result = Frontend.ShowMessageBox(Strings.Menu_UnsavedChanges, MessageBoxImage.Warning, MessageBoxButton.YesNo);
 
                 if (result != MessageBoxResult.Yes)
@@ -1373,6 +1406,7 @@ namespace PhasmaStrap.UI.Elements.Settings
             _searchDebounce.Stop();
             _unsavedTimer.Stop();
             PhasmaStrap.UI.NotificationCenter.HistoryChanged -= NotificationCenter_HistoryChanged;
+            PhasmaStrap.Utility.PhasmaAccount.Changed -= PhasmaAccount_Changed;
             _trayIcon?.Dispose();
 
             ControllerService.Shutdown();

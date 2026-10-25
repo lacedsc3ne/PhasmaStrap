@@ -1,5 +1,3 @@
-using System.ComponentModel;
-
 namespace PhasmaStrap.Integrations
 {
     public static class TelemetryBlocker
@@ -52,37 +50,6 @@ namespace PhasmaStrap.Integrations
         public static bool RequestApply() => Networking.HostsElevation.Apply(App.Settings.Prop.NetworkingProxyEnabled && Networking.HostsFileManager.IsBlockPresent(), true);
 
         public static bool RequestRemove() => Networking.HostsElevation.Apply(App.Settings.Prop.NetworkingProxyEnabled && Networking.HostsFileManager.IsBlockPresent(), false);
-
-        private static bool RunElevated(string flag)
-        {
-            try
-            {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = Paths.Process,
-                    Arguments = flag,
-                    UseShellExecute = true,
-                    Verb = "runas"
-                };
-
-                using Process? process = Process.Start(startInfo);
-                if (process is null)
-                    return false;
-
-                process.WaitForExit();
-                return process.ExitCode == 0;
-            }
-            catch (Win32Exception ex) when (ex.NativeErrorCode == 1223)
-            {
-                App.Logger.WriteLine(LOG_IDENT, "User declined the elevation prompt");
-                return false;
-            }
-            catch (Exception ex)
-            {
-                App.Logger.WriteException(LOG_IDENT, ex);
-                return false;
-            }
-        }
 
         public static bool ApplyElevated()
         {

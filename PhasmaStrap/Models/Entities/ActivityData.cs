@@ -16,11 +16,7 @@ namespace PhasmaStrap.Models.Entities
         public long UniverseId
         {
             get => _universeId;
-            set
-            {
-                _universeId = value;
-                UniverseDetails.LoadFromCache(value);
-            }
+            set => _universeId = value;
         }
 
         public long PlaceId { get; set; } = 0;
@@ -104,7 +100,10 @@ namespace PhasmaStrap.Models.Entities
             const string LOG_IDENT = "ActivityData::QueryServerLocation";
 
             if (!MachineAddressValid)
-                throw new InvalidOperationException($"Machine address is invalid ({MachineAddress})");
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Skipped, the server address is not usable ({MachineAddress})");
+                return null;
+            }
 
             await serverQuerySemaphore.WaitAsync();
 
@@ -134,7 +133,6 @@ namespace PhasmaStrap.Models.Entities
                 App.Logger.WriteLine(LOG_IDENT, $"Failed to get server location for {MachineAddress}");
                 App.Logger.WriteException(LOG_IDENT, ex);
 
-                GlobalCache.ServerLocation[MachineAddress] = location;
                 serverQuerySemaphore.Release();
             }
 
@@ -145,9 +143,11 @@ namespace PhasmaStrap.Models.Entities
 
         private void RejoinServer()
         {
-            string playerPath = new RobloxPlayerData().ExecutablePath;
+            string uri = GetInviteDeeplink(false);
 
-            Process.Start(playerPath, GetInviteDeeplink(false));
+            App.Logger.WriteLine("ActivityData::RejoinServer", $"Rejoining {PlaceId}/{JobId} through PhasmaStrap");
+
+            PhasmaStrap.Utility.RobloxLaunch.Launch(uri);
         }
     }
 }

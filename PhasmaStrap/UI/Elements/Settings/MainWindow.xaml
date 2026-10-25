@@ -656,7 +656,8 @@
                VerticalOffset="-8"
                StaysOpen="False"
                AllowsTransparency="True"
-               PopupAnimation="Fade">
+               PopupAnimation="Fade"
+               Closed="NotificationsPopup_Closed">
             <Border Width="370" MaxHeight="480" Margin="0,0,10,10" Padding="0" Style="{DynamicResource PhasmaPopupSurface}">
                 <DockPanel>
                     <!--  Title, unread count, do not disturb and a shortcut to the notification settings  -->

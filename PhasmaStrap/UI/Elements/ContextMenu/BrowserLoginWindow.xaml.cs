@@ -46,9 +46,13 @@ namespace PhasmaStrap.UI.Elements.ContextMenu
             {
                 string userDataFolder = Path.Combine(Paths.Base, "BrowserLogin");
                 Directory.CreateDirectory(userDataFolder);
+                DeleteOldProfile(userDataFolder);
 
                 CoreWebView2Environment env = await CoreWebView2Environment.CreateAsync(userDataFolder: userDataFolder);
-                await Browser.EnsureCoreWebView2Async(env);
+                CoreWebView2ControllerOptions options = env.CreateCoreWebView2ControllerOptions();
+                options.IsInPrivateModeEnabled = true;
+                await Browser.EnsureCoreWebView2Async(env, options);
+                App.Logger.WriteLine(LOG_IDENT, "Opened a fresh private browser session for sign in");
 
                 Browser.CoreWebView2.NavigationCompleted += CoreWebView2_NavigationCompleted;
                 Browser.Source = new Uri("https://www.roblox.com/login");
@@ -62,6 +66,23 @@ namespace PhasmaStrap.UI.Elements.ContextMenu
                     "Could not open the embedded browser. This needs the Microsoft Edge WebView2 Runtime, which Roblox itself normally installs already - try launching Roblox at least once first, or install the runtime from Microsoft's website.",
                     MessageBoxImage.Error);
                 Complete(null);
+            }
+        }
+
+        private static void DeleteOldProfile(string userDataFolder)
+        {
+            string oldProfile = Path.Combine(userDataFolder, "EBWebView", "Default");
+            if (!Directory.Exists(oldProfile))
+                return;
+
+            try
+            {
+                Directory.Delete(oldProfile, true);
+                App.Logger.WriteLine(LOG_IDENT, $"Deleted the saved browser profile at {oldProfile}");
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not delete the saved browser profile at {oldProfile}: {ex.Message}");
             }
         }
 

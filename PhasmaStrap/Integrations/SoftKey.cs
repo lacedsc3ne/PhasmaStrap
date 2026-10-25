@@ -98,7 +98,7 @@ namespace PhasmaStrap.Integrations
         [DllImport("user32.dll")]
         private static extern int GetMessage(out MSG message, IntPtr hwnd, uint min, uint max);
 
-        [DllImport("user32.dll")]
+        [DllImport("user32.dll", SetLastError = true)]
         private static extern bool PostThreadMessage(uint thread, uint message, IntPtr wParam, IntPtr lParam);
 
         [DllImport("user32.dll")]
@@ -129,6 +129,8 @@ namespace PhasmaStrap.Integrations
         private uint _threadId;
         private IntPtr _hook;
         private long _resolved;
+        private volatile bool _stopping;
+        private readonly ManualResetEventSlim _ready = new(false);
 
         public SoftKey(int robloxPid, string? profile)
         {
@@ -158,6 +160,17 @@ namespace PhasmaStrap.Integrations
             if (_hook == IntPtr.Zero)
             {
                 App.Logger.WriteLine(LOG_IDENT, $"Could not listen for keys (error {Marshal.GetLastWin32Error()})");
+                _ready.Set();
+                return;
+            }
+
+            _ready.Set();
+
+            if (_stopping)
+            {
+                UnhookWindowsHookEx(_hook);
+                _hook = IntPtr.Zero;
+                App.Logger.WriteLine(LOG_IDENT, "Stopped before it began listening");
                 return;
             }
 
@@ -280,10 +293,19 @@ namespace PhasmaStrap.Integrations
 
         public void Dispose()
         {
-            if (_threadId != 0)
-                PostThreadMessage(_threadId, WM_QUIT, IntPtr.Zero, IntPtr.Zero);
+            _stopping = true;
 
+            Thread? thread = _thread;
             _thread = null;
+
+            if (thread is null)
+                return;
+
+            if (_ready.Wait(1000) && _threadId != 0 && !PostThreadMessage(_threadId, WM_QUIT, IntPtr.Zero, IntPtr.Zero))
+                App.Logger.WriteLine(LOG_IDENT, $"Could not ask the key listener to stop (error {Marshal.GetLastWin32Error()})");
+
+            if (!thread.Join(1000))
+                App.Logger.WriteLine(LOG_IDENT, "The key listener did not stop within one second");
         }
     }
 }

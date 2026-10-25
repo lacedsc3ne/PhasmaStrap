@@ -22,9 +22,21 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
         {
             _activityWatcher = activityWatcher;
 
-            _activityWatcher.OnGameLeave += (_, _) => LoadData();
+            _activityWatcher.OnGameLeave += OnGameLeave;
 
             LoadData();
+        }
+
+        public void Detach() => _activityWatcher.OnGameLeave -= OnGameLeave;
+
+        private void OnGameLeave(object? sender, EventArgs e)
+        {
+            var dispatcher = System.Windows.Application.Current?.Dispatcher;
+
+            if (dispatcher is null)
+                return;
+
+            dispatcher.BeginInvoke(new Action(LoadData));
         }
 
         private async void LoadData()
@@ -32,7 +44,12 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
             LoadState = GenericTriState.Unknown;
             OnPropertyChanged(nameof(LoadState));
 
-            var entries = _activityWatcher.History.Where(x => x.UniverseDetails is null);
+            List<ActivityData> history;
+
+            lock (_activityWatcher.History)
+                history = new List<ActivityData>(_activityWatcher.History);
+
+            var entries = history.Where(x => x.UniverseDetails is null).ToList();
 
             if (entries.Any())
             {
@@ -59,11 +76,11 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
                     entry.UniverseDetails = UniverseDetails.LoadFromCache(entry.UniverseId);
             }
 
-            GameHistory = new(_activityWatcher.History);
+            GameHistory = new(history);
 
             var consolidatedJobIds = new List<ActivityData>();
 
-            foreach (var entry in _activityWatcher.History)
+            foreach (var entry in history)
             {
                 if (entry.RootActivity is not null)
                 {

@@ -10,7 +10,7 @@
 
         public static readonly (string Id, string DisplayName, string Description)[] All =
         {
-            (CleanRamNow, "Clean RAM Now", "Trims process working sets and purges the standby list - the same action as the Performance page's Clean RAM button."),
+            (CleanRamNow, "Clean RAM Now", "Frees up RAM by trimming the memory of other programs. Roblox is left alone so your game does not stutter."),
             (ToggleHeadsetAudio, "Toggle Headset Audio Boost", "Turns the headset loudness boost on or off without switching to Settings."),
             (TakeScreenshot, "Take Screenshot", "Captures the Roblox window and saves it to the Capture page's gallery."),
             (SaveInstantReplay, "Save Instant Replay", "Saves the last several seconds of gameplay as an MP4 clip - only does anything if Instant Replay is enabled on the Capture page."),

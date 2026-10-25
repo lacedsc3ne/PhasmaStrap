@@ -207,25 +207,13 @@ namespace PhasmaStrap.Integrations
                     normalized = _normalizedSessions.ContainsKey(key);
                     if (!normalized)
                     {
-                        if (!focused)
+                        if (focused)
                         {
-                            session.SimpleAudioVolume.Volume = DuckLevel;
-                            SessionSnapshot seeded = new()
-                            {
-                                ProcessId = session.GetProcessID,
-                                Volume = 1.0f,
-                                Muted = session.SimpleAudioVolume.Mute
-                            };
-                            _snapshots[key] = seeded;
-                            snapshots[key] = seeded;
-                        }
-                        else
-                        {
-                            session.SimpleAudioVolume.Volume = 1.0f;
                             _snapshots.Remove(key);
                             snapshots.Remove(key);
                         }
                         _normalizedSessions[key] = session.GetProcessID;
+                        App.Logger.WriteLine(LOG_IDENT, $"Found a Roblox audio session (pid {session.GetProcessID}) at volume {session.SimpleAudioVolume.Volume:0.00}, keeping it as the player's own level");
                     }
                     if (!focused && !_snapshots.ContainsKey(key))
                     {
@@ -437,6 +425,10 @@ namespace PhasmaStrap.Integrations
                             }
                             catch
                             {
+                            }
+                            finally
+                            {
+                                session.Dispose();
                             }
                         }
                     }

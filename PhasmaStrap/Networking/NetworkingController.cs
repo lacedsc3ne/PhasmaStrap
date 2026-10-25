@@ -66,11 +66,18 @@ namespace PhasmaStrap.Networking
             return true;
         }
 
-        public static void Disable()
+        public static bool Disable()
         {
             StopKeeper();
 
-            HostsElevation.Apply(false, App.Settings.Prop.BlockRobloxTelemetry);
+            bool hostsOk = HostsElevation.Apply(false, App.Settings.Prop.BlockRobloxTelemetry) || !HostsFileManager.IsBlockPresent();
+            if (!hostsOk)
+            {
+                App.Logger.WriteLine(LOG_IDENT, "Hosts file removal was declined or failed, keeping the proxy running so Roblox still connects");
+                StartKeeper();
+                return false;
+            }
+
             AssetProxyServer.Stop();
 
             try
@@ -82,22 +89,37 @@ namespace PhasmaStrap.Networking
                 App.Logger.WriteLine(LOG_IDENT, $"Could not restore Roblox's trust bundle: {ex.Message}");
             }
 
+            bool certificateRemoved = AssetProxyCA.RemoveFromTrustStore();
+            App.Logger.WriteLine(LOG_IDENT, certificateRemoved ? "Removed the proxy root certificate" : "Could not remove the proxy root certificate");
+
             App.Settings.Prop.NetworkingProxyEnabled = false;
             App.Settings.Save();
+            return true;
         }
 
-        public static void ReconcileOnStartup()
+        public static void ReconcileOnStartup(bool allowPrompts)
         {
             if (App.Settings.Prop.NetworkingProxyEnabled)
             {
                 RegisterHosts();
                 AssetProxyServer.Start();
-                EnsureCertificateInstalled();
+
+                if (allowPrompts)
+                    EnsureCertificateInstalled();
+
                 UsernameSpoofer.WarmUpIdentity();
                 StartKeeper();
             }
+            else if (allowPrompts && AssetProxyCA.IsAnyRootInTrustStore())
+            {
+                App.Logger.WriteLine(LOG_IDENT, "The proxy is off but its root certificate is still trusted, removing it");
+                AssetProxyCA.RemoveFromTrustStore();
+            }
 
-            HostsElevation.ReconcileOnStartup();
+            if (allowPrompts)
+                HostsElevation.ReconcileOnStartup();
+            else
+                App.Logger.WriteLine(LOG_IDENT, "Skipping certificate and hosts checks that could show a Windows prompt, this is not the settings window");
         }
 
         private static void StartKeeper()
@@ -145,40 +167,21 @@ namespace PhasmaStrap.Networking
 
         private static void RegisterHosts()
         {
-            AssetProxyServer.InterceptedHosts[PresenceSpoofPolicy.Host] = (PresenceSpoofPolicy.TransformRequest, null, PresenceSpoofPolicy.TryServeFromCache);
+            AssetProxyServer.InterceptedHosts[PresenceSpoofPolicy.Host] = (PresenceSpoofPolicy.TransformRequest, UsernameSpoofer.ProcessResponse, PresenceSpoofPolicy.TryServeFromCache);
+            AssetProxyServer.InterceptedHosts[RobuxSpoofer.Host] = (null, RobuxSpoofer.ProcessResponse, null);
+            AssetProxyServer.InterceptedHosts[GameCreatorSpoofer.Host] = (null, GameCreatorSpoofer.ProcessResponse, null);
+            AssetProxyServer.InterceptedHosts[AssetWarpPolicy.Host] = (AssetWarpPolicy.TransformRequest, CachePreloadThenRewriteBatch, ServeBatchFromPreloadCache);
+            AssetProxyServer.InterceptedHosts[AssetWarpThumbnailPolicy.Host] = (null, AssetWarpThumbnailPolicy.ProcessResponse, null);
 
-            AssetProxyServer.InterceptedHosts.TryGetValue(RobuxSpoofer.Host, out var existingEconomy);
-            AssetProxyServer.InterceptedHosts[RobuxSpoofer.Host] = (existingEconomy.RequestTransform, RobuxSpoofer.ProcessResponse, existingEconomy.TryServeFromCache);
-
-            AssetProxyServer.InterceptedHosts.TryGetValue(UsernameSpoofer.Host, out var existingApis);
-            AssetProxyServer.InterceptedHosts[UsernameSpoofer.Host] = (existingApis.RequestTransform, CombineResponseTransforms(existingApis.ResponseTransform, UsernameSpoofer.ProcessResponse), existingApis.TryServeFromCache);
-
-            AssetProxyServer.InterceptedHosts.TryGetValue(GameCreatorSpoofer.Host, out var existingGames);
-            AssetProxyServer.InterceptedHosts[GameCreatorSpoofer.Host] = (existingGames.RequestTransform, CombineResponseTransforms(existingGames.ResponseTransform, GameCreatorSpoofer.ProcessResponse), existingGames.TryServeFromCache);
-
-            RegisterAssetWarpHosts();
-
-            if (!AssetProxyServer.InterceptedHosts.ContainsKey(JoinPickerPolicy.Host))
-                AssetProxyServer.InterceptedHosts[JoinPickerPolicy.Host] = (null, null, null);
+            AssetProxyServer.AsyncHandlers[AssetWarpPolicy.Host] = AssetContentService.HandleAsync;
             AssetProxyServer.AsyncHandlers[JoinPickerPolicy.Host] = JoinPickerPolicy.HandleAsync;
         }
 
-        private static void RegisterAssetWarpHosts()
+        private static byte[]? CachePreloadThenRewriteBatch(ProxiedRequest request, ProxiedResponse response)
         {
-            AssetProxyServer.InterceptedHosts.TryGetValue(AssetWarpPolicy.Host, out var existingDelivery);
-
-            AssetProxyServer.InterceptedHosts[AssetWarpPolicy.Host] = (
-                AssetWarpPolicy.TransformRequest,
-                CombineResponseTransforms(CombineResponseTransforms(existingDelivery.ResponseTransform, AssetPreloadCache.CacheResponse), AssetContentService.RewriteBatch),
-                ServeBatchFromPreloadCache);
-
-            AssetProxyServer.AsyncHandlers[AssetWarpPolicy.Host] = AssetContentService.HandleAsync;
-
-            AssetProxyServer.InterceptedHosts.TryGetValue(AssetWarpThumbnailPolicy.Host, out var existingThumbnails);
-            AssetProxyServer.InterceptedHosts[AssetWarpThumbnailPolicy.Host] = (
-                existingThumbnails.RequestTransform,
-                CombineResponseTransforms(existingThumbnails.ResponseTransform, AssetWarpThumbnailPolicy.ProcessResponse),
-                existingThumbnails.TryServeFromCache);
+            byte[]? cached = AssetPreloadCache.CacheResponse(request, response);
+            ProxiedResponse intermediate = cached is null ? response : response with { Body = cached };
+            return AssetContentService.RewriteBatch(request, intermediate) ?? cached;
         }
 
         private static ProxiedResponse? ServeBatchFromPreloadCache(ProxiedRequest request)
@@ -189,21 +192,6 @@ namespace PhasmaStrap.Networking
 
             byte[]? rewritten = AssetContentService.RewriteBatch(request, cached);
             return rewritten is null ? cached : cached with { Body = rewritten };
-        }
-
-        private static Func<ProxiedRequest, ProxiedResponse, byte[]?> CombineResponseTransforms(
-            Func<ProxiedRequest, ProxiedResponse, byte[]?>? first,
-            Func<ProxiedRequest, ProxiedResponse, byte[]?> second)
-        {
-            if (first is null)
-                return second;
-
-            return (request, response) =>
-            {
-                byte[]? firstResult = first(request, response);
-                ProxiedResponse intermediate = firstResult is null ? response : response with { Body = firstResult };
-                return second(request, intermediate) ?? firstResult;
-            };
         }
     }
 }

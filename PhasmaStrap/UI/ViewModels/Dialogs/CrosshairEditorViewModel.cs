@@ -297,51 +297,87 @@ namespace PhasmaStrap.UI.ViewModels.Dialogs
         private string _importCode = "";
         public string ImportCode { get => _importCode; set { _importCode = value ?? ""; OnPropertyChanged(nameof(ImportCode)); } }
 
+        private bool _codeBusy;
+
         public ICommand CopyCodeCommand => new RelayCommand(async () =>
         {
-            Status = "Making a link...";
-
-            string code = ShareCode;
-            string? link = await PhasmaStrap.Utility.PhasmaAccount.ShortLinkAsync("crosshair", _style.Name, code);
-
-            if (!PhasmaStrap.Utility.ClipboardShare.CopyText(link ?? code))
-            {
-                Status = "Could not reach the clipboard - try again.";
+            if (_codeBusy)
                 return;
-            }
 
-            Status = link is null
-                ? "Code copied - anyone with PhasmaStrap can paste it into their editor."
-                : $"{link} copied - paste it into anyone's editor, or open it in a browser.";
+            _codeBusy = true;
+
+            try
+            {
+                Status = "Making a link...";
+
+                string code = ShareCode;
+                string? link = await PhasmaStrap.Utility.PhasmaAccount.ShortLinkAsync("crosshair", _style.Name, code);
+
+                if (!PhasmaStrap.Utility.ClipboardShare.CopyText(link ?? code))
+                {
+                    Status = "Could not reach the clipboard - try again.";
+                    return;
+                }
+
+                Status = link is null
+                    ? "Code copied - anyone with PhasmaStrap can paste it into their editor."
+                    : $"{link} copied - paste it into anyone's editor, or open it in a browser.";
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("CrosshairEditorViewModel::CopyCode", $"Could not share the crosshair: {ex.Message}");
+                Status = $"Could not share the crosshair: {ex.Message}";
+            }
+            finally
+            {
+                _codeBusy = false;
+            }
         });
 
         public ICommand ImportCodeCommand => new RelayCommand(async () =>
         {
-            string text = _importCode;
-            string? id = PhasmaStrap.Utility.PhasmaAccount.GalleryIdIn(text);
+            if (_codeBusy)
+                return;
 
-            if (id is not null)
+            _codeBusy = true;
+
+            try
             {
-                Status = "Fetching that link...";
-                text = await PhasmaStrap.Utility.PhasmaAccount.GalleryTakeAsync(id) ?? "";
+                string text = _importCode;
+                string? id = PhasmaStrap.Utility.PhasmaAccount.GalleryIdIn(text);
 
-                if (text.Length == 0)
+                if (id is not null)
                 {
-                    Status = "That link has expired, or it never existed.";
+                    Status = "Fetching that link...";
+                    text = await PhasmaStrap.Utility.PhasmaAccount.GalleryTakeAsync(id) ?? "";
+
+                    if (text.Length == 0)
+                    {
+                        Status = "That link has expired, or it never existed.";
+                        return;
+                    }
+                }
+
+                CrosshairStyle? style = CrosshairStyle.FromShareCode(text);
+                if (style is null)
+                {
+                    Status = "That is not a crosshair code (they start with PHX).";
                     return;
                 }
-            }
 
-            CrosshairStyle? style = CrosshairStyle.FromShareCode(text);
-            if (style is null)
+                LoadStyle(style);
+                ImportCode = "";
+                Status = $"Loaded{(style.Name.Length > 0 ? $" \"{style.Name}\"" : "")}. Press Apply to use it, or save it to your designs.";
+            }
+            catch (Exception ex)
             {
-                Status = "That is not a crosshair code (they start with PHX).";
-                return;
+                App.Logger.WriteLine("CrosshairEditorViewModel::ImportCode", $"Could not load the crosshair code: {ex.Message}");
+                Status = $"Could not load that code: {ex.Message}";
             }
-
-            LoadStyle(style);
-            ImportCode = "";
-            Status = $"Loaded{(style.Name.Length > 0 ? $" \"{style.Name}\"" : "")}. Press Apply to use it, or save it to your designs.";
+            finally
+            {
+                _codeBusy = false;
+            }
         });
 
         public ICommand ApplyCommand => new RelayCommand(Apply);
@@ -355,7 +391,7 @@ namespace PhasmaStrap.UI.ViewModels.Dialogs
             Applied?.Invoke();
             Status = App.Settings.Prop.Crosshair
                 ? "Applied. A game that is running picks it up within a second or two."
-                : "Applied. The crosshair itself is switched off - turn it on on the Rendering page.";
+                : "Applied. The crosshair itself is switched off - turn it on under Performance, Overlays, Crosshair.";
         }
     }
 }

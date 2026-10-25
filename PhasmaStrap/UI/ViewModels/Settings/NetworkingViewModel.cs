@@ -19,11 +19,16 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             private set { _wipeStatus = value; OnPropertyChanged(nameof(WipeStatus)); }
         }
 
-        public ICommand WipeAllCommand => new RelayCommand(WipeAll);
+        private bool _wiping;
 
-        private void WipeAll()
+        public ICommand WipeAllCommand => new AsyncRelayCommand(WipeAll);
+
+        private async Task WipeAll()
         {
             const string LOG_IDENT = "NetworkingViewModel::WipeAll";
+
+            if (_wiping)
+                return;
 
             MessageBoxResult confirm = Frontend.ShowMessageBox(
                 "This deletes your saved Roblox login (you'll be signed out of Roblox itself, not just PhasmaStrap's account switcher), every PhasmaStrap/Roblox cache and log file, and the AssetWarp preload cache. This cannot be undone.\n\nContinue?",
@@ -33,6 +38,9 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             if (confirm != MessageBoxResult.Yes)
                 return;
+
+            _wiping = true;
+            WipeStatus = "Wiping...";
 
             bool signedOut = false;
 
@@ -51,28 +59,56 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 App.Logger.WriteLine(LOG_IDENT, $"Failed to delete Roblox cookies: {ex.Message}");
             }
 
-            int filesDeleted = 0;
+            List<string> directories = Cleaner.Directories.Values.ToList();
 
-            foreach ((string _, string directory) in Cleaner.Directories)
+            int filesDeleted = await Task.Run(() =>
             {
-                if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
-                    continue;
+                int deleted = 0;
 
-                foreach (string file in Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories))
+                foreach (string directory in directories)
                 {
+                    if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
+                        continue;
+
+                    string[] files;
+
                     try
                     {
-                        File.Delete(file);
-                        filesDeleted++;
+                        files = Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories);
                     }
                     catch (Exception ex)
                     {
-                        App.Logger.WriteLine(LOG_IDENT, $"Failed to delete '{file}': {ex.Message}");
+                        App.Logger.WriteLine(LOG_IDENT, $"Failed to list '{directory}': {ex.Message}");
+                        continue;
+                    }
+
+                    foreach (string file in files)
+                    {
+                        try
+                        {
+                            File.Delete(file);
+                            deleted++;
+                        }
+                        catch (Exception ex)
+                        {
+                            App.Logger.WriteLine(LOG_IDENT, $"Failed to delete '{file}': {ex.Message}");
+                        }
                     }
                 }
-            }
 
-            AssetPreloadCache.ClearCache();
+                return deleted;
+            });
+
+            _wiping = false;
+
+            try
+            {
+                AssetPreloadCache.ClearCache();
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Failed to clear the preload cache: {ex.Message}");
+            }
 
             WipeStatus = signedOut
                 ? $"Wiped {filesDeleted} file(s) and signed you out of Roblox."
@@ -92,9 +128,10 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                     if (!ok)
                         App.Logger.WriteLine("NetworkingViewModel", "Enabling the proxy failed or the elevation prompt was declined");
                 }
-                else
+                else if (!NetworkingController.Disable())
                 {
-                    NetworkingController.Disable();
+                    App.Logger.WriteLine("NetworkingViewModel", "Turning the proxy off failed, the hosts file change could not be undone");
+                    Frontend.ShowMessageBox("Could not undo the hosts file change, so Asset Warp is still on. Try again and accept the Windows prompt.", MessageBoxImage.Warning);
                 }
 
                 OnPropertyChanged(nameof(ProxyEnabled));
@@ -152,13 +189,13 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public PresenceSpoofMode SelectedPresenceSpoofMode
         {
             get => App.Settings.Prop.PresenceSpoofMode;
-            set { App.Settings.Prop.PresenceSpoofMode = value; App.Settings.Save(); OnPropertyChanged(nameof(SelectedPresenceSpoofMode)); }
+            set { Spoofer.SelectedPresenceSpoofMode = value; OnPropertyChanged(nameof(SelectedPresenceSpoofMode)); OnPropertyChanged(nameof(ProxyEnabled)); }
         }
 
         public string RobuxSpoofAmount
         {
             get => App.Settings.Prop.RobuxSpoofAmount;
-            set { App.Settings.Prop.RobuxSpoofAmount = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(RobuxSpoofAmount)); }
+            set { Spoofer.RobuxSpoofAmount = value; OnPropertyChanged(nameof(RobuxSpoofAmount)); OnPropertyChanged(nameof(ProxyEnabled)); }
         }
 
         public string UsernameSpoofName
@@ -230,7 +267,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
                 long totalBytes = PreloadCacheEntries.Sum(e => e.SizeBytes);
                 string sizeText = totalBytes >= 1024 * 1024 ? $"{totalBytes / 1048576.0:0.#} MB" : $"{totalBytes / 1024.0:0.#} KB";
-                return $"{PreloadCacheEntries.Count} entrie(s), {sizeText}";
+                return $"{PreloadCacheEntries.Count} {(PreloadCacheEntries.Count == 1 ? "entry" : "entries")}, {sizeText}";
             }
         }
 

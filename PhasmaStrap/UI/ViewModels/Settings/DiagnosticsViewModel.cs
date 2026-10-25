@@ -73,7 +73,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             RunConnectionCommand = new AsyncRelayCommand(RunConnectionAsync);
             CancelConnectionCommand = new RelayCommand(() => _connectionCancel?.Cancel());
 
-            RefreshServer();
+            _ = RefreshServerInBackgroundAsync();
             InitialiseMore();
         }
 
@@ -217,25 +217,47 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         private void RefreshServer()
         {
-            _server = ConnectionDoctor.FindLastServer(Paths.RobloxLogs);
+            (_server, ServerText) = DescribeLastServer();
+        }
 
-            if (_server is null)
+        private async Task RefreshServerInBackgroundAsync()
+        {
+            ServerText = "Looking for the last server you joined...";
+
+            try
             {
-                ServerText = "No game server found in Roblox's logs yet - join a game first, then come back.";
-                return;
+                (string? server, string text) = await Task.Run(DescribeLastServer);
+
+                if (_connectionBusy)
+                    return;
+
+                _server = server;
+                ServerText = text;
             }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("DiagnosticsViewModel::RefreshServerInBackground", $"Could not read the last server from the logs: {ex.Message}");
+            }
+        }
+
+        private static (string? Server, string Text) DescribeLastServer()
+        {
+            string? server = ConnectionDoctor.FindLastServer(Paths.RobloxLogs);
+
+            if (server is null)
+                return (null, "No game server found in Roblox's logs yet - join a game first, then come back.");
 
             string region = "";
             try
             {
                 ServerFetchStore.EnsureLoaded();
-                region = ServerRegion.Describe(RobloxDatacenterMap.Map(_server));
+                region = ServerRegion.Describe(RobloxDatacenterMap.Map(server));
             }
             catch
             {
             }
 
-            ServerText = $"Tests the way to the server you joined last: {_server}{(region.Length > 0 ? $" ({region})" : "")}. For a live problem, run it while you are in that game.";
+            return (server, $"Tests the way to the server you joined last: {server}{(region.Length > 0 ? $" ({region})" : "")}. For a live problem, run it while you are in that game.");
         }
 
         private async Task RunConnectionAsync()

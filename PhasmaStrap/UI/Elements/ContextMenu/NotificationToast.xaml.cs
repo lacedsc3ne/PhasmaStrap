@@ -279,7 +279,8 @@ namespace PhasmaStrap.UI.Elements.ContextMenu
             try
             {
                 System.Windows.Forms.Screen screen = System.Windows.Forms.Screen.FromPoint(System.Windows.Forms.Cursor.Position);
-                foreach (Process process in Process.GetProcessesByName(App.RobloxPlayerAppName))
+                Process[] players = Process.GetProcessesByName(App.RobloxPlayerAppName);
+                foreach (Process process in players)
                 {
                     if (process.MainWindowHandle != IntPtr.Zero)
                     {
@@ -287,6 +288,9 @@ namespace PhasmaStrap.UI.Elements.ContextMenu
                         break;
                     }
                 }
+
+                foreach (Process process in players)
+                    process.Dispose();
 
                 var area = screen.WorkingArea;
                 Matrix fromDevice = PresentationSource.FromVisual(this)?.CompositionTarget?.TransformFromDevice ?? Matrix.Identity;

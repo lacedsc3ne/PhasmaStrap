@@ -125,28 +125,28 @@
 
                 <Grid Grid.Column="0" Margin="0,0,8,0" Visibility="{Binding ListsVisibility}">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="2*" MinWidth="160" />
+                        <ColumnDefinition Width="*" MinWidth="104" MaxWidth="128" />
+                        <ColumnDefinition Width="*" MinWidth="104" MaxWidth="138" />
+                        <ColumnDefinition Width="*" MinWidth="104" MaxWidth="158" />
+                        <ColumnDefinition Width="*" MinWidth="104" MaxWidth="148" />
+                        <ColumnDefinition Width="*" MinWidth="104" MaxWidth="148" />
                     </Grid.ColumnDefinitions>
                     <ui:TextBox Grid.Column="0" Icon="Search24" PlaceholderText="{x:Static resources:Strings.Menu_PrivateServers_SearchGamesServerNamesUsernames}" Text="{Binding Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <ComboBox Grid.Column="1" Width="120" Margin="8,0,0,0" Padding="10,5,10,5" ToolTip="{x:Static resources:Strings.Menu_PrivateServers_WhoseServersShowFriendsAreListed}" ItemsSource="{Binding OwnerOptions}" SelectedItem="{Binding Owner, Mode=TwoWay}" />
-                    <ComboBox Grid.Column="2" Width="130" Margin="8,0,0,0" Padding="10,5,10,5" ToolTip="{x:Static resources:Strings.Menu_PrivateServers_OnlyServersGame}" ItemsSource="{Binding GameOptions}" SelectedItem="{Binding Game, Mode=TwoWay}" />
-                    <ComboBox Grid.Column="3" Width="150" Margin="8,0,0,0" Padding="10,5,10,5" SelectedIndex="{Binding ShowIndex, Mode=TwoWay}">
+                    <ComboBox Grid.Column="1" Margin="8,0,0,0" Padding="10,5,10,5" ToolTip="{x:Static resources:Strings.Menu_PrivateServers_WhoseServersShowFriendsAreListed}" ItemsSource="{Binding OwnerOptions}" SelectedItem="{Binding Owner, Mode=TwoWay}" />
+                    <ComboBox Grid.Column="2" Margin="8,0,0,0" Padding="10,5,10,5" ToolTip="{x:Static resources:Strings.Menu_PrivateServers_OnlyServersGame}" ItemsSource="{Binding GameOptions}" SelectedItem="{Binding Game, Mode=TwoWay}" />
+                    <ComboBox Grid.Column="3" Margin="8,0,0,0" Padding="10,5,10,5" SelectedIndex="{Binding ShowIndex, Mode=TwoWay}">
                         <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_YoursShared}" />
                         <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_OnlyYours}" />
                         <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_OnlySharedYou}" />
                     </ComboBox>
-                    <ComboBox Grid.Column="4" Width="140" Margin="8,0,0,0" Padding="10,5,10,5" SelectedIndex="{Binding StatusIndex, Mode=TwoWay}">
+                    <ComboBox Grid.Column="4" Margin="8,0,0,0" Padding="10,5,10,5" SelectedIndex="{Binding StatusIndex, Mode=TwoWay}">
                         <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_AnyStatus}" />
                         <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_CanJoinNow}" />
                         <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_Inactive}" />
                         <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_EndingWithin30Days}" />
                     </ComboBox>
-                    <ComboBox Grid.Column="5" Width="140" Margin="8,0,0,0" Padding="10,5,10,5" SelectedIndex="{Binding SortIndex, Mode=TwoWay}">
+                    <ComboBox Grid.Column="5" Margin="8,0,0,0" Padding="10,5,10,5" SelectedIndex="{Binding SortIndex, Mode=TwoWay}">
                         <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_SortByGame}" />
                         <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_SortByOwner}" />
                         <ComboBoxItem Content="{x:Static resources:Strings.Menu_PrivateServers_EndingSoonestFirst}" />

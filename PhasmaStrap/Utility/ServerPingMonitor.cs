@@ -52,6 +52,7 @@ namespace PhasmaStrap.Utility
             }
 
             using var ping = new Ping();
+            int failures = 0;
 
             while (!token.IsCancellationRequested)
             {
@@ -59,16 +60,26 @@ namespace PhasmaStrap.Utility
                 {
                     PingReply reply = await ping.SendPingAsync(address, TimeoutMs).ConfigureAwait(false);
                     _latestMs = reply.Status == IPStatus.Success ? (int)reply.RoundtripTime : -1;
+
+                    if (failures > 0)
+                        App.Logger.WriteLine(LOG_IDENT, $"Pinging {address} works again after {failures} failure(s)");
+
+                    failures = 0;
                 }
                 catch (Exception ex)
                 {
                     _latestMs = -1;
-                    App.Logger.WriteException(LOG_IDENT, ex);
+                    failures++;
+
+                    if (failures == 1)
+                        App.Logger.WriteException(LOG_IDENT, ex);
+                    else if (failures % 30 == 0)
+                        App.Logger.WriteLine(LOG_IDENT, $"Pinging {address} has failed {failures} times in a row: {ex.Message}");
                 }
 
                 try
                 {
-                    await Task.Delay(PollIntervalMs, token).ConfigureAwait(false);
+                    await Task.Delay(failures > 5 ? PollIntervalMs * 5 : PollIntervalMs, token).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {

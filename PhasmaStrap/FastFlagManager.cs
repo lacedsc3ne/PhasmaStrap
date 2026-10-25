@@ -399,7 +399,7 @@ namespace PhasmaStrap
         {
             { RefreshRate.Default, null },
             { RefreshRate.RefreshRate75, "75" },
-            { RefreshRate.RefreshRate85, "80" },
+            { RefreshRate.RefreshRate85, "85" },
             { RefreshRate.RefreshRate90, "90" },
             { RefreshRate.RefreshRate100, "100" },
             { RefreshRate.RefreshRate120, "120" },
@@ -524,8 +524,17 @@ namespace PhasmaStrap
 
         public override void Save()
         {
-            foreach (var pair in Prop)
-                Prop[pair.Key] = pair.Value.ToString()!;
+            foreach (var pair in Prop.ToList())
+            {
+                if (pair.Value is null)
+                {
+                    App.Logger.WriteLine("FastFlagManager::Save", $"Dropping {pair.Key} because it has no value");
+                    Prop.Remove(pair.Key);
+                    continue;
+                }
+
+                Prop[pair.Key] = pair.Value.ToString() ?? "";
+            }
 
             base.Save();
 

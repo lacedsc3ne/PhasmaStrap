@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 
 using PhasmaStrap.UI.ViewModels.Dialogs;
@@ -19,6 +20,15 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             _viewModel = new CaptureLibraryViewModel(tab) { Owner = this };
             DataContext = _viewModel;
             InitializeComponent();
+            KeyDown += (_, e) =>
+            {
+                if (e.Key != Key.Escape)
+                    return;
+
+                App.Logger.WriteLine("CaptureLibraryWindow", "Escape pressed, closing");
+                e.Handled = true;
+                Close();
+            };
 
             Closed += (_, _) =>
             {
@@ -33,6 +43,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             if (_open is not null)
             {
                 _open._viewModel.Tab = tab;
+                _open._viewModel.SetRange(null);
                 if (_open.WindowState == System.Windows.WindowState.Minimized)
                     _open.WindowState = System.Windows.WindowState.Normal;
                 _open.Activate();

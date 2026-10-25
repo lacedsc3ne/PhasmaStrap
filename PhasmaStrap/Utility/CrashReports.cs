@@ -90,7 +90,10 @@ namespace PhasmaStrap.Utility
         {
             try
             {
-                bool running = Process.GetProcessesByName(App.RobloxPlayerAppName).Length > 0;
+                Process[] players = Process.GetProcessesByName(App.RobloxPlayerAppName);
+                bool running = players.Length > 0;
+                foreach (Process player in players)
+                    player.Dispose();
 
                 return new DirectoryInfo(Paths.RobloxLogs).GetFiles("*.log")
                     .Where(f => f.Name.Contains("_Player_", StringComparison.OrdinalIgnoreCase))

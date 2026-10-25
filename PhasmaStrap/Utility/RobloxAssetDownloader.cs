@@ -6,9 +6,11 @@ namespace PhasmaStrap.Utility
 
     public static class RobloxAssetDownloader
     {
+        private const int MaxAssetBytes = 200 * 1024 * 1024;
+
         public static async Task<AssetDownloadResult> DownloadAssetAsync(long assetId, CancellationToken token = default)
         {
-            using var client = new HttpClient(new HttpClientHandler { UseCookies = false }) { Timeout = TimeSpan.FromSeconds(30) };
+            using var client = new HttpClient(new HttpClientHandler { UseCookies = false, AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(30) };
 
             try
             {
@@ -19,7 +21,25 @@ namespace PhasmaStrap.Utility
                 if (!string.IsNullOrEmpty(cookie))
                     req.Headers.TryAddWithoutValidation("Cookie", $".ROBLOSECURITY={cookie}");
 
-                using HttpResponseMessage res = await client.SendAsync(req, token);
+                HttpResponseMessage res = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, token);
+
+                for (int hop = 0; hop < 5 && (int)res.StatusCode >= 300 && (int)res.StatusCode < 400 && res.Headers.Location is not null; hop++)
+                {
+                    Uri next = res.Headers.Location.IsAbsoluteUri ? res.Headers.Location : new Uri(req.RequestUri!, res.Headers.Location);
+                    res.Dispose();
+
+                    if (next.Scheme != Uri.UriSchemeHttps)
+                    {
+                        App.Logger.WriteLine("RobloxAssetDownloader", $"Asset {assetId} redirected to a non secure address, stopping");
+                        return new AssetDownloadResult(false, null, "Roblox sent the download to an address that is not secure.");
+                    }
+
+                    using var follow = new HttpRequestMessage(HttpMethod.Get, next);
+                    follow.Headers.TryAddWithoutValidation("User-Agent", $"{App.ProjectName}/{App.Version}");
+                    res = await client.SendAsync(follow, HttpCompletionOption.ResponseHeadersRead, token);
+                }
+
+                using HttpResponseMessage final = res;
 
                 if (res.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     return new AssetDownloadResult(false, null, "This asset needs an account that owns/can access it - sign into Roblox first.");
@@ -30,7 +50,7 @@ namespace PhasmaStrap.Utility
                 if (!res.IsSuccessStatusCode)
                     return new AssetDownloadResult(false, null, $"Roblox returned {(int)res.StatusCode} {res.StatusCode}.");
 
-                byte[] bytes = await res.Content.ReadAsByteArrayAsync(token);
+                byte[] bytes = await Http.ReadBytesBoundedAsync(res.Content, MaxAssetBytes, token);
                 return bytes.Length > 0
                     ? new AssetDownloadResult(true, bytes, null)
                     : new AssetDownloadResult(false, null, "Roblox returned an empty response.");

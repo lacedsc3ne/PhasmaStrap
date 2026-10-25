@@ -38,6 +38,13 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
                 return;
             }
 
+            if (!string.IsNullOrWhiteSpace(type) && !GBSEditorViewModel.IsValidTypeName(type))
+            {
+                App.Logger.WriteLine("GBSEditorPage", $"Refused to add {name} with the type '{type}'");
+                Frontend.ShowMessageBox("That type is not valid. Use a single word that starts with a letter, like token, int or bool.", MessageBoxImage.Information);
+                return;
+            }
+
             if (!_viewModel.Add(name, string.IsNullOrWhiteSpace(type) ? "token" : type, value))
             {
                 Frontend.ShowMessageBox(Strings.Menu_GBSEditor_AlreadyExists, MessageBoxImage.Information);

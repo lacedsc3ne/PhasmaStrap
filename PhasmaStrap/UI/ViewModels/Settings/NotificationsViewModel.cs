@@ -171,7 +171,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public string SummaryText =>
             NotificationsEnabled
-                ? $"Notifications on, server join {OnOff(NotificationsJoinToastEnabled)}, server leave {OnOff(NotificationsLeaveToastEnabled)}, Do Not Disturb {OnOff(DoNotDisturbEnabled)}"
+                ? $"Notifications on, server join {OnOff(NotificationsJoinToastEnabled)}, server leave {OnOff(NotificationsLeaveToastEnabled)}, do not disturb {OnOff(DoNotDisturbEnabled)}"
                 : "Notifications off, so nothing pops up while you play";
 
         private static string OnOff(bool value) => value ? "on" : "off";

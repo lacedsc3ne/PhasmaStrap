@@ -194,12 +194,45 @@ namespace PhasmaStrap.UI.Elements.Bootstrapper
             return Strings.ResourceManager.GetStringSafe(resourceName);
         }
 
-        private static string? GetFullPath(CustomDialog dialog, string? sourcePath)
+        private static string? GetFullPath(CustomDialog dialog, string? sourcePath, XElement xmlElement, string attributeName)
         {
+            const string ThemePrefix = "theme://";
+
             if (sourcePath == null)
                 return null;
 
-            return sourcePath.Replace("theme://", $"{dialog.ThemeDir}\\");
+            string value = sourcePath.Trim();
+            bool looksLikePath = value.Contains('\\') || value.Contains('/') || value.Contains(':');
+
+            if (!looksLikePath)
+                return sourcePath;
+
+            if (!value.StartsWith(ThemePrefix, StringComparison.OrdinalIgnoreCase))
+                throw RejectedThemePath(xmlElement, attributeName, value);
+
+            string relative = value[ThemePrefix.Length..];
+            string fragment = "";
+
+            int hash = relative.IndexOf('#');
+            if (hash >= 0)
+            {
+                fragment = relative[hash..];
+                relative = relative[..hash];
+            }
+
+            string themeRoot = System.IO.Path.GetFullPath(dialog.ThemeDir).TrimEnd('\\') + "\\";
+            string full = System.IO.Path.GetFullPath(System.IO.Path.Combine(themeRoot, relative.TrimStart('/', '\\')));
+
+            if (!full.StartsWith(themeRoot, StringComparison.OrdinalIgnoreCase))
+                throw RejectedThemePath(xmlElement, attributeName, value);
+
+            return full + fragment;
+        }
+
+        private static CustomThemeException RejectedThemePath(XElement xmlElement, string attributeName, string value)
+        {
+            App.Logger.WriteLine("CustomDialog::GetFullPath", $"Refused {xmlElement.Name}.{attributeName} = '{value}', theme files must be inside the theme folder and start with theme://");
+            return new CustomThemeException("CustomTheme.Errors.ElementAttributeParseError", xmlElement.Name, attributeName, "file inside the theme folder");
         }
 
         private static GetImageSourceDataResult GetImageSourceData(CustomDialog dialog, string name, XElement xmlElement)
@@ -209,7 +242,7 @@ namespace PhasmaStrap.UI.Elements.Bootstrapper
             if (path == "{Icon}")
                 return new GetImageSourceDataResult { IsIcon = true };
 
-            path = GetFullPath(dialog, path)!;
+            path = GetFullPath(dialog, path, xmlElement, name)!;
 
             if (!Uri.TryCreate(path, UriKind.RelativeOrAbsolute, out Uri? result))
                 throw new CustomThemeException("CustomTheme.Errors.ElementAttributeParseError", xmlElement.Name, name, "Uri");
@@ -217,8 +250,14 @@ namespace PhasmaStrap.UI.Elements.Bootstrapper
             if (result == null)
                 throw new CustomThemeException("CustomTheme.Errors.ElementAttributeParseErrorNull", xmlElement.Name, name, "Uri");
 
+            if (!result.IsAbsoluteUri)
+                throw RejectedThemePath(xmlElement, name, path);
+
             if (result.Scheme != "file")
                 throw new CustomThemeException("CustomTheme.Errors.ElementAttributeBlacklistedUriScheme", xmlElement.Name, name, result.Scheme);
+
+            if (result.IsUnc)
+                throw RejectedThemePath(xmlElement, name, path);
 
             return new GetImageSourceDataResult { Uri = result };
         }

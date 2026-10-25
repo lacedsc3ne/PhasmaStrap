@@ -43,7 +43,7 @@
                       SelectionMode="Single"
                       GridLinesVisibility="Horizontal"
                       Margin="0"
-                      AlternatingRowBackground="#08000000"
+                      AlternatingRowBackground="{DynamicResource SubtleFillColorTertiaryBrush}"
                       BorderThickness="1"
                       BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                       ItemsSource="{Binding Channels}"
@@ -68,7 +68,7 @@
         <Border Grid.Row="3" Margin="0,8,0,0" Padding="16,12" Background="{DynamicResource ControlFillColorTertiaryBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="0,1,0,0">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                 <ui:Button Appearance="Secondary" Content="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" Icon="ArrowSync24" Margin="0,0,10,0" Command="{Binding RefreshCommand}" />
-                <ui:Button Appearance="Primary" Content="{x:Static resources:Strings.Dialog_ChannelLists_Select}" Margin="0,0,10,0" Click="SelectButton_Click" />
+                <ui:Button Appearance="Primary" Content="{x:Static resources:Strings.Dialog_ChannelLists_Select}" Margin="0,0,10,0" IsDefault="True" Click="SelectButton_Click" />
                 <ui:Button Appearance="Secondary" Content="{x:Static resources:Strings.Common_Close}" IsCancel="True" Click="Close_Click" />
             </StackPanel>
         </Border>

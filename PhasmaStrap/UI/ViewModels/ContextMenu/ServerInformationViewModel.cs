@@ -29,7 +29,21 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
 
         public async void QueryServerLocation()
         {
-            string? location = await _activityWatcher.Data.QueryServerLocation();
+            const string LOG_IDENT = "ServerInformationViewModel::QueryServerLocation";
+
+            string? location = null;
+
+            try
+            {
+                if (_activityWatcher.Data.MachineAddressValid)
+                    location = await _activityWatcher.Data.QueryServerLocation();
+                else
+                    App.Logger.WriteLine(LOG_IDENT, $"Skipped, server address is not usable ({_activityWatcher.Data.MachineAddress})");
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not get the server location for {_activityWatcher.Data.MachineAddress}: {ex.Message}");
+            }
 
             if (String.IsNullOrEmpty(location))
                 ServerLocation = Strings.Common_NotAvailable;
@@ -39,6 +53,16 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
             OnPropertyChanged(nameof(ServerLocation));
         }
 
-        private void CopyInstanceId() => Clipboard.SetDataObject(InstanceId);
+        private void CopyInstanceId()
+        {
+            try
+            {
+                Clipboard.SetDataObject(InstanceId);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("ServerInformationViewModel::CopyInstanceId", $"Could not copy {InstanceId}: {ex.Message}");
+            }
+        }
     }
 }

@@ -75,11 +75,11 @@
             </Grid>
         </Border>
 
-        <StackPanel Margin="0,8,0,10" Orientation="Horizontal">
-            <TextBlock VerticalAlignment="Center" FontSize="13.5" FontWeight="SemiBold" Text="{x:Static resources:Strings.Installer_Extensions_Other_Title}" />
-            <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+        <WrapPanel Margin="0,8,0,10">
+            <TextBlock Margin="0,0,10,0" VerticalAlignment="Center" FontSize="13.5" FontWeight="SemiBold" Text="{x:Static resources:Strings.Installer_Extensions_Other_Title}" />
+            <TextBlock VerticalAlignment="Center" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                        Text="Point PhasmaStrap at a tool you already have. It does not bundle or download these." />
-        </StackPanel>
+        </WrapPanel>
 
         <ItemsControl ItemsSource="{Binding Extensions}" Focusable="False">
             <ItemsControl.ItemsPanel>

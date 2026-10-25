@@ -44,13 +44,13 @@
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <Border Grid.Row="0" CornerRadius="{DynamicResource PhasmaCornerRadius}" ClipToBounds="True" Background="#FF15171B" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1">
+                <Border Grid.Row="0" CornerRadius="{DynamicResource PhasmaCornerRadius}" ClipToBounds="True" Background="{DynamicResource SolidBackgroundFillColorBaseAltBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1">
                     <Image x:Name="PreviewImage" Stretch="Uniform" Margin="8" RenderOptions.BitmapScalingMode="HighQuality" />
                 </Border>
                 <TextBlock x:Name="InfoText" Grid.Row="1" Margin="2,8,0,0" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
             </Grid>
 
-            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
+            <ScrollViewer x:Name="SettingsPanel" Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
                 <StackPanel>
                     <TextBlock Style="{StaticResource Section}" Margin="0,0,0,6" Text="Pictures" />
                     <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
@@ -60,7 +60,7 @@
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
-                                    <Border Width="64" Height="36" CornerRadius="4" ClipToBounds="True" Background="#FF24262C">
+                                    <Border Width="64" Height="36" CornerRadius="4" ClipToBounds="True" Background="{DynamicResource ControlFillColorSecondaryBrush}">
                                         <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" />
                                     </Border>
                                     <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="200" Text="{Binding Name}" ToolTip="{Binding Name}" />

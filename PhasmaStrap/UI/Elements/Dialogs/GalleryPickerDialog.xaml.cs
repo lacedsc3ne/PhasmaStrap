@@ -47,12 +47,14 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             var items = await PhasmaAccount.GalleryAsync(_kind, SearchBox.Text ?? "");
 
             ItemsList.ItemsSource = items;
-            EmptyText.Text = (SearchBox.Text ?? "").Trim().Length > 0
-                ? "Nothing matches that."
-                : "Nothing published yet.";
-            EmptyText.Visibility = items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            EmptyText.Text = items is null
+                ? "Could not reach the server. Check your connection and try again."
+                : (SearchBox.Text ?? "").Trim().Length > 0
+                    ? "Nothing matches that."
+                    : "Nothing published yet.";
+            EmptyText.Visibility = items is null || items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
-            if (items.Count > 0)
+            if (items is not null && items.Count > 0)
                 ItemsList.SelectedIndex = 0;
 
             _busy = false;
@@ -69,7 +71,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             string? code = await PhasmaAccount.GalleryTakeAsync(chosen.Id);
 
             _busy = false;
-            AddButton.IsEnabled = true;
+            AddButton.IsEnabled = ItemsList.SelectedItem is GalleryItem;
 
             if (string.IsNullOrEmpty(code))
             {
@@ -85,6 +87,9 @@ namespace PhasmaStrap.UI.Elements.Dialogs
         }
 
         private void OnAddClicked(object sender, RoutedEventArgs e) => Accept();
+
+        private void ItemsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) =>
+            AddButton.IsEnabled = !_busy && ItemsList.SelectedItem is GalleryItem;
 
         private void ItemsList_MouseDoubleClick(object sender, MouseButtonEventArgs e) => Accept();
 

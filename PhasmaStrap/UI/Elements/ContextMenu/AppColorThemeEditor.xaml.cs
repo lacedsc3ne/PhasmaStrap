@@ -240,9 +240,17 @@ namespace PhasmaStrap.UI.Elements.ContextMenu
         {
             StatusText.Text = message;
             StatusIcon.Symbol = isError ? Wpf.Ui.Common.SymbolRegular.ErrorCircle24 : Wpf.Ui.Common.SymbolRegular.CheckmarkCircle24;
-            StatusBorder.Background = new SolidColorBrush(isError ? Color.FromArgb(0x33, 0xFF, 0x3B, 0x3B) : Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF));
-            StatusBorder.BorderBrush = new SolidColorBrush(isError ? Color.FromArgb(0x80, 0xFF, 0x3B, 0x3B) : Color.FromArgb(0x33, 0xFF, 0xFF, 0xFF));
-            StatusText.Foreground = new SolidColorBrush(isError ? Color.FromRgb(0xFF, 0xC9, 0xC9) : Color.FromRgb(0xDD, 0xDD, 0xDD));
+            if (isError)
+            {
+                StatusBorder.Background = new SolidColorBrush(Color.FromArgb(0x33, 0xFF, 0x3B, 0x3B));
+                StatusBorder.BorderBrush = new SolidColorBrush(Color.FromArgb(0x80, 0xFF, 0x3B, 0x3B));
+            }
+            else
+            {
+                StatusBorder.SetResourceReference(System.Windows.Controls.Border.BackgroundProperty, "ControlFillColorDefaultBrush");
+                StatusBorder.SetResourceReference(System.Windows.Controls.Border.BorderBrushProperty, "ControlStrokeColorDefaultBrush");
+            }
+            StatusText.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, "TextFillColorPrimaryBrush");
             StatusBorder.Visibility = Visibility.Visible;
             SaveButton.IsEnabled = !isError;
         }

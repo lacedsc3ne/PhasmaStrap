@@ -313,7 +313,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public ICommand InviteFriendCommand => new RelayCommand(() =>
         {
-            var dialog = new Elements.Dialogs.PartyInviteDialog();
+            var dialog = new Elements.Dialogs.PartyInviteDialog { Owner = Frontend.ActiveOwner() };
             dialog.ShowDialog();
         });
 

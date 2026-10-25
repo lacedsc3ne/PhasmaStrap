@@ -219,6 +219,13 @@ namespace PhasmaStrap.UI
             canvasWidth = Math.Max(1, canvasWidth);
             canvasHeight = Math.Max(1, canvasHeight);
 
+            if ((long)canvasWidth * canvasHeight * 4 > MaxDecodedBytes)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"'{Path.GetFileName(path)}' says its canvas is {canvasWidth}x{canvasHeight}, too big to animate - showing it as a still image");
+                BitmapSource still = Materialize(new FormatConvertedBitmap(decoder.Frames[0], PixelFormats.Pbgra32, null, 0));
+                return new Media { Frames = new[] { still }, Delays = new[] { TimeSpan.Zero } };
+            }
+
             double scale = Math.Min(1.0, (double)MaxFrameWidth / canvasWidth);
             long fullBytes = (long)(canvasWidth * scale) * (long)(canvasHeight * scale) * 4 * count;
             if (fullBytes > MaxDecodedBytes)

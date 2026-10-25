@@ -146,9 +146,15 @@ namespace PhasmaStrap.Integrations.Overlays
             var sb = new StringBuilder();
             var prop = App.Settings.Prop;
 
-            bool hud = prop.OverlayHudEnabled;
-            bool crosshair = prop.Crosshair;
-            bool gpuCompositor = OverlaySettings.AnyEnabled;
+            bool focusMode = prop.OverlayFocusModeEnabled;
+            bool hud = OverlaySettings.HudEnabled;
+            bool crosshair = OverlaySettings.CrosshairEnabled;
+            bool pictureEffects = prop.RiShadeEnabled
+                || (prop.AntiAliasingEnabled && prop.AntiAliasingMethodIndex > 0)
+                || FrameGeneration.FrameGenSettings.ModeIndex > 0;
+            bool streamSafe = prop.StreamSafeEnabled;
+            long placeId = OverlayHub.CurrentPlaceId;
+            bool placeProfile = placeId != 0 && prop.OverlayPlaceProfiles.ContainsKey(placeId.ToString());
 
             RobloxWindowRect roblox = ResolveRobloxRect();
             bool inGame = roblox.Valid;
@@ -156,47 +162,60 @@ namespace PhasmaStrap.Integrations.Overlays
             sb.AppendLine("PhasmaStrap overlay diagnostics");
             sb.AppendLine();
 
-            if (!hud && !crosshair)
+            if (!OverlaySettings.GameEffectsEnabled)
             {
-                sb.AppendLine("CAUSE: Every overlay is turned off.");
-                sb.AppendLine();
-                sb.AppendLine("Nothing is set to show. Turn on what you want in Settings > Overlays.");
+                if (focusMode && (prop.OverlayHudEnabled || prop.Crosshair))
+                {
+                    sb.AppendLine("CAUSE: Focus mode is on, so the stats overlay and crosshair are hidden.");
+                    sb.AppendLine();
+                    sb.AppendLine("Turn off focus mode in Settings > Overlays to see them again.");
+                }
+                else
+                {
+                    sb.AppendLine("CAUSE: Every overlay is turned off.");
+                    sb.AppendLine();
+                    sb.AppendLine("Nothing is set to show. Turn on what you want in Settings > Overlays.");
+                }
                 return sb.ToString();
             }
 
             sb.AppendLine("What is turned on:");
             sb.AppendLine("  Stats overlay (FPS): " + OnOff(hud));
             sb.AppendLine("  Crosshair: " + OnOff(crosshair));
-            sb.AppendLine("  GPU compositor running: " + OnOff(gpuCompositor));
-            sb.AppendLine("  Roblox detected in a game: " + OnOff(inGame));
+            sb.AppendLine("  Picture effects (shaders, smoothing, frame generation): " + OnOff(pictureEffects));
+            sb.AppendLine("  Stream-safe view: " + OnOff(streamSafe));
+            sb.AppendLine("  Focus mode: " + OnOff(focusMode));
+            if (placeProfile)
+                sb.AppendLine("  This game has its own overlay choices: ON");
+            sb.AppendLine("  Roblox window found: " + OnOff(inGame));
             sb.AppendLine();
 
             if (!inGame)
             {
-                sb.AppendLine("CAUSE: Roblox is not in a game right now.");
-                sb.AppendLine("Overlays only draw while a Roblox game window is open and focused. Join a game, then check again.");
+                sb.AppendLine("CAUSE: No Roblox game window was found right now.");
+                sb.AppendLine("Overlays only draw while a Roblox game window is open. Join a game, then check again.");
                 return sb.ToString();
             }
 
-            bool likelyRobloxFullscreen = IsRobloxOwnFullscreen(roblox);
+            bool fillsScreen = IsRobloxOwnFullscreen(roblox);
 
             sb.AppendLine("Most likely cause, in order:");
             sb.AppendLine();
 
             int n = 1;
 
-            if (likelyRobloxFullscreen)
+            if (fillsScreen)
             {
-                sb.AppendLine(n++ + ". Roblox is in its own Fullscreen display mode (exclusive fullscreen).");
-                sb.AppendLine("   Windows gives an exclusive fullscreen game the whole screen and will not draw ANY external overlay on top of it, including PhasmaStrap's. This is the number one reason overlays vanish once you are in first person.");
-                sb.AppendLine("   FIX: In Roblox, press Esc, open Settings, set Display Mode to Windowed.");
+                sb.AppendLine(n++ + ". Roblox fills the whole screen with no border.");
+                sb.AppendLine("   If Roblox is in its own Fullscreen display mode, Windows can stop other windows, PhasmaStrap's overlays included, from drawing on top of it.");
+                sb.AppendLine("   FIX: In Roblox, press Esc, open Settings, set Display Mode to Windowed, then check again.");
                 sb.AppendLine();
             }
 
             if (n == 1)
             {
-                sb.AppendLine("Everything looks correctly set up and the overlay window is open.");
-                sb.AppendLine("If you still cannot see it, Roblox is almost certainly running in its own exclusive Fullscreen display mode. Press Esc in Roblox, open Settings and set Display Mode to Windowed.");
+                sb.AppendLine("No setup problem was found.");
+                sb.AppendLine("If you still cannot see the overlay, leave the game and join again so the overlay restarts. If that does not help, close Roblox and PhasmaStrap, then open them again.");
             }
 
             return sb.ToString();

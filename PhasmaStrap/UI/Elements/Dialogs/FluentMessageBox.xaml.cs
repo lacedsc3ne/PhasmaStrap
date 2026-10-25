@@ -1,6 +1,7 @@
 using System.Media;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 
@@ -84,6 +85,13 @@ namespace PhasmaStrap.UI.Elements.Dialogs
                     break;
             }
 
+            Result = buttons switch
+            {
+                MessageBoxButton.YesNoCancel or MessageBoxButton.OKCancel => MessageBoxResult.Cancel,
+                MessageBoxButton.OK => MessageBoxResult.OK,
+                _ => MessageBoxResult.None
+            };
+
             if (ButtonThree.Visibility == Visibility.Visible)
                 Width = 356;
             else if (ButtonTwo.Visibility == Visibility.Visible)
@@ -107,6 +115,16 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             {
                 var hWnd = new WindowInteropHelper(this).Handle;
                 PInvoke.FlashWindow((HWND)hWnd, true);
+            };
+
+            PreviewKeyDown += (_, e) =>
+            {
+                if (e.Key != Key.Escape)
+                    return;
+
+                App.Logger.WriteLine("FluentMessageBox", $"Closed with Escape, result {Result}");
+                e.Handled = true;
+                Close();
             };
         }
 

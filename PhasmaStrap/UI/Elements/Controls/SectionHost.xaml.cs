@@ -224,7 +224,7 @@ namespace PhasmaStrap.UI.Elements.Controls
             ["Crosshair"] = "A crosshair drawn over the game.",
             ["Stream-safe mode"] = "Hide private details while you stream.",
             ["Overlays"] = "Things drawn on top of the game.",
-            ["Per-game"] = "Give a game its own frame rate, resolution or flag profile.",
+            ["Per game"] = "Give a game its own frame rate, resolution or flag profile.",
             ["Network"] = "See how your connection to Roblox is doing and tune how it behaves.",
             ["NVIDIA"] = "Driver settings for Roblox, applied to its own profile only.",
             ["Settings file"] = "Every key in the game's own settings file.",

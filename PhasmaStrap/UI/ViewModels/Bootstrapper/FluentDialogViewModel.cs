@@ -30,6 +30,10 @@ namespace PhasmaStrap.UI.ViewModels.Bootstrapper
                     new SolidColorBrush(Color.FromArgb(alpha, 225, 225, 225)) :
                     new SolidColorBrush(Color.FromArgb(alpha, 30, 30, 30));
             }
+            else if (App.Settings.Prop.Theme.GetFinal() == Enums.Theme.Light)
+            {
+                BackgroundColourBrush = new SolidColorBrush(Color.FromArgb(230, 0xF3, 0xF3, 0xF5));
+            }
         }
     }
 }

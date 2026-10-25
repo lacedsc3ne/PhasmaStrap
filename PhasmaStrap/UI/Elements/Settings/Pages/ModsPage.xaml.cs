@@ -86,7 +86,7 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
         private void ManagedModCard_DragEnter(object sender, DragEventArgs e)
         {
             if (sender is Border border && e.Data.GetDataPresent(ManagedModDragFormat))
-                border.BorderBrush = Brushes.DodgerBlue;
+                border.BorderBrush = TryFindResource("PhasmaAccentBrush") as Brush ?? Brushes.DodgerBlue;
         }
 
         private void ManagedModCard_DragLeave(object sender, DragEventArgs e)
@@ -139,7 +139,7 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
                 e.Handled = true;
-                CopyDroppedFilesIntoManagedMod(target, (string[])e.Data.GetData(DataFormats.FileDrop));
+                await CopyDroppedFilesIntoManagedModAsync(target, (string[])e.Data.GetData(DataFormats.FileDrop));
                 await ViewModel.LoadManagedModsAsync();
             }
         }
@@ -165,25 +165,29 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
                 var record = ManagedModStore.Create(name);
                 string folder = ManagedModStore.GetFolder(record.Id);
 
-                CopyDroppedPathsInto(folder, paths);
+                App.Logger.WriteLine("ModsPage", $"Adding {paths.Length} dropped item(s) as the new mod {name}");
+                await Task.Run(() => CopyDroppedPathsInto(folder, paths));
 
                 await ViewModel.LoadManagedModsAsync();
             }
             catch (Exception ex)
             {
+                App.Logger.WriteLine("ModsPage", $"Dropped files could not be added as a mod: {ex.Message}");
                 Frontend.ShowMessageBox("The dropped files could not be added as a mod:\n" + ex.Message, MessageBoxImage.Warning);
             }
         }
 
-        private static void CopyDroppedFilesIntoManagedMod(ManagedModItem item, string[] paths)
+        private static async Task CopyDroppedFilesIntoManagedModAsync(ManagedModItem item, string[] paths)
         {
             try
             {
                 string folder = ManagedModStore.GetFolder(item.Id);
-                CopyDroppedPathsInto(folder, paths);
+                App.Logger.WriteLine("ModsPage", $"Adding {paths.Length} dropped item(s) to the mod {item.Id}");
+                await Task.Run(() => CopyDroppedPathsInto(folder, paths));
             }
             catch (Exception ex)
             {
+                App.Logger.WriteLine("ModsPage", $"Dropped files could not be added to the mod {item.Id}: {ex.Message}");
                 Frontend.ShowMessageBox("Those files could not be added to the mod:\n" + ex.Message, MessageBoxImage.Warning);
             }
         }

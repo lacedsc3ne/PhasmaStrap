@@ -130,6 +130,11 @@ float4 PSStreamSafe(VSOut inp) : SV_Target
                 App.Logger.WriteLine("OverlayCompositor::StreamView", "Stream-safe mode is off, closing the stream view window");
                 DestroyStreamView();
             }
+            else if (!wanted && _streamFailed)
+            {
+                App.Logger.WriteLine("OverlayCompositor::StreamView", "Stream-safe mode is off, the stream view will be tried again next time it is turned on");
+                _streamFailed = false;
+            }
         }
 
         private void SyncStreamView()
@@ -244,7 +249,16 @@ float4 PSStreamSafe(VSOut inp) : SV_Target
                 _streamRtv = null;
                 _streamBackBuffer?.Dispose();
                 _streamBackBuffer = null;
-                _streamSwapChain!.ResizeBuffers(2, _width, _height, Format.B8G8R8A8_UNorm, SwapChainFlags.None);
+                _context!.UnsetRenderTargets();
+                _context.Flush();
+                var result = _streamSwapChain!.ResizeBuffers(2, _width, _height, Format.B8G8R8A8_UNorm, SwapChainFlags.None);
+                if (result.Failure)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Stream view resize to {_width}x{_height} failed with {result.Code:X8}, closing the stream view");
+                    DestroyStreamView();
+                    _streamFailed = true;
+                    return;
+                }
                 _streamWidth = _width;
                 _streamHeight = _height;
                 CreateStreamRtv();

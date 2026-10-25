@@ -42,14 +42,24 @@ namespace PhasmaStrap.Integrations.Nvidia
             string name = string.IsNullOrWhiteSpace(profileName) ? NvidiaProfileInspector.DefaultProfileName : profileName.Trim();
 
             XElement settingsElement = new XElement("Settings");
+            int skipped = 0;
             foreach (NvidiaSetting setting in settings ?? Enumerable.Empty<NvidiaSetting>())
             {
+                if (setting.Type != NvSettingType.Dword)
+                {
+                    skipped++;
+                    continue;
+                }
+
                 settingsElement.Add(new XElement("ProfileSetting",
                     new XElement("SettingNameInfo", string.IsNullOrWhiteSpace(setting.Name) ? "Setting " + setting.Id : setting.Name),
                     new XElement("SettingID", setting.Id.ToString(CultureInfo.InvariantCulture)),
-                    new XElement("ValueType", setting.Type == NvSettingType.Dword ? "Dword" : setting.Type.ToString()),
+                    new XElement("ValueType", "Dword"),
                     new XElement("SettingValue", setting.Value.ToString(CultureInfo.InvariantCulture))));
             }
+
+            if (skipped > 0)
+                App.Logger.WriteLine("NvidiaProfileManager", $"Left {skipped} text or binary setting(s) out of the .nip export because only number settings can be written");
 
             XElement executeables = new XElement("Executeables");
             foreach (string executable in RobloxExecutables)

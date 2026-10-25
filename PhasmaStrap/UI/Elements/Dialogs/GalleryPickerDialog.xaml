@@ -37,7 +37,7 @@
         </StackPanel>
 
         <Grid Grid.Row="2" Margin="16,0,16,0">
-            <ListBox x:Name="ItemsList" MouseDoubleClick="ItemsList_MouseDoubleClick">
+            <ListBox x:Name="ItemsList" MouseDoubleClick="ItemsList_MouseDoubleClick" SelectionChanged="ItemsList_SelectionChanged">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <StackPanel Margin="2,5">
@@ -58,7 +58,7 @@
             Padding="15"
             Background="{ui:ThemeResource SolidBackgroundFillColorSecondaryBrush}">
             <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-                <Button x:Name="AddButton" MinWidth="100" Click="OnAddClicked" Content="Add this one" />
+                <Button x:Name="AddButton" MinWidth="100" IsEnabled="False" Click="OnAddClicked" Content="Add this one" />
                 <Button MinWidth="100" Margin="12,0,0,0" Content="{x:Static resources:Strings.Common_Cancel}" IsCancel="True" />
             </StackPanel>
         </Border>

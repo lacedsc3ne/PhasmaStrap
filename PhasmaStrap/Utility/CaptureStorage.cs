@@ -104,9 +104,48 @@ namespace PhasmaStrap.Utility
             return result;
         }
 
-        private static void Recycle(string path) =>
-            Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(path,
-                Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs,
-                Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+        private static void Recycle(string path)
+        {
+            if (!Environment.Is64BitProcess)
+            {
+                Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(path,
+                    Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs,
+                    Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+                return;
+            }
+
+            var operation = new SHFILEOPSTRUCT
+            {
+                wFunc = FO_DELETE,
+                pFrom = path + "\0",
+                fFlags = FOF_SILENT | FOF_NOCONFIRMATION | FOF_ALLOWUNDO | FOF_NOERRORUI
+            };
+
+            int code = SHFileOperation(ref operation);
+            if (code != 0 || operation.fAnyOperationsAborted)
+                throw new IOException($"Windows could not move it to the Recycle Bin (code {code})");
+        }
+
+        private const uint FO_DELETE = 0x3;
+        private const ushort FOF_SILENT = 0x4;
+        private const ushort FOF_NOCONFIRMATION = 0x10;
+        private const ushort FOF_ALLOWUNDO = 0x40;
+        private const ushort FOF_NOERRORUI = 0x400;
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+        private struct SHFILEOPSTRUCT
+        {
+            public IntPtr hwnd;
+            public uint wFunc;
+            public string pFrom;
+            public string? pTo;
+            public ushort fFlags;
+            public bool fAnyOperationsAborted;
+            public IntPtr hNameMappings;
+            public string? lpszProgressTitle;
+        }
+
+        [System.Runtime.InteropServices.DllImport("shell32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+        private static extern int SHFileOperation(ref SHFILEOPSTRUCT operation);
     }
 }

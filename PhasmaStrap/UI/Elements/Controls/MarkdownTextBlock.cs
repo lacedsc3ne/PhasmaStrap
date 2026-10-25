@@ -46,6 +46,15 @@ namespace PhasmaStrap.UI.Elements.Controls
             return span;
         }
 
+        private static bool IsWebLink(string url)
+        {
+            if (Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+                return true;
+
+            App.Logger.WriteLine("MarkdownTextBlock", $"Showing link '{url}' as plain text, only http and https links can be opened");
+            return false;
+        }
+
         private static System.Windows.Documents.Inline? GetWpfInlineFromMarkdownInline(Markdig.Syntax.Inlines.Inline? inline)
         {
             switch (inline)
@@ -76,7 +85,7 @@ namespace PhasmaStrap.UI.Elements.Controls
                         string? url = linkInline.Url;
                         if (linkInline.IsImage)
                             return null;
-                        if (string.IsNullOrEmpty(url))
+                        if (string.IsNullOrEmpty(url) || !IsWebLink(url))
                             return Children(linkInline);
 
                         return new Hyperlink(Children(linkInline))
@@ -87,10 +96,13 @@ namespace PhasmaStrap.UI.Elements.Controls
                     }
 
                 case AutolinkInline autolink:
+                    if (autolink.IsEmail || !IsWebLink(autolink.Url))
+                        return new Run(autolink.Url);
+
                     return new Hyperlink(new Run(autolink.Url))
                     {
                         Command = GlobalViewModel.OpenWebpageCommand,
-                        CommandParameter = autolink.IsEmail ? "mailto:" + autolink.Url : autolink.Url
+                        CommandParameter = autolink.Url
                     };
 
                 case CodeInline code:

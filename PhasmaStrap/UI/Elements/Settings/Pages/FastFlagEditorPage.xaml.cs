@@ -888,7 +888,7 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
 
             if (!PhasmaStrap.Utility.PhasmaAccount.SignedIn)
             {
-                Frontend.ShowMessageBox("Sign in on the Accounts page first, so the gallery can show who made it.", MessageBoxImage.Information);
+                Frontend.ShowMessageBox("Sign in under Settings > Account and backup first, so the gallery can show who made it.", MessageBoxImage.Information);
                 return;
             }
 
@@ -982,7 +982,7 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             MarkProfilesEdited();
             SwitchTo(profile.Id);
 
-            string message = $"Added \"{profile.Name}\" with {profile.Flags.Count} flag(s)" + (profile.Remove.Count > 0 ? $" and {profile.Remove.Count} turned off" : "") + ". Give it to a game on the Per-game flags tab, then press Save.";
+            string message = $"Added \"{profile.Name}\" with {profile.Flags.Count} flag(s)" + (profile.Remove.Count > 0 ? $" and {profile.Remove.Count} turned off" : "") + ". Give it to a game on the Per game flags tab, then press Save.";
             if (bad.Count > 0)
                 message += $"\n\n{bad.Count} flag(s) in the code were not valid and were left out: {string.Join(", ", bad.Take(10))}";
 
@@ -1256,11 +1256,13 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
 
         private void ShowAddDialog() => ShowAddDialog(jsonTab: false);
 
-        private void ShowAddDialog(bool jsonTab)
+        private void ShowAddDialog(bool jsonTab, string json = "")
         {
             var dialog = new AddFastFlagDialog { Owner = Owner };
             if (jsonTab)
                 dialog.Tabs.SelectedIndex = 1;
+            if (json.Length > 0)
+                dialog.JsonTextBox.Text = json;
             dialog.ShowDialog();
 
             if (dialog.Result != MessageBoxResult.OK)
@@ -1328,6 +1330,7 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
         {
             Dictionary<string, object>? list;
 
+            string pasted = json;
             json = json.Trim();
 
             if (!json.StartsWith('{'))
@@ -1346,8 +1349,9 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             }
             catch (Exception ex)
             {
+                App.Logger.WriteLine("FastFlagEditorPage", $"Pasted JSON ({pasted.Length} characters) could not be read: {ex.Message}");
                 Frontend.ShowMessageBox(string.Format(Strings.Menu_FastFlagEditor_InvalidJSON, ex.Message), MessageBoxImage.Error);
-                ShowAddDialog();
+                ShowAddDialog(jsonTab: true, json: pasted);
                 return;
             }
 
@@ -1976,7 +1980,7 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
 
             string where = target is null ? "your flags" : $"\"{target.Name}\"";
             string verb = move ? "Moved" : "Copied";
-            string hint = target is not null && !App.FlagProfiles.RulesUsing(target.Id).Any() ? " No game uses that profile yet - give it one on the Per-game flags tab." : "";
+            string hint = target is not null && !App.FlagProfiles.RulesUsing(target.Id).Any() ? " No game uses that profile yet. Give it one on the Per game flags tab." : "";
             ShowStatus($"{verb} {rows.Count} flag(s) to {where}.{hint}");
         }
 
@@ -2025,7 +2029,18 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
                 _ => JsonSerializer.Serialize(flags, options)
             };
 
-            System.Windows.Clipboard.SetDataObject(payload);
+            try
+            {
+                System.Windows.Clipboard.SetDataObject(payload);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("FastFlagEditorPage", $"Could not copy {flags.Count} flag(s) to the clipboard: {ex.Message}");
+                Frontend.ShowMessageBox("Could not copy to the clipboard. Another program may be using it, so try again in a moment.", MessageBoxImage.Warning);
+                return;
+            }
+
+            App.Logger.WriteLine("FastFlagEditorPage", $"Copied {flags.Count} flag(s) to the clipboard as {dialog.SelectedFormat}");
 
             string message = Strings.Menu_FastFlagEditor_JsonCopiedToClipboard;
             if (profile is not null && profile.Remove.Count > 0)

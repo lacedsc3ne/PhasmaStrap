@@ -165,12 +165,13 @@ namespace PhasmaStrap.Integrations.GameChat
                         continue;
                     IntPtr handle = overlay.WindowHandle;
                     long heartbeat = overlay.LastHeartbeatMs;
-                    if (handle == IntPtr.Zero || !IsWindowVisible(handle) || heartbeat == 0 || Environment.TickCount64 - heartbeat < 6000)
+                    if (handle == IntPtr.Zero || !IsWindowVisible(handle) || heartbeat == 0 || Environment.TickCount64 - heartbeat < 15000)
                         continue;
                     if (Interlocked.Exchange(ref _hangHandled, 1) != 0)
                         continue;
                     HideOverlayWindows(handle);
-                    App.Logger.WriteLine(Tag, "Game chat was hidden because the overlay stopped responding");
+                    SetHookEnabled(false);
+                    App.Logger.WriteLine(Tag, $"Game chat was hidden because the overlay stopped responding for {Environment.TickCount64 - heartbeat} ms");
                     if (App.Settings.Prop.GameChatEnabled)
                     {
                         App.Settings.Prop.GameChatEnabled = false;

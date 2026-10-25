@@ -48,12 +48,12 @@ namespace PhasmaStrap.UI.Elements.Dialogs
         {
             var border = new Border
             {
-                BorderBrush = new SolidColorBrush(Colors.Gray),
                 BorderThickness = new Thickness(1.0),
                 Margin = new Thickness(0, 0, 0, 8),
                 Padding = new Thickness(10.0),
                 Background = new SolidColorBrush(Colors.Transparent)
             };
+            border.SetResourceReference(Border.BorderBrushProperty, "ControlStrokeColorDefaultBrush");
 
             var stackPanel = new StackPanel { Orientation = Orientation.Horizontal };
 

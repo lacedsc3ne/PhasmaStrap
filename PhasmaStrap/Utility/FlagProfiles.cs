@@ -322,7 +322,19 @@ namespace PhasmaStrap.Utility
         {
             profile.Id = FlagProfile.NewId();
             profile.Name = (profile.Name ?? "").Trim();
-            profile.Flags = (profile.Flags ?? new()).Where(f => !string.IsNullOrWhiteSpace(f.Key)).ToDictionary(f => f.Key.Trim(), f => f.Value ?? "");
+            var flags = new Dictionary<string, string>();
+            foreach (var (key, value) in profile.Flags ?? new())
+            {
+                if (string.IsNullOrWhiteSpace(key))
+                    continue;
+
+                string name = key.Trim();
+                if (flags.ContainsKey(name))
+                    App.Logger.WriteLine("FlagLayers::Tidy", $"Share code has {name} more than once, keeping the last value");
+
+                flags[name] = value ?? "";
+            }
+            profile.Flags = flags;
             profile.Remove = (profile.Remove ?? new()).Where(k => !string.IsNullOrWhiteSpace(k)).Select(k => k.Trim()).Distinct().ToList();
             return profile;
         }
@@ -485,7 +497,10 @@ namespace PhasmaStrap.Utility
                     {
                         FastFlagSnapshot? snapshot = snapshots.FirstOrDefault(s => s.Name == presetName);
                         if (snapshot is null)
+                        {
+                            App.Logger.WriteLine(LOG_IDENT, $"Preset '{presetName}' for place {placeId} no longer exists, dropping that assignment");
                             continue;
+                        }
 
                         profile = new FlagProfile
                         {

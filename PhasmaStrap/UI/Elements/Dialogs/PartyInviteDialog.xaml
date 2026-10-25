@@ -7,8 +7,8 @@
         Width="460" Height="560"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
-        ExtendsContentIntoTitleBar="True"
-        WindowBackdropType="Mica">
+        Background="{ui:ThemeResource ApplicationBackgroundBrush}"
+        ExtendsContentIntoTitleBar="True">
 
     <Grid>
         <Grid.RowDefinitions>

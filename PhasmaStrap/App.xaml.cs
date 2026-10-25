@@ -298,7 +298,7 @@ namespace PhasmaStrap
 
             try
             {
-                using var request = new HttpRequestMessage(HttpMethod.Post, $"https://{WebUrl}/metrics/post?key={key}&value={value}");
+                using var request = new HttpRequestMessage(HttpMethod.Post, $"https://{WebUrl}/metrics/post?key={Uri.EscapeDataString(key)}&value={Uri.EscapeDataString(value)}");
                 Utility.PhasmaAccount.Authorize(request);
                 using var response = await HttpClient.SendAsync(request);
             }
@@ -341,6 +341,164 @@ namespace PhasmaStrap
                     Frontend.ShowMessageBox(Strings.App_OSDeprecation_Win7_81, MessageBoxImage.Error);
 
                 Terminate(ErrorCode.ERROR_INVALID_FUNCTION);
+            }
+        }
+
+        private const string BackgroundServicesMutexName = @"Local\PhasmaStrapBackgroundServices";
+
+        public static bool OwnsBackgroundServices { get; private set; }
+
+        private static Mutex? _backgroundServicesMutex;
+
+        private static bool ProcessKeepsRunning()
+        {
+            if (LaunchSettings.UninstallFlag.Active || LaunchSettings.SwitchAccountFlag.Active)
+                return false;
+
+            if (LaunchSettings.GuardFlag.Active || LaunchSettings.PartyFlag.Active)
+                return true;
+
+            if (LaunchSettings.DiscordJoinFlag.Active || LaunchSettings.EditClipFlag.Active)
+                return false;
+
+            if (LaunchSettings.LinkFlag.Active || LaunchSettings.MenuFlag.Active || LaunchSettings.WatcherFlag.Active)
+                return true;
+
+            if (LaunchSettings.BackgroundUpdaterFlag.Active || LaunchSettings.RobloxLaunchMode != LaunchMode.None)
+                return false;
+
+            return !LaunchSettings.QuietFlag.Active;
+        }
+
+        private static void StartBackgroundServicesWhenFree()
+        {
+            const string LOG_IDENT = "App::BackgroundServices";
+
+            var thread = new Thread(() =>
+            {
+                try
+                {
+                    _backgroundServicesMutex = new Mutex(false, BackgroundServicesMutexName);
+                    Mutex mutex = _backgroundServicesMutex;
+
+                    try
+                    {
+                        if (!mutex.WaitOne(0))
+                        {
+                            Logger.WriteLine(LOG_IDENT, "Another PhasmaStrap window is running the background services, waiting for it to close");
+                            mutex.WaitOne();
+                        }
+                    }
+                    catch (AbandonedMutexException)
+                    {
+                        Logger.WriteLine(LOG_IDENT, "The previous owner of the background services closed without handing over");
+                    }
+
+                    OwnsBackgroundServices = true;
+                    Logger.WriteLine(LOG_IDENT, $"This process (PID {Environment.ProcessId}) now runs the background services");
+
+                    Current.Dispatcher.Invoke(StartBackgroundServices);
+                    Utility.SettingsHotReload.Reloaded += (_, _) => Current.Dispatcher.BeginInvoke(ApplyBackgroundServices);
+
+                    Thread.Sleep(Timeout.Infinite);
+                }
+                catch (Exception ex)
+                {
+                    Logger.WriteLine(LOG_IDENT, $"Background services could not be started: {ex.Message}");
+                }
+            })
+            {
+                IsBackground = true,
+                Name = "Background services owner"
+            };
+
+            thread.Start();
+        }
+
+        private static void StartBackgroundServices()
+        {
+            const string LOG_IDENT = "App::StartBackgroundServices";
+
+            try
+            {
+                if (Settings.Prop.StudioPluginEnabled)
+                {
+                    StudioBridge.Start();
+                    StudioPluginInstaller.EnsureInstalled();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine(LOG_IDENT, $"Studio companion startup failed: {ex.Message}");
+            }
+
+            try
+            {
+                if (Settings.Prop.StudioRichPresenceEnabled)
+                    StudioRichPresence ??= new StudioRichPresence();
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine(LOG_IDENT, $"Studio Rich Presence startup failed: {ex.Message}");
+            }
+
+            try
+            {
+                if (Settings.Prop.AutoCleanRam)
+                    Utility.AutoRamCleaner.Start();
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine(LOG_IDENT, $"Auto RAM cleaner startup failed: {ex.Message}");
+            }
+
+            try
+            {
+                if (Settings.Prop.FriendActivityAlertsEnabled)
+                    Utility.FriendActivityMonitor.Start();
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine(LOG_IDENT, $"Friend activity monitor startup failed: {ex.Message}");
+            }
+        }
+
+        private static void ApplyBackgroundServices()
+        {
+            const string LOG_IDENT = "App::ApplyBackgroundServices";
+
+            try
+            {
+                if (Settings.Prop.StudioPluginEnabled)
+                    StudioBridge.Start();
+                else
+                    StudioBridge.Stop();
+
+                if (Settings.Prop.StudioRichPresenceEnabled)
+                {
+                    StudioRichPresence ??= new StudioRichPresence();
+                }
+                else if (StudioRichPresence is not null)
+                {
+                    StudioRichPresence.Dispose();
+                    StudioRichPresence = null;
+                }
+
+                if (Settings.Prop.AutoCleanRam)
+                    Utility.AutoRamCleaner.Start();
+                else
+                    Utility.AutoRamCleaner.Stop();
+
+                if (Settings.Prop.FriendActivityAlertsEnabled)
+                    Utility.FriendActivityMonitor.Start();
+                else
+                    Utility.FriendActivityMonitor.Stop();
+
+                Logger.WriteLine(LOG_IDENT, $"Studio companion {Settings.Prop.StudioPluginEnabled}, Studio presence {Settings.Prop.StudioRichPresenceEnabled}, auto RAM cleaner {Settings.Prop.AutoCleanRam}, friend alerts {Settings.Prop.FriendActivityAlertsEnabled}");
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine(LOG_IDENT, $"Could not apply the background services: {ex.Message}");
             }
         }
 
@@ -398,6 +556,7 @@ namespace PhasmaStrap
             }
 
             AppDomain.CurrentDomain.ProcessExit += (_, _) => Integrations.ClassicServerManager.Stop();
+            AppDomain.CurrentDomain.ProcessExit += (_, _) => Utility.TranslationService.Shutdown();
 
             _ = Task.Run(() =>
             {
@@ -612,48 +771,10 @@ namespace PhasmaStrap
                     Logger.WriteLine(LOG_IDENT, $"CPU core limiter startup failed: {ex.Message}");
                 }
 
-                try
-                {
-                    if (Settings.Prop.StudioPluginEnabled)
-                    {
-                        StudioBridge.Start();
-                        StudioPluginInstaller.EnsureInstalled();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Logger.WriteLine(LOG_IDENT, $"Studio companion startup failed: {ex.Message}");
-                }
-
-                try
-                {
-                    if (Settings.Prop.StudioRichPresenceEnabled)
-                        StudioRichPresence = new StudioRichPresence();
-                }
-                catch (Exception ex)
-                {
-                    Logger.WriteLine(LOG_IDENT, $"Studio Rich Presence startup failed: {ex.Message}");
-                }
-
-                try
-                {
-                    if (Settings.Prop.AutoCleanRam)
-                        Utility.AutoRamCleaner.Start();
-                }
-                catch (Exception ex)
-                {
-                    Logger.WriteLine(LOG_IDENT, $"Auto RAM cleaner startup failed: {ex.Message}");
-                }
-
-                try
-                {
-                    if (Settings.Prop.FriendActivityAlertsEnabled)
-                        Utility.FriendActivityMonitor.Start();
-                }
-                catch (Exception ex)
-                {
-                    Logger.WriteLine(LOG_IDENT, $"Friend activity monitor startup failed: {ex.Message}");
-                }
+                if (ProcessKeepsRunning())
+                    StartBackgroundServicesWhenFree();
+                else
+                    Logger.WriteLine(LOG_IDENT, "Short-lived launch, not starting Studio, RAM cleaner or friend alert services here");
 
                 try
                 {
@@ -688,7 +809,7 @@ namespace PhasmaStrap
                 {
                     try
                     {
-                        Networking.NetworkingController.ReconcileOnStartup();
+                        Networking.NetworkingController.ReconcileOnStartup(allowPrompts: LaunchSettings.MenuFlag.Active);
                     }
                     catch (Exception ex)
                     {

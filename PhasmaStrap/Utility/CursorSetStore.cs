@@ -27,6 +27,7 @@
         };
 
         private const long MaxIndexBytes = 2 * 1024 * 1024;
+        private const long MaxImportBytes = 64 * 1024 * 1024;
         private static readonly object Sync = new();
         private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true, PropertyNameCaseInsensitive = true };
 
@@ -130,20 +131,43 @@
                     CreatedUtc = DateTime.UtcNow
                 };
                 string folder = GetFolderCore(record.Id);
+
+                long unpackedBytes = 0;
+                using (var zip = new ICSharpCode.SharpZipLib.Zip.ZipFile(zipPath))
+                {
+                    foreach (ICSharpCode.SharpZipLib.Zip.ZipEntry entry in zip)
+                        unpackedBytes += Math.Max(0, entry.Size);
+                }
+
+                if (unpackedBytes > MaxImportBytes)
+                {
+                    App.Logger.WriteLine("CursorSetStore::Import", $"Refused {zipPath}: it unpacks to {unpackedBytes} bytes");
+                    throw new InvalidDataException("That archive is too big to be a cursor set.");
+                }
+
                 Directory.CreateDirectory(folder);
 
-                var fastZip = new ICSharpCode.SharpZipLib.Zip.FastZip();
-                fastZip.ExtractZip(zipPath, folder, null);
-
-                if (!CursorImages.AnyIn(folder, FileMap.Keys))
+                try
                 {
-                    string[] subdirectories = Directory.GetDirectories(folder);
-                    if (subdirectories.Length == 1)
+                    var fastZip = new ICSharpCode.SharpZipLib.Zip.FastZip();
+                    fastZip.ExtractZip(zipPath, folder, null);
+
+                    if (!CursorImages.AnyIn(folder, FileMap.Keys))
                     {
-                        foreach (string file in Directory.GetFiles(subdirectories[0]))
-                            File.Move(file, Path.Combine(folder, Path.GetFileName(file)), true);
-                        Directory.Delete(subdirectories[0], true);
+                        string[] subdirectories = Directory.GetDirectories(folder);
+                        if (subdirectories.Length == 1)
+                        {
+                            foreach (string file in Directory.GetFiles(subdirectories[0]))
+                                File.Move(file, Path.Combine(folder, Path.GetFileName(file)), true);
+                            Directory.Delete(subdirectories[0], true);
+                        }
                     }
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine("CursorSetStore::Import", $"Could not unpack {zipPath}: {ex.Message}");
+                    try { Directory.Delete(folder, true); } catch { }
+                    throw;
                 }
 
                 if (!CursorImages.AnyIn(folder, FileMap.Keys))

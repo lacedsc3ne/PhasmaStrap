@@ -120,6 +120,12 @@ namespace PhasmaStrap.UI
             if (_activityWatcher is null)
                 return;
 
+            if (!_activityWatcher.Data.MachineAddressValid)
+            {
+                App.Logger.WriteLine("NotifyIconWrapper::OnGameJoin", "The server address is not a public one, skipping the location lookup");
+                return;
+            }
+
             string? serverLocation = await _activityWatcher.Data.QueryServerLocation();
 
             if (string.IsNullOrEmpty(serverLocation))

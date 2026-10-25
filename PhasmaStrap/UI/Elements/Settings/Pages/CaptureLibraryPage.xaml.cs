@@ -56,7 +56,7 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
 
         private void Page_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (_viewModel.Selected is null || e.OriginalSource is System.Windows.Controls.TextBox or System.Windows.Controls.ComboBox)
+            if (_viewModel.Selected is null || !LibraryRoot.IsKeyboardFocused)
                 return;
 
             switch (e.Key)

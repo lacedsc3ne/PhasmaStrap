@@ -56,7 +56,10 @@ namespace PhasmaStrap.Utility
                 Flags = flags.ToDictionary(kv => kv.Key, kv => kv.Value),
             };
 
-            File.WriteAllText(SnapshotPath(name), JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true }));
+            string path = SnapshotPath(name);
+            string temp = path + ".tmp";
+            File.WriteAllText(temp, JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true }));
+            File.Move(temp, path, true);
         }
 
         public static void Delete(string name)

@@ -62,9 +62,12 @@ namespace PhasmaStrap.Utility
 
         public readonly record struct TrimResult(int ProcessesTrimmed, long BytesFreed);
 
-        public static TrimResult TrimAllProcessWorkingSets()
+        public static TrimResult TrimAllProcessWorkingSets() => TrimAllProcessWorkingSets(false);
+
+        public static TrimResult TrimAllProcessWorkingSets(bool skipRoblox)
         {
             int trimmed = 0;
+            int skipped = 0;
             long freed = 0;
 
             foreach (Process process in Process.GetProcesses())
@@ -75,6 +78,12 @@ namespace PhasmaStrap.Utility
 
                     try
                     {
+                        if (skipRoblox && string.Equals(process.ProcessName, App.RobloxPlayerAppName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            skipped++;
+                            continue;
+                        }
+
                         long before = process.WorkingSet64;
 
                         handle = OpenProcess(PROCESS_SET_QUOTA | PROCESS_QUERY_INFORMATION, false, process.Id);
@@ -101,6 +110,9 @@ namespace PhasmaStrap.Utility
                     }
                 }
             }
+
+            if (skipped > 0)
+                App.Logger.WriteLine(LOG_IDENT, $"Left {skipped} Roblox process(es) alone while trimming");
 
             return new TrimResult(trimmed, freed);
         }

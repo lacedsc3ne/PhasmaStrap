@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Input;
 
 using PhasmaStrap.Resources;
 
@@ -27,6 +28,15 @@ namespace PhasmaStrap.UI.Elements.Dialogs
         public FFlagPresetsDialog()
         {
             InitializeComponent();
+            KeyDown += (_, e) =>
+            {
+                if (e.Key != Key.Escape)
+                    return;
+
+                App.Logger.WriteLine("FFlagPresetsDialog", "Escape pressed, closing");
+                e.Handled = true;
+                Close();
+            };
             LoadPresetCategories();
         }
 

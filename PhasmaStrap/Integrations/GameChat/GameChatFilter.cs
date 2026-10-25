@@ -89,10 +89,10 @@ namespace PhasmaStrap.Integrations.GameChat
         {
             string current = App.Settings.Prop.GameChatFilterPreference;
             if (string.IsNullOrWhiteSpace(current))
-                return SetPreference(DefaultFilterPreference);
+                return DefaultFilterPreference;
             string normalized = current.Trim().ToLowerInvariant();
             if (!ValidFilterPreferences.Contains(normalized))
-                return SetPreference(DefaultFilterPreference);
+                return DefaultFilterPreference;
             return normalized;
         }
 

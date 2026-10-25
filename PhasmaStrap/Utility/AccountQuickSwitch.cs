@@ -13,6 +13,7 @@ namespace PhasmaStrap.Utility
             public string DatFile { get; set; } = "";
             public DateTime AddedUtc { get; set; }
             public DateTime LastUsedUtc { get; set; }
+            public bool NeedsReAdd { get; set; }
 
             [System.Text.Json.Serialization.JsonIgnore]
             public string Title => string.IsNullOrWhiteSpace(DisplayName) || DisplayName == Username ? Username : $"{DisplayName} (@{Username})";
@@ -51,6 +52,12 @@ namespace PhasmaStrap.Utility
             Account account = all.FirstOrDefault(a => a.UserId == userId)
                 ?? throw new InvalidOperationException("That account is no longer in the library.");
 
+            if (account.NeedsReAdd)
+            {
+                Log?.Invoke($"Refused to switch to {account.UserId}, its saved login may belong to another account");
+                throw new InvalidOperationException("The saved login for this account may belong to another account. Add it again under Social, Accounts.");
+            }
+
             string saved = Path.Combine(folder, account.DatFile);
             if (string.IsNullOrEmpty(account.DatFile) || !File.Exists(saved))
                 throw new InvalidOperationException("The saved login for this account is missing. Remove it on the Accounts page and add it again.");
@@ -79,7 +86,18 @@ namespace PhasmaStrap.Utility
             }
 
             account.LastUsedUtc = DateTime.UtcNow;
-            File.WriteAllText(MetaPath(folder), System.Text.Json.JsonSerializer.Serialize(all, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+            try
+            {
+                string metaPath = MetaPath(folder);
+                string metaTemp = metaPath + ".tmp";
+                File.WriteAllText(metaTemp, System.Text.Json.JsonSerializer.Serialize(all, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+                File.Move(metaTemp, metaPath, true);
+            }
+            catch (Exception ex)
+            {
+                Log?.Invoke($"Switched the login but could not save the last used time for {account.Username} ({account.UserId}): {ex.Message}");
+            }
+
             Log?.Invoke($"Switched the Roblox login to {account.Username} ({account.UserId})");
         }
 

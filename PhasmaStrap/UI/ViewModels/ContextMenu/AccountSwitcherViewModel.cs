@@ -16,6 +16,7 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
         private DateTime _lastUsedUtc;
         private string? _avatarUrl;
         private bool _isCurrent;
+        private bool _needsReAdd;
 
         public long UserId { get; set; }
         public string Username { get; set; } = "";
@@ -49,6 +50,12 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
             set { if (_isCurrent != value) { _isCurrent = value; Raise(nameof(IsCurrent)); Raise(nameof(CurrentBadgeVisibility)); } }
         }
 
+        public bool NeedsReAdd
+        {
+            get => _needsReAdd;
+            set { if (_needsReAdd != value) { _needsReAdd = value; Raise(nameof(NeedsReAdd)); Raise(nameof(LastUsedDisplay)); } }
+        }
+
         public event Action<SwitcherAccount>? NoteChanged;
 
         [JsonIgnore]
@@ -58,7 +65,8 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
         public string Subtitle => $"@{Username}  ·  ID {UserId}";
 
         [JsonIgnore]
-        public string LastUsedDisplay => LastUsedUtc == default ? "Never switched to" : $"Last used {LastUsedUtc.ToLocalTime():g}";
+        public string LastUsedDisplay => NeedsReAdd ? "Sign in again to use this account"
+            : LastUsedUtc == default ? "Never switched to" : $"Last used {LastUsedUtc.ToLocalTime():g}";
 
         [JsonIgnore]
         public Visibility CurrentBadgeVisibility => _isCurrent ? Visibility.Visible : Visibility.Collapsed;
@@ -78,9 +86,13 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
             public string DatFile { get; set; } = "";
             public DateTime AddedUtc { get; set; }
             public DateTime LastUsedUtc { get; set; }
+            public bool NeedsReAdd { get; set; }
         }
 
         private const string LOG_IDENT = "AccountSwitcher";
+
+        private static bool _sharedLoginWarningShown;
+        private List<string> _sharedLoginNames = new();
 
         private readonly string _folder = Paths.AccountBackups;
         private readonly string _metaPath = Path.Combine(Paths.AccountBackups, "accounts.json");
@@ -185,7 +197,7 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
                     IsLoggedIn = true;
                     CurrentTitle = string.IsNullOrWhiteSpace(current.DisplayName) ? current.Username : current.DisplayName;
                     CurrentSubtitle = $"@{current.Username}  ·  ID {current.UserId}";
-                    _currentInLibrary = Accounts.Any(a => a.UserId == current.UserId);
+                    _currentInLibrary = Accounts.Any(a => a.UserId == current.UserId && !a.NeedsReAdd);
                     OnPropertyChanged(nameof(AddCurrentEnabled));
                 }
                 else
@@ -203,6 +215,17 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
                 await FetchAvatarsSafeAsync().ConfigureAwait(true);
 
                 Status = Accounts.Count == 0 ? "No saved accounts yet." : $"{Accounts.Count} account(s) saved.";
+
+                if (_sharedLoginNames.Count > 0 && !_sharedLoginWarningShown)
+                {
+                    _sharedLoginWarningShown = true;
+                    App.Logger.WriteLine(LOG_IDENT, $"Telling the user to add these accounts again: {string.Join(", ", _sharedLoginNames)}");
+                    Frontend.ShowMessageBox(
+                        "These saved accounts share one login file because of an old bug, so switching to them could sign you into the wrong account:\n\n"
+                        + string.Join("\n", _sharedLoginNames)
+                        + "\n\nAdd each one again: right-click it and choose \"Sign in again\", or sign into it on Roblox and click \"Add this account\".",
+                        MessageBoxImage.Warning);
+                }
             }
             catch (Exception ex)
             {
@@ -310,13 +333,14 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
                 }
 
                 SwitcherAccount? existing = Accounts.FirstOrDefault(a => a.UserId == account.UserId);
-                string datName = existing?.DatFile ?? $"acc_{account.UserId}_{Guid.NewGuid():N}"[..8] + ".dat";
+                string datName = PickDatName(existing, account.UserId);
                 string datPath = Path.Combine(_folder, datName);
 
                 await CopyWithRetryAsync(_liveCookiePath, datPath, overwrite: true).ConfigureAwait(true);
 
                 if (existing != null)
                 {
+                    MoveToDat(existing, datName);
                     existing.Username = account.Username;
                     existing.DisplayName = account.DisplayName;
                     existing.LastUsedUtc = DateTime.UtcNow;
@@ -351,6 +375,62 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
             }
         }
 
+        private static string NewDatName(long userId) => $"acc_{userId}_{Guid.NewGuid().ToString("N")[..8]}.dat";
+
+        private bool SharesDatWithOtherUser(SwitcherAccount account) => Accounts.Any(a =>
+            a.UserId != account.UserId && a.DatFile.Equals(account.DatFile, StringComparison.OrdinalIgnoreCase));
+
+        private string PickDatName(SwitcherAccount? existing, long userId)
+        {
+            if (existing is not null && !existing.NeedsReAdd && !SharesDatWithOtherUser(existing))
+                return existing.DatFile;
+
+            string name = NewDatName(userId);
+
+            if (existing is not null)
+                App.Logger.WriteLine(LOG_IDENT, $"Giving user {userId} its own login file {name} instead of {existing.DatFile}");
+
+            return name;
+        }
+
+        private void MoveToDat(SwitcherAccount account, string datName)
+        {
+            string oldDat = account.DatFile;
+            account.NeedsReAdd = false;
+
+            if (oldDat.Equals(datName, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            account.DatFile = datName;
+            DeleteDatIfUnused(oldDat);
+        }
+
+        private void DeleteDatIfUnused(string datFile)
+        {
+            if (string.IsNullOrEmpty(datFile))
+                return;
+
+            if (Accounts.Any(a => a.DatFile.Equals(datFile, StringComparison.OrdinalIgnoreCase)))
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Keeping login file {datFile}, another saved account still uses it");
+                return;
+            }
+
+            try
+            {
+                string datPath = Path.Combine(_folder, datFile);
+
+                if (File.Exists(datPath))
+                    File.Delete(datPath);
+
+                App.Logger.WriteLine(LOG_IDENT, $"Deleted login file {datFile}");
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Delete dat {datFile} failed: {ex.Message}");
+            }
+        }
+
         private string ResolveTemplate() => File.Exists(_liveCookiePath)
             ? _liveCookiePath
             : Accounts.Select(a => Path.Combine(_folder, a.DatFile)).FirstOrDefault(File.Exists) ?? "";
@@ -368,7 +448,7 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
                 return (false, null, "Invalid or expired cookie");
 
             SwitcherAccount? existing = Accounts.FirstOrDefault(a => a.UserId == account.UserId);
-            string datName = existing?.DatFile ?? $"acc_{account.UserId}_{Guid.NewGuid():N}"[..8] + ".dat";
+            string datName = PickDatName(existing, account.UserId);
             string datPath = Path.Combine(_folder, datName);
 
             if (!RobloxCookie.SynthesizeDatWithCookie(template, cookie, datPath))
@@ -376,6 +456,7 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
 
             if (existing != null)
             {
+                MoveToDat(existing, datName);
                 existing.Username = account.Username;
                 existing.DisplayName = account.DisplayName;
             }
@@ -521,7 +602,10 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
             }
             catch (Exception ex)
             {
-                Status = $"Bulk import failed: {ex.Message}";
+                App.Logger.WriteLine(LOG_IDENT, $"Bulk import stopped after {succeeded} account(s): {ex.Message}");
+                SaveMeta();
+                ApplyFilter();
+                Status = $"Bulk import failed after {succeeded} account(s): {ex.Message}";
             }
             finally
             {
@@ -539,6 +623,13 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
             if (IsRobloxRunning())
             {
                 Frontend.ShowMessageBox("Close all Roblox windows before switching accounts.", MessageBoxImage.Warning);
+                return;
+            }
+
+            if (account.NeedsReAdd)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Blocked switching to {account.UserId}, its login file {account.DatFile} was shared with another account");
+                Frontend.ShowMessageBox($"The saved login for {account.Username} may belong to another account. Right-click it and choose \"Sign in again\", or sign into it on Roblox and click \"Add this account\", then switch.", MessageBoxImage.Warning);
                 return;
             }
 
@@ -622,30 +713,34 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
             if (Frontend.ShowMessageBox($"Remove the saved account {account.Username}?\nThis only deletes PhasmaStrap's saved login, not the Roblox account.", MessageBoxImage.Question, MessageBoxButton.YesNo, MessageBoxResult.No) != MessageBoxResult.Yes)
                 return;
 
+            if (!_opLock.Wait(0))
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Remove of {account.UserId} skipped, another account action is running");
+                Status = "Wait for the current action to finish, then try again.";
+                return;
+            }
+
             try
             {
-                string datPath = Path.Combine(_folder, account.DatFile);
+                account.NoteChanged -= OnNoteChanged;
+                Accounts.Remove(account);
+                DeleteDatIfUnused(account.DatFile);
 
-                if (File.Exists(datPath))
-                    File.Delete(datPath);
+                if (_currentInLibrary && account.UserId == _currentUserId)
+                {
+                    _currentInLibrary = false;
+                    OnPropertyChanged(nameof(AddCurrentEnabled));
+                }
+
+                SaveMeta();
+                ApplyFilter();
+                Status = $"Removed: {account.Username}";
+                App.Logger.WriteLine(LOG_IDENT, $"Removed saved account {account.UserId}");
             }
-            catch (Exception ex)
+            finally
             {
-                App.Logger.WriteLine(LOG_IDENT, $"Delete dat failed: {ex.Message}");
+                _opLock.Release();
             }
-
-            account.NoteChanged -= OnNoteChanged;
-            Accounts.Remove(account);
-
-            if (_currentInLibrary && account.UserId == _currentUserId)
-            {
-                _currentInLibrary = false;
-                OnPropertyChanged(nameof(AddCurrentEnabled));
-            }
-
-            SaveMeta();
-            ApplyFilter();
-            Status = $"Removed: {account.Username}";
         }
 
         private async Task LogoutAsync()
@@ -768,6 +863,7 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
                 a.NoteChanged -= OnNoteChanged;
 
             Accounts.Clear();
+            _sharedLoginNames = new List<string>();
 
             try
             {
@@ -781,8 +877,27 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
                     if (string.IsNullOrEmpty(s.DatFile) || !File.Exists(Path.Combine(_folder, s.DatFile)))
                         continue;
 
-                    Accounts.Add(CreateAccount(s.UserId, s.Username, s.DisplayName, s.Note, s.DatFile, s.AddedUtc, s.LastUsedUtc));
+                    SwitcherAccount item = CreateAccount(s.UserId, s.Username, s.DisplayName, s.Note, s.DatFile, s.AddedUtc, s.LastUsedUtc);
+                    item.NeedsReAdd = s.NeedsReAdd;
+                    Accounts.Add(item);
                 }
+
+                bool newlyFlagged = false;
+
+                foreach (SwitcherAccount a in Accounts.Where(SharesDatWithOtherUser).ToList())
+                {
+                    if (a.NeedsReAdd)
+                        continue;
+
+                    a.NeedsReAdd = true;
+                    newlyFlagged = true;
+                    App.Logger.WriteLine(LOG_IDENT, $"Account {a.UserId} shares login file {a.DatFile} with another account, it must be added again");
+                }
+
+                if (newlyFlagged)
+                    SaveMeta();
+
+                _sharedLoginNames = Accounts.Where(a => a.NeedsReAdd).Select(a => a.Title).ToList();
             }
             catch (Exception ex)
             {
@@ -802,7 +917,8 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
                     Note = a.Note,
                     DatFile = a.DatFile,
                     AddedUtc = a.AddedUtc,
-                    LastUsedUtc = a.LastUsedUtc
+                    LastUsedUtc = a.LastUsedUtc,
+                    NeedsReAdd = a.NeedsReAdd
                 }).ToList();
 
                 Directory.CreateDirectory(_folder);
@@ -997,8 +1113,6 @@ namespace PhasmaStrap.UI.ViewModels.ContextMenu
 
             try
             {
-                _opLock.Dispose();
-
                 foreach (SwitcherAccount a in Accounts)
                     a.NoteChanged -= OnNoteChanged;
             }

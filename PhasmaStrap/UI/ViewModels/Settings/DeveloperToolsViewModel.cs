@@ -356,7 +356,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
                 if (!App.Settings.Prop.NetworkingProxyEnabled)
                 {
-                    ProxyStatus = "The networking proxy is turned off, so no requests are being intercepted. Turn it on under Launching, Networking.";
+                    ProxyStatus = "The networking proxy is turned off, so no requests are being intercepted. Turn it on under Performance, Network.";
                     return;
                 }
 

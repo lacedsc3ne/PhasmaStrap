@@ -369,7 +369,17 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 : "Reset NIP failed: " + result.Message);
 
             if (result.Ok)
-                LoadFromDriver();
+            {
+                try
+                {
+                    List<NvidiaSetting> profile = NvidiaProfileInspector.ReadProfile();
+                    Application.Current.Dispatcher.Invoke(() => ApplyProfile(profile));
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine("NvidiaViewModel", "Reset worked but reloading the profile failed: " + ex.Message);
+                }
+            }
 
             return result;
         }

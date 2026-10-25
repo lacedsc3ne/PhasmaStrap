@@ -79,8 +79,7 @@ namespace PhasmaStrap.Utility
             if (!Uri.TryCreate(text, UriKind.Absolute, out Uri? uri))
                 return false;
 
-            string host = uri.Host.ToLowerInvariant();
-            if (!host.EndsWith("roblox.com", StringComparison.Ordinal) && host != "ro.blox.com")
+            if (!IsRobloxHost(uri))
                 return false;
 
             var query = HttpUtility.ParseQueryString(uri.Query);
@@ -122,6 +121,12 @@ namespace PhasmaStrap.Utility
             if (!Uri.TryCreate(text, UriKind.Absolute, out Uri? uri))
                 return null;
 
+            if (!IsRobloxHost(uri) || (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp))
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Not looking up '{input}', it is not a Roblox web link");
+                return null;
+            }
+
             try
             {
                 using var handler = new HttpClientHandler { AllowAutoRedirect = false };
@@ -143,6 +148,12 @@ namespace PhasmaStrap.Utility
                     if (TryParse(location.ToString(), out RobloxLaunchTarget resolved))
                         return resolved;
 
+                    if (!IsRobloxHost(location))
+                    {
+                        App.Logger.WriteLine(LOG_IDENT, $"'{input}' redirected away from Roblox to {location.Host}, stopping");
+                        break;
+                    }
+
                     current = location;
                 }
             }
@@ -152,6 +163,12 @@ namespace PhasmaStrap.Utility
             }
 
             return null;
+        }
+
+        private static bool IsRobloxHost(Uri uri)
+        {
+            string host = uri.Host.ToLowerInvariant();
+            return host == "roblox.com" || host.EndsWith(".roblox.com", StringComparison.Ordinal) || host == "ro.blox.com";
         }
     }
 }

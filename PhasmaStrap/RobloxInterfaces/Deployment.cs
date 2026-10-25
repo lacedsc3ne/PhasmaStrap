@@ -44,7 +44,7 @@ namespace PhasmaStrap.RobloxInterfaces
 
             try
             {
-                var response = await App.HttpClient.GetAsync($"{url}/versionStudio", token);
+                using var response = await App.HttpClient.GetAsync($"{url}/versionStudio", token);
 
                 response.EnsureSuccessStatusCode();
 

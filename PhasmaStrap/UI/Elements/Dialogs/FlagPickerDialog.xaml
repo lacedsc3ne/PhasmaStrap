@@ -50,7 +50,7 @@
             <DockPanel>
                 <TextBlock x:Name="CountText" DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-                    <Button x:Name="OkButton" MinWidth="100" IsEnabled="False" Click="OkButton_Click" Content="{x:Static resources:Strings.Common_OK}" />
+                    <Button x:Name="OkButton" MinWidth="100" IsEnabled="False" IsDefault="True" Click="OkButton_Click" Content="{x:Static resources:Strings.Common_OK}" />
                     <Button MinWidth="100" Margin="12,0,0,0" Content="{x:Static resources:Strings.Common_Cancel}" IsCancel="True" />
                 </StackPanel>
             </DockPanel>

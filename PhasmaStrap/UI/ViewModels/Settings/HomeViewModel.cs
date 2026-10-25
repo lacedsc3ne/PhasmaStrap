@@ -110,6 +110,8 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             GamesStore.Changed += GamesStore_Changed;
         }
 
+        public void Detach() => GamesStore.Changed -= GamesStore_Changed;
+
         private void GamesStore_Changed(object? sender, EventArgs e)
         {
             void Refresh()

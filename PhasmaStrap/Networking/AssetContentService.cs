@@ -22,7 +22,7 @@ namespace PhasmaStrap.Networking
             UseCookies = false,
             AllowAutoRedirect = true,
         })
-        { Timeout = TimeSpan.FromSeconds(60) };
+        { Timeout = TimeSpan.FromSeconds(60), MaxResponseContentBufferSize = 256 * 1024 * 1024 };
 
         private static readonly ConcurrentDictionary<string, byte> Unshrinkable = new();
 
@@ -55,6 +55,7 @@ namespace PhasmaStrap.Networking
         private static readonly ConcurrentDictionary<long, ConcurrentDictionary<long, ManifestEntry>> Manifests = new();
         private static readonly ConcurrentDictionary<long, byte> DirtyManifests = new();
         private static System.Threading.Timer? _manifestTimer;
+        private static readonly object ManifestSync = new();
 
         private static string ManifestFolder => Path.Combine(Paths.Base, "AssetCache", "manifests");
         private const int MaxManifestEntries = 20000;
@@ -92,10 +93,17 @@ namespace PhasmaStrap.Networking
             manifest[info.AssetId] = new ManifestEntry { AssetId = info.AssetId, TypeId = info.TypeId, Key = info.Key };
             DirtyManifests[info.PlaceId] = 0;
 
-            _manifestTimer ??= new System.Threading.Timer(_ => FlushManifests(), null, 20_000, 20_000);
+            lock (ManifestSync)
+                _manifestTimer ??= new System.Threading.Timer(_ => FlushManifests(), null, 20_000, 20_000);
         }
 
         public static void FlushManifests()
+        {
+            lock (ManifestSync)
+                FlushManifestsLocked();
+        }
+
+        private static void FlushManifestsLocked()
         {
             foreach (long placeId in DirtyManifests.Keys.ToList())
             {
@@ -328,7 +336,8 @@ namespace PhasmaStrap.Networking
                     if (outcome is not null)
                     {
                         var shrunk = new CachedAsset { Body = outcome.Body, ContentType = outcome.Format == "jpeg" ? "image/jpeg" : "image/png", TypeId = asset.TypeId, AssetId = asset.AssetId, OriginalBytes = asset.Body.Length };
-                        Cache.Put(info.Key, variant, shrunk, CacheLimitBytes);
+                        if (App.Settings.Prop.AssetCacheEnabled)
+                            Cache.Put(info.Key, variant, shrunk, CacheLimitBytes);
 
                         happened.Shrunk = true;
                         happened.ShrinkSaved = asset.Body.Length - outcome.Body.Length;

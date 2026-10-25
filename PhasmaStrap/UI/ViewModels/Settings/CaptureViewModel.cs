@@ -818,18 +818,34 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public ICommand RefreshReplaysCommand => new RelayCommand(RefreshReplays);
         public ICommand OpenReplayCommand => new RelayCommand<ReplayClipItem>(item =>
         {
-            if (item is not null && File.Exists(item.Path))
-                Process.Start(new ProcessStartInfo(item.Path) { UseShellExecute = true });
+            if (item is null || !File.Exists(item.Path))
+                return;
+
+            string? error = ShellOpen(item.Path);
+
+            if (error is not null)
+                ReplayStatus = $"Couldn't open {item.FileName}: {error}";
         });
         public ICommand EditReplayCommand => new RelayCommand<ReplayClipItem>(item =>
         {
             if (item is null || item.IsGif || !File.Exists(item.Path))
                 return;
 
-            var editor = new PhasmaStrap.UI.Elements.Dialogs.ClipEditorWindow(item.Path)
+            PhasmaStrap.UI.Elements.Dialogs.ClipEditorWindow editor;
+
+            try
             {
-                Owner = System.Windows.Application.Current.Windows.OfType<PhasmaStrap.UI.Elements.Settings.MainWindow>().FirstOrDefault()
-            };
+                editor = new PhasmaStrap.UI.Elements.Dialogs.ClipEditorWindow(item.Path)
+                {
+                    Owner = System.Windows.Application.Current.Windows.OfType<PhasmaStrap.UI.Elements.Settings.MainWindow>().FirstOrDefault()
+                };
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("CaptureViewModel::EditReplay", $"Could not open {item.Path} in the editor: {ex.Message}");
+                ReplayStatus = $"Couldn't open {item.FileName} in the editor: {ex.Message}";
+                return;
+            }
 
             editor.ShowDialog();
 
@@ -852,9 +868,28 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         });
         public ICommand OpenReplaysFolderCommand => new RelayCommand(() =>
         {
-            Directory.CreateDirectory(InstantReplayRecorder.ClipsDir);
-            Process.Start("explorer.exe", InstantReplayRecorder.ClipsDir);
+            string? error = ShellOpen(InstantReplayRecorder.ClipsDir, createFolder: true);
+
+            if (error is not null)
+                ReplayStatus = $"Couldn't open the clips folder: {error}";
         });
+
+        private static string? ShellOpen(string path, bool createFolder = false)
+        {
+            try
+            {
+                if (createFolder)
+                    Directory.CreateDirectory(path);
+
+                using Process? process = Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+                return null;
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("CaptureViewModel::ShellOpen", $"Could not open {path}: {ex.Message}");
+                return ex.Message;
+            }
+        }
 
         private void RefreshReplays()
         {
@@ -912,19 +947,35 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public ICommand RefreshCommand => new RelayCommand(RefreshGallery);
         public ICommand OpenScreenshotCommand => new RelayCommand<ScreenshotItem>(item =>
         {
-            if (item is not null && File.Exists(item.Path))
-                Process.Start(new ProcessStartInfo(item.Path) { UseShellExecute = true });
+            if (item is null || !File.Exists(item.Path))
+                return;
+
+            string? error = ShellOpen(item.Path);
+
+            if (error is not null)
+                Status = $"Couldn't open {item.FileName}: {error}";
         });
         public ICommand EditScreenshotCommand => new RelayCommand<ScreenshotItem>(item =>
         {
             if (item is null || !File.Exists(item.Path))
                 return;
 
-            var editor = new PhasmaStrap.UI.Elements.Dialogs.ScreenshotEditorWindow(item.Path)
+            PhasmaStrap.UI.Elements.Dialogs.ScreenshotEditorWindow editor;
+
+            try
             {
-                Owner = System.Windows.Application.Current.Windows.OfType<PhasmaStrap.UI.Elements.Settings.MainWindow>().FirstOrDefault(),
-                Modal = true
-            };
+                editor = new PhasmaStrap.UI.Elements.Dialogs.ScreenshotEditorWindow(item.Path)
+                {
+                    Owner = System.Windows.Application.Current.Windows.OfType<PhasmaStrap.UI.Elements.Settings.MainWindow>().FirstOrDefault(),
+                    Modal = true
+                };
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("CaptureViewModel::EditScreenshot", $"Could not open {item.Path} in the editor: {ex.Message}");
+                Status = $"Couldn't open {item.FileName} in the editor: {ex.Message}";
+                return;
+            }
 
             editor.ShowDialog();
 
@@ -944,8 +995,10 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         });
         public ICommand OpenFolderCommand => new RelayCommand(() =>
         {
-            Directory.CreateDirectory(ScreenshotCapture.ScreenshotsDir);
-            Process.Start("explorer.exe", ScreenshotCapture.ScreenshotsDir);
+            string? error = ShellOpen(ScreenshotCapture.ScreenshotsDir, createFolder: true);
+
+            if (error is not null)
+                Status = $"Couldn't open the screenshots folder: {error}";
         });
 
         public CaptureViewModel()

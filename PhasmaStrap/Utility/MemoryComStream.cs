@@ -10,10 +10,11 @@ namespace PhasmaStrap.Utility
 
         private static readonly System.Collections.Concurrent.ConcurrentBag<byte[]> Spare = new();
         private static long _blocksInUse;
+        private static int _spareCount;
 
         public static long BytesInUse => Interlocked.Read(ref _blocksInUse) * BlockSize;
 
-        public static long BytesSpare => (long)Spare.Count * BlockSize;
+        public static long BytesSpare => (long)Volatile.Read(ref _spareCount) * BlockSize;
 
         private readonly object _lock = new();
         private readonly List<byte[]> _blocks = new();
@@ -29,7 +30,12 @@ namespace PhasmaStrap.Utility
         {
             while ((long)_blocks.Count * BlockSize < size)
             {
-                _blocks.Add(Spare.TryTake(out byte[]? block) ? block : new byte[BlockSize]);
+                if (Spare.TryTake(out byte[]? block))
+                    Interlocked.Decrement(ref _spareCount);
+                else
+                    block = new byte[BlockSize];
+
+                _blocks.Add(block);
                 Interlocked.Increment(ref _blocksInUse);
             }
         }
@@ -42,8 +48,11 @@ namespace PhasmaStrap.Utility
                 {
                     Interlocked.Decrement(ref _blocksInUse);
 
-                    if (Spare.Count < MaxSpareBlocks)
+                    if (Volatile.Read(ref _spareCount) < MaxSpareBlocks)
+                    {
+                        Interlocked.Increment(ref _spareCount);
                         Spare.Add(block);
+                    }
                 }
 
                 _blocks.Clear();

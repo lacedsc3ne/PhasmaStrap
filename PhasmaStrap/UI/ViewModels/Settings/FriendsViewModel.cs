@@ -398,7 +398,9 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 App.Settings.Prop.FriendActivityAlertsEnabled = value;
                 OnPropertyChanged(nameof(AlertsEnabled));
 
-                if (value)
+                if (!App.OwnsBackgroundServices)
+                    App.Logger.WriteLine("FriendsViewModel", "Friend alerts changed, the PhasmaStrap process running background services will apply it after Save");
+                else if (value)
                     PhasmaStrap.Utility.FriendActivityMonitor.Start();
                 else
                     PhasmaStrap.Utility.FriendActivityMonitor.Stop();
@@ -408,7 +410,13 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public int PollSeconds
         {
             get => App.Settings.Prop.FriendActivityPollSeconds;
-            set => App.Settings.Prop.FriendActivityPollSeconds = Math.Max(20, value);
+            set
+            {
+                App.Settings.Prop.FriendActivityPollSeconds = Math.Max(20, value);
+
+                if (value < 20)
+                    OnPropertyChanged(nameof(PollSeconds));
+            }
         }
 
         public Visibility PartyInviteVisibility => App.Settings.Prop.PartyEnabled ? Visibility.Visible : Visibility.Collapsed;
@@ -450,6 +458,9 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         private async Task RefreshAsync()
         {
+            if (Loading)
+                return;
+
             Loading = true;
             OnPropertyChanged(nameof(EmptyStateVisibility));
             Status = "Loading...";
@@ -705,6 +716,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             string? icon = null;
             var parts = new List<string>();
             string toolTip = "";
+            bool failed = false;
 
             try
             {
@@ -753,10 +765,13 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             catch (Exception ex)
             {
                 App.Logger.WriteLine(LOG_IDENT, $"Could not look up {row.Name}'s server: {ex.Message}");
+                failed = true;
             }
 
             string text = string.Join(" · ", parts);
-            _serverInfo[key] = (DateTime.UtcNow, text, toolTip, icon);
+
+            if (!failed)
+                _serverInfo[key] = (DateTime.UtcNow, text, toolTip, icon);
 
             row.ServerText = text;
             row.ServerToolTip = toolTip;

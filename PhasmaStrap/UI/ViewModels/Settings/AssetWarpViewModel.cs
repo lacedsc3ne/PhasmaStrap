@@ -124,7 +124,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public int PreloadCacheMb
         {
             get => App.Settings.Prop.AssetWarpPreloadCacheMb;
-            set { App.Settings.Prop.AssetWarpPreloadCacheMb = value; App.Settings.Save(); OnPropertyChanged(nameof(PreloadCacheMb)); OnPropertyChanged(nameof(PreloadCacheSizeDisplay)); }
+            set { App.Settings.Prop.AssetWarpPreloadCacheMb = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(PreloadCacheMb)); OnPropertyChanged(nameof(PreloadCacheSizeDisplay)); }
         }
 
         public string PreloadCacheSizeDisplay => PreloadCacheMb >= 1024 ? $"{PreloadCacheMb / 1024.0:0.#} GB" : $"{PreloadCacheMb} MB";

@@ -125,8 +125,22 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
 
         private void PreviewGrid_SizeChanged(object sender, SizeChangedEventArgs e) => UpdateSplit();
 
+        private void PreviewFrame_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Left)
+                _split = Math.Clamp(_split - 0.05, 0.0, 1.0);
+            else if (e.Key == Key.Right)
+                _split = Math.Clamp(_split + 0.05, 0.0, 1.0);
+            else
+                return;
+
+            UpdateSplit();
+            e.Handled = true;
+        }
+
         private void PreviewFrame_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            PreviewFrame.Focus();
             _dragging = PreviewFrame.CaptureMouse();
             SetSplitFrom(e);
             e.Handled = true;

@@ -94,7 +94,9 @@ namespace PhasmaStrap.Utility
                 var keep = lastSeen.Where(pair => pair.Value >= cutoff).ToDictionary(pair => pair.Key, pair => pair.Value);
 
                 Directory.CreateDirectory(Paths.Base);
-                File.WriteAllText(LastSeenPath, JsonSerializer.Serialize(keep));
+                string temp = LastSeenPath + "." + Guid.NewGuid().ToString("N") + ".tmp";
+                File.WriteAllText(temp, JsonSerializer.Serialize(keep));
+                File.Move(temp, LastSeenPath, true);
             }
             catch (Exception ex)
             {

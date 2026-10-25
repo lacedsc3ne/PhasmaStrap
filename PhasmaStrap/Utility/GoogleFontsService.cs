@@ -269,7 +269,7 @@ namespace PhasmaStrap.Utility
                         if (!Directory.Exists(FontCacheDirectory))
                             return;
 
-                        FileInfo[] files = Directory.EnumerateFiles(FontCacheDirectory, "*", SearchOption.AllDirectories)
+                        FileInfo[] files = Directory.EnumerateFiles(FontCacheDirectory, "*", SearchOption.TopDirectoryOnly)
                             .Where(path => path.EndsWith(".ttf", StringComparison.OrdinalIgnoreCase) || path.EndsWith(".otf", StringComparison.OrdinalIgnoreCase))
                             .Select(path => new FileInfo(path))
                             .Where(file => file.Exists)

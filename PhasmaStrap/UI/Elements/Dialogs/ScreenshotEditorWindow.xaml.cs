@@ -29,6 +29,8 @@ namespace PhasmaStrap.UI.Elements.Dialogs
         private UIElement? _previewShape;
         private readonly List<Point> _penPoints = new();
         private bool _suppressZoomEvent;
+        private bool _unsaved;
+        private bool _discardConfirmed;
 
         public bool Saved { get; private set; }
 
@@ -48,6 +50,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             UpdateUndoButtons();
 
             Loaded += (_, _) => ZoomToFit();
+            Closing += OnClosing;
             App.Logger.WriteLine(LOG_IDENT, $"Opened {path} ({_bitmap.PixelWidth}x{_bitmap.PixelHeight})");
         }
 
@@ -267,6 +270,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             if (_undo.Count > MaxUndo)
                 _undo = TrimStack(_undo);
             _redo.Clear();
+            _unsaved = true;
             UpdateUndoButtons();
         }
 
@@ -570,6 +574,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
             _redo.Push(Snapshot());
             Restore(_undo.Pop());
+            _unsaved = true;
             ClearCrop();
             UpdateUndoButtons();
         }
@@ -582,6 +587,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
             _undo.Push(Snapshot());
             Restore(_redo.Pop());
+            _unsaved = true;
             ClearCrop();
             UpdateUndoButtons();
         }
@@ -703,6 +709,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
                 WritePng(RenderResult(), target);
                 Saved = true;
+                _unsaved = false;
                 UpdateStatus($"saved {System.IO.Path.GetFileName(target)}");
             }
             catch (Exception ex)
@@ -714,19 +721,35 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
+            string temp = _path + ".tmp";
+
             try
             {
                 BitmapSource result = RenderResult();
-                string temp = _path + ".tmp";
                 WritePng(result, temp);
                 File.Move(temp, _path, true);
                 Saved = true;
+                _unsaved = false;
                 Finish(true);
             }
             catch (Exception ex)
             {
                 App.Logger.WriteLine(LOG_IDENT, $"Save failed: {ex.Message}");
                 UpdateStatus($"save failed: {ex.Message}");
+                DeleteTempFile(temp);
+            }
+        }
+
+        private static void DeleteTempFile(string temp)
+        {
+            try
+            {
+                if (File.Exists(temp))
+                    File.Delete(temp);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not delete {temp}: {ex.Message}");
             }
         }
 
@@ -734,10 +757,30 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
         private void Finish(bool result)
         {
+            if (!ConfirmDiscard())
+                return;
+
             if (Modal)
                 DialogResult = result;
 
             Close();
+        }
+
+        private bool ConfirmDiscard()
+        {
+            if (!_unsaved || _discardConfirmed)
+                return true;
+
+            MessageBoxResult answer = Frontend.ShowMessageBox("Close without saving?\n\nYour edits to this screenshot will be lost.",MessageBoxImage.Warning, MessageBoxButton.YesNo);
+            _discardConfirmed = answer == MessageBoxResult.Yes;
+            App.Logger.WriteLine(LOG_IDENT, $"Unsaved edits on close, discard {_discardConfirmed}");
+            return _discardConfirmed;
+        }
+
+        private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (!ConfirmDiscard())
+                e.Cancel = true;
         }
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -753,7 +796,20 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             if (ctrl && e.Key == Key.S) { Save_Click(sender, e); e.Handled = true; return; }
 
             if (e.Key == Key.Enter && _cropRect is not null) { ApplyCrop(); e.Handled = true; return; }
-            if (e.Key == Key.Escape) { ClearCrop(); Preview.Children.Clear(); e.Handled = true; return; }
+            if (e.Key == Key.Escape)
+            {
+                e.Handled = true;
+                if (_cropRect is not null || Preview.Children.Count > 0)
+                {
+                    ClearCrop();
+                    Preview.Children.Clear();
+                    return;
+                }
+
+                App.Logger.WriteLine(LOG_IDENT, "Escape pressed, closing");
+                Finish(Saved);
+                return;
+            }
 
             if (Keyboard.Modifiers != ModifierKeys.None)
                 return;

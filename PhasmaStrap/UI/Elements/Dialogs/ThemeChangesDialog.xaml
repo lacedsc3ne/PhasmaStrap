@@ -75,7 +75,7 @@
                                     Width="20"
                                     Height="20"
                                     Background="{Binding OldSwatch}"
-                                    BorderBrush="#55FFFFFF"
+                                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
                                     BorderThickness="1"
                                     CornerRadius="4"
                                     Visibility="{Binding HasOld, Converter={StaticResource BoolToVisibilityConverter}}" />
@@ -92,7 +92,7 @@
                                     Width="20"
                                     Height="20"
                                     Background="{Binding NewSwatch}"
-                                    BorderBrush="#55FFFFFF"
+                                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
                                     BorderThickness="1"
                                     CornerRadius="4" />
 

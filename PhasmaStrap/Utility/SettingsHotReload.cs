@@ -63,7 +63,12 @@ namespace PhasmaStrap.Utility
                     return;
 
                 App.Logger.WriteLine(LOG_IDENT, "Settings changed on disk, reloading so this session picks them up");
-                App.Settings.Load(alertFailure: false);
+                if (!App.Settings.Load(alertFailure: false))
+                {
+                    App.Logger.WriteLine(LOG_IDENT, "The settings file could not be read, keeping the current settings");
+                    _lastWriteUtc = default;
+                    return;
+                }
 
                 Reloaded?.Invoke(null, EventArgs.Empty);
             }

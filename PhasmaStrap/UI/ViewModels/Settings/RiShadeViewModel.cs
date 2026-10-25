@@ -32,7 +32,16 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             string contents = JsonSerializer.Serialize(Prop, new JsonSerializerOptions { WriteIndented = true });
 
-            File.WriteAllText(dialog.FileName, contents);
+            try
+            {
+                File.WriteAllText(dialog.FileName, contents);
+                App.Logger.WriteLine("RiShadeViewModel::ExportPreset", $"Exported preset to '{dialog.FileName}'");
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("RiShadeViewModel::ExportPreset", $"Could not save '{dialog.FileName}': {ex.Message}");
+                Frontend.ShowMessageBox($"Could not save the preset:\n{ex.Message}", System.Windows.MessageBoxImage.Error);
+            }
         }
 
         private void ImportPreset()

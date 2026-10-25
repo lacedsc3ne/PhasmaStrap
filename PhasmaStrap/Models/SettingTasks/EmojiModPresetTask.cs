@@ -37,20 +37,39 @@ namespace PhasmaStrap.Models.SettingTasks
             {
                 try
                 {
-                    var response = await App.HttpClient.GetAsync(NewState.GetUrl());
+                    using var response = await App.HttpClient.GetAsync(NewState.GetUrl());
 
                     response.EnsureSuccessStatusCode();
 
+                    byte[] font = await response.Content.ReadAsByteArrayAsync();
+
                     Directory.CreateDirectory(Path.GetDirectoryName(_filePath)!);
 
-                    await using var fileStream = new FileStream(_filePath, FileMode.Create);
-                    await response.Content.CopyToAsync(fileStream);
+                    string tempPath = _filePath + ".download";
+                    await File.WriteAllBytesAsync(tempPath, font);
+
+                    if (File.Exists(_filePath))
+                        Filesystem.AssertReadOnly(_filePath);
+
+                    File.Move(tempPath, _filePath, true);
+
+                    App.Logger.WriteLine(LOG_IDENT, $"Installed the {NewState} emoji font ({font.Length} bytes)");
 
                     OriginalState = NewState;
                 }
                 catch (Exception ex)
                 {
                     App.Logger.WriteException(LOG_IDENT, ex);
+
+                    try
+                    {
+                        if (File.Exists(_filePath + ".download"))
+                            File.Delete(_filePath + ".download");
+                    }
+                    catch (Exception deleteEx)
+                    {
+                        App.Logger.WriteLine(LOG_IDENT, $"Could not remove the partial download: {deleteEx.Message}");
+                    }
 
                     Frontend.ShowConnectivityDialog(
                         String.Format(Strings.Dialog_Connectivity_UnableToConnect, "GitHub"),
@@ -62,10 +81,18 @@ namespace PhasmaStrap.Models.SettingTasks
             }
             else if (query is not null && query.Any())
             {
-                Filesystem.AssertReadOnly(_filePath);
-                File.Delete(_filePath);
+                try
+                {
+                    Filesystem.AssertReadOnly(_filePath);
+                    File.Delete(_filePath);
 
-                OriginalState = NewState;
+                    OriginalState = NewState;
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Could not remove the emoji font at {_filePath}");
+                    App.Logger.WriteException(LOG_IDENT, ex);
+                }
             }
         }
     }

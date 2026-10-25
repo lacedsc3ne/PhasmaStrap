@@ -65,6 +65,7 @@ namespace PhasmaStrap.Integrations.GameChat
         private int _pendingUiCount;
         private int _flushScheduled;
         private const int MaxPendingUiActions = 64;
+        private const int MaxChatBlocks = 300;
         private const int MaxUiActionsPerFlush = 8;
         private volatile bool _closed;
         private bool _wasForeground;
@@ -318,7 +319,7 @@ namespace PhasmaStrap.Integrations.GameChat
 
         public void EnterGame(string jobId)
         {
-            if (!Dispatcher.CheckAccess()) { DispatchUi(() => EnterGame(jobId)); return; }
+            if (!Dispatcher.CheckAccess()) { DispatchUiNow(() => EnterGame(jobId)); return; }
             _leaveTimer.Stop();
             _inGame = true;
             string newJob = string.IsNullOrEmpty(jobId) ? "global" : jobId;
@@ -341,7 +342,7 @@ namespace PhasmaStrap.Integrations.GameChat
 
         public void LeaveGame()
         {
-            if (!Dispatcher.CheckAccess()) { DispatchUi(LeaveGame); return; }
+            if (!Dispatcher.CheckAccess()) { DispatchUiNow(LeaveGame); return; }
 
             HideOverlay();
         }
@@ -549,7 +550,7 @@ namespace PhasmaStrap.Integrations.GameChat
 
         public void ToggleVisibility()
         {
-            if (!Dispatcher.CheckAccess()) { DispatchUi(ToggleVisibility); return; }
+            if (!Dispatcher.CheckAccess()) { DispatchUiNow(ToggleVisibility); return; }
             IsWindowHidden = !IsWindowHidden;
             if (IsWindowHidden && _isChatting)
                 CancelChatMode();
@@ -590,7 +591,7 @@ namespace PhasmaStrap.Integrations.GameChat
 
         public void RequestChatMode()
         {
-            if (!Dispatcher.CheckAccess()) { DispatchUi(RequestChatMode); return; }
+            if (!Dispatcher.CheckAccess()) { DispatchUiNow(RequestChatMode); return; }
             if (IsWindowHidden || _isChatting)
                 return;
             _inputBox.CaretIndex = _rawInputText.Length;
@@ -599,7 +600,7 @@ namespace PhasmaStrap.Integrations.GameChat
 
         public void StartChatMode()
         {
-            if (!Dispatcher.CheckAccess()) { DispatchUi(StartChatMode); return; }
+            if (!Dispatcher.CheckAccess()) { DispatchUiNow(StartChatMode); return; }
             _isChatting = true;
             _chatBox.IsHitTestVisible = true;
             SetTargetOpacity(ChatOnOpacity);
@@ -609,7 +610,7 @@ namespace PhasmaStrap.Integrations.GameChat
 
         public void CancelChatMode()
         {
-            if (!Dispatcher.CheckAccess()) { DispatchUi(CancelChatMode); return; }
+            if (!Dispatcher.CheckAccess()) { DispatchUiNow(CancelChatMode); return; }
             _isChatting = false;
             _chatBox.IsHitTestVisible = false;
             SetTargetOpacity(ChatOffOpacity);
@@ -746,7 +747,7 @@ namespace PhasmaStrap.Integrations.GameChat
             if (!Dispatcher.CheckAccess()) { DispatchUi(() => AppendText(text)); return; }
             var p = new Paragraph { Margin = new Thickness(0, 0, 0, 6) };
             p.Inlines.Add(new Run(text) { Foreground = Brushes.LightGray });
-            _docChat.Blocks.Add(p);
+            AddBlock(_docChat, p);
             ScrollToEnd();
         }
 
@@ -757,7 +758,7 @@ namespace PhasmaStrap.Integrations.GameChat
             var p = new Paragraph { Margin = new Thickness(0, 0, 0, 4) };
             p.Inlines.Add(new Run("[System] ") { Foreground = FreezeBrush(Color.FromRgb(150, 150, 160)), FontWeight = FontWeights.SemiBold });
             p.Inlines.Add(new Run(text) { Foreground = FreezeBrush(Color.FromRgb(200, 200, 210)) });
-            doc.Blocks.Add(p);
+            AddBlock(doc, p);
             if (_chatBox.Document == doc)
                 ScrollToEnd();
         }
@@ -771,7 +772,7 @@ namespace PhasmaStrap.Integrations.GameChat
             {
                 var hidden = new Paragraph { Margin = new Thickness(0, 0, 0, 4) };
                 hidden.Inlines.Add(new Run(GameChatStrings.MessageHiddenDueToFilterSettings) { Foreground = FreezeBrush(Color.FromRgb(130, 130, 140)), FontStyle = FontStyles.Italic });
-                doc.Blocks.Add(hidden);
+                AddBlock(doc, hidden);
                 if (_chatBox.Document == doc)
                     ScrollToEnd();
                 return;
@@ -794,12 +795,39 @@ namespace PhasmaStrap.Integrations.GameChat
             string displayText = App.Settings.Prop.AutoTranslate
                 ? TranslationService.Translate(msg.Text, App.Settings.Prop.AutoTranslateLanguage)
                 : msg.Text;
-            p.Inlines.Add(new Run(": " + displayText) { Foreground = Brushes.WhiteSmoke });
+            var textRun = new Run(": " + displayText) { Foreground = Brushes.WhiteSmoke };
+            p.Inlines.Add(textRun);
+
+            if (App.Settings.Prop.AutoTranslate && displayText == msg.Text)
+                _ = ApplyLateTranslationAsync(textRun, msg.Text, App.Settings.Prop.AutoTranslateLanguage);
 
             p.Tag = msg;
-            doc.Blocks.Add(p);
+            AddBlock(doc, p);
             if (_chatBox.Document == doc)
                 ScrollToEnd();
+        }
+
+        private async Task ApplyLateTranslationAsync(Run textRun, string original, string language)
+        {
+            try
+            {
+                string translated = await TranslationService.TranslateAsync(original, language).ConfigureAwait(false);
+                if (translated == original)
+                    return;
+
+                DispatchUi(() => textRun.Text = ": " + translated);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LogTag + "::ApplyLateTranslationAsync", $"Could not translate a chat message to {language}: {ex.Message}");
+            }
+        }
+
+        private static void AddBlock(FlowDocument doc, Block block)
+        {
+            doc.Blocks.Add(block);
+            while (doc.Blocks.Count > MaxChatBlocks && doc.Blocks.FirstBlock != null)
+                doc.Blocks.Remove(doc.Blocks.FirstBlock);
         }
 
         private void ScrollToEnd()
@@ -823,7 +851,7 @@ namespace PhasmaStrap.Integrations.GameChat
             catch
             {
             }
-            _profileWindow = new GameChatProfileWindow(userId, fallbackName, () => _client.SendBugAsync($"[report] {fallbackName} ({userId})"));
+            _profileWindow = new GameChatProfileWindow(userId, fallbackName, () => ReportUserAsync(userId, fallbackName));
             _profileWindow.Owner = this;
             _profileWindow.Show();
         }
@@ -1024,6 +1052,41 @@ namespace PhasmaStrap.Integrations.GameChat
             }
         }
 
+        private async Task<GameChatBugResult> ReportUserAsync(long userId, string name)
+        {
+            if (_bugBusy || (DateTime.UtcNow - _lastBugSentUtc).TotalSeconds < 60)
+            {
+                AppendSystemMessage(GameChatStrings.ReportCooldown);
+                return GameChatBugResult.RateLimited;
+            }
+            _bugBusy = true;
+            AppendSystemMessage(string.Format(GameChatStrings.ReportSending, name));
+            try
+            {
+                GameChatBugResult result = await _client.SendBugAsync($"[report] {name} ({userId})").ConfigureAwait(true);
+                _lastBugSentUtc = DateTime.UtcNow;
+                App.Logger.WriteLine(LogTag + "::ReportUserAsync", $"Report for {name} ({userId}) finished with {result}");
+                AppendSystemMessage(result switch
+                {
+                    GameChatBugResult.Ok => string.Format(GameChatStrings.ReportSent, name),
+                    GameChatBugResult.RateLimited => GameChatStrings.ReportCooldown,
+                    GameChatBugResult.NotConnected => GameChatStrings.NotConnected,
+                    _ => GameChatStrings.ReportFailed,
+                });
+                return result;
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LogTag + "::ReportUserAsync", $"Report for {name} ({userId}) failed: {ex.Message}");
+                AppendSystemMessage(GameChatStrings.ReportFailed);
+                return GameChatBugResult.Failed;
+            }
+            finally
+            {
+                _bugBusy = false;
+            }
+        }
+
         private async Task SendBugReportAsync(string text)
         {
             if (string.IsNullOrWhiteSpace(text) || text.Length < 5)
@@ -1053,6 +1116,32 @@ namespace PhasmaStrap.Integrations.GameChat
             finally
             {
                 _bugBusy = false;
+            }
+        }
+
+        private void DispatchUiNow(Action action)
+        {
+            if (_closed)
+                return;
+            try
+            {
+                Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
+                {
+                    if (_closed)
+                        return;
+                    try
+                    {
+                        action();
+                    }
+                    catch (Exception ex)
+                    {
+                        App.Logger.WriteException(LogTag + "::DispatchUiNow", ex);
+                    }
+                }));
+            }
+            catch (InvalidOperationException ex)
+            {
+                App.Logger.WriteLine(LogTag + "::DispatchUiNow", $"Could not reach the overlay window: {ex.Message}");
             }
         }
 

@@ -139,6 +139,7 @@ namespace PhasmaStrap.Utility
         private readonly System.Threading.Timer _timer;
         private readonly CancellationTokenSource _cancel = new();
         private int _busy;
+        private string _lastWaitingStatus = "";
 
         public PerformanceMeasurer(ActivityWatcher activityWatcher)
         {
@@ -165,9 +166,16 @@ namespace PhasmaStrap.Utility
 
                 if (!_activityWatcher.InGame)
                 {
-                    PerformanceRuns.WriteStatus(new MeasureStatus { RequestId = request.Id, State = "waiting", Message = "Waiting for you to join a game..." });
+                    if (_lastWaitingStatus != request.Id)
+                    {
+                        _lastWaitingStatus = request.Id;
+                        PerformanceRuns.WriteStatus(new MeasureStatus { RequestId = request.Id, State = "waiting", Message = "Waiting for you to join a game..." });
+                    }
+
                     return;
                 }
+
+                _lastWaitingStatus = "";
 
                 double inGame = (DateTime.Now - _activityWatcher.Data.TimeJoined).TotalSeconds;
                 if (inGame < request.DelayAfterJoinSeconds)
@@ -204,12 +212,31 @@ namespace PhasmaStrap.Utility
 
                 var probe = new FrameTimeProbe(App.RobloxPlayerAppName);
 
+                object progressLock = new();
+                bool measured = false;
+
                 using var progress = new System.Threading.Timer(_ =>
-                    PerformanceRuns.WriteStatus(new MeasureStatus { RequestId = request.Id, State = "measuring", Progress = probe.Progress, Message = "Measuring - keep playing..." }), null, 0, 1000);
+                {
+                    lock (progressLock)
+                    {
+                        if (!measured)
+                            PerformanceRuns.WriteStatus(new MeasureStatus { RequestId = request.Id, State = "measuring", Progress = probe.Progress, Message = "Measuring - keep playing..." });
+                    }
+                }, null, 0, 1000);
 
-                PerformanceReport? report = probe.Measure(request.Seconds, _cancel.Token);
+                PerformanceReport? report;
 
-                progress.Change(Timeout.Infinite, Timeout.Infinite);
+                try
+                {
+                    report = probe.Measure(request.Seconds, _cancel.Token);
+                }
+                finally
+                {
+                    progress.Change(Timeout.Infinite, Timeout.Infinite);
+
+                    lock (progressLock)
+                        measured = true;
+                }
 
                 if (report is null)
                 {

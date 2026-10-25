@@ -8,8 +8,10 @@ using PhasmaStrap.Utility;
 
 namespace PhasmaStrap.UI.ViewModels.Settings
 {
-    public sealed class RobloxVersionRow
+    public sealed class RobloxVersionRow : NotifyPropertyChangedViewModel
     {
+        private string _sizeText = "...";
+
         public RobloxVersionRecord Record { get; init; } = null!;
         public bool IsInstalled { get; init; }
 
@@ -18,20 +20,28 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public Visibility UseVisibility => IsInstalled ? Visibility.Collapsed : Visibility.Visible;
         public string Detail => $"{Record.Guid}  ·  installed {Record.InstalledUtc.ToLocalTime():d MMM yyyy}  ·  {SizeText}";
 
-        public string SizeText
+        public string SizeText => _sizeText;
+
+        public async Task LoadSizeAsync()
         {
-            get
+            string folder = RobloxVersions.FolderOf(Record.Guid);
+
+            _sizeText = await Task.Run(() =>
             {
                 try
                 {
-                    long bytes = new DirectoryInfo(RobloxVersions.FolderOf(Record.Guid)).EnumerateFiles("*", SearchOption.AllDirectories).Sum(f => f.Length);
+                    long bytes = new DirectoryInfo(folder).EnumerateFiles("*", SearchOption.AllDirectories).Sum(f => f.Length);
                     return $"{bytes / 1024.0 / 1024:0} MB";
                 }
-                catch
+                catch (Exception ex)
                 {
+                    App.Logger.WriteLine("RobloxVersionRow::LoadSizeAsync", $"Could not measure '{folder}': {ex.Message}");
                     return "?";
                 }
-            }
+            });
+
+            OnPropertyChanged(nameof(SizeText));
+            OnPropertyChanged(nameof(Detail));
         }
     }
 
@@ -54,6 +64,9 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             if (!string.IsNullOrEmpty(installed) && !OnDisk.Any(r => r.IsInstalled) && File.Exists(Path.Combine(RobloxVersions.FolderOf(installed), "RobloxPlayerBeta.exe")))
                 OnDisk.Insert(0, new RobloxVersionRow { Record = new RobloxVersionRecord { Guid = installed, FileVersion = RobloxVersions.FileVersionOf(installed), InstalledUtc = Directory.GetCreationTimeUtc(RobloxVersions.FolderOf(installed)) }, IsInstalled = true });
+
+            foreach (RobloxVersionRow row in OnDisk)
+                _ = row.LoadSizeAsync();
 
             OnPropertyChanged(nameof(InstalledText));
             OnPropertyChanged(nameof(LatestText));
@@ -206,8 +219,13 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         private string _compareStatus = "";
         public string CompareStatus { get => _compareStatus; private set { _compareStatus = value; OnPropertyChanged(nameof(CompareStatus)); } }
 
+        private bool _comparing;
+
         public ICommand CompareCommand => new AsyncRelayCommand(async () =>
         {
+            if (_comparing)
+                return;
+
             string current = App.PlayerState.Prop.VersionGuid;
             RobloxVersionRow? other = OnDisk.FirstOrDefault(r => !r.IsInstalled);
 
@@ -218,15 +236,32 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
 
             CompareStatus = "Comparing...";
+            _comparing = true;
 
-            List<string> dropped = await Task.Run(() => RobloxVersions.DroppedFlags(
-                Path.Combine(RobloxVersions.FolderOf(other.Record.Guid), "RobloxPlayerBeta.exe"),
-                Path.Combine(RobloxVersions.FolderOf(current), "RobloxPlayerBeta.exe"),
-                RobloxVersions.YourFlagNames()));
+            try
+            {
+                List<string> yourFlags = RobloxVersions.YourFlagNames();
 
-            CompareStatus = dropped.Count == 0
-                ? $"Every flag of yours that {other.Record.FileVersion} had is still in the version you use."
-                : $"{dropped.Count} of your flags were in {other.Record.FileVersion} but aren't in the version you use:\n" + string.Join("\n", dropped);
+                List<string> dropped = await Task.Run(() => RobloxVersions.DroppedFlags(
+                    Path.Combine(RobloxVersions.FolderOf(other.Record.Guid), "RobloxPlayerBeta.exe"),
+                    Path.Combine(RobloxVersions.FolderOf(current), "RobloxPlayerBeta.exe"),
+                    yourFlags));
+
+                App.Logger.WriteLine("RobloxVersionsViewModel::Compare", $"Compared {other.Record.Guid} with {current}, {dropped.Count} flag(s) dropped");
+
+                CompareStatus = dropped.Count == 0
+                    ? $"Every flag of yours that {other.Record.FileVersion} had is still in the version you use."
+                    : $"{dropped.Count} of your flags were in {other.Record.FileVersion} but aren't in the version you use:\n" + string.Join("\n", dropped);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("RobloxVersionsViewModel::Compare", $"Compare of {other.Record.Guid} with {current} failed: {ex.Message}");
+                CompareStatus = $"Could not compare the two versions: {ex.Message}";
+            }
+            finally
+            {
+                _comparing = false;
+            }
         });
     }
 }

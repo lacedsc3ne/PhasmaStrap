@@ -91,6 +91,13 @@ namespace PhasmaStrap.Utility
                 if (!File.Exists(SentinelPath))
                     return;
 
+                int owner = SentinelOwner();
+                if (owner > 0 && owner != Environment.ProcessId && IsRunning(owner))
+                {
+                    App.Logger?.WriteLine("RenderAcceleration::TripSentinel", $"PhasmaStrap process {owner} is still starting up, leaving its render check alone");
+                    return;
+                }
+
                 File.Delete(SentinelPath);
 
                 if (App.Settings?.Prop == null || App.Settings.Prop.WPFSoftwareRender)
@@ -113,7 +120,7 @@ namespace PhasmaStrap.Utility
 
             try
             {
-                File.WriteAllText(SentinelPath, string.Empty);
+                File.WriteAllText(SentinelPath, Environment.ProcessId.ToString());
                 CompositionTarget.Rendering += OnFirstFrame;
             }
             catch (Exception ex)
@@ -128,11 +135,39 @@ namespace PhasmaStrap.Utility
 
             try
             {
-                File.Delete(SentinelPath);
+                int owner = SentinelOwner();
+                if (owner <= 0 || owner == Environment.ProcessId)
+                    File.Delete(SentinelPath);
             }
             catch (Exception ex)
             {
                 App.Logger?.WriteException("RenderAcceleration::OnFirstFrame", ex);
+            }
+        }
+
+        private static int SentinelOwner()
+        {
+            try
+            {
+                return File.Exists(SentinelPath) && int.TryParse(File.ReadAllText(SentinelPath).Trim(), out int pid) ? pid : 0;
+            }
+            catch (Exception ex)
+            {
+                App.Logger?.WriteLine("RenderAcceleration::SentinelOwner", $"Could not read the render check file: {ex.Message}");
+                return 0;
+            }
+        }
+
+        private static bool IsRunning(int pid)
+        {
+            try
+            {
+                using var process = System.Diagnostics.Process.GetProcessById(pid);
+                return !process.HasExited;
+            }
+            catch
+            {
+                return false;
             }
         }
 

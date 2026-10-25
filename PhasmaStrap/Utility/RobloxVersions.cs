@@ -57,7 +57,9 @@
             {
                 try
                 {
-                    File.WriteAllText(DataPath, JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true }));
+                    string temp = DataPath + ".tmp";
+                    File.WriteAllText(temp, JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true }));
+                    File.Move(temp, DataPath, true);
                 }
                 catch (Exception ex)
                 {
@@ -137,13 +139,16 @@
 
         public static void RecordLatest(string guid, string fileVersion)
         {
-            RobloxVersionData data = Load();
-            if (data.LatestGuid == guid)
-                return;
+            lock (_lock)
+            {
+                RobloxVersionData data = Load();
+                if (data.LatestGuid == guid)
+                    return;
 
-            data.LatestGuid = guid;
-            data.LatestFileVersion = fileVersion;
-            Save(data);
+                data.LatestGuid = guid;
+                data.LatestFileVersion = fileVersion;
+                Save(data);
+            }
         }
 
         public static string? Choose(string latestGuid, string installedGuid, out string? why)
@@ -188,18 +193,21 @@
         {
             SaveManifestCopy(guid, manifestText);
 
-            RobloxVersionData data = Load();
+            lock (_lock)
+            {
+                RobloxVersionData data = Load();
 
-            if (!string.IsNullOrEmpty(previousGuid) && previousGuid != guid && !data.History.Any(r => r.Guid == previousGuid))
-                data.History.Add(new RobloxVersionRecord { Guid = previousGuid, FileVersion = FileVersionOf(previousGuid), InstalledUtc = Directory.Exists(FolderOf(previousGuid)) ? Directory.GetCreationTimeUtc(FolderOf(previousGuid)) : DateTime.UtcNow.AddMinutes(-1) });
+                if (!string.IsNullOrEmpty(previousGuid) && previousGuid != guid && !data.History.Any(r => r.Guid == previousGuid))
+                    data.History.Add(new RobloxVersionRecord { Guid = previousGuid, FileVersion = FileVersionOf(previousGuid), InstalledUtc = Directory.Exists(FolderOf(previousGuid)) ? Directory.GetCreationTimeUtc(FolderOf(previousGuid)) : DateTime.UtcNow.AddMinutes(-1) });
 
-            data.History.RemoveAll(r => r.Guid == guid);
-            data.History.Add(new RobloxVersionRecord { Guid = guid, FileVersion = FileVersionOf(guid), InstalledUtc = DateTime.UtcNow });
+                data.History.RemoveAll(r => r.Guid == guid);
+                data.History.Add(new RobloxVersionRecord { Guid = guid, FileVersion = FileVersionOf(guid), InstalledUtc = DateTime.UtcNow });
 
-            if (data.History.Count > 10)
-                data.History.RemoveRange(0, data.History.Count - 10);
+                if (data.History.Count > 10)
+                    data.History.RemoveRange(0, data.History.Count - 10);
 
-            Save(data);
+                Save(data);
+            }
         }
 
         public static HashSet<string> FoldersToKeep(string currentGuid)
@@ -371,11 +379,14 @@
                 var watch = Stopwatch.StartNew();
                 List<string> missing = DroppedFlags(oldExe, exe, YourFlagNames());
 
-                RobloxVersionData data = Load();
-                data.CheckedGuid = guid;
-                data.MissingFlags = missing;
-                data.MissingFlagsShown = missing.Count == 0;
-                Save(data);
+                lock (_lock)
+                {
+                    RobloxVersionData data = Load();
+                    data.CheckedGuid = guid;
+                    data.MissingFlags = missing;
+                    data.MissingFlagsShown = missing.Count == 0;
+                    Save(data);
+                }
 
                 App.Logger.WriteLine(LOG_IDENT, $"Flag check of {guid} against {previousGuid}: {missing.Count} of your flags dropped ({watch.ElapsedMilliseconds} ms)");
             }

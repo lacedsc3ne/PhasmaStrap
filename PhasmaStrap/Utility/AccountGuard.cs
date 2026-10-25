@@ -49,39 +49,92 @@ namespace PhasmaStrap.Utility
 
         private static readonly string[] InterceptorNames = { "fiddler", "charles proxy", "mitmproxy", "portswigger", "burp", "http toolkit", "httptoolkit", "proxyman", "do_not_trust", "telerik" };
 
+        private const string StateMutexName = @"Local\PhasmaStrapAccountGuardState";
+
         public static GuardState Load()
         {
             lock (_lock)
             {
+                using var mutex = new Mutex(false, StateMutexName);
+                bool held = TakeStateMutex(mutex);
                 try
                 {
-                    if (File.Exists(StatePath))
-                        return JsonSerializer.Deserialize<GuardState>(File.ReadAllText(StatePath)) ?? new GuardState();
+                    return ReadState();
                 }
-                catch (Exception ex)
+                finally
                 {
-                    App.Logger.WriteLine(LOG_IDENT, $"Could not read the guard state: {ex.Message}");
+                    if (held)
+                        mutex.ReleaseMutex();
                 }
-
-                return new GuardState();
             }
         }
 
-        private static void Save(GuardState state)
+        private static void Update(Action<GuardState> change)
         {
             lock (_lock)
             {
+                using var mutex = new Mutex(false, StateMutexName);
+                bool held = TakeStateMutex(mutex);
                 try
                 {
-                    if (state.History.Count > 50)
-                        state.History.RemoveRange(0, state.History.Count - 50);
-
-                    File.WriteAllText(StatePath, JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true }));
+                    GuardState state = ReadState();
+                    change(state);
+                    WriteState(state);
                 }
-                catch (Exception ex)
+                finally
                 {
-                    App.Logger.WriteLine(LOG_IDENT, $"Could not save the guard state: {ex.Message}");
+                    if (held)
+                        mutex.ReleaseMutex();
                 }
+            }
+        }
+
+        private static bool TakeStateMutex(Mutex mutex)
+        {
+            try
+            {
+                if (mutex.WaitOne(TimeSpan.FromSeconds(10)))
+                    return true;
+
+                App.Logger.WriteLine(LOG_IDENT, "Another PhasmaStrap process held the guard state for 10 seconds, going ahead without it");
+                return false;
+            }
+            catch (AbandonedMutexException)
+            {
+                App.Logger.WriteLine(LOG_IDENT, "Took over the guard state lock from a PhasmaStrap process that closed while holding it");
+                return true;
+            }
+        }
+
+        private static GuardState ReadState()
+        {
+            try
+            {
+                if (File.Exists(StatePath))
+                    return JsonSerializer.Deserialize<GuardState>(File.ReadAllText(StatePath)) ?? new GuardState();
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not read the guard state: {ex.Message}");
+            }
+
+            return new GuardState();
+        }
+
+        private static void WriteState(GuardState state)
+        {
+            try
+            {
+                if (state.History.Count > 50)
+                    state.History.RemoveRange(0, state.History.Count - 50);
+
+                string temp = StatePath + ".tmp";
+                File.WriteAllText(temp, JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true }));
+                File.Move(temp, StatePath, true);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not save the guard state: {ex.Message}");
             }
         }
 
@@ -161,28 +214,45 @@ namespace PhasmaStrap.Utility
             }
         }
 
-        private static List<X509Certificate2> RootCertificates(StoreLocation location)
+        private sealed record RootCertificate(string Subject, string Thumbprint, string Name);
+
+        private static List<RootCertificate> RootCertificates(StoreLocation location)
         {
+            var result = new List<RootCertificate>();
+
             try
             {
                 using var store = new X509Store(StoreName.Root, location);
                 store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
-                return store.Certificates.Cast<X509Certificate2>().ToList();
+
+                X509Certificate2Collection certificates = store.Certificates;
+                try
+                {
+                    foreach (X509Certificate2 cert in certificates)
+                        result.Add(new RootCertificate(cert.Subject, cert.Thumbprint, cert.GetNameInfo(X509NameType.SimpleName, false)));
+                }
+                finally
+                {
+                    foreach (X509Certificate2 cert in certificates)
+                        cert.Dispose();
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                return new List<X509Certificate2>();
+                App.Logger.WriteLine(LOG_IDENT, $"Could not read the {location} trusted certificates: {ex.Message}");
             }
+
+            return result;
         }
 
-        private static bool IsOwnCertificate(X509Certificate2 certificate) =>
+        private static bool IsOwnCertificate(RootCertificate certificate) =>
             certificate.Subject.Contains("PhasmaStrap Local Proxy CA", StringComparison.OrdinalIgnoreCase);
 
         private static IEnumerable<GuardFinding> CheckCertificates(GuardState state)
         {
-            List<X509Certificate2> mine = RootCertificates(StoreLocation.CurrentUser);
+            List<RootCertificate> mine = RootCertificates(StoreLocation.CurrentUser);
 
-            foreach (X509Certificate2 cert in mine.Concat(RootCertificates(StoreLocation.LocalMachine)))
+            foreach (RootCertificate cert in mine.Concat(RootCertificates(StoreLocation.LocalMachine)))
             {
                 string name = cert.Subject.ToLowerInvariant();
                 if (InterceptorNames.Any(n => name.Contains(n)))
@@ -191,7 +261,7 @@ namespace PhasmaStrap.Utility
                     {
                         Id = $"interceptor:{cert.Thumbprint}",
                         Title = "A traffic-interception certificate is trusted",
-                        Detail = $"\"{cert.GetNameInfo(X509NameType.SimpleName, false)}\" can read encrypted traffic from this PC, Roblox logins included. That's fine if you use that tool on purpose; otherwise remove it (certmgr.msc > Trusted Root Certification Authorities).",
+                        Detail = $"\"{cert.Name}\" can read encrypted traffic from this PC, Roblox logins included. That's fine if you use that tool on purpose; otherwise remove it (certmgr.msc > Trusted Root Certification Authorities).",
                     };
                 }
             }
@@ -199,7 +269,7 @@ namespace PhasmaStrap.Utility
             if (!state.Baselined)
                 yield break;
 
-            foreach (X509Certificate2 cert in mine)
+            foreach (RootCertificate cert in mine)
             {
                 if (IsOwnCertificate(cert) || state.RootThumbprints.Contains(cert.Thumbprint))
                     continue;
@@ -208,7 +278,7 @@ namespace PhasmaStrap.Utility
                 {
                     Id = $"root:{cert.Thumbprint}",
                     Title = "A new trusted certificate was added",
-                    Detail = $"\"{cert.GetNameInfo(X509NameType.SimpleName, false)}\" was added to the certificates your Windows account trusts. A trusted certificate lets whoever made it read encrypted traffic, Roblox logins included. If you didn't just install something that needs it, remove it in certmgr.msc.",
+                    Detail = $"\"{cert.Name}\" was added to the certificates your Windows account trusts. A trusted certificate lets whoever made it read encrypted traffic, Roblox logins included. If you didn't just install something that needs it, remove it in certmgr.msc.",
                 };
             }
         }
@@ -304,65 +374,68 @@ namespace PhasmaStrap.Utility
             findings.AddRange(CheckTrustBundles(state));
             findings.AddRange(CheckProxy(state));
 
-            bool changed = false;
+            List<string> bundles = TrustBundles().ToList();
+            List<string> accepted = state.Accepted;
 
-            if (!state.Baselined)
+            Update(latest =>
             {
-                state.RootThumbprints = RootCertificates(StoreLocation.CurrentUser).Select(c => c.Thumbprint).ToList();
-                state.Proxy = CurrentProxy().Trim();
-                state.Baselined = true;
-                changed = true;
-            }
-
-            foreach (string bundle in TrustBundles())
-            {
-                if (!state.BundleHashes.ContainsKey(bundle) && BundleHash(bundle) is string hash)
+                if (!latest.Baselined)
                 {
-                    state.BundleHashes[bundle] = hash;
-                    changed = true;
+                    latest.RootThumbprints = RootCertificates(StoreLocation.CurrentUser).Select(c => c.Thumbprint).ToList();
+                    latest.Proxy = CurrentProxy().Trim();
+                    latest.Baselined = true;
+                    App.Logger.WriteLine(LOG_IDENT, $"Took the first baseline: {latest.RootThumbprints.Count} trusted certificate(s), proxy '{latest.Proxy}'");
                 }
-            }
 
-            foreach (string gone in state.BundleHashes.Keys.Where(b => !File.Exists(b)).ToList())
-            {
-                state.BundleHashes.Remove(gone);
-                changed = true;
-            }
+                foreach (string bundle in bundles)
+                {
+                    if (!latest.BundleHashes.ContainsKey(bundle) && BundleHash(bundle) is string hash)
+                        latest.BundleHashes[bundle] = hash;
+                }
 
-            if (changed)
-                Save(state);
+                foreach (string gone in latest.BundleHashes.Keys.Where(b => !File.Exists(b)).ToList())
+                    latest.BundleHashes.Remove(gone);
 
-            return findings.Where(f => !state.Accepted.Contains(f.Id)).ToList();
+                accepted = latest.Accepted;
+            });
+
+            return findings.Where(f => !accepted.Contains(f.Id)).ToList();
         }
 
         public static void Accept(GuardFinding finding)
         {
-            GuardState state = Load();
+            App.Logger.WriteLine(LOG_IDENT, $"Accepted finding {finding.Id}");
 
-            if (!state.Accepted.Contains(finding.Id))
-                state.Accepted.Add(finding.Id);
-
-            if (finding.Id.StartsWith("root:"))
-                state.RootThumbprints.Add(finding.Id[5..]);
-            else if (finding.Id.StartsWith("proxy:"))
-                state.Proxy = CurrentProxy().Trim();
-            else if (finding.Id.StartsWith("bundle:"))
+            Update(state =>
             {
-                string[] parts = finding.Id.Split(':');
-                string bundle = string.Join(":", parts.Skip(1).Take(parts.Length - 2));
-                state.BundleHashes[bundle] = parts[^1];
-            }
+                if (!state.Accepted.Contains(finding.Id))
+                    state.Accepted.Add(finding.Id);
 
-            Save(state);
+                if (finding.Id.StartsWith("root:"))
+                {
+                    string thumbprint = finding.Id[5..];
+                    if (!state.RootThumbprints.Contains(thumbprint))
+                        state.RootThumbprints.Add(thumbprint);
+                }
+                else if (finding.Id.StartsWith("proxy:"))
+                    state.Proxy = CurrentProxy().Trim();
+                else if (finding.Id.StartsWith("bundle:"))
+                {
+                    string[] parts = finding.Id.Split(':');
+                    string bundle = string.Join(":", parts.Skip(1).Take(parts.Length - 2));
+                    state.BundleHashes[bundle] = parts[^1];
+                }
+            });
         }
 
         private static void Record(GuardState state, string title, string detail)
         {
             state.History.Add(new GuardAlert { Utc = DateTime.UtcNow, Title = title, Detail = detail });
             App.Logger.WriteLine(LOG_IDENT, $"Alert: {title} - {detail}");
-
-            UI.NotificationCenter.Notify(title, detail, UI.NotificationCategory.General, durationSeconds: 20, kind: UI.NotificationKindId.AccountGuard);
         }
+
+        private static void Notify(GuardAlert alert) =>
+            UI.NotificationCenter.Notify(alert.Title, alert.Detail, UI.NotificationCategory.General, durationSeconds: 20, kind: UI.NotificationKindId.AccountGuard);
 
         public static void ScanAndNotify()
         {
@@ -372,15 +445,20 @@ namespace PhasmaStrap.Utility
             try
             {
                 List<GuardFinding> findings = Scan();
-                GuardState state = Load();
+                var fresh = new List<GuardAlert>();
 
-                foreach (GuardFinding finding in findings.Where(f => !state.Alerted.Contains(f.Id)))
+                Update(state =>
                 {
-                    state.Alerted.Add(finding.Id);
-                    Record(state, finding.Title, finding.Detail);
-                }
+                    foreach (GuardFinding finding in findings.Where(f => !state.Alerted.Contains(f.Id) && !state.Accepted.Contains(f.Id)))
+                    {
+                        state.Alerted.Add(finding.Id);
+                        Record(state, finding.Title, finding.Detail);
+                        fresh.Add(state.History[^1]);
+                    }
+                });
 
-                Save(state);
+                foreach (GuardAlert alert in fresh)
+                    Notify(alert);
             }
             catch (Exception ex)
             {
@@ -412,9 +490,19 @@ namespace PhasmaStrap.Utility
             if (!BackgroundWanted)
                 return;
 
-            using var running = new Mutex(false, @"Local\PhasmaStrapAccountGuard", out bool createdNew);
-            if (createdNew)
-                Process.Start(Paths.Application, "-guard");
+            try
+            {
+                using var running = new Mutex(false, @"Local\PhasmaStrapAccountGuard", out bool createdNew);
+                if (createdNew)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, "Starting the background guard");
+                    Process.Start(Paths.Application, "-guard");
+                }
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not start the background guard: {ex.Message}");
+            }
         }
 
         private static bool RobloxRunning()
@@ -447,7 +535,16 @@ namespace PhasmaStrap.Utility
                     if (DateTime.Now - process.StartTime > window)
                         continue;
 
-                    string path = process.MainModule?.FileName ?? process.ProcessName;
+                    string path;
+                    try
+                    {
+                        path = process.MainModule?.FileName ?? process.ProcessName;
+                    }
+                    catch
+                    {
+                        path = process.ProcessName + ".exe";
+                    }
+
                     if (path.StartsWith(windows, StringComparison.OrdinalIgnoreCase))
                         continue;
 
@@ -478,9 +575,15 @@ namespace PhasmaStrap.Utility
                     : "")
                 + "If you don't recognise it, sign out of all sessions on roblox.com (Settings > Security) and change your password.";
 
-            GuardState state = Load();
-            Record(state, "Your Roblox sign-in file was opened", detail);
-            Save(state);
+            GuardAlert? alert = null;
+            Update(state =>
+            {
+                Record(state, "Your Roblox sign-in file was opened", detail);
+                alert = state.History[^1];
+            });
+
+            if (alert is not null)
+                Notify(alert);
         }
 
         private static Mutex? _guardMutex;
@@ -595,6 +698,7 @@ namespace PhasmaStrap.Utility
                 IntPtr inPtr = Marshal.AllocHGlobal(Marshal.SizeOf<REQUEST_OPLOCK_INPUT_BUFFER>());
                 IntPtr outPtr = Marshal.AllocHGlobal(Marshal.SizeOf<REQUEST_OPLOCK_OUTPUT_BUFFER>());
                 IntPtr ovPtr = Marshal.AllocHGlobal(Marshal.SizeOf<NativeOverlapped>());
+                bool stillPending = false;
 
                 try
                 {
@@ -614,7 +718,11 @@ namespace PhasmaStrap.Utility
                         if (stop.IsCancellationRequested || giveUp())
                         {
                             CancelIoEx(handle, ovPtr);
-                            done.WaitOne(TimeSpan.FromSeconds(1));
+                            if (!done.WaitOne(TimeSpan.FromSeconds(10)))
+                            {
+                                stillPending = true;
+                                App.Logger.WriteLine(LOG_IDENT, "The sign-in file watch did not stop after cancelling, keeping its buffers");
+                            }
                             return Result.Stopped;
                         }
                     }
@@ -622,9 +730,12 @@ namespace PhasmaStrap.Utility
                 finally
                 {
                     handle.Dispose();
-                    Marshal.FreeHGlobal(inPtr);
-                    Marshal.FreeHGlobal(outPtr);
-                    Marshal.FreeHGlobal(ovPtr);
+                    if (!stillPending)
+                    {
+                        Marshal.FreeHGlobal(inPtr);
+                        Marshal.FreeHGlobal(outPtr);
+                        Marshal.FreeHGlobal(ovPtr);
+                    }
                 }
             }
 

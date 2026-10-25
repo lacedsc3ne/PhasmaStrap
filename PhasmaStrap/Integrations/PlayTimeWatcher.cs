@@ -8,6 +8,8 @@ namespace PhasmaStrap.Integrations
 
         private readonly ActivityWatcher _activityWatcher;
 
+        private readonly List<Task> _pending = new();
+
         private bool _disposed;
 
         public PlayTimeWatcher(ActivityWatcher activityWatcher)
@@ -26,7 +28,12 @@ namespace PhasmaStrap.Integrations
             if (activity is null || activity.PlaceId <= 0 || !activity.TimeLeft.HasValue)
                 return;
 
-            _ = RecordAsync(activity);
+            Task record = RecordAsync(activity);
+            lock (_pending)
+            {
+                _pending.RemoveAll(task => task.IsCompleted);
+                _pending.Add(record);
+            }
         }
 
         private async Task RecordAsync(ActivityData activity)
@@ -37,7 +44,7 @@ namespace PhasmaStrap.Integrations
                 {
                     try
                     {
-                        await UniverseDetails.FetchSingle(activity.UniverseId);
+                        await UniverseDetails.FetchSingle(activity.UniverseId).ConfigureAwait(false);
                         activity.UniverseDetails = UniverseDetails.LoadFromCache(activity.UniverseId);
                     }
                     catch (Exception ex)
@@ -61,6 +68,18 @@ namespace PhasmaStrap.Integrations
 
             _disposed = true;
             _activityWatcher.OnGameLeave -= OnGameLeave;
+
+            Task[] pending;
+            lock (_pending)
+                pending = _pending.Where(task => !task.IsCompleted).ToArray();
+
+            if (pending.Length > 0)
+            {
+                bool finished = Task.WaitAll(pending, TimeSpan.FromSeconds(5));
+                App.Logger.WriteLine(LOG_IDENT, finished
+                    ? $"Waited for {pending.Length} play time record(s) to save"
+                    : $"{pending.Length} play time record(s) were still saving after 5 seconds");
+            }
 
             GC.SuppressFinalize(this);
         }

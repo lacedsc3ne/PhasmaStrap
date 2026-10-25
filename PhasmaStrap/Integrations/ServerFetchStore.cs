@@ -14,6 +14,8 @@ namespace PhasmaStrap.Integrations
         private static ServerFetchData _data = new();
         private static bool _loaded;
         private static Timer? _saveTimer;
+        private static bool _dirty;
+        private static bool _exitSaveHooked;
 
         private static readonly JsonSerializerOptions StoreJsonOptions = new()
         {
@@ -87,6 +89,22 @@ namespace PhasmaStrap.Integrations
             catch (Exception ex)
             {
                 App.Logger.WriteLine(LOG_IDENT, $"PrunePrivateCidrs failed: {ex.Message}");
+            }
+        }
+
+        private static ServerFetchData? ReadFromDisk()
+        {
+            try
+            {
+                if (!File.Exists(FilePath))
+                    return null;
+
+                return JsonSerializer.Deserialize<ServerFetchData>(File.ReadAllText(FilePath), StoreJsonOptions);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not read {FilePath} before saving: {ex.Message}");
+                return null;
             }
         }
 
@@ -249,9 +267,30 @@ namespace PhasmaStrap.Integrations
         {
             lock (_lock)
             {
+                _dirty = true;
+
+                if (!_exitSaveHooked)
+                {
+                    _exitSaveHooked = true;
+                    AppDomain.CurrentDomain.ProcessExit += (_, _) => SaveIfChanged();
+                }
+
                 _saveTimer ??= new Timer(_ => SaveNow(), null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
                 _saveTimer.Change(TimeSpan.FromSeconds(30), Timeout.InfiniteTimeSpan);
             }
+        }
+
+        private static void SaveIfChanged()
+        {
+            bool dirty;
+            lock (_lock)
+                dirty = _dirty;
+
+            if (!dirty)
+                return;
+
+            App.Logger.WriteLine(LOG_IDENT, "Saving learned datacenters before closing");
+            SaveNow();
         }
 
         public static void SaveNow()
@@ -259,9 +298,25 @@ namespace PhasmaStrap.Integrations
             string contents;
             try
             {
+                ServerFetchData? onDisk = ReadFromDisk();
+
                 lock (_lock)
                 {
                     _saveTimer?.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+
+                    int merged = 0;
+                    if (onDisk?.Servers != null)
+                    {
+                        foreach (var item in onDisk.Servers)
+                        {
+                            if (item.Value != null && _data.Servers.TryAdd(item.Key, item.Value))
+                                merged++;
+                        }
+                    }
+                    if (merged > 0)
+                        App.Logger.WriteLine(LOG_IDENT, $"Kept {merged} datacenter(s) another PhasmaStrap window saved");
+
+                    _dirty = false;
                     _data = NormalizeData(_data);
                     _data.UpdatedUtc = DateTime.UtcNow;
                     contents = JsonSerializer.Serialize(_data, StoreJsonOptions);
@@ -275,6 +330,8 @@ namespace PhasmaStrap.Integrations
             catch (Exception ex)
             {
                 App.Logger.WriteLine(LOG_IDENT, $"Save failed: {ex.Message}");
+                lock (_lock)
+                    _dirty = true;
             }
         }
 
@@ -289,7 +346,7 @@ namespace PhasmaStrap.Integrations
             timer?.Dispose();
 
             if (_loaded)
-                SaveNow();
+                SaveIfChanged();
         }
 
         private static string? GetSlash24Cidr(string ip)

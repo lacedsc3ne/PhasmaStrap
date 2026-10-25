@@ -86,7 +86,7 @@ namespace PhasmaStrap.Utility
                 if (part.IndexOfAny(_invalidPathChars) != -1)
                     return ValidationResult.IllegalCharacter;
 
-                if (_reservedNames.Contains(part))
+                if (_reservedNames.Contains(part.ToUpperInvariant()))
                     return ValidationResult.ReservedDirectoryName;
             }
 

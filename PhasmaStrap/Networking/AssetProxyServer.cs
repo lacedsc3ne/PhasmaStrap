@@ -1,4 +1,5 @@
-﻿using System.IO.Compression;
+﻿using System.Collections.Concurrent;
+using System.IO.Compression;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
@@ -15,13 +16,25 @@ namespace PhasmaStrap.Networking
 
         public const int Port = 443;
 
-        public static readonly Dictionary<string, (Func<ProxiedRequest, byte[]?>? RequestTransform, Func<ProxiedRequest, ProxiedResponse, byte[]?>? ResponseTransform, Func<ProxiedRequest, ProxiedResponse?>? TryServeFromCache)> InterceptedHosts
+        public static readonly ConcurrentDictionary<string, (Func<ProxiedRequest, byte[]?>? RequestTransform, Func<ProxiedRequest, ProxiedResponse, byte[]?>? ResponseTransform, Func<ProxiedRequest, ProxiedResponse?>? TryServeFromCache)> InterceptedHosts
             = new(StringComparer.OrdinalIgnoreCase);
 
-        public static readonly Dictionary<string, Func<ProxiedRequest, CancellationToken, Task<ProxiedResponse?>>> AsyncHandlers
+        public static readonly ConcurrentDictionary<string, Func<ProxiedRequest, CancellationToken, Task<ProxiedResponse?>>> AsyncHandlers
             = new(StringComparer.OrdinalIgnoreCase);
 
         private const int KeepAliveIdleMs = 30_000;
+
+        private const int HandshakeTimeoutMs = 15_000;
+
+        private const int UpstreamTimeoutMs = 120_000;
+
+        private const int MaxLineBytes = 64 * 1024;
+
+        private const int MaxHeaderCount = 200;
+
+        private const int MaxRequestBodyBytes = 16 * 1024 * 1024;
+
+        private const int MaxResponseBodyBytes = 256 * 1024 * 1024;
 
         private static readonly string[] HopByHopRequestHeaders =
         {
@@ -117,7 +130,7 @@ namespace PhasmaStrap.Networking
                     break;
                 }
 
-                _ = Task.Run(() => HandleClientAsync(client, token), token);
+                _ = Task.Run(() => HandleClientAsync(client, token));
             }
         }
 
@@ -138,14 +151,19 @@ namespace PhasmaStrap.Networking
                     ServerCertificateSelectionCallback = (sender, hostName) =>
                     {
                         sniHost = hostName;
-                        return AssetProxyCA.GetLeafCertificate(hostName ?? "unknown");
+                        if (hostName is null || !InterceptedHosts.ContainsKey(hostName))
+                            throw new AuthenticationException($"No certificate for non-allowlisted host {hostName ?? "(none)"}");
+
+                        return AssetProxyCA.GetLeafCertificate(hostName);
                     },
                     EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13
                 };
 
                 try
                 {
-                    await sslStream.AuthenticateAsServerAsync(serverOptions, token);
+                    using var handshake = CancellationTokenSource.CreateLinkedTokenSource(token);
+                    handshake.CancelAfter(HandshakeTimeoutMs);
+                    await sslStream.AuthenticateAsServerAsync(serverOptions, handshake.Token);
                 }
                 catch (Exception)
                 {
@@ -161,22 +179,16 @@ namespace PhasmaStrap.Networking
 
                 ProxyHealth.Accepted();
 
-                var reader = new RawHttpReader(sslStream);
+                var reader = new RawHttpReader(sslStream, MaxRequestBodyBytes);
                 bool keepAlive;
-                bool first = true;
 
                 do
                 {
                     keepAlive = false;
 
                     ProxiedRequest? request;
-                    if (first)
+                    using (var idle = CancellationTokenSource.CreateLinkedTokenSource(token))
                     {
-                        request = await ReadRequestAsync(reader, sslStream, sniHost, token);
-                    }
-                    else
-                    {
-                        using var idle = CancellationTokenSource.CreateLinkedTokenSource(token);
                         idle.CancelAfter(KeepAliveIdleMs);
 
                         try
@@ -188,8 +200,6 @@ namespace PhasmaStrap.Networking
                             return;
                         }
                     }
-
-                    first = false;
 
                     if (request is null)
                         return;
@@ -307,11 +317,16 @@ namespace PhasmaStrap.Networking
         private sealed class RawHttpReader
         {
             private readonly Stream _stream;
+            private readonly int _maxBodyBytes;
             private readonly byte[] _buffer = new byte[16384];
             private int _bufferLen;
             private int _bufferPos;
 
-            public RawHttpReader(Stream stream) => _stream = stream;
+            public RawHttpReader(Stream stream, int maxBodyBytes)
+            {
+                _stream = stream;
+                _maxBodyBytes = maxBodyBytes;
+            }
 
             public async Task<string?> ReadLineAsync(CancellationToken token)
             {
@@ -338,12 +353,18 @@ namespace PhasmaStrap.Networking
                         return Encoding.ASCII.GetString(line.ToArray());
                     }
 
+                    if (line.Count >= MaxLineBytes)
+                        throw new IOException($"HTTP line longer than {MaxLineBytes} bytes");
+
                     line.Add(b);
                 }
             }
 
             public async Task<byte[]> ReadExactAsync(int length, CancellationToken token)
             {
+                if (length > _maxBodyBytes)
+                    throw new IOException($"Body of {length} bytes is over the {_maxBodyBytes} byte limit");
+
                 var result = new byte[length];
                 int offset = 0;
 
@@ -386,6 +407,9 @@ namespace PhasmaStrap.Networking
                     if (read == 0)
                         break;
 
+                    if (output.Length + read > _maxBodyBytes)
+                        throw new IOException($"Body is over the {_maxBodyBytes} byte limit");
+
                     output.Write(chunk, 0, read);
                 }
 
@@ -413,9 +437,17 @@ namespace PhasmaStrap.Networking
                     if (!int.TryParse(sizeLine, System.Globalization.NumberStyles.HexNumber, null, out int size) || size < 0)
                         throw new IOException($"Malformed chunk size '{sizeLine}'");
 
+                    if (output.Length + size > _maxBodyBytes)
+                        throw new IOException($"Chunked body is over the {_maxBodyBytes} byte limit");
+
                     if (size == 0)
                     {
-                        while (!string.IsNullOrEmpty(await ReadLineAsync(token))) { }
+                        int trailers = 0;
+                        while (!string.IsNullOrEmpty(await ReadLineAsync(token)))
+                        {
+                            if (++trailers > MaxHeaderCount)
+                                throw new IOException($"More than {MaxHeaderCount} chunk trailers");
+                        }
                         break;
                     }
 
@@ -442,15 +474,12 @@ namespace PhasmaStrap.Networking
             string method = parts[0];
             string path = parts[1];
 
-            var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            string? line;
-            while (!string.IsNullOrEmpty(line = await reader.ReadLineAsync(token)))
-            {
-                int colon = line.IndexOf(':');
-                if (colon <= 0)
-                    continue;
+            Dictionary<string, string> headers = await ReadHeadersAsync(reader, token);
 
-                headers[line[..colon].Trim()] = line[(colon + 1)..].Trim();
+            if (headers.TryGetValue("Host", out string? hostHeader) && !IsSameHost(hostHeader, sniHost))
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Refusing request for Host '{hostHeader}' on a connection made for {sniHost}");
+                return null;
             }
 
             if (headers.TryGetValue("Expect", out string? expect) && expect.Contains("100-continue", StringComparison.OrdinalIgnoreCase))
@@ -461,8 +490,47 @@ namespace PhasmaStrap.Networking
 
             byte[] body = await ReadBodyAsync(reader, headers, token);
 
-            string host = headers.TryGetValue("Host", out string? hostHeader) ? hostHeader : sniHost;
-            return new ProxiedRequest(host, method, path, headers, body);
+            return new ProxiedRequest(sniHost, method, path, headers, body);
+        }
+
+        private static bool IsSameHost(string hostHeader, string sniHost)
+        {
+            string host = hostHeader.Trim();
+            if (host.EndsWith(":443", StringComparison.Ordinal))
+                host = host[..^4];
+
+            return host.Equals(sniHost, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static async Task<Dictionary<string, string>> ReadHeadersAsync(RawHttpReader reader, CancellationToken token)
+        {
+            var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            int count = 0;
+            string? line;
+
+            while (!string.IsNullOrEmpty(line = await reader.ReadLineAsync(token)))
+            {
+                if (++count > MaxHeaderCount)
+                    throw new IOException($"More than {MaxHeaderCount} headers");
+
+                int colon = line.IndexOf(':');
+                if (colon <= 0)
+                    continue;
+
+                string name = line[..colon].Trim();
+                string value = line[(colon + 1)..].Trim();
+
+                if (!headers.TryGetValue(name, out string? existing))
+                    headers[name] = value;
+                else if (name.Equals("Set-Cookie", StringComparison.OrdinalIgnoreCase))
+                    headers[name] = existing + "\n" + value;
+                else if (name.Equals("Cookie", StringComparison.OrdinalIgnoreCase))
+                    headers[name] = existing + "; " + value;
+                else
+                    headers[name] = existing + ", " + value;
+            }
+
+            return headers;
         }
 
         private static async Task<byte[]> ReadBodyAsync(RawHttpReader reader, Dictionary<string, string> headers, CancellationToken token)
@@ -477,6 +545,22 @@ namespace PhasmaStrap.Networking
         }
 
         internal static async Task<ProxiedResponse?> ForwardToUpstreamAsync(ProxiedRequest request, CancellationToken token)
+        {
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
+            timeout.CancelAfter(UpstreamTimeoutMs);
+
+            try
+            {
+                return await ForwardToUpstreamCoreAsync(request, timeout.Token);
+            }
+            catch (OperationCanceledException) when (!token.IsCancellationRequested)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"{request.Method} {request.Host} took longer than {UpstreamTimeoutMs / 1000} seconds, giving up");
+                return null;
+            }
+        }
+
+        private static async Task<ProxiedResponse?> ForwardToUpstreamCoreAsync(ProxiedRequest request, CancellationToken token)
         {
             string? ip = await DohResolver.ResolveAsync(request.Host, token);
             if (ip is null)
@@ -515,7 +599,7 @@ namespace PhasmaStrap.Networking
                 await upstreamSsl.WriteAsync(request.Body, token);
             await upstreamSsl.FlushAsync(token);
 
-            var reader = new RawHttpReader(upstreamSsl);
+            var reader = new RawHttpReader(upstreamSsl, MaxResponseBodyBytes);
 
             int statusCode;
             string statusText;
@@ -531,16 +615,7 @@ namespace PhasmaStrap.Networking
                 statusCode = statusParts.Length > 1 && int.TryParse(statusParts[1], out int code) ? code : 502;
                 statusText = statusParts.Length > 2 ? statusParts[2] : "";
 
-                headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                string? line;
-                while (!string.IsNullOrEmpty(line = await reader.ReadLineAsync(token)))
-                {
-                    int colon = line.IndexOf(':');
-                    if (colon <= 0)
-                        continue;
-
-                    headers[line[..colon].Trim()] = line[(colon + 1)..].Trim();
-                }
+                headers = await ReadHeadersAsync(reader, token);
 
                 if (statusCode >= 200)
                     break;
@@ -592,7 +667,17 @@ namespace PhasmaStrap.Networking
                 }
 
                 using (decoder)
-                    decoder.CopyTo(output);
+                {
+                    var chunk = new byte[16384];
+                    int read;
+                    while ((read = decoder.Read(chunk, 0, chunk.Length)) > 0)
+                    {
+                        if (output.Length + read > MaxResponseBodyBytes)
+                            throw new InvalidDataException($"Decompressed body is over the {MaxResponseBodyBytes} byte limit");
+
+                        output.Write(chunk, 0, read);
+                    }
+                }
 
                 headers.Remove("Content-Encoding");
                 return output.ToArray();
@@ -612,20 +697,20 @@ namespace PhasmaStrap.Networking
             builder.Append($"HTTP/1.1 {response.StatusCode} {response.StatusText}\r\n");
             foreach (var header in response.Headers)
             {
-                if (header.Key.Equals("Content-Length", StringComparison.OrdinalIgnoreCase)
+                bool passLength = bodyless && response.StatusCode != 204 && header.Key.Equals("Content-Length", StringComparison.OrdinalIgnoreCase);
+
+                if ((header.Key.Equals("Content-Length", StringComparison.OrdinalIgnoreCase) && !passLength)
                     || header.Key.Equals("Transfer-Encoding", StringComparison.OrdinalIgnoreCase)
                     || header.Key.Equals("Connection", StringComparison.OrdinalIgnoreCase)
                     || header.Key.Equals("Keep-Alive", StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                builder.Append($"{header.Key}: {header.Value}\r\n");
+                foreach (string value in header.Value.Split('\n'))
+                    builder.Append($"{header.Key}: {value}\r\n");
             }
 
-            if (!bodyless || response.StatusCode == 304)
+            if (!bodyless)
                 builder.Append($"Content-Length: {response.Body.Length}\r\n");
-
-            if (keepAlive && bodyless && response.StatusCode != 304)
-                builder.Append("Content-Length: 0\r\n");
 
             builder.Append(keepAlive ? "Connection: keep-alive\r\n\r\n" : "Connection: close\r\n\r\n");
 

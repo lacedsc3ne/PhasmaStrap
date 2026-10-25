@@ -432,12 +432,28 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             Refresh();
         });
 
+        private async Task UpdateCacheUsageAsync()
+        {
+            if (string.IsNullOrEmpty(CacheUsage))
+                CacheUsage = "Checking the cache size...";
+
+            try
+            {
+                (int count, long bytes) = await Task.Run(() => AssetContentService.Cache.Size());
+                CacheUsage = count == 0 ? "The cache is empty." : $"{count:N0} assets, {Size(bytes)} on disk.";
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("AssetEngineViewModel::UpdateCacheUsage", $"Could not measure the cache: {ex.Message}");
+                CacheUsage = "Could not check the cache size.";
+            }
+        }
+
         private void Refresh()
         {
             Dictionary<long, string> names = GameNames();
 
-            (int count, long bytes) = AssetContentService.Cache.Size();
-            CacheUsage = count == 0 ? "The cache is empty." : $"{count:N0} assets, {Size(bytes)} on disk.";
+            _ = UpdateCacheUsageAsync();
 
             Games.Clear();
             foreach ((long placeId, int known, int cached) in AssetContentService.ListManifests().OrderByDescending(m => m.Known).Take(40))

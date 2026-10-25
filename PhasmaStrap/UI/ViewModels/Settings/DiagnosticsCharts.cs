@@ -73,7 +73,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             int count = Math.Min(MaxFrameBars, data.Count);
             double secondsPerSlice = report.Seconds > 0 ? report.Seconds / data.Count : 0;
 
-            double top = Math.Clamp(data.OrderBy(d => d).ElementAt(Math.Min(data.Count - 1, (int)(data.Count * 0.98))) * 1.6, report.MedianFrameMs * 3, 250);
+            double top = Math.Max(Math.Min(data.OrderBy(d => d).ElementAt(Math.Min(data.Count - 1, (int)(data.Count * 0.98))) * 1.6, 250), report.MedianFrameMs * 3);
             top = Math.Max(top, 20);
 
             double stutterLine = Math.Max(25, report.MedianFrameMs * 2.5);

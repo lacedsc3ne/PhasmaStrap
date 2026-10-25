@@ -12,7 +12,7 @@
     <controls:SectionHost x:Name="Host" Header="Performance" Layout="Rail">
         <controls:SectionItem Label="Frame rate" PageType="{x:Type pages:RenderingFrameRatePage}" />
         <controls:SectionItem Label="Resolution" PageType="{x:Type pages:RenderingResolutionPage}" />
-        <controls:SectionItem Label="Per-game" PageType="{x:Type pages:RenderingPerGamePage}" />
+        <controls:SectionItem Label="Per game" PageType="{x:Type pages:RenderingPerGamePage}" />
         <controls:SectionItem Label="Low-end mode" PageType="{x:Type pages:RenderingLowEndPage}" />
         <controls:SectionItem Label="Boost options" PageType="{x:Type pages:RenderingBoostPage}" />
         <controls:SectionItem Label="System" PageType="{x:Type pages:RenderingSystemPage}" />

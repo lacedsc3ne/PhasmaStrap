@@ -178,7 +178,10 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         private void AddCustomTheme()
         {
-            var dialog = new AddCustomThemeDialog();
+            var dialog = new AddCustomThemeDialog
+            {
+                Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive) ?? Application.Current.MainWindow
+            };
             dialog.ShowDialog();
 
             if (dialog.Created)
@@ -304,32 +307,52 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             if (dialog.ShowDialog() != true)
                 return;
 
+            const string LOG_IDENT = "AppearanceViewModel::ExportCustomTheme";
+
             string themeDir = Path.Combine(Paths.CustomThemes, SelectedCustomTheme);
 
-            using var memStream = new MemoryStream();
-            using var zipStream = new ZipOutputStream(memStream);
-
-            foreach (var filePath in Directory.EnumerateFiles(themeDir, "*.*", SearchOption.AllDirectories))
+            try
             {
-                string relativePath = filePath[(themeDir.Length + 1)..];
+                using var memStream = new MemoryStream();
+                using var zipStream = new ZipOutputStream(memStream);
 
-                var entry = new ZipEntry(relativePath);
-                entry.DateTime = DateTime.Now;
+                foreach (var filePath in Directory.EnumerateFiles(themeDir, "*.*", SearchOption.AllDirectories))
+                {
+                    string relativePath = filePath[(themeDir.Length + 1)..];
 
-                zipStream.PutNextEntry(entry);
+                    var entry = new ZipEntry(relativePath);
+                    entry.DateTime = DateTime.Now;
 
-                using var fileStream = File.OpenRead(filePath);
-                fileStream.CopyTo(zipStream);
+                    zipStream.PutNextEntry(entry);
+
+                    using var fileStream = File.OpenRead(filePath);
+                    fileStream.CopyTo(zipStream);
+                }
+
+                zipStream.CloseEntry();
+                zipStream.Finish();
+                memStream.Position = 0;
+
+                using (var outputStream = File.Create(dialog.FileName))
+                    memStream.CopyTo(outputStream);
+
+                App.Logger.WriteLine(LOG_IDENT, $"Exported {SelectedCustomTheme} to {dialog.FileName}");
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteException(LOG_IDENT, ex);
+                Frontend.ShowMessageBox($"Could not export the theme: {ex.Message}", MessageBoxImage.Error);
+                return;
             }
 
-            zipStream.CloseEntry();
-            zipStream.Finish();
-            memStream.Position = 0;
-
-            using var outputStream = File.OpenWrite(dialog.FileName);
-            memStream.CopyTo(outputStream);
-
-            Process.Start("explorer.exe", $"/select,\"{dialog.FileName}\"");
+            try
+            {
+                Process.Start("explorer.exe", $"/select,\"{dialog.FileName}\"");
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not show {dialog.FileName} in Explorer: {ex.Message}");
+            }
         }
 
         private void PopulateCustomThemes()
@@ -366,7 +389,11 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string? SelectedCustomTheme
         {
             get => App.Settings.Prop.SelectedCustomTheme;
-            set => App.Settings.Prop.SelectedCustomTheme = value;
+            set
+            {
+                App.Settings.Prop.SelectedCustomTheme = value;
+                OnPropertyChanged(nameof(IsCustomThemeSelected));
+            }
         }
 
         public string SelectedCustomThemeName { get; set; } = "";

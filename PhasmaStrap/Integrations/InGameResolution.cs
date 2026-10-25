@@ -39,12 +39,22 @@ namespace PhasmaStrap.Integrations
                     return;
                 }
 
-                if (_applied)
-                    RestoreLocked();
-
                 string? device = string.IsNullOrWhiteSpace(monitor) ? null : monitor;
 
                 DisplayMode? current = DisplaySystem.GetCurrentMode(device);
+
+                if (_applied && string.Equals(_savedDevice, device, StringComparison.OrdinalIgnoreCase)
+                    && current != null && current.Width == width && current.Height == height && current.RefreshRate == refreshRate)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Resolution {width}x{height}@{refreshRate} is already applied on '{device ?? "primary"}', keeping it");
+                    return;
+                }
+
+                if (_applied)
+                {
+                    RestoreLocked();
+                    current = DisplaySystem.GetCurrentMode(device);
+                }
 
                 if (current != null && current.Width == width && current.Height == height && current.RefreshRate == refreshRate)
                 {

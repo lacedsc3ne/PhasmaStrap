@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using PhasmaStrap.Integrations;
@@ -303,23 +304,38 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public ICommand JoinCommand => new RelayCommand<ServerListItem>(server =>
         {
-            if (server is null || !long.TryParse(PlaceId.Trim(), out long placeId))
+            if (server is null || _searchedPlaceId <= 0)
                 return;
 
-            ServerBrowser.JoinServer(placeId, server.JobId);
+            Join(server);
         });
 
         public ICommand JoinFastestCommand => new RelayCommand(() =>
         {
-            if (!long.TryParse(PlaceId.Trim(), out long placeId))
+            if (_searchedPlaceId <= 0)
                 return;
 
             ServerListItem? fastest = Servers.Where(s => s.Ping > 0).OrderBy(s => s.Ping).FirstOrDefault();
             if (fastest is null)
                 return;
 
-            ServerBrowser.JoinServer(placeId, fastest.JobId);
+            Join(fastest);
         });
+
+        private void Join(ServerListItem server)
+        {
+            App.Logger.WriteLine("ServerBrowserViewModel::Join", $"Joining server {server.JobId} in place {_searchedPlaceId}");
+
+            try
+            {
+                ServerBrowser.JoinServer(_searchedPlaceId, server.JobId);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("ServerBrowserViewModel::Join", $"Could not start Roblox: {ex.Message}");
+                Frontend.ShowMessageBox($"Could not start Roblox: {ex.Message}", MessageBoxImage.Error);
+            }
+        }
 
         public bool HasPingedServers => Servers.Any(s => s.Ping > 0);
 

@@ -76,9 +76,6 @@ namespace PhasmaStrap.Integrations
                     SET_WINDOW_POS_FLAGS.SWP_NOZORDER | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE
                     | SET_WINDOW_POS_FLAGS.SWP_NOOWNERZORDER | SET_WINDOW_POS_FLAGS.SWP_FRAMECHANGED);
 
-                if (PInvoke.GetForegroundWindow() != hwnd)
-                    PInvoke.SetForegroundWindow(hwnd);
-
                 _applied = true;
                 App.Logger.WriteLine(LOG_IDENT, $"Roblox window set to {width}x{height} borderless fullscreen");
                 return true;

@@ -58,7 +58,7 @@ namespace PhasmaStrap.Utility
                     }
                 },
                 state: null,
-                cancellationToken,
+                CancellationToken.None,
                 TaskCreationOptions.LongRunning,
                 TaskScheduler.Default);
 

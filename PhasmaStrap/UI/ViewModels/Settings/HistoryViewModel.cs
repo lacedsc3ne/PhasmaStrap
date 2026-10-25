@@ -97,7 +97,15 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 return;
 
             string uri = PhasmaStrap.Utility.RobloxLaunch.DeepLink(PhasmaStrap.Utility.PlaceNames.StartPlaceOf(entry.PlaceId));
-            Process.Start(Paths.Process, $"-player \"{uri}\"");
+            try
+            {
+                Process.Start(Paths.Process, $"-player \"{uri}\"");
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("HistoryViewModel", $"Could not start Roblox for place {entry.PlaceId}: {ex.Message}");
+                Frontend.ShowMessageBox($"Could not start Roblox: {ex.Message}", MessageBoxImage.Error);
+            }
         }
 
         private static void CopyLink(PlayTimeEntry? entry)

@@ -33,6 +33,10 @@ namespace PhasmaStrap.Integrations
         private readonly DiscordRpcClient _rpcClient = new(ResolveApplicationId());
         private readonly ActivityWatcher _activityWatcher;
         private readonly Queue<Message> _messageQueue = new();
+        private readonly object _presenceLock = new();
+        private const int MaxQueuedMessages = 50;
+
+        private bool _presenceIsForGame;
 
         private DiscordRPC.RichPresence? _currentPresence;
         private DiscordRPC.RichPresence? _originalPresence;
@@ -93,25 +97,41 @@ namespace PhasmaStrap.Integrations
             if (message.Command != "SetRichPresence" && message.Command != "SetLaunchData")
                 return;
 
-            if (_currentPresence is null || _originalPresence is null)
+            lock (_presenceLock)
             {
-                App.Logger.WriteLine(LOG_IDENT, "Presence is not set, enqueuing message");
-                _messageQueue.Enqueue(message);
-                return;
-            }
+                try
+                {
+                    if (_currentPresence is null || _originalPresence is null || !_presenceIsForGame)
+                    {
+                        if (_messageQueue.Count >= MaxQueuedMessages)
+                            _messageQueue.Dequeue();
 
-            if (message.Command == "SetLaunchData")
-            {
-                _currentPresence.Buttons = GetButtons();
-            }
-            else if (message.Command == "SetRichPresence")
-            {
-                ProcessSetRichPresence(message, implicitUpdate);
-            }
+                        _messageQueue.Enqueue(message);
+                        App.Logger.WriteLine(LOG_IDENT, $"Game presence is not set yet, queued {message.Command} ({_messageQueue.Count} waiting)");
+                        return;
+                    }
 
-            if (implicitUpdate)
-                UpdatePresence();
+                    if (message.Command == "SetLaunchData")
+                    {
+                        _currentPresence.Buttons = GetButtons();
+                    }
+                    else if (message.Command == "SetRichPresence")
+                    {
+                        ProcessSetRichPresence(message);
+                    }
+
+                    if (implicitUpdate)
+                        UpdatePresence();
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Ignored a {message.Command} message that could not be applied: {ex.Message}");
+                    App.Logger.WriteException(LOG_IDENT, ex);
+                }
+            }
         }
+
+        private static bool FitsDiscordLimit(string text) => Encoding.UTF8.GetByteCount(text) <= 128;
 
         private void AddToThumbnailCache(ulong id, string? url)
         {
@@ -119,7 +139,22 @@ namespace PhasmaStrap.Integrations
                 _thumbnailCache.Add(new ThumbnailCacheEntry { Id = id, Url = url });
         }
 
-        private async Task UpdatePresenceIconsAsync(ulong? smallImg, ulong? largeImg, bool implicitUpdate, CancellationToken token)
+        private async Task UpdatePresenceIconsAsync(ulong? smallImg, ulong? largeImg, CancellationToken token)
+        {
+            try
+            {
+                await FetchPresenceIconsAsync(smallImg, largeImg, token);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("DiscordRichPresence::UpdatePresenceIconsAsync", $"Could not load presence images (small {smallImg}, large {largeImg}): {ex.Message}");
+            }
+        }
+
+        private async Task FetchPresenceIconsAsync(ulong? smallImg, ulong? largeImg, CancellationToken token)
         {
             Debug.Assert(smallImg != null || largeImg != null);
 
@@ -146,13 +181,16 @@ namespace PhasmaStrap.Integrations
                 string? smallUrl = urls[0];
                 string? largeUrl = urls[1];
 
-                AddToThumbnailCache((ulong)smallImg, smallUrl);
-                AddToThumbnailCache((ulong)largeImg, largeUrl);
-
-                if (_currentPresence != null)
+                lock (_presenceLock)
                 {
-                    _currentPresence.Assets.SmallImageKey = smallUrl;
-                    _currentPresence.Assets.LargeImageKey = largeUrl;
+                    AddToThumbnailCache((ulong)smallImg, smallUrl);
+                    AddToThumbnailCache((ulong)largeImg, largeUrl);
+
+                    if (_currentPresence != null)
+                    {
+                        _currentPresence.Assets.SmallImageKey = smallUrl;
+                        _currentPresence.Assets.LargeImageKey = largeUrl;
+                    }
                 }
             }
             else if (smallImg != null)
@@ -165,10 +203,13 @@ namespace PhasmaStrap.Integrations
                     IsCircular = false
                 }, token);
 
-                AddToThumbnailCache((ulong)smallImg, url);
+                lock (_presenceLock)
+                {
+                    AddToThumbnailCache((ulong)smallImg, url);
 
-                if (_currentPresence != null)
-                    _currentPresence.Assets.SmallImageKey = url;
+                    if (_currentPresence != null)
+                        _currentPresence.Assets.SmallImageKey = url;
+                }
             }
             else if (largeImg != null)
             {
@@ -180,20 +221,25 @@ namespace PhasmaStrap.Integrations
                     IsCircular = false
                 }, token);
 
-                AddToThumbnailCache((ulong)largeImg, url);
+                lock (_presenceLock)
+                {
+                    AddToThumbnailCache((ulong)largeImg, url);
 
-                if (_currentPresence != null)
-                    _currentPresence.Assets.LargeImageKey = url;
+                    if (_currentPresence != null)
+                        _currentPresence.Assets.LargeImageKey = url;
+                }
             }
 
-            _smallImgBeingFetched = null;
-            _largeImgBeingFetched = null;
+            lock (_presenceLock)
+            {
+                _smallImgBeingFetched = null;
+                _largeImgBeingFetched = null;
 
-            if (implicitUpdate)
                 UpdatePresence();
+            }
         }
 
-        private void ProcessSetRichPresence(Message message, bool implicitUpdate)
+        private void ProcessSetRichPresence(Message message)
         {
             const string LOG_IDENT = "DiscordRichPresence::ProcessSetRichPresence";
             Models.BloxstrapRPC.RichPresence? presenceData;
@@ -225,8 +271,8 @@ namespace PhasmaStrap.Integrations
 
             if (presenceData.Details is not null)
             {
-                if (presenceData.Details.Length > 128)
-                    App.Logger.WriteLine(LOG_IDENT, $"Details cannot be longer than 128 characters");
+                if (!FitsDiscordLimit(presenceData.Details))
+                    App.Logger.WriteLine(LOG_IDENT, $"Ignored details because it is longer than 128 bytes ({Encoding.UTF8.GetByteCount(presenceData.Details)})");
                 else if (presenceData.Details == "<reset>")
                     _currentPresence.Details = _originalPresence.Details;
                 else
@@ -235,8 +281,8 @@ namespace PhasmaStrap.Integrations
 
             if (presenceData.State is not null)
             {
-                if (presenceData.State.Length > 128)
-                    App.Logger.WriteLine(LOG_IDENT, $"State cannot be longer than 128 characters");
+                if (!FitsDiscordLimit(presenceData.State))
+                    App.Logger.WriteLine(LOG_IDENT, $"Ignored state because it is longer than 128 bytes ({Encoding.UTF8.GetByteCount(presenceData.State)})");
                 else if (presenceData.State == "<reset>")
                     _currentPresence.State = _originalPresence.State;
                 else
@@ -287,7 +333,12 @@ namespace PhasmaStrap.Integrations
                     }
 
                     if (presenceData.SmallImage.HoverText is not null)
-                        _currentPresence.Assets.SmallImageText = presenceData.SmallImage.HoverText;
+                    {
+                        if (FitsDiscordLimit(presenceData.SmallImage.HoverText))
+                            _currentPresence.Assets.SmallImageText = presenceData.SmallImage.HoverText;
+                        else
+                            App.Logger.WriteLine(LOG_IDENT, $"Ignored small image hover text because it is longer than 128 bytes ({Encoding.UTF8.GetByteCount(presenceData.SmallImage.HoverText)})");
+                    }
                 }
             }
 
@@ -322,7 +373,12 @@ namespace PhasmaStrap.Integrations
                     }
 
                     if (presenceData.LargeImage.HoverText is not null)
-                        _currentPresence.Assets.LargeImageText = presenceData.LargeImage.HoverText;
+                    {
+                        if (FitsDiscordLimit(presenceData.LargeImage.HoverText))
+                            _currentPresence.Assets.LargeImageText = presenceData.LargeImage.HoverText;
+                        else
+                            App.Logger.WriteLine(LOG_IDENT, $"Ignored large image hover text because it is longer than 128 bytes ({Encoding.UTF8.GetByteCount(presenceData.LargeImage.HoverText)})");
+                    }
                 }
             }
 
@@ -333,8 +389,11 @@ namespace PhasmaStrap.Integrations
 
             if (_smallImgBeingFetched != null || _largeImgBeingFetched != null)
             {
-                _fetchThumbnailsToken = new CancellationTokenSource();
-                Task.Run(() => UpdatePresenceIconsAsync(_smallImgBeingFetched, _largeImgBeingFetched, implicitUpdate, _fetchThumbnailsToken.Token));
+                ulong? smallImg = _smallImgBeingFetched;
+                ulong? largeImg = _largeImgBeingFetched;
+                var fetchToken = new CancellationTokenSource();
+                _fetchThumbnailsToken = fetchToken;
+                Task.Run(() => UpdatePresenceIconsAsync(smallImg, largeImg, fetchToken.Token));
             }
         }
 
@@ -342,14 +401,29 @@ namespace PhasmaStrap.Integrations
         {
             App.Logger.WriteLine("DiscordRichPresence::SetVisibility", $"Setting presence visibility ({visible})");
 
-            _visible = visible;
+            lock (_presenceLock)
+            {
+                _visible = visible;
 
-            if (_visible)
-                UpdatePresence();
-            else
+                if (_visible)
+                    UpdatePresence();
+                else
+                {
+                    ClearDiscordPresence();
+                    PublishSnapshot(null);
+                }
+            }
+        }
+
+        private void ClearDiscordPresence()
+        {
+            try
             {
                 _rpcClient.ClearPresence();
-                PublishSnapshot(null);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("DiscordRichPresence::ClearDiscordPresence", $"Could not clear the Discord presence: {ex.Message}");
             }
         }
 
@@ -359,32 +433,36 @@ namespace PhasmaStrap.Integrations
 
             if (!_activityWatcher.InGame)
             {
-                _messageQueue.Clear();
-
-                if (App.Settings.Prop.DiscordShowAsPhasmaStrap)
+                lock (_presenceLock)
                 {
-                    App.Logger.WriteLine(LOG_IDENT, "Not in game, showing the idle PhasmaStrap presence");
+                    _messageQueue.Clear();
+                    _presenceIsForGame = false;
 
-                    _currentPresence = new DiscordRPC.RichPresence
+                    if (App.Settings.Prop.DiscordShowAsPhasmaStrap)
                     {
-                        Details = "In the Roblox app",
-                        State = "Not in a game",
-                        Timestamps = new Timestamps { Start = _sessionStartUtc },
-                        Assets = new Assets
-                        {
-                            LargeImageKey = PhasmaStrapLogoUrl,
-                            LargeImageText = $"PhasmaStrap v{App.Version}",
-                        }
-                    };
-                    _originalPresence = _currentPresence.Clone();
-                }
-                else
-                {
-                    App.Logger.WriteLine(LOG_IDENT, "Not in game, clearing presence");
-                    _currentPresence = _originalPresence = null;
-                }
+                        App.Logger.WriteLine(LOG_IDENT, "Not in game, showing the idle PhasmaStrap presence");
 
-                UpdatePresence();
+                        _currentPresence = new DiscordRPC.RichPresence
+                        {
+                            Details = "In the Roblox app",
+                            State = "Not in a game",
+                            Timestamps = new Timestamps { Start = _sessionStartUtc },
+                            Assets = new Assets
+                            {
+                                LargeImageKey = PhasmaStrapLogoUrl,
+                                LargeImageText = $"PhasmaStrap v{App.Version}",
+                            }
+                        };
+                        _originalPresence = _currentPresence.Clone();
+                    }
+                    else
+                    {
+                        App.Logger.WriteLine(LOG_IDENT, "Not in game, clearing presence");
+                        _currentPresence = _originalPresence = null;
+                    }
+
+                    UpdatePresence();
+                }
                 return true;
             }
 
@@ -416,8 +494,8 @@ namespace PhasmaStrap.Integrations
                 }
                 catch (Exception ex)
                 {
+                    App.Logger.WriteLine(LOG_IDENT, $"Could not load game details for universe {activity.UniverseId}, leaving the presence as it is");
                     App.Logger.WriteException(LOG_IDENT, ex);
-                    Frontend.ShowMessageBox($"{Strings.ActivityWatcher_RichPresenceLoadFailed}\n\n{ex.Message}", MessageBoxImage.Warning);
                     return false;
                 }
 
@@ -430,10 +508,17 @@ namespace PhasmaStrap.Integrations
 
             if (App.Settings.Prop.ShowAccountOnRichPresence)
             {
-                var userDetails = await UserDetails.Fetch(activity.UserId);
+                try
+                {
+                    var userDetails = await UserDetails.Fetch(activity.UserId);
 
-                smallImage = userDetails.Thumbnail.ImageUrl!;
-                smallImageText = $"Playing on {userDetails.Data.DisplayName} (@{userDetails.Data.Name})";
+                    smallImage = userDetails.Thumbnail.ImageUrl!;
+                    smallImageText = $"Playing on {userDetails.Data.DisplayName} (@{userDetails.Data.Name})";
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Could not load account details for user {activity.UserId}, using the default small image: {ex.Message}");
+                }
             }
 
             if (!_activityWatcher.InGame || placeId != activity.PlaceId)
@@ -450,37 +535,51 @@ namespace PhasmaStrap.Integrations
             };
 
             string universeName = universeDetails.Data.Name;
-            _maxPlayers = universeDetails.Data.MaxPlayers;
 
             if (universeName.Length < 2)
                 universeName = $"{universeName}\x2800\x2800\x2800";
 
-            _currentPresence = new DiscordRPC.RichPresence
+            lock (_presenceLock)
             {
-                Details = universeName,
-                State = status,
-                Timestamps = new Timestamps { Start = timeStarted.ToUniversalTime() },
-                Buttons = GetButtons(),
-                Assets = new Assets
+                try
                 {
-                    LargeImageKey = icon,
-                    LargeImageText = universeDetails.Data.Name,
-                    SmallImageKey = smallImage,
-                    SmallImageText = smallImageText
+                    _maxPlayers = universeDetails.Data.MaxPlayers;
+
+                    _currentPresence = new DiscordRPC.RichPresence
+                    {
+                        Details = universeName,
+                        State = status,
+                        Timestamps = new Timestamps { Start = timeStarted.ToUniversalTime() },
+                        Buttons = GetButtons(),
+                        Assets = new Assets
+                        {
+                            LargeImageKey = icon,
+                            LargeImageText = universeDetails.Data.Name,
+                            SmallImageKey = smallImage,
+                            SmallImageText = smallImageText
+                        }
+                    };
+
+                    ApplyUserTemplate(placeId, activity.UniverseId, universeDetails.Data.Name, status, universeDetails.Data.Creator.Name);
+
+                    _originalPresence = _currentPresence.Clone();
+                    _presenceIsForGame = true;
                 }
-            };
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Could not build the presence for place {placeId}: {ex.Message}");
+                    App.Logger.WriteException(LOG_IDENT, ex);
+                    return false;
+                }
 
-            ApplyUserTemplate(placeId, activity.UniverseId, universeDetails.Data.Name, status, universeDetails.Data.Creator.Name);
+                if (_messageQueue.Count > 0)
+                    App.Logger.WriteLine(LOG_IDENT, $"Processing {_messageQueue.Count} queued message(s)");
 
-            _originalPresence = _currentPresence.Clone();
+                while (_messageQueue.Count > 0)
+                    ProcessRPCMessage(_messageQueue.Dequeue(), false);
 
-            if (_messageQueue.Any())
-            {
-                App.Logger.WriteLine(LOG_IDENT, "Processing queued messages");
-                ProcessRPCMessage(_messageQueue.Dequeue(), false);
+                UpdatePresence();
             }
-
-            UpdatePresence();
 
             return true;
         }
@@ -510,10 +609,22 @@ namespace PhasmaStrap.Integrations
                 .Replace("{universeId}", universeId.ToString());
 
             if (!String.IsNullOrWhiteSpace(template.DetailsTemplate))
-                _currentPresence.Details = Substitute(template.DetailsTemplate);
+            {
+                string details = Substitute(template.DetailsTemplate);
+                if (FitsDiscordLimit(details))
+                    _currentPresence.Details = details;
+                else
+                    App.Logger.WriteLine(LOG_IDENT, $"Template details for place ID {placeId} are longer than 128 bytes ({Encoding.UTF8.GetByteCount(details)}), keeping the default");
+            }
 
             if (!String.IsNullOrWhiteSpace(template.StateTemplate))
-                _currentPresence.State = Substitute(template.StateTemplate);
+            {
+                string state = Substitute(template.StateTemplate);
+                if (FitsDiscordLimit(state))
+                    _currentPresence.State = state;
+                else
+                    App.Logger.WriteLine(LOG_IDENT, $"Template state for place ID {placeId} is longer than 128 bytes ({Encoding.UTF8.GetByteCount(state)}), keeping the default");
+            }
 
             if (!String.IsNullOrWhiteSpace(template.LargeImageUrl))
                 _currentPresence.Assets.LargeImageKey = template.LargeImageUrl;
@@ -521,7 +632,15 @@ namespace PhasmaStrap.Integrations
             if (!String.IsNullOrWhiteSpace(template.SmallImageUrl) && !App.Settings.Prop.ShowAccountOnRichPresence)
                 _currentPresence.Assets.SmallImageKey = template.SmallImageUrl;
 
-            if (!String.IsNullOrWhiteSpace(template.ButtonLabel) && !String.IsNullOrWhiteSpace(template.ButtonUrl))
+            bool buttonUrlValid = Uri.TryCreate(template.ButtonUrl, UriKind.Absolute, out Uri? buttonUri)
+                && (buttonUri.Scheme == Uri.UriSchemeHttps || buttonUri.Scheme == Uri.UriSchemeHttp)
+                && Encoding.UTF8.GetByteCount(template.ButtonUrl) <= 512;
+            bool buttonLabelValid = !String.IsNullOrWhiteSpace(template.ButtonLabel) && Encoding.UTF8.GetByteCount(template.ButtonLabel) <= 32;
+
+            if (!String.IsNullOrWhiteSpace(template.ButtonLabel) && !String.IsNullOrWhiteSpace(template.ButtonUrl) && (!buttonUrlValid || !buttonLabelValid))
+                App.Logger.WriteLine(LOG_IDENT, $"Skipped the template button for place ID {placeId} (label valid: {buttonLabelValid}, link valid: {buttonUrlValid})");
+
+            if (buttonUrlValid && buttonLabelValid)
             {
                 var buttons = new List<Button>
                 {
@@ -576,26 +695,37 @@ namespace PhasmaStrap.Integrations
         {
             const string LOG_IDENT = "DiscordRichPresence::UpdatePresence";
 
-            if (_currentPresence is null)
+            lock (_presenceLock)
             {
-                App.Logger.WriteLine(LOG_IDENT, $"Presence is empty, clearing");
-                _rpcClient.ClearPresence();
-                PublishSnapshot(null);
-                return;
+                if (_currentPresence is null)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Presence is empty, clearing");
+                    ClearDiscordPresence();
+                    PublishSnapshot(null);
+                    return;
+                }
+
+                App.Logger.WriteLine(LOG_IDENT, $"Updating presence");
+
+                if (_visible)
+                {
+                    try
+                    {
+                        DiscordJoin.Apply(_currentPresence, _activityWatcher.Data, _maxPlayers);
+                        _rpcClient.SetPresence(_currentPresence);
+                    }
+                    catch (Exception ex)
+                    {
+                        App.Logger.WriteLine(LOG_IDENT, $"Discord did not accept the presence: {ex.Message}");
+                        App.Logger.WriteException(LOG_IDENT, ex);
+                    }
+
+                    if (Utility.RpcTranslationService.IsEnabled)
+                        _ = ApplyPresenceTranslationAsync(_currentPresence);
+                }
+
+                PublishSnapshot(_visible ? _currentPresence : null);
             }
-
-            App.Logger.WriteLine(LOG_IDENT, $"Updating presence");
-
-            if (_visible)
-            {
-                DiscordJoin.Apply(_currentPresence, _activityWatcher.Data, _maxPlayers);
-                _rpcClient.SetPresence(_currentPresence);
-
-                if (Utility.RpcTranslationService.IsEnabled)
-                    _ = ApplyPresenceTranslationAsync(_currentPresence);
-            }
-
-            PublishSnapshot(_visible ? _currentPresence : null);
         }
 
         private void PublishSnapshot(DiscordRPC.RichPresence? presence)
@@ -631,8 +761,20 @@ namespace PhasmaStrap.Integrations
                 return;
             }
 
-            if (_visible && ReferenceEquals(_currentPresence, presence))
-                _rpcClient.SetPresence(presence);
+            lock (_presenceLock)
+            {
+                if (!_visible || !ReferenceEquals(_currentPresence, presence))
+                    return;
+
+                try
+                {
+                    _rpcClient.SetPresence(presence);
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine("DiscordRichPresence::ApplyPresenceTranslationAsync", $"Discord did not accept the translated presence: {ex.Message}");
+                }
+            }
         }
 
         public void Dispose()

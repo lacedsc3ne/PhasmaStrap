@@ -143,7 +143,11 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             if (request is not null && !measuring)
             {
-                bool roblox = Process.GetProcessesByName(App.RobloxPlayerAppName).Length > 0;
+                Process[] players = Process.GetProcessesByName(App.RobloxPlayerAppName);
+                bool roblox = players.Length > 0;
+
+                foreach (Process player in players)
+                    player.Dispose();
                 MeasureStatusText = roblox
                     ? status?.Message.Length > 0 && status.RequestId == request.Id ? status.Message : "Ordered - it starts once you are in a game."
                     : "Ordered. Start Roblox through PhasmaStrap and join a game - it is measured there, and you get a notification when it is done.";
@@ -199,7 +203,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 return points;
 
             const double width = 900, height = 70;
-            double top = Math.Clamp(data.OrderBy(d => d).ElementAt((int)(data.Count * 0.98)) * 1.6, report.MedianFrameMs * 3, 250);
+            double top = Math.Max(Math.Min(data.OrderBy(d => d).ElementAt(Math.Min(data.Count - 1, (int)(data.Count * 0.98))) * 1.6, 250), report.MedianFrameMs * 3);
             top = Math.Max(top, 20);
             scale = $"frame time, 0 - {top:0} ms";
 
@@ -406,9 +410,9 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             try
             {
-                FlagTuner.Finish(_experiment, keep);
+                bool restored = FlagTuner.Finish(_experiment, keep);
                 TunerMessage = keep is null
-                    ? "Experiment closed. Your original flags are back in place."
+                    ? restored ? "Experiment closed. Your original flags are back in place." : "Experiment closed, but the copy of your original flags was missing, so your flags were left as they are."
                     : $"Experiment closed. \"{keep.Name}\" is now your flag set (your old one is still there as the snapshot \"{_experiment.BackupSnapshot}\").";
             }
             catch (Exception ex)

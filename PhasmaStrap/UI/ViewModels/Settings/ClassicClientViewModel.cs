@@ -371,6 +371,8 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             if (string.IsNullOrWhiteSpace(SelectedClassicClient))
                 return;
 
+            bool serverWasRunning = ClassicServerManager.IsRunning;
+
             string? startError = ClassicServerManager.Start(SelectedClassicClient);
             if (startError != null)
             {
@@ -380,6 +382,12 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             if (!ClassicClients.LaunchClient(SelectedClassicClient, out string? launchError))
             {
+                if (!serverWasRunning)
+                {
+                    App.Logger.WriteLine("ClassicClientViewModel::LaunchClient", $"Client {SelectedClassicClient} did not start ({launchError}), stopping the server that was started for it");
+                    ClassicServerManager.Stop();
+                }
+
                 Frontend.ShowMessageBox(launchError ?? "Failed to launch the classic client.", System.Windows.MessageBoxImage.Error);
             }
 

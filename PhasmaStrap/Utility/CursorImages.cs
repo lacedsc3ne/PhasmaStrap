@@ -119,26 +119,64 @@ namespace PhasmaStrap.Utility
 
         public static string ChosenFolder => Path.Combine(Paths.CursorSets, ChosenFolderName);
 
-        private static string Reset()
+        private static string StagingFolder => ChosenFolder + ".new";
+
+        private static string StartStaging()
+        {
+            string staging = StagingFolder;
+
+            if (Directory.Exists(staging))
+                Directory.Delete(staging, true);
+
+            Directory.CreateDirectory(staging);
+
+            return staging;
+        }
+
+        private static void DiscardStaging()
+        {
+            try
+            {
+                if (Directory.Exists(StagingFolder))
+                    Directory.Delete(StagingFolder, true);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not clear the unfinished cursor folder: {ex.Message}");
+            }
+        }
+
+        private static string CommitStaging()
         {
             string folder = ChosenFolder;
 
             if (Directory.Exists(folder))
                 Directory.Delete(folder, true);
 
-            Directory.CreateDirectory(folder);
+            Directory.Move(StagingFolder, folder);
 
             return folder;
         }
 
         public static string BuildFromOneImage(string imagePath)
         {
-            string folder = Reset();
+            string staging = StartStaging();
 
-            WritePng(imagePath, Path.Combine(folder, "ArrowCursor.png"));
-            WritePng(imagePath, Path.Combine(folder, "ArrowFarCursor.png"));
+            try
+            {
+                WritePng(imagePath, Path.Combine(staging, "ArrowCursor.png"));
+                WritePng(imagePath, Path.Combine(staging, "ArrowFarCursor.png"));
 
-            File.WriteAllText(Path.Combine(folder, ImageNote), imagePath);
+                File.WriteAllText(Path.Combine(staging, ImageNote), imagePath);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not build a cursor from {imagePath}, kept the current one: {ex.Message}");
+                DiscardStaging();
+                throw;
+            }
+
+            string folder = CommitStaging();
 
             App.Logger.WriteLine(LOG_IDENT, $"Built an arrow cursor from {Path.GetFileName(imagePath)}");
 
@@ -147,21 +185,32 @@ namespace PhasmaStrap.Utility
 
         public static string BuildFromFolder(string sourceFolder, IEnumerable<string> canonicalNames)
         {
-            string folder = Reset();
+            string staging = StartStaging();
             int taken = 0;
 
-            foreach (string name in canonicalNames)
+            try
             {
-                string? source = FindSource(sourceFolder, name);
+                foreach (string name in canonicalNames)
+                {
+                    string? source = FindSource(sourceFolder, name);
 
-                if (source is null)
-                    continue;
+                    if (source is null)
+                        continue;
 
-                WritePng(source, Path.Combine(folder, name));
-                taken++;
+                    WritePng(source, Path.Combine(staging, name));
+                    taken++;
+                }
+
+                File.WriteAllText(Path.Combine(staging, PackNote), sourceFolder);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not take cursor images from {sourceFolder}, kept the current ones: {ex.Message}");
+                DiscardStaging();
+                throw;
             }
 
-            File.WriteAllText(Path.Combine(folder, PackNote), sourceFolder);
+            string folder = CommitStaging();
 
             App.Logger.WriteLine(LOG_IDENT, $"Took {taken} cursor image(s) from {sourceFolder}");
 

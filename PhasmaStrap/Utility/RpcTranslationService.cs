@@ -8,22 +8,12 @@ namespace PhasmaStrap.Utility
 
         private static string TargetLanguage => App.Settings.Prop.AutoTranslateLanguage;
 
-        private static string? _lastTranslatedLanguage;
-
-        public static void InvalidateLanguage()
-        {
-            _lastTranslatedLanguage = null;
-        }
-
         public static async Task ApplyToPresenceAsync(DiscordRPC.RichPresence presence)
         {
             if (presence is null)
                 return;
 
             string lang = TargetLanguage;
-
-            if (_lastTranslatedLanguage == lang)
-                return;
 
             if (!IsEnabled)
                 return;
@@ -68,8 +58,6 @@ namespace PhasmaStrap.Utility
                 string[] results = await Task.WhenAll(tasks).ConfigureAwait(false);
                 for (int i = 0; i < results.Length; i++)
                     fields[i](results[i]);
-
-                _lastTranslatedLanguage = lang;
             }
             catch (Exception ex)
             {

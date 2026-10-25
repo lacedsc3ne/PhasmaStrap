@@ -219,7 +219,7 @@ namespace PhasmaStrap.Integrations.GameChat
                 {
                     _chatMode = false;
                     QueueInput(_form.CancelChatMode);
-                    return CallNextHookEx(_hook, code, wParam, lParam);
+                    return (IntPtr)1;
                 }
 
                 if (key == Keys.Enter)

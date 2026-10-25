@@ -65,7 +65,29 @@ namespace PhasmaStrap.UI.ViewModels.Dialogs
 
         public ICommand InviteCommand { get; }
 
+        private bool _loading;
+
         private async Task RefreshAsync()
+        {
+            if (_loading)
+            {
+                App.Logger.WriteLine("PartyInviteViewModel", "Refresh skipped, the friends list is still loading");
+                return;
+            }
+
+            _loading = true;
+
+            try
+            {
+                await LoadFriendsAsync();
+            }
+            finally
+            {
+                _loading = false;
+            }
+        }
+
+        private async Task LoadFriendsAsync()
         {
             Friends.Clear();
 

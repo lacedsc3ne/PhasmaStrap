@@ -68,55 +68,82 @@ namespace PhasmaStrap.Integrations
         {
             const string LOG_IDENT = "ActivityWatcher::Start";
 
-            FileInfo logFileInfo;
-
-            if (String.IsNullOrEmpty(LogLocation))
+            try
             {
-                string logDirectory = Path.Combine(Paths.LocalAppData, "Roblox\\logs");
+                FileInfo? logFileInfo;
 
-                if (!Directory.Exists(logDirectory))
-                    return;
-
-                App.Logger.WriteLine(LOG_IDENT, "Opening Roblox log file...");
-
-                while (true)
+                if (String.IsNullOrEmpty(LogLocation))
                 {
-                    logFileInfo = new DirectoryInfo(logDirectory)
-                        .GetFiles()
-                        .Where(x => x.Name.Contains("Player", StringComparison.OrdinalIgnoreCase) && x.CreationTime <= DateTime.Now)
-                        .OrderByDescending(x => x.CreationTime)
-                        .First();
+                    string logDirectory = Path.Combine(Paths.LocalAppData, "Roblox\\logs");
 
-                    if (logFileInfo.CreationTime.AddSeconds(15) > DateTime.Now)
-                        break;
+                    App.Logger.WriteLine(LOG_IDENT, "Opening Roblox log file...");
 
-                    App.Logger.WriteLine(LOG_IDENT, $"Could not find recent enough log file, waiting... (newest is {logFileInfo.Name})");
-                    await Task.Delay(1000);
+                    while (true)
+                    {
+                        if (IsDisposed)
+                        {
+                            App.Logger.WriteLine(LOG_IDENT, "Stopped waiting for a log file because the watcher was disposed");
+                            return;
+                        }
+
+                        logFileInfo = null;
+
+                        if (Directory.Exists(logDirectory))
+                        {
+                            logFileInfo = new DirectoryInfo(logDirectory)
+                                .GetFiles()
+                                .Where(x => x.Name.Contains("Player", StringComparison.OrdinalIgnoreCase) && x.CreationTime <= DateTime.Now)
+                                .OrderByDescending(x => x.CreationTime)
+                                .FirstOrDefault();
+                        }
+
+                        if (logFileInfo is not null && logFileInfo.CreationTime.AddSeconds(15) > DateTime.Now)
+                            break;
+
+                        App.Logger.WriteLine(LOG_IDENT, $"Could not find recent enough log file, waiting... (newest is {logFileInfo?.Name ?? "none"})");
+                        await Task.Delay(1000);
+                    }
+
+                    LogLocation = logFileInfo.FullName;
+                }
+                else
+                {
+                    logFileInfo = new FileInfo(LogLocation);
                 }
 
-                LogLocation = logFileInfo.FullName;
+                OnLogOpen?.Invoke(this, EventArgs.Empty);
+
+                var logFileStream = logFileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+
+                App.Logger.WriteLine(LOG_IDENT, $"Opened {LogLocation}");
+
+                using var streamReader = new StreamReader(logFileStream);
+
+                while (!IsDisposed)
+                {
+                    string? log = await streamReader.ReadLineAsync();
+
+                    if (log is null)
+                    {
+                        await Task.Delay(1000);
+                        continue;
+                    }
+
+                    try
+                    {
+                        ReadLogEntry(log);
+                    }
+                    catch (Exception ex)
+                    {
+                        App.Logger.WriteLine(LOG_IDENT, $"Skipped a log line that could not be handled: {ex.Message}");
+                        App.Logger.WriteException(LOG_IDENT, ex);
+                    }
+                }
             }
-            else
+            catch (Exception ex)
             {
-                logFileInfo = new FileInfo(LogLocation);
-            }
-
-            OnLogOpen?.Invoke(this, EventArgs.Empty);
-
-            var logFileStream = logFileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-
-            App.Logger.WriteLine(LOG_IDENT, $"Opened {LogLocation}");
-
-            using var streamReader = new StreamReader(logFileStream);
-
-            while (!IsDisposed)
-            {
-                string? log = await streamReader.ReadLineAsync();
-
-                if (log is null)
-                    await Task.Delay(1000);
-                else
-                    ReadLogEntry(log);
+                App.Logger.WriteLine(LOG_IDENT, $"The activity watcher stopped (log: {LogLocation ?? "none"})");
+                App.Logger.WriteException(LOG_IDENT, ex);
             }
         }
 
@@ -382,7 +409,12 @@ namespace PhasmaStrap.Integrations
             App.Logger.WriteLine(logIdent, $"Disconnected from Game ({Data})");
 
             Data.TimeLeft = DateTime.Now;
-            History.Insert(0, Data);
+            lock (History)
+            {
+                History.Insert(0, Data);
+                if (History.Count > 200)
+                    History.RemoveRange(200, History.Count - 200);
+            }
 
             InGame = false;
             Data = new();

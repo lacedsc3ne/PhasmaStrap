@@ -266,8 +266,12 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string ModCursorText { get; private set; } = "Roblox default";
         public string ModDeathSoundText { get; private set; } = "Roblox default";
 
-        private void LoadModSummary()
+        public void LoadModSummary()
         {
+            ModFontText = "Roblox default";
+            ModCursorText = "Roblox default";
+            ModDeathSoundText = "Roblox default";
+
             try
             {
                 if (File.Exists(Paths.CustomFont))
@@ -300,6 +304,10 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             {
                 App.Logger.WriteLine("BehaviourViewModel", $"Could not read the mods summary: {ex.Message}");
             }
+
+            OnPropertyChanged(nameof(ModFontText));
+            OnPropertyChanged(nameof(ModCursorText));
+            OnPropertyChanged(nameof(ModDeathSoundText));
         }
 
         public bool ConfirmLaunches

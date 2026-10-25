@@ -350,7 +350,7 @@ namespace PhasmaStrap.UI.Elements.Bootstrapper
             uiElement.FontWeight = GetFontWeightFromXElement(xmlElement);
             uiElement.FontStyle = GetFontStyleFromXElement(xmlElement);
 
-            string? fontFamily = GetFullPath(dialog, xmlElement.Attribute("FontFamily")?.Value);
+            string? fontFamily = GetFullPath(dialog, xmlElement.Attribute("FontFamily")?.Value, xmlElement, "FontFamily");
             if (fontFamily != null)
                 uiElement.FontFamily = new System.Windows.Media.FontFamily(fontFamily);
         }
@@ -540,7 +540,7 @@ namespace PhasmaStrap.UI.Elements.Bootstrapper
             textBlock.IsHyphenationEnabled = ParseXmlAttribute<bool>(xmlElement, "IsHyphenationEnabled", false);
             textBlock.BaselineOffset = ParseXmlAttribute<double>(xmlElement, "BaselineOffset", double.NaN);
 
-            string? fontFamily = GetFullPath(dialog, xmlElement.Attribute("FontFamily")?.Value);
+            string? fontFamily = GetFullPath(dialog, xmlElement.Attribute("FontFamily")?.Value, xmlElement, "FontFamily");
             if (fontFamily != null)
                 textBlock.FontFamily = new System.Windows.Media.FontFamily(fontFamily);
 

@@ -25,6 +25,22 @@ namespace PhasmaStrap.Integrations
 
         private static string Build()
         {
+            try
+            {
+                System.Windows.Application? app = System.Windows.Application.Current;
+                if (app is not null && !app.Dispatcher.CheckAccess())
+                    return app.Dispatcher.Invoke(BuildFromResources);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("StudioTheme", $"Could not read the app colours, using the defaults: {ex.Message}");
+            }
+
+            return BuildFromResources();
+        }
+
+        private static string BuildFromResources()
+        {
             Color background = Composite(ResColor(new[] { "ApplicationBackgroundBrush", "ApplicationBackgroundColor" }, Color.FromRgb(14, 14, 18)), Color.FromRgb(14, 14, 18));
             Color section = Composite(ResColor(new[] { "CardBackgroundFillColorDefaultBrush", "CardBackgroundFillColorDefault" }, Color.FromRgb(22, 22, 27)), background);
             Color row = Composite(ResColor(new[] { "ControlFillColorDefaultBrush", "ControlFillColorDefault" }, Color.FromRgb(29, 29, 35)), section);
@@ -56,26 +72,16 @@ namespace PhasmaStrap.Integrations
                 if (app is null)
                     return fallback;
 
-                Color? result = null;
-                app.Dispatcher.Invoke(() =>
+                foreach (string key in keys)
                 {
-                    foreach (string key in keys)
-                    {
-                        object? resource = app.TryFindResource(key);
-                        if (resource is Color color)
-                        {
-                            result = color;
-                            break;
-                        }
-                        if (resource is SolidColorBrush brush)
-                        {
-                            result = brush.Color;
-                            break;
-                        }
-                    }
-                });
+                    object? resource = app.TryFindResource(key);
+                    if (resource is Color color)
+                        return color;
+                    if (resource is SolidColorBrush brush)
+                        return brush.Color;
+                }
 
-                return result ?? fallback;
+                return fallback;
             }
             catch
             {

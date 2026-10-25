@@ -82,10 +82,23 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             IsBusy = true;
             StatusText = IsInstalled ? "Checking for updates..." : "Installing Rojo...";
 
+            bool wasInstalled = IsInstalled;
+            string? versionBefore = RojoManager.InstalledVersion;
+
             try
             {
                 await RojoManager.EnsureInstalledAsync(ReportProgress, CancellationToken.None);
-                StatusText = $"Rojo {RojoManager.InstalledVersion} ready.";
+
+                string? versionAfter = RojoManager.InstalledVersion;
+
+                if (!wasInstalled)
+                    StatusText = $"Rojo {versionAfter} installed and ready.";
+                else if (versionBefore == versionAfter)
+                    StatusText = $"Rojo {versionAfter} is already up to date.";
+                else
+                    StatusText = $"Rojo updated to {versionAfter} and ready.";
+
+                App.Logger.WriteLine("RojoViewModel::InstallOrUpdateAsync", $"Rojo was {versionBefore ?? "not installed"}, now {versionAfter}");
             }
             catch (Exception ex)
             {

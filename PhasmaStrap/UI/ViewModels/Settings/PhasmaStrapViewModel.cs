@@ -186,53 +186,65 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             if (dialog.ShowDialog() != true)
                 return;
 
-            using var memStream = new MemoryStream();
-            using var zipStream = new ZipOutputStream(memStream);
+            const string LOG_IDENT = "PhasmaStrapViewModel::ExportData";
 
-            if (ShouldExportConfig)
+            try
             {
-                var files = new List<string>()
+                using var memStream = new MemoryStream();
+                using var zipStream = new ZipOutputStream(memStream);
+
+                if (ShouldExportConfig)
                 {
-                    App.Settings.FileLocation,
-                    App.State.FileLocation,
-                    App.FastFlags.FileLocation,
-                    App.FlagProfiles.FileLocation
-                };
+                    var files = new List<string>()
+                    {
+                        App.Settings.FileLocation,
+                        App.State.FileLocation,
+                        App.FastFlags.FileLocation,
+                        App.FlagProfiles.FileLocation
+                    };
 
-                AddFilesToZipStream(zipStream, files.Where(File.Exists), "Config/");
+                    AddFilesToZipStream(zipStream, files.Where(File.Exists), "Config/");
+                }
+
+                if (ShouldExportLogs && Directory.Exists(Paths.Logs))
+                {
+                    var files = Directory.GetFiles(Paths.Logs)
+                        .Where(x => !x.Equals(App.Logger.FileLocation, StringComparison.OrdinalIgnoreCase));
+
+                    AddFilesToZipStream(zipStream, files, "Logs/");
+                }
+
+                if (ShouldExportSystemInfo)
+                {
+                    string specs = string.Join(Environment.NewLine,
+                        $"PhasmaStrap {App.Version}",
+                        $"OS: {Environment.OSVersion.VersionString} ({(Environment.Is64BitOperatingSystem ? "64" : "32")}-bit)",
+                        $".NET: {Environment.Version}",
+                        $"GPU(s): {PhasmaStrap.Utility.GpuInventory.Summary}",
+                        $"Generated: {DateTime.UtcNow:u}");
+
+                    var entry = new ZipEntry("SystemInfo.txt") { DateTime = DateTime.Now };
+                    zipStream.PutNextEntry(entry);
+                    byte[] bytes = Encoding.UTF8.GetBytes(specs);
+                    zipStream.Write(bytes, 0, bytes.Length);
+                }
+
+                zipStream.CloseEntry();
+                zipStream.Finish();
+                memStream.Position = 0;
+
+                using (var outputStream = File.Create(dialog.FileName))
+                    memStream.CopyTo(outputStream);
+
+                App.Logger.WriteLine(LOG_IDENT, $"Exported data to '{dialog.FileName}'");
+                Process.Start("explorer.exe", $"/select,\"{dialog.FileName}\"");
             }
-
-            if (ShouldExportLogs && Directory.Exists(Paths.Logs))
+            catch (Exception ex)
             {
-                var files = Directory.GetFiles(Paths.Logs)
-                    .Where(x => !x.Equals(App.Logger.FileLocation, StringComparison.OrdinalIgnoreCase));
-
-                AddFilesToZipStream(zipStream, files, "Logs/");
+                App.Logger.WriteLine(LOG_IDENT, $"Export to '{dialog.FileName}' failed: {ex.Message}");
+                App.Logger.WriteException(LOG_IDENT, ex);
+                Frontend.ShowMessageBox($"Could not save the export file:\n{ex.Message}", MessageBoxImage.Error);
             }
-
-            if (ShouldExportSystemInfo)
-            {
-                string specs = string.Join(Environment.NewLine,
-                    $"PhasmaStrap {App.Version}",
-                    $"OS: {Environment.OSVersion.VersionString} ({(Environment.Is64BitOperatingSystem ? "64" : "32")}-bit)",
-                    $".NET: {Environment.Version}",
-                    $"GPU(s): {PhasmaStrap.Utility.GpuInventory.Summary}",
-                    $"Generated: {DateTime.UtcNow:u}");
-
-                var entry = new ZipEntry("SystemInfo.txt") { DateTime = DateTime.Now };
-                zipStream.PutNextEntry(entry);
-                byte[] bytes = Encoding.UTF8.GetBytes(specs);
-                zipStream.Write(bytes, 0, bytes.Length);
-            }
-
-            zipStream.CloseEntry();
-            zipStream.Finish();
-            memStream.Position = 0;
-
-            using var outputStream = File.OpenWrite(dialog.FileName);
-            memStream.CopyTo(outputStream);
-
-            Process.Start("explorer.exe", $"/select,\"{dialog.FileName}\"");
         }
 
         public sealed class BackupItem
@@ -440,7 +452,12 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             App.FlagProfiles.Load(alertFailure: false);
             App.FlagProfiles.NotifyEdited();
 
-            Frontend.ShowMessageBox($"Imported {imported} config file(s).", MessageBoxImage.Information);
+            App.Logger.WriteLine(LOG_IDENT, $"Imported {imported} config file(s) from '{dialog.FileName}', restarting the settings window");
+            Frontend.ShowMessageBox($"Imported {imported} config file(s). The settings window restarts now.", MessageBoxImage.Information);
+
+            var window = Application.Current.Windows.OfType<Elements.Settings.MainWindow>().FirstOrDefault();
+            if (window?.DataContext is MainWindowViewModel main)
+                main.RestartCommand.Execute(null);
         }
 
         private void AddFilesToZipStream(ZipOutputStream zipStream, IEnumerable<string> files, string directory)

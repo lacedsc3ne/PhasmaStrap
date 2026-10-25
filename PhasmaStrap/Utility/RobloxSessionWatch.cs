@@ -166,7 +166,10 @@ namespace PhasmaStrap.Utility
             try
             {
                 string argument = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(data)));
-                Process.Start(Paths.Process, $"-watcher \"{argument}\"");
+                var startInfo = new ProcessStartInfo(Paths.Process);
+                startInfo.ArgumentList.Add("-watcher");
+                startInfo.ArgumentList.Add(argument);
+                using Process? watcher = Process.Start(startInfo);
 
                 App.Logger.WriteLine(LOG_IDENT, $"Watching {player.Id} with {Path.GetFileName(log)}");
             }

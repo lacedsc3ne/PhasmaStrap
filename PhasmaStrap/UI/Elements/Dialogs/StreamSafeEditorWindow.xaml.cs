@@ -76,6 +76,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             Loaded += (_, _) => GrabFromRoblox();
             Closing += OnClosing;
             PreviewKeyDown += OnPreviewKeyDown;
+            KeyDown += OnKeyDown;
         }
 
         private AreaItem AddArea(string name, double x, double y, double w, double h)
@@ -364,6 +365,16 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             }
         }
 
+        private void OnKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.Escape)
+                return;
+
+            App.Logger.WriteLine("StreamSafeEditor", "Escape pressed, closing");
+            e.Handled = true;
+            Close();
+        }
+
         private void Add_Click(object sender, RoutedEventArgs e)
         {
             if (_areas.Count >= StreamSafe.MaxRegions)
@@ -411,7 +422,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
             MessageBoxResult answer = Frontend.ShowMessageBox("Use these areas?\n\nYes applies them, No closes without changing anything.", MessageBoxImage.Question, MessageBoxButton.YesNoCancel);
 
-            if (answer == MessageBoxResult.Cancel)
+            if (answer is MessageBoxResult.Cancel or MessageBoxResult.None)
                 e.Cancel = true;
             else if (answer == MessageBoxResult.Yes)
                 Apply();

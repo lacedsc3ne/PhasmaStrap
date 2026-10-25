@@ -281,7 +281,13 @@ namespace PhasmaStrap.UI.ViewModels.Installer
                 return;
             }
 
+            const string LOG_IDENT = "ManagerViewModel::RelocateToDrive";
+
             string newBase = Path.Combine(driveRoot, Path.GetFileName(oldBase.TrimEnd(Path.DirectorySeparatorChar)));
+            bool createdNewBase = !Directory.Exists(newBase);
+            bool switched = false;
+
+            App.Logger.WriteLine(LOG_IDENT, $"Moving install from {oldBase} to {newBase}");
 
             try
             {
@@ -292,31 +298,83 @@ namespace PhasmaStrap.UI.ViewModels.Installer
                 File.Delete(testFile);
 
                 CopyDirectory(oldBase, newBase);
-                Directory.Delete(oldBase, true);
 
                 Paths.Initialize(newBase);
-
-                using (var uninstallKey = Registry.CurrentUser.CreateSubKey(App.UninstallKey))
-                {
-                    uninstallKey.SetValueSafe("DisplayIcon", $"{Paths.Application},0");
-                    uninstallKey.SetValueSafe("InstallLocation", Paths.Base);
-                    uninstallKey.SetValueSafe("ModifyPath", $"\"{Paths.Application}\" -settings");
-                    uninstallKey.SetValueSafe("QuietUninstallString", $"\"{Paths.Application}\" -uninstall -quiet");
-                    uninstallKey.SetValueSafe("UninstallString", $"\"{Paths.Application}\" -uninstall");
-                }
-
-                WindowsRegistry.RegisterPlayer();
-
-                RefreshShortcut(Path.Combine(Paths.Desktop, $"{App.ProjectName}.lnk"));
-                RefreshShortcut(Path.Combine(Paths.WindowsStartMenu, $"{App.ProjectName}.lnk"));
+                switched = true;
+                WriteInstallLocation();
             }
             catch (Exception ex)
             {
-                App.Logger.WriteException("ManagerViewModel::RelocateToDrive", ex);
+                App.Logger.WriteException(LOG_IDENT, ex);
+                UndoRelocate(oldBase, newBase, createdNewBase, switched);
                 Frontend.ShowMessageBox(String.Format(Strings.Installer_Manager_Map_Failed, ex.Message), MessageBoxImage.Error);
+                OnPropertyChanged(nameof(SelectedDrive));
+                return;
+            }
+
+            try
+            {
+                Directory.Delete(oldBase, true);
+                App.Logger.WriteLine(LOG_IDENT, $"Removed the old install at {oldBase}");
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"The new install at {newBase} is in use, but some old files at {oldBase} could not be removed: {ex.Message}");
             }
 
             OnPropertyChanged(nameof(SelectedDrive));
+        }
+
+        private static void WriteInstallLocation()
+        {
+            using (var uninstallKey = Registry.CurrentUser.CreateSubKey(App.UninstallKey))
+            {
+                uninstallKey.SetValueSafe("DisplayIcon", $"{Paths.Application},0");
+                uninstallKey.SetValueSafe("InstallLocation", Paths.Base);
+                uninstallKey.SetValueSafe("ModifyPath", $"\"{Paths.Application}\" -settings");
+                uninstallKey.SetValueSafe("QuietUninstallString", $"\"{Paths.Application}\" -uninstall -quiet");
+                uninstallKey.SetValueSafe("UninstallString", $"\"{Paths.Application}\" -uninstall");
+            }
+
+            WindowsRegistry.RegisterPlayer();
+
+            RefreshShortcut(Path.Combine(Paths.Desktop, $"{App.ProjectName}.lnk"));
+            RefreshShortcut(Path.Combine(Paths.WindowsStartMenu, $"{App.ProjectName}.lnk"));
+        }
+
+        private static void UndoRelocate(string oldBase, string newBase, bool createdNewBase, bool switched)
+        {
+            const string LOG_IDENT = "ManagerViewModel::UndoRelocate";
+
+            if (switched)
+            {
+                try
+                {
+                    Paths.Initialize(oldBase);
+                    WriteInstallLocation();
+                    App.Logger.WriteLine(LOG_IDENT, $"Pointed the install back at {oldBase}");
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Could not point the install back at {oldBase}: {ex.Message}");
+                }
+            }
+
+            if (!createdNewBase)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Leaving {newBase} in place, it existed before the move");
+                return;
+            }
+
+            try
+            {
+                Directory.Delete(newBase, true);
+                App.Logger.WriteLine(LOG_IDENT, $"Removed the partial copy at {newBase}");
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not remove the partial copy at {newBase}: {ex.Message}");
+            }
         }
 
         private static void RefreshShortcut(string lnkPath)

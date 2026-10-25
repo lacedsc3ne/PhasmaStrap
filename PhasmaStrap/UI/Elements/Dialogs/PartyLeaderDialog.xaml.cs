@@ -71,6 +71,8 @@ namespace PhasmaStrap.UI.Elements.Dialogs
                 dialog.Height = 460;
                 dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
                 dialog.Scrim.Background = Brushes.Transparent;
+                dialog.ShowInTaskbar = true;
+                App.Logger.WriteLine("PartyLeaderDialog", $"No settings window to cover (owner found: {owner is not null}), showing on its own");
             }
 
             dialog.ShowDialog();

@@ -38,6 +38,8 @@ namespace PhasmaStrap.Utility
         private static readonly TimeSpan ClaimInterval = TimeSpan.FromMinutes(1);
 
         private static CancellationTokenSource? _cts;
+
+        private static readonly HashSet<string> _shownThisRun = new();
         private static Thread? _thread;
 
         public static void Start()
@@ -130,14 +132,20 @@ namespace PhasmaStrap.Utility
 
             foreach (AccountNotice notice in list.Items.Where(item => !item.Read))
             {
+                shown.Add(notice.Id);
+
+                lock (_shownThisRun)
+                {
+                    if (!_shownThisRun.Add(notice.Id))
+                        continue;
+                }
+
                 NotificationCenter.Notify(
                     notice.Title,
                     notice.Detail,
                     NotificationCategory.General,
                     durationSeconds: 8,
                     kind: NotificationKindId.GalleryReview);
-
-                shown.Add(notice.Id);
             }
 
             if (shown.Count > 0)

@@ -353,7 +353,7 @@
                     <StackPanel Margin="0,0,0,10">
                         <WrapPanel>
                             <ui:TextBox x:Name="NewNameTextBox" Width="170" Margin="0,0,6,8" PlaceholderText="{x:Static resources:Strings.Common_Name}" />
-                            <ui:TextBox x:Name="NewTypeTextBox" Width="90" Margin="0,0,6,8" Text="{x:Static resources:Strings.Menu_GBSEditor_Token}" PlaceholderText="{x:Static resources:Strings.Menu_GBSEditor_Type}" />
+                            <ui:TextBox x:Name="NewTypeTextBox" Width="120" Margin="0,0,6,8" Text="{x:Static resources:Strings.Menu_GBSEditor_Token}" PlaceholderText="{x:Static resources:Strings.Menu_GBSEditor_Type}" />
                             <ui:TextBox x:Name="NewValueTextBox" Width="140" Margin="0,0,6,8" PlaceholderText="{x:Static resources:Strings.Common_Value}" />
                             <Button Margin="0,0,6,8" Style="{DynamicResource PhasmaAccentButton}" Content="{x:Static resources:Strings.Menu_GBSEditor_AddNew}" Click="AddButton_Click" />
                             <Button Margin="0,0,0,8" Content="{x:Static resources:Strings.Menu_GBSEditor_DeleteSelected}" Click="DeleteButton_Click">

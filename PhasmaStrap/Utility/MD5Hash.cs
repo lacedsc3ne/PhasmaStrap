@@ -20,7 +20,6 @@ namespace PhasmaStrap.Utility
 
         public static string FromFile(string filename)
         {
-            using MD5 md5 = MD5.Create();
             using FileStream stream = File.OpenRead(filename);
             return FromStream(stream);
         }

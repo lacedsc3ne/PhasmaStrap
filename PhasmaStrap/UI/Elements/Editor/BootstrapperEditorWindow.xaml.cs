@@ -427,9 +427,16 @@ namespace PhasmaStrap.UI.Elements.Editor
                 if (text == UIXML.Text)
                     return;
 
+                if (_viewModel.CodeChanged)
+                {
+                    App.Logger?.WriteLine("BootstrapperEditorWindow", "Theme.xml changed outside the editor but there are unsaved edits here, not reloading it");
+                    return;
+                }
+
                 int caret = UIXML.CaretOffset;
                 UIXML.Text = text;
                 UIXML.CaretOffset = Math.Min(caret, text.Length);
+                _viewModel.CodeChanged = false;
 
                 Snackbar.Show(Strings.CustomTheme_Editor_OpenExternal_Title, string.Format(Strings.CustomTheme_Editor_OpenExternal_Reloaded, _externalEditor?.Name ?? ""));
             }
@@ -595,7 +602,7 @@ namespace PhasmaStrap.UI.Elements.Editor
         {
             CloseCompletionWindow();
 
-            if (UIXML.Text.Length > 2 && UIXML.Text[UIXML.CaretOffset - 2] == '<')
+            if (UIXML.CaretOffset >= 3 && UIXML.Text[UIXML.CaretOffset - 2] == '<')
             {
                 var elementName = GetElementAtCursor(UIXML.Text, UIXML.CaretOffset - 3);
                 if (elementName == null)

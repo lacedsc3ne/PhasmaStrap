@@ -95,11 +95,20 @@ namespace PhasmaStrap.UI
             };
         }
 
+        public static Window? ActiveOwner() =>
+            Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive && w.IsVisible)
+            ?? Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsVisible && w is Elements.Settings.MainWindow);
+
         private static MessageBoxResult ShowFluentMessageBox(string message, MessageBoxImage icon, MessageBoxButton buttons)
         {
             return Application.Current.Dispatcher.Invoke(new Func<MessageBoxResult>(() =>
             {
                 var messagebox = new FluentMessageBox(message, icon, buttons);
+
+                Window? owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive && w.IsVisible && w != messagebox);
+                if (owner is not null)
+                    messagebox.Owner = owner;
+
                 messagebox.ShowDialog();
                 return messagebox.Result;
             }));
@@ -115,6 +124,18 @@ namespace PhasmaStrap.UI
             };
 
             notifyIcon.ShowBalloonTip(timeout, title, message, icon);
+
+            _ = Task.Delay(TimeSpan.FromSeconds(10)).ContinueWith(_ =>
+            {
+                try
+                {
+                    notifyIcon.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine("Frontend::ShowBalloonTip", $"Could not remove the balloon tray icon: {ex.Message}");
+                }
+            });
         }
     }
 }

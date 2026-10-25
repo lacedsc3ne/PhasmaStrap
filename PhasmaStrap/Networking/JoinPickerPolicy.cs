@@ -63,6 +63,10 @@ namespace PhasmaStrap.Networking
                     return null;
                 }
 
+                byte[]? spoofed = GameCreatorSpoofer.ProcessResponse(rewritten, response);
+                if (spoofed is not null)
+                    response = response with { Body = spoofed };
+
                 return response;
             }
             catch (Exception ex)

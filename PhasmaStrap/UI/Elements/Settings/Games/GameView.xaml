@@ -436,9 +436,9 @@
         <!--  SERVERS: places rail, public servers, launch setup  -->
         <Grid Grid.Row="2" Visibility="{Binding ServersTabVisibility}">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="232" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="290" />
+                <ColumnDefinition Width="0.2*" MinWidth="150" MaxWidth="232" />
+                <ColumnDefinition Width="0.55*" />
+                <ColumnDefinition Width="0.25*" MinWidth="220" MaxWidth="290" />
             </Grid.ColumnDefinitions>
 
             <!--  Places and subplaces  -->
@@ -562,7 +562,7 @@
                 <Grid DockPanel.Dock="Top" Margin="12,0,12,6">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="140" />
-                        <ColumnDefinition Width="*" MinWidth="150" />
+                        <ColumnDefinition Width="*" MinWidth="70" />
                         <ColumnDefinition Width="86" />
                         <ColumnDefinition Width="44" />
                         <ColumnDefinition Width="70" />
@@ -592,7 +592,7 @@
                             <Grid MinHeight="26">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="140" />
-                                    <ColumnDefinition Width="*" MinWidth="150" />
+                                    <ColumnDefinition Width="*" MinWidth="70" />
                                     <ColumnDefinition Width="86" />
                                     <ColumnDefinition Width="44" />
                                     <ColumnDefinition Width="70" />
@@ -623,13 +623,19 @@
                                     </TextBlock>
                                 </StackPanel>
 
-                                <StackPanel Grid.Column="1" Margin="0,0,10,0" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Grid Width="120" Height="5" VerticalAlignment="Center">
-                                        <Border CornerRadius="3" Background="{DynamicResource PhasmaSelectedBrush}" />
-                                        <Border Width="{Binding FillWidth}" HorizontalAlignment="Left" CornerRadius="3" Background="{DynamicResource PhasmaAccentBrush}" />
-                                    </Grid>
-                                    <TextBlock Margin="10,0,0,0" Text="{Binding PlayersText}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                </StackPanel>
+                                <Grid Grid.Column="1" Margin="0,0,10,0" VerticalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" MaxWidth="120" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Viewbox Height="5" VerticalAlignment="Center" Stretch="Fill" StretchDirection="DownOnly">
+                                        <Grid Width="120" Height="5">
+                                            <Border CornerRadius="3" Background="{DynamicResource PhasmaSelectedBrush}" />
+                                            <Border Width="{Binding FillWidth}" HorizontalAlignment="Left" CornerRadius="3" Background="{DynamicResource PhasmaAccentBrush}" />
+                                        </Grid>
+                                    </Viewbox>
+                                    <TextBlock Grid.Column="1" Margin="10,0,0,0" Text="{Binding PlayersText}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                </Grid>
                                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                                     <Ellipse Margin="0,0,8,0" Style="{StaticResource PingDot}" />
                                     <TextBlock Text="{Binding PingText}" FontSize="12.5" FontWeight="SemiBold" />

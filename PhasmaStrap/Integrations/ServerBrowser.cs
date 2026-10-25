@@ -67,9 +67,9 @@ namespace PhasmaStrap.Integrations
                                 items.Add(new ServerListItem
                                 {
                                     JobId = jobId,
-                                    Playing = el.TryGetProperty("playing", out var p) && p.TryGetInt32(out int playing) ? playing : 0,
-                                    MaxPlayers = el.TryGetProperty("maxPlayers", out var m) && m.TryGetInt32(out int max) ? max : 0,
-                                    Ping = el.TryGetProperty("ping", out var pg) && pg.TryGetInt32(out int ping) ? ping : -1,
+                                    Playing = el.TryGetProperty("playing", out var p) && p.ValueKind == JsonValueKind.Number && p.TryGetInt32(out int playing) ? playing : 0,
+                                    MaxPlayers = el.TryGetProperty("maxPlayers", out var m) && m.ValueKind == JsonValueKind.Number && m.TryGetInt32(out int max) ? max : 0,
+                                    Ping = el.TryGetProperty("ping", out var pg) && pg.ValueKind == JsonValueKind.Number && pg.TryGetInt32(out int ping) ? ping : -1,
                                     Fps = el.TryGetProperty("fps", out var fp) && fp.ValueKind == JsonValueKind.Number && fp.TryGetDouble(out double fps) ? fps : 0,
                                 });
                             }
@@ -90,7 +90,8 @@ namespace PhasmaStrap.Integrations
         public static void JoinServer(long placeId, string jobId)
         {
             string uri = PhasmaStrap.Utility.RobloxLaunch.DeepLink(placeId, jobId);
-            Process.Start(Paths.Process, $"-player \"{uri}\"");
+            App.Logger.WriteLine(LOG_IDENT, $"Joining server {jobId} in place {placeId}");
+            Process.Start(Paths.Process, $"-player \"{uri}\"")?.Dispose();
         }
     }
 }

@@ -2,6 +2,7 @@ using System.Media;
 using System.Web;
 using System.Windows;
 using System.Windows.Interop;
+using System.Windows.Input;
 
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -15,6 +16,15 @@ namespace PhasmaStrap.UI.Elements.Dialogs
         public ExceptionDialog(Exception exception)
         {
             InitializeComponent();
+            KeyDown += (_, e) =>
+            {
+                if (e.Key != Key.Escape)
+                    return;
+
+                App.Logger.WriteLine("ExceptionDialog", "Escape pressed, closing");
+                e.Handled = true;
+                Close();
+            };
             AddException(exception);
 
             if (!App.Logger.Initialized)

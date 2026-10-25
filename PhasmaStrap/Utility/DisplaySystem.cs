@@ -48,7 +48,7 @@ namespace PhasmaStrap.Utility
 
         private const int ENUM_CURRENT_SETTINGS = -1;
 
-        private const uint CDS_UPDATEREGISTRY = 0x1;
+        private const uint CDS_FULLSCREEN = 0x4;
 
         private const uint CDS_TEST = 0x2;
 
@@ -315,7 +315,7 @@ namespace PhasmaStrap.Utility
             {
                 return test;
             }
-            return ChangeDisplaySettingsEx(device, ref dm, IntPtr.Zero, CDS_UPDATEREGISTRY, IntPtr.Zero);
+            return ChangeDisplaySettingsEx(device, ref dm, IntPtr.Zero, CDS_FULLSCREEN, IntPtr.Zero);
         }
 
         public static string DescribeError(int code)

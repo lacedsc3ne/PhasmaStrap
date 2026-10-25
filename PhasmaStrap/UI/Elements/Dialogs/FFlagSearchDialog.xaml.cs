@@ -50,6 +50,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
         };
 
         private Dictionary<string, object> _allFlags = new();
+        private bool _statusShowsCap;
         private Dictionary<string, FlagMetadata> _flagMetadata = new();
 
         private readonly CancellationTokenSource _lifetimeCancellation = new();
@@ -72,6 +73,15 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             _initialQuery = initialQuery?.Trim() ?? "";
 
             InitializeComponent();
+            KeyDown += (_, e) =>
+            {
+                if (e.Key != Key.Escape)
+                    return;
+
+                App.Logger.WriteLine("FFlagSearch", "Escape pressed, closing");
+                e.Handled = true;
+                Close();
+            };
 
             AddFromSearchButton.Content = $"Add to {_targetName}";
             AddFromBrowseButton.Content = $"Add to {_targetName}";
@@ -144,6 +154,13 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
                 _allFlags = allFlags;
                 _flagMetadata = flagMetadata;
+
+                if (allFlags.Count == 0)
+                {
+                    App.Logger.WriteLine("FFlagSearch", "No flags could be downloaded from any source");
+                    await UpdateStatusAsync(Strings.Dialog_FFlagSearch_StatusLoadError);
+                    return;
+                }
 
                 await UpdateStatusAsync(String.Format(Strings.Dialog_FFlagSearch_StatusLoaded, allFlags.Count));
 
@@ -231,7 +248,16 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
                 string[] parts = line.Split('=', 2);
                 if (parts.Length != 2)
+                {
+                    string name = line.Trim();
+                    if (name.StartsWith('[') && name.IndexOf(']') is int end and > 0)
+                        name = name[(end + 1)..].Trim();
+
+                    if (name.Length > 0 && !name.Contains(' '))
+                        flags.TryAdd(name, "");
+
                     continue;
+                }
 
                 string key = parts[0].Trim();
                 string text = parts[1].Trim();
@@ -337,7 +363,15 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             ExportSearchResultsButton.IsEnabled = results.Count > 0;
 
             if (results.Count > MaximumVisibleResults)
+            {
                 StatusText.Text = String.Format(Strings.Dialog_FFlagSearch_ShowingFirstN, MaximumVisibleResults, results.Count);
+                _statusShowsCap = true;
+            }
+            else if (_statusShowsCap)
+            {
+                StatusText.Text = String.Format(Strings.Dialog_FFlagSearch_StatusLoaded, _allFlags.Count);
+                _statusShowsCap = false;
+            }
         }
 
         private async void ValidateButton_Click(object sender, RoutedEventArgs e)
@@ -376,6 +410,13 @@ namespace PhasmaStrap.UI.Elements.Dialogs
                 }
 
                 Dictionary<string, object> knownFlags = _allFlags;
+
+                if (knownFlags.Count == 0)
+                {
+                    App.Logger.WriteLine("FFlagSearch", $"Validation of {parsed.Count} flag(s) skipped, the flag list is empty");
+                    Frontend.ShowMessageBox("The list of Roblox flags couldn't be downloaded, so your flags can't be checked yet.\n\nCheck your internet connection, then close and open this window again.", MessageBoxImage.Warning);
+                    return;
+                }
 
                 List<FlagValidationResult> results = await Task.Run(() =>
                 {
@@ -770,9 +811,21 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             base.OnClosed(e);
         }
 
-        private void TrueFlagsOnlyCheckBox_CheckedChanged(object sender, RoutedEventArgs e) => RerunCurrentSearch();
+        private void TrueFlagsOnlyCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
+        {
+            if (TrueFlagsOnlyCheckBox.IsChecked == true)
+                FalseFlagsOnlyCheckBox.IsChecked = false;
 
-        private void FalseFlagsOnlyCheckBox_CheckedChanged(object sender, RoutedEventArgs e) => RerunCurrentSearch();
+            RerunCurrentSearch();
+        }
+
+        private void FalseFlagsOnlyCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
+        {
+            if (FalseFlagsOnlyCheckBox.IsChecked == true)
+                TrueFlagsOnlyCheckBox.IsChecked = false;
+
+            RerunCurrentSearch();
+        }
 
         private void RerunCurrentSearch()
         {

@@ -54,7 +54,7 @@ namespace PhasmaStrap.Utility
                 {
                     if (IsMemoryUnderPressure())
                     {
-                        SystemMemoryCleaner.TrimResult result = SystemMemoryCleaner.TrimAllProcessWorkingSets();
+                        SystemMemoryCleaner.TrimResult result = SystemMemoryCleaner.TrimAllProcessWorkingSets(true);
                         App.Logger.WriteLine(LOG_IDENT, $"Memory usage was high - auto-trimmed {result.ProcessesTrimmed} processes (~{result.BytesFreed / 1048576.0:0.#} MB)");
                     }
                 }

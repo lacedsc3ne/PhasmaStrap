@@ -12,6 +12,8 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
 {
     public partial class AccountsPage
     {
+        private System.Windows.Window? _ownerWindow;
+
         public AccountsPage()
         {
             var vm = new AccountSwitcherViewModel();
@@ -58,8 +60,23 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             }));
         }
 
-        private void Page_Unloaded(object sender, System.Windows.RoutedEventArgs e)
+        private void Page_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
+            if (_ownerWindow is not null)
+                return;
+
+            _ownerWindow = System.Windows.Window.GetWindow(this);
+
+            if (_ownerWindow is not null)
+                _ownerWindow.Closed += OwnerWindow_Closed;
+        }
+
+        private void OwnerWindow_Closed(object? sender, EventArgs e)
+        {
+            if (_ownerWindow is not null)
+                _ownerWindow.Closed -= OwnerWindow_Closed;
+
+            App.Logger.WriteLine("AccountsPage", "Settings window closed, disposing the account switcher");
             ((AccountSwitcherViewModel)DataContext).Dispose();
         }
     }

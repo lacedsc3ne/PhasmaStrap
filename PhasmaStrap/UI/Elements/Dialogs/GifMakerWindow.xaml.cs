@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -54,6 +55,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
             Closing += OnClosing;
             Closed += (_, _) => _timer.Stop();
+            KeyDown += OnKeyDown;
         }
 
         private void ReadSettings()
@@ -85,7 +87,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
         private void Restart()
         {
-            if (!_ready || _pictures.Count == 0)
+            if (!_ready || _saving || _pictures.Count == 0)
                 return;
 
             ReadSettings();
@@ -183,6 +185,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             DownButton.IsEnabled = i >= 0 && i < _pictures.Count - 1;
             RemoveButton.IsEnabled = i >= 0 && _pictures.Count > 1;
             SaveButton.IsEnabled = !_saving;
+            SettingsPanel.IsEnabled = !_saving;
         }
 
         private void Add_Click(object sender, RoutedEventArgs e)
@@ -349,6 +352,16 @@ namespace PhasmaStrap.UI.Elements.Dialogs
         }
 
         private void Close_Click(object sender, RoutedEventArgs e) => Close();
+
+        private void OnKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.Escape)
+                return;
+
+            App.Logger.WriteLine(LOG_IDENT, $"Escape pressed, saving {_saving}");
+            e.Handled = true;
+            Close();
+        }
 
         private void OnClosing(object? sender, CancelEventArgs e)
         {

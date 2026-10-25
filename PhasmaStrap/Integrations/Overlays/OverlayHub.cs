@@ -115,10 +115,11 @@ namespace PhasmaStrap.Integrations.Overlays
             Mutex? mutex = null;
             bool held = false;
 
-            IDisposable trackerLease = RobloxWindowTracker.Acquire();
+            IDisposable? trackerLease = null;
 
             try
             {
+                trackerLease = RobloxWindowTracker.Acquire();
                 mutex = new Mutex(false, "PhasmaStrapOverlayCompositorActive");
                 bool loggedWaitOwner = false;
                 bool loggedWaitRoblox = false;
@@ -220,7 +221,7 @@ namespace PhasmaStrap.Integrations.Overlays
                     }
                 }
                 mutex?.Dispose();
-                trackerLease.Dispose();
+                trackerLease?.Dispose();
                 CompleteThread(owner);
             }
         }

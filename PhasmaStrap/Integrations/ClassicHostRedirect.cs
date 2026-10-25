@@ -106,7 +106,33 @@ namespace PhasmaStrap.Integrations
             }
         }
 
-        public static void RemoveWhenSessionEnds()
+        public static void RemoveWhenSessionEnds(Func<int> currentLaunch)
+        {
+            int launch = currentLaunch();
+            WaitForSessionEnd();
+
+            while (currentLaunch() != launch)
+            {
+                launch = currentLaunch();
+                App.Logger.WriteLine(LOG_IDENT, "Another classic launch happened while waiting, holding the redirect for it too");
+                WaitForSessionEnd();
+            }
+
+            try
+            {
+                string? failure = Set(false);
+                if (failure != null)
+                    App.Logger.WriteLine(LOG_IDENT, "Could not remove the redirect after the session: " + failure);
+                else
+                    App.Logger.WriteLine(LOG_IDENT, "Classic session finished, normal Roblox name resolution is back");
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteException(LOG_IDENT + "::RemoveWhenSessionEnds", ex);
+            }
+        }
+
+        private static void WaitForSessionEnd()
         {
             try
             {
@@ -140,11 +166,8 @@ namespace PhasmaStrap.Integrations
             }
             catch (Exception ex)
             {
-                App.Logger.WriteException(LOG_IDENT + "::RemoveWhenSessionEnds", ex);
+                App.Logger.WriteException(LOG_IDENT + "::WaitForSessionEnd", ex);
             }
-
-            Set(false);
-            App.Logger.WriteLine(LOG_IDENT, "Classic session finished, normal Roblox name resolution is back");
         }
 
         private static string? RunElevated(bool enable)

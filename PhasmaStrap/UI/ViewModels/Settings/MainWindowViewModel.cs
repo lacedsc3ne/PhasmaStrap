@@ -67,7 +67,16 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 if (task.Changed)
                 {
                     App.Logger.WriteLine(LOG_IDENT, $"Executing pending task '{task}'");
-                    task.Execute();
+
+                    try
+                    {
+                        task.Execute();
+                    }
+                    catch (Exception ex)
+                    {
+                        App.Logger.WriteLine(LOG_IDENT, $"Pending task '{task}' failed: {ex.Message}");
+                        App.Logger.WriteException(LOG_IDENT, ex);
+                    }
                 }
             }
 

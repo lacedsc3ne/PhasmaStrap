@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Windows;
 using System.Windows.Input;
+using System.Xml;
 using System.Xml.Linq;
 
 using CommunityToolkit.Mvvm.Input;
@@ -277,6 +279,15 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         private void ResetToDefaults()
         {
+            MessageBoxResult confirm = Frontend.ShowMessageBox(
+                "This puts every Roblox setting in this file back to its default. Your current values will be lost. Continue?",
+                MessageBoxImage.Warning,
+                MessageBoxButton.YesNo);
+
+            if (confirm != MessageBoxResult.Yes)
+                return;
+
+            App.Logger.WriteLine("GBSEditorViewModel::ResetToDefaults", $"Resetting {Entries.Count} setting(s) to defaults");
             _gbs.ResetProperties();
             _gbs.Save();
             Load();
@@ -315,6 +326,12 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(type) || NameExists(name))
                 return false;
 
+            if (!IsValidTypeName(type))
+            {
+                App.Logger.WriteLine("GBSEditorViewModel::Add", $"Rejected type name \"{type}\" for \"{name}\"");
+                return false;
+            }
+
             var entry = new GBSEntry { Name = name, Type = type, Value = value };
             Entries.Add(entry);
 
@@ -327,6 +344,19 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             return Persist();
         }
 
+        public static bool IsValidTypeName(string type)
+        {
+            try
+            {
+                XmlConvert.VerifyNCName(type);
+                return true;
+            }
+            catch (XmlException)
+            {
+                return false;
+            }
+        }
+
         public bool Persist()
         {
             XElement? properties = GBSEditor.EnsureProperties(_gbs.Document);
@@ -334,14 +364,27 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             if (properties is null)
                 return false;
 
-            properties.RemoveNodes();
+            var elements = new List<XElement>();
 
             foreach (GBSEntry entry in Entries)
             {
-                var element = new XElement(string.IsNullOrWhiteSpace(entry.Type) ? "token" : entry.Type, entry.Value);
+                string type = string.IsNullOrWhiteSpace(entry.Type) ? "token" : entry.Type;
+
+                if (!IsValidTypeName(type))
+                {
+                    App.Logger.WriteLine("GBSEditorViewModel::Persist", $"Rejected type name \"{type}\" for \"{entry.Name}\"");
+                    Frontend.ShowMessageBox($"\"{type}\" is not a valid type. Use a single word that starts with a letter, like token, int or bool.", MessageBoxImage.Information);
+                    RefreshEntriesFromDocument();
+                    return false;
+                }
+
+                var element = new XElement(type, entry.Value);
                 element.SetAttributeValue("name", entry.Name);
-                properties.Add(element);
+                elements.Add(element);
             }
+
+            properties.RemoveNodes();
+            properties.Add(elements);
 
             bool success = _gbs.Save();
 

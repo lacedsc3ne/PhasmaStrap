@@ -269,21 +269,21 @@
                         <StackPanel>
                             <TextBlock FontSize="20" FontFamily="Georgia" Text="Aa Bb" />
                             <TextBlock Margin="0,8,0,0" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="Interface font" />
-                            <TextBlock Margin="0,2,0,0" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding ModFontText, Mode=OneTime}" />
+                            <TextBlock Margin="0,2,0,0" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding ModFontText, Mode=OneWay}" />
                         </StackPanel>
                     </Border>
                     <Border Margin="0,0,10,0" Padding="14,12" Style="{DynamicResource PhasmaCard}">
                         <StackPanel>
                             <ui:SymbolIcon HorizontalAlignment="Left" FontSize="22" Symbol="Target24" Foreground="{DynamicResource PhasmaAccentBrush}" />
                             <TextBlock Margin="0,8,0,0" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="Cursor" />
-                            <TextBlock Margin="0,2,0,0" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding ModCursorText, Mode=OneTime}" />
+                            <TextBlock Margin="0,2,0,0" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding ModCursorText, Mode=OneWay}" />
                         </StackPanel>
                     </Border>
                     <Border Margin="0,0,10,0" Padding="14,12" Style="{DynamicResource PhasmaCard}">
                         <StackPanel>
                             <ui:SymbolIcon HorizontalAlignment="Left" FontSize="22" Symbol="Alert24" Foreground="{DynamicResource PhasmaAccentBrush}" />
                             <TextBlock Margin="0,8,0,0" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="Death sound" />
-                            <TextBlock Margin="0,2,0,0" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding ModDeathSoundText, Mode=OneTime}" />
+                            <TextBlock Margin="0,2,0,0" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding ModDeathSoundText, Mode=OneWay}" />
                         </StackPanel>
                     </Border>
                     <Button Padding="14,12" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Style="{DynamicResource PhasmaGhostButton}"
@@ -377,7 +377,7 @@
                     <ui:ToggleSwitch IsChecked="{Binding AutoRejoinOnCrash, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="Rejoin after a dropped connection" Description="When Roblox kicks you for being idle or the connection is lost, join the same server again">
+                <controls:OptionControl Header="Rejoin after a dropped connection" x:Name="DisconnectRejoinOption" Description="When Roblox kicks you for being idle or the connection is lost, join the same server again">
                     <ui:ToggleSwitch IsChecked="{Binding AutoRejoinOnDisconnect, Mode=TwoWay}" />
                 </controls:OptionControl>
 
@@ -385,11 +385,37 @@
                     <ui:ToggleSwitch IsChecked="{Binding ShowServerUptime, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Behaviour_MaxAttempts}" Description="{x:Static resources:Strings.Menu_Behaviour_HowManyTimesRetryBeforeGiving}" IsEnabled="{Binding InnerContent.IsChecked, ElementName=AutoRejoinOption, Mode=OneWay}">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Behaviour_MaxAttempts}" Description="{x:Static resources:Strings.Menu_Behaviour_HowManyTimesRetryBeforeGiving}">
+                    <controls:OptionControl.Style>
+                        <Style TargetType="controls:OptionControl">
+                            <Setter Property="IsEnabled" Value="False" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding InnerContent.IsChecked, ElementName=AutoRejoinOption}" Value="True">
+                                    <Setter Property="IsEnabled" Value="True" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding InnerContent.IsChecked, ElementName=DisconnectRejoinOption}" Value="True">
+                                    <Setter Property="IsEnabled" Value="True" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </controls:OptionControl.Style>
                     <ui:NumberBox ClearButtonEnabled="False" IntegersOnly="True" Width="140" Min="1" Max="10" Value="{Binding AutoRejoinMaxAttempts, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Behaviour_DelayBetweenAttempts}" Description="Seconds" IsEnabled="{Binding InnerContent.IsChecked, ElementName=AutoRejoinOption, Mode=OneWay}">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Behaviour_DelayBetweenAttempts}" Description="Seconds">
+                    <controls:OptionControl.Style>
+                        <Style TargetType="controls:OptionControl">
+                            <Setter Property="IsEnabled" Value="False" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding InnerContent.IsChecked, ElementName=AutoRejoinOption}" Value="True">
+                                    <Setter Property="IsEnabled" Value="True" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding InnerContent.IsChecked, ElementName=DisconnectRejoinOption}" Value="True">
+                                    <Setter Property="IsEnabled" Value="True" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </controls:OptionControl.Style>
                     <ui:NumberBox ClearButtonEnabled="False" IntegersOnly="True" Width="140" Min="1" Max="60" Value="{Binding AutoRejoinDelaySeconds, Mode=TwoWay}" />
                 </controls:OptionControl>
             </controls:SettingsCard>

@@ -21,6 +21,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
         private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(100) };
         private readonly DateTime _opened = DateTime.UtcNow;
         private readonly TimeSpan _limit;
+        private bool _closed;
 
         public string? ChosenJobId { get; private set; }
 
@@ -45,9 +46,13 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             };
             _timer.Start();
 
-            Closed += (_, _) => _timer.Stop();
+            Closed += (_, _) =>
+            {
+                _closed = true;
+                _timer.Stop();
+            };
 
-            _ = FillAsync(placeId, search);
+            Loaded += (_, _) => _ = FillAsync(placeId, search);
         }
 
         /// <summary>"Game · Place" from what is already on this PC (your library and the place name cache), or empty.</summary>
@@ -84,7 +89,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             try
             {
                 GameInfo? game = await GameLookup.FromPlaceAsync(placeId);
-                if (game is not null && IsVisible)
+                if (game is not null && !_closed)
                     ShowGame(PlaceNames.Display(game.Name, placeId));
             }
             catch (Exception ex)
@@ -107,8 +112,11 @@ namespace PhasmaStrap.UI.Elements.Dialogs
                 servers = new List<MatchmakerCandidate>();
             }
 
-            if (!IsVisible)
+            if (_closed)
+            {
+                App.Logger.WriteLine("ServerPickerWindow", $"Server search finished with {servers.Count} servers after the picker closed");
                 return;
+            }
 
             Searching.Visibility = Visibility.Collapsed;
 
@@ -117,7 +125,8 @@ namespace PhasmaStrap.UI.Elements.Dialogs
                 HeadlineText.Text = "No servers could be listed";
                 DetailText.Text = "Roblox will choose one. The picker needs you to be signed in, and the game needs public servers.";
                 await Task.Delay(1800);
-                Close();
+                if (!_closed)
+                    Close();
                 return;
             }
 

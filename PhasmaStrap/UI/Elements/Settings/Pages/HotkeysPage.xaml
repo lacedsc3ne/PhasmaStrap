@@ -88,7 +88,7 @@
                                                     <TextBlock FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Description}" />
 
                                                     <!--  Whether the feature behind this hotkey is on  -->
-                                                    <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                                    <DockPanel Margin="0,5,0,0">
                                                         <Ellipse Width="6" Height="6" VerticalAlignment="Center" Margin="0,0,6,0">
                                                             <Ellipse.Style>
                                                                 <Style TargetType="Ellipse">
@@ -116,17 +116,17 @@
                                                                 </Style>
                                                             </TextBlock.Style>
                                                         </TextBlock>
-                                                    </StackPanel>
+                                                    </DockPanel>
                                                 </StackPanel>
 
                                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                                     <!--  Uid="Capture" and Tag are used by the code behind to keep listening when this is clicked  -->
-                                                    <Button Uid="Capture" Width="160" Focusable="False"
+                                                    <Button Uid="Capture" Width="160"
                                                             Style="{StaticResource HotkeyCaptureButton}"
                                                             Content="{Binding ButtonText}"
                                                             Tag="{Binding}"
                                                             Click="CaptureButton_Click" />
-                                                    <Button Margin="6,0,0,0" Focusable="False" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold"
+                                                    <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold"
                                                             Content="{x:Static resources:Strings.ContextMenu_OutputConsole_Clear}"
                                                             IsEnabled="{Binding HasGesture}"
                                                             Tag="{Binding}"

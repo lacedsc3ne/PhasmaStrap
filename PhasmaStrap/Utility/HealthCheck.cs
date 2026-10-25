@@ -87,7 +87,10 @@ namespace PhasmaStrap.Utility
                     continue;
                 }
 
-                string target = command.StartsWith('"') ? command[1..Math.Max(1, command.IndexOf('"', 1))] : command.Split(' ')[0];
+                int exeEnd = command.IndexOf(".exe", StringComparison.OrdinalIgnoreCase);
+                string target = command.StartsWith('"') ? command[1..Math.Max(1, command.IndexOf('"', 1))]
+                    : exeEnd > 0 ? command[..(exeEnd + 4)]
+                    : command.Split(' ')[0];
 
                 if (!File.Exists(target))
                 {

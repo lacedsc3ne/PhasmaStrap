@@ -12,6 +12,12 @@ namespace PhasmaStrap.UI.ViewModels
             if (location is null)
                 return;
 
+            if (!Uri.TryCreate(location, UriKind.Absolute, out Uri? uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            {
+                App.Logger.WriteLine("GlobalViewModel::OpenWebpage", $"Refused to open {location}, only web links can be opened");
+                return;
+            }
+
             Utilities.ShellExecute(location);
         }
     }

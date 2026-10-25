@@ -19,7 +19,18 @@ namespace PhasmaStrap.Integrations.GameChat
 
             Task<ImageSource?> task = _headshotCache.GetOrAdd(userId, FetchHeadshotAsync);
             TrimCache(_headshotCache);
+            _ = ForgetIfFailedAsync(userId, task);
             return task;
+        }
+
+        private static async Task ForgetIfFailedAsync(long userId, Task<ImageSource?> task)
+        {
+            ImageSource? image = await task.ConfigureAwait(false);
+            if (image != null)
+                return;
+
+            if (_headshotCache.TryRemove(new KeyValuePair<long, Task<ImageSource?>>(userId, task)))
+                App.Logger.WriteLine(Tag, $"No headshot for user {userId}, it will be fetched again next time");
         }
 
         private static async Task<ImageSource?> FetchHeadshotAsync(long userId)
@@ -70,8 +81,8 @@ namespace PhasmaStrap.Integrations.GameChat
                 if (!response.IsSuccessStatusCode)
                     return null;
 
-                byte[] bytes = await response.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
-                if (bytes.Length == 0 || bytes.Length > MaxImageBytes)
+                byte[] bytes = await Http.ReadBytesBoundedAsync(response.Content, MaxImageBytes).ConfigureAwait(false);
+                if (bytes.Length == 0)
                     return null;
 
                 return DecodeImage(bytes, 96);

@@ -356,8 +356,18 @@ namespace PhasmaStrap.UI.ViewModels.Dialogs
 
         public ICommand OpenCommand => new RelayCommand<CaptureItem>(item =>
         {
-            if (item is not null && System.IO.File.Exists(item.Path))
-                Process.Start(new ProcessStartInfo(item.Path) { UseShellExecute = true });
+            if (item is null || !System.IO.File.Exists(item.Path))
+                return;
+
+            try
+            {
+                using Process? process = Process.Start(new ProcessStartInfo(item.Path) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("CaptureLibrary", $"Could not open {item.Path}: {ex.Message}");
+                Status = $"Couldn't open {System.IO.Path.GetFileName(item.Path)}: {ex.Message}";
+            }
         });
 
         public Window? Owner { get; set; }

@@ -485,43 +485,6 @@ namespace PhasmaStrap.Integrations
             }
         }
 
-        public static async Task<long> GetRemoteClientSizeAsync(string client, CancellationToken ct) =>
-            await GetRemoteSizeAsync("clients/" + client + ".zip", ct).ConfigureAwait(false);
-
-        public static async Task<long> GetRemoteSizeAsync(string relativePath, CancellationToken ct)
-        {
-            try
-            {
-                return (await ResolveReleaseAssetAsync(relativePath, ct).ConfigureAwait(false)).Size;
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch
-            {
-            }
-
-            foreach (string url in BuildCandidateUrls(relativePath))
-            {
-                try
-                {
-                    using var request = new HttpRequestMessage(HttpMethod.Head, url);
-                    using var response = await Http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
-                    if (response.IsSuccessStatusCode && response.Content.Headers.ContentLength.HasValue)
-                        return response.Content.Headers.ContentLength.Value;
-                }
-                catch (OperationCanceledException)
-                {
-                    throw;
-                }
-                catch
-                {
-                }
-            }
-            return -1L;
-        }
-
         private static string InstalledIndexPath => Path.Combine(Root, "installed.json");
 
         private static Dictionary<string, InstalledAssetRecord> LoadIndex()
@@ -611,9 +574,12 @@ namespace PhasmaStrap.Integrations
                 if (!IsSupportedClientCode(client))
                     throw new ArgumentException("The classic client code is invalid", nameof(client));
 
+                EnsureNothingRunning();
+
                 string dir = ResolvePathWithin(ClientsDir, client);
                 if (Directory.Exists(dir))
                     await Task.Run(() => Directory.Delete(dir, true), ct).ConfigureAwait(false);
+                ForgetClientExeNames();
 
                 var index = LoadIndex();
                 if (index.Remove(client))
@@ -663,6 +629,7 @@ namespace PhasmaStrap.Integrations
 
         private static async Task<ReleaseAssetIntegrity> DownloadAndExtractAsync(string relativePath, Action<double, string>? progress, CancellationToken ct)
         {
+            EnsureNothingRunning();
             ReleaseAssetIntegrity asset = await ResolveReleaseAssetAsync(relativePath, ct).ConfigureAwait(false);
             string tempZip = Path.Combine(Path.GetTempPath(), "phasmastrap_classic_" + Guid.NewGuid().ToString("N") + ".zip");
             string stagedRoot = CreateSiblingPath(Root, "archive");
@@ -675,6 +642,7 @@ namespace PhasmaStrap.Integrations
                     await Task.Run(() => CopyTree(Root, stagedRoot, ct), ct).ConfigureAwait(false);
 
                 await Task.Run(() => SafeZipExtractor.ExtractToDirectory(tempZip, stagedRoot, overwrite: true, maxExpandedBytes: 4294967296L), ct).ConfigureAwait(false);
+                EnsureNothingRunning();
 
                 if (string.Equals(relativePath, "engine.zip", StringComparison.OrdinalIgnoreCase))
                 {
@@ -766,6 +734,7 @@ namespace PhasmaStrap.Integrations
 
             string backup = CreateSiblingPath(fullTarget, "backup");
             bool movedTarget = false;
+            bool movedStaged = false;
             try
             {
                 if (Directory.Exists(fullTarget))
@@ -774,15 +743,42 @@ namespace PhasmaStrap.Integrations
                     movedTarget = true;
                 }
                 Directory.Move(fullStaged, fullTarget);
+                movedStaged = true;
             }
-            catch
+            catch (Exception ex)
             {
-                DeleteDirectoryIfExists(fullTarget);
-                if (movedTarget && Directory.Exists(backup))
-                    Directory.Move(backup, fullTarget);
+                App.Logger.WriteLine(LOG_IDENT + "::CommitDirectory", $"Could not replace {fullTarget} (moved old copy: {movedTarget}, moved new copy: {movedStaged}): {ex.Message}");
+
+                if (movedStaged)
+                    DeleteDirectoryIfExists(fullTarget);
+
+                if (movedTarget && Directory.Exists(backup) && !Directory.Exists(fullTarget))
+                {
+                    try
+                    {
+                        Directory.Move(backup, fullTarget);
+                        App.Logger.WriteLine(LOG_IDENT + "::CommitDirectory", $"Put the old copy back at {fullTarget}");
+                    }
+                    catch (Exception restoreEx)
+                    {
+                        App.Logger.WriteLine(LOG_IDENT + "::CommitDirectory", $"Could not put the old copy back, it is still at {backup}: {restoreEx.Message}");
+                    }
+                }
                 throw;
             }
             DeleteDirectoryIfExists(backup);
+            ForgetClientExeNames();
+        }
+
+        private static void EnsureNothingRunning()
+        {
+            bool serverRunning = ClassicServerManager.IsRunning;
+            bool clientRunning = AnyClassicClientRunning();
+            if (!serverRunning && !clientRunning)
+                return;
+
+            App.Logger.WriteLine(LOG_IDENT + "::EnsureNothingRunning", $"Refused to change classic files (server running: {serverRunning}, client running: {clientRunning})");
+            throw new InvalidOperationException("Close the classic server and any classic client first, then try again.");
         }
 
         private static void DeleteDirectoryIfExists(string path)
@@ -997,75 +993,6 @@ namespace PhasmaStrap.Integrations
             RecordInstalled(client, archive.Size, archive.Sha256);
         }
 
-        public static async Task AutoUpdateAllAsync(CancellationToken ct = default)
-        {
-            if (!EngineDataInstalled)
-                return;
-
-            await MutationLock.WaitAsync(ct).ConfigureAwait(false);
-            try
-            {
-                const string LOG_IDENT_LOCAL = LOG_IDENT + "::AutoUpdateAll";
-                Action<double, string> quiet = delegate { };
-
-                try { await FetchManifestAsync(ct, force: true).ConfigureAwait(false); }
-                catch (Exception ex) { App.Logger.WriteLine(LOG_IDENT_LOCAL, "Manifest refresh failed, skipping this pass: " + ex.Message); return; }
-
-                int updated = 0;
-
-                try
-                {
-                    if (await IsAssetUpdateAvailableAsync("engine.zip", EngineKey, ct).ConfigureAwait(false))
-                    {
-                        App.Logger.WriteLine(LOG_IDENT_LOCAL, "Updating the classic engine data pack");
-                        ReleaseAssetIntegrity engine = await DownloadAndExtractAsync("engine.zip", quiet, ct).ConfigureAwait(false);
-                        RecordInstalled(EngineKey, engine.Size, engine.Sha256);
-                        updated++;
-                    }
-                }
-                catch (OperationCanceledException) { throw; }
-                catch (Exception ex) { App.Logger.WriteLine(LOG_IDENT_LOCAL, "Engine update failed: " + ex.Message); }
-
-                try
-                {
-                    if (await IsAssetUpdateAvailableAsync("maps.zip", MapsKey, ct).ConfigureAwait(false))
-                    {
-                        App.Logger.WriteLine(LOG_IDENT_LOCAL, "Updating the classic maps pack");
-                        ReleaseAssetIntegrity maps = await DownloadAndExtractAsync("maps.zip", quiet, ct).ConfigureAwait(false);
-                        RecordInstalled(MapsKey, maps.Size, maps.Sha256);
-                        updated++;
-                    }
-                }
-                catch (OperationCanceledException) { throw; }
-                catch (Exception ex) { App.Logger.WriteLine(LOG_IDENT_LOCAL, "Maps update failed: " + ex.Message); }
-
-                foreach (string installed in ListInstalledClients())
-                {
-                    ct.ThrowIfCancellationRequested();
-                    try
-                    {
-                        if (!await IsClientUpdateAvailableAsync(installed, ct).ConfigureAwait(false))
-                            continue;
-
-                        App.Logger.WriteLine(LOG_IDENT_LOCAL, "Updating classic client " + installed);
-                        await InstallClientCoreAsync(installed, quiet, ct).ConfigureAwait(false);
-                        updated++;
-                    }
-                    catch (OperationCanceledException) { throw; }
-                    catch (Exception ex) { App.Logger.WriteLine(LOG_IDENT_LOCAL, "Update for " + installed + " failed: " + ex.Message); }
-                }
-
-                App.Logger.WriteLine(LOG_IDENT_LOCAL, updated == 0 ? "Everything is already up to date" : "Updated " + updated + " item(s)");
-            }
-            catch (OperationCanceledException)
-            {
-            }
-            finally
-            {
-                MutationLock.Release();
-            }
-        }
-
         public static async Task UpdateEverythingAsync(string client, Action<string>? status, Action<double, string>? progress, CancellationToken ct)
         {
             await MutationLock.WaitAsync(ct).ConfigureAwait(false);
@@ -1108,6 +1035,36 @@ namespace PhasmaStrap.Integrations
             }
         }
 
+        private static readonly object ClientExeNamesLock = new();
+        private static HashSet<string> s_clientExeNames = new(StringComparer.OrdinalIgnoreCase);
+        private static string s_clientExeNamesDir = "";
+        private static long s_clientExeNamesTicks;
+
+        private static HashSet<string> GetClientExeNames(string fullClientsDir)
+        {
+            lock (ClientExeNamesLock)
+            {
+                long now = Environment.TickCount64;
+                if (s_clientExeNamesTicks != 0 && now - s_clientExeNamesTicks < 30000 && string.Equals(s_clientExeNamesDir, fullClientsDir, StringComparison.OrdinalIgnoreCase))
+                    return s_clientExeNames;
+
+                var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (string exe in Directory.EnumerateFiles(fullClientsDir, "*.exe", SearchOption.AllDirectories))
+                    names.Add(Path.GetFileNameWithoutExtension(exe));
+
+                s_clientExeNames = names;
+                s_clientExeNamesDir = fullClientsDir;
+                s_clientExeNamesTicks = now;
+                return names;
+            }
+        }
+
+        private static void ForgetClientExeNames()
+        {
+            lock (ClientExeNamesLock)
+                s_clientExeNamesTicks = 0;
+        }
+
         public static bool AnyClassicClientRunning()
         {
             try
@@ -1118,21 +1075,28 @@ namespace PhasmaStrap.Integrations
 
                 string fullClientsDir = Path.GetFullPath(clientsDir).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
 
-                foreach (Process process in Process.GetProcesses())
+                bool found = false;
+                foreach (string exeName in GetClientExeNames(fullClientsDir))
                 {
-                    try
+                    foreach (Process process in Process.GetProcessesByName(exeName))
                     {
-                        string? path = process.MainModule?.FileName;
-                        if (path != null && path.StartsWith(fullClientsDir, StringComparison.OrdinalIgnoreCase))
-                            return true;
+                        try
+                        {
+                            string? path = process.MainModule?.FileName;
+                            if (!found && path != null && path.StartsWith(fullClientsDir, StringComparison.OrdinalIgnoreCase))
+                                found = true;
+                        }
+                        catch
+                        {
+                        }
+                        finally
+                        {
+                            process.Dispose();
+                        }
                     }
-                    catch
-                    {
-                    }
-                    finally
-                    {
-                        process.Dispose();
-                    }
+
+                    if (found)
+                        return true;
                 }
             }
             catch (Exception ex)

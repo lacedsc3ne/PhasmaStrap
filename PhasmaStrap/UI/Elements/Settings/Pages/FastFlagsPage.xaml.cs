@@ -41,6 +41,8 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             SetupViewModel();
         }
 
+        private void Page_Unloaded(object sender, RoutedEventArgs e) => _viewModel.Detach();
+
         private void ValidateInt32(object sender, TextCompositionEventArgs e) => e.Handled = e.Text != "-" && !Int32.TryParse(e.Text, out int _);
 
         private void ValidateUInt32(object sender, TextCompositionEventArgs e) => e.Handled = !UInt32.TryParse(e.Text, out uint _);

@@ -11,7 +11,7 @@
       d:DataContext="{d:DesignInstance models:AccountSwitcherViewModel, IsDesignTimeCreatable=False}"
       Title="AccountsPage"
       Scrollable="True"
-      Unloaded="Page_Unloaded">
+      Loaded="Page_Loaded">
     <ui:UiPage.Resources>
         <!--  Accent Switch button that turns soft on the account already in use  -->
         <Style x:Key="AccountSwitchButton" TargetType="{x:Type Button}" BasedOn="{StaticResource PhasmaAccentButton}">

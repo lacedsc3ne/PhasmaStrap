@@ -17,15 +17,22 @@ namespace PhasmaStrap.UI.ViewModels.Installer
 
         public async void DoChecks()
         {
-            var releaseInfo = await App.GetLatestRelease();
-
-            if (releaseInfo is not null)
+            try
             {
-                if (Utilities.CompareVersions(App.Version, releaseInfo.TagName) == VersionComparison.LessThan)
+                var releaseInfo = await App.GetLatestRelease();
+
+                if (releaseInfo is not null)
                 {
-                    VersionNotice = String.Format(Strings.Installer_Welcome_UpdateNotice, App.Version, releaseInfo.TagName.Replace("v", ""));
-                    OnPropertyChanged(nameof(VersionNotice));
+                    if (Utilities.CompareVersions(App.Version, releaseInfo.TagName) == VersionComparison.LessThan)
+                    {
+                        VersionNotice = String.Format(Strings.Installer_Welcome_UpdateNotice, App.Version, releaseInfo.TagName.Replace("v", ""));
+                        OnPropertyChanged(nameof(VersionNotice));
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("WelcomeViewModel::DoChecks", $"Could not check for a newer release: {ex.Message}");
             }
 
             CanContinue = true;

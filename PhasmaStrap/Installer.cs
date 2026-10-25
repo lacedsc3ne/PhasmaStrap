@@ -284,7 +284,16 @@ namespace PhasmaStrap
                 () => Directory.Delete(Paths.Versions, true),
                 () => Directory.Delete(Paths.Downloads, true),
 
-                () => File.Delete(App.State.FileLocation)
+                () => File.Delete(App.State.FileLocation),
+
+                () =>
+                {
+                    if (App.Settings.Prop.NetworkingProxyEnabled || Networking.HostsFileManager.IsBlockPresent())
+                        App.Logger.WriteLine(LOG_IDENT, $"Turning the Asset Warp proxy off before uninstalling: {(Networking.NetworkingController.Disable() ? "done" : "the hosts file change could not be undone")}");
+
+                    Networking.AssetProxyCA.RemoveFromTrustStore();
+                    Networking.AssetProxyCA.UnpatchRobloxTrustBundles();
+                }
             };
 
             if (!keepData)
@@ -296,12 +305,69 @@ namespace PhasmaStrap
 
                     () => File.Delete(App.Settings.FileLocation)
                 });
+
+                string[] dataFolders =
+                {
+                    Paths.AccountBackups, Paths.CustomThemes, Paths.Integrations, Paths.ManagedMods, Paths.CursorSets,
+                    Paths.SettingsBackups, Paths.ServerFetch, Paths.PlayTime,
+                    Path.Combine(Paths.Base, "Cache"), Path.Combine(Paths.Base, "Diagnostics"), Path.Combine(Paths.Base, "CrashReports"),
+                    Path.Combine(Paths.Base, "FastFlagSnapshots"), Path.Combine(Paths.Base, "AssetCache"), Path.Combine(Paths.Base, "SwapPacks"),
+                    Path.Combine(Paths.Base, "AssetPreloadCache"), Path.Combine(Paths.Base, "Backgrounds"), Path.Combine(Paths.Base, "BrowserLogin"),
+                    Path.Combine(Paths.Base, "GameShortcutIcons")
+                };
+
+                string[] dataFiles =
+                {
+                    App.FastFlags.FileLocation, App.FlagProfiles.FileLocation, Paths.CustomColorThemeXaml,
+                    "AccountGuard.json", "AccountToken.txt", "FriendHistory.json", "FriendNotes.json", "FriendLastSeen.json",
+                    "Games.json", "Party.json", "PartyPresence.json", "RobloxVersions.json", "SettingsWindow.json",
+                    "AppliedFlagProfile.json", "OneTimeFlagProfile.json", "ModManifest.txt", "gpurender.pending"
+                };
+
+                foreach (string folder in dataFolders)
+                {
+                    cleanupSequence.Add(() =>
+                    {
+                        if (Directory.Exists(folder))
+                        {
+                            Directory.Delete(folder, true);
+                            App.Logger.WriteLine(LOG_IDENT, $"Removed {folder}");
+                        }
+                    });
+                }
+
+                foreach (string file in dataFiles)
+                {
+                    string path = Path.IsPathRooted(file) ? file : Path.Combine(Paths.Base, file);
+
+                    cleanupSequence.Add(() =>
+                    {
+                        if (File.Exists(path))
+                        {
+                            File.Delete(path);
+                            App.Logger.WriteLine(LOG_IDENT, $"Removed {path}");
+                        }
+                    });
+                }
             }
 
             bool deleteFolder = Directory.GetFiles(Paths.Base).Length <= 3;
 
             if (deleteFolder)
+            {
                 cleanupSequence.Add(() => Directory.Delete(Paths.Base, true));
+            }
+            else if (!keepData)
+            {
+                cleanupSequence.Add(() =>
+                {
+                    deleteFolder = Directory.GetFiles(Paths.Base).Length <= 3;
+                    App.Logger.WriteLine(LOG_IDENT, $"After removing data, {(deleteFolder ? "the install folder will be removed" : "other files are still in the install folder, leaving it")}");
+
+                    if (deleteFolder)
+                        Directory.Delete(Paths.Base, true);
+                });
+            }
 
             if (!playerStillInstalled && !studioStillInstalled && Directory.Exists(robloxFolder))
                 cleanupSequence.Add(() => Directory.Delete(robloxFolder, true));
@@ -511,12 +577,12 @@ namespace PhasmaStrap
                     UpgradeFailed(currentVer);
                     return;
                 }
-            }
 
-            if (!ReplaceApplication(LOG_IDENT))
-            {
-                UpgradeFailed(currentVer);
-                return;
+                if (!ReplaceApplication(LOG_IDENT))
+                {
+                    UpgradeFailed(currentVer);
+                    return;
+                }
             }
 
             using (var uninstallKey = Registry.CurrentUser.CreateSubKey(App.UninstallKey))

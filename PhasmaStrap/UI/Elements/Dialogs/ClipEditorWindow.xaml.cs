@@ -617,7 +617,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             _busy = busy;
             _busyLabel = label;
             FooterButtons.IsEnabled = !busy;
-            GifTools.IsEnabled = !busy;
+            ToolsPanel.IsEnabled = !busy;
             Timeline.IsEnabled = !busy;
             ExportProgress.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
             ExportProgress.Value = 0;
@@ -877,7 +877,15 @@ namespace PhasmaStrap.UI.Elements.Dialogs
                 if (!cancelled)
                     App.Logger.WriteLine(LOG_IDENT, $"GIF export failed: {ex}");
 
-                try { if (cancelled && File.Exists(destination)) File.Delete(destination); } catch { }
+                try
+                {
+                    if (File.Exists(destination))
+                        File.Delete(destination);
+                }
+                catch (Exception deleteEx)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Could not delete the unfinished GIF {destination}: {deleteEx.Message}");
+                }
 
                 SetBusy(false);
                 UpdateStatus(cancelled ? "GIF cancelled" : $"couldn't make the GIF: {ex.Message}");
@@ -904,7 +912,10 @@ namespace PhasmaStrap.UI.Elements.Dialogs
                     source.Freeze();
 
                     Directory.CreateDirectory(ScreenshotCapture.ScreenshotsDir);
-                    string target = System.IO.Path.Combine(ScreenshotCapture.ScreenshotsDir, $"ReplayFrame_{DateTime.Now:yyyyMMdd_HHmmss}.png");
+                    string stem = $"ReplayFrame_{DateTime.Now:yyyyMMdd_HHmmss}";
+                    string target = System.IO.Path.Combine(ScreenshotCapture.ScreenshotsDir, stem + ".png");
+                    for (int n = 2; File.Exists(target); n++)
+                        target = System.IO.Path.Combine(ScreenshotCapture.ScreenshotsDir, $"{stem}_{n}.png");
 
                     var encoder = new PngBitmapEncoder();
                     encoder.Frames.Add(BitmapFrame.Create(source));
@@ -973,6 +984,12 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             if (Keyboard.Modifiers != ModifierKeys.None)
                 return;
 
+            if (Keyboard.FocusedElement is ComboBoxItem or ComboBox { IsDropDownOpen: true })
+                return;
+
+            if (e.Key != Key.Escape && Keyboard.FocusedElement is ComboBox or TextBox)
+                return;
+
             bool handled = true;
 
             switch (e.Key)
@@ -989,9 +1006,14 @@ namespace PhasmaStrap.UI.Elements.Dialogs
                 case Key.C: SetCropMode(!_cropMode); break;
                 case Key.Escape:
                     if (_cropMode)
+                    {
                         SetCropMode(false);
+                    }
                     else
-                        handled = false;
+                    {
+                        App.Logger.WriteLine(LOG_IDENT, "Escape pressed, closing");
+                        Close();
+                    }
                     break;
                 default: handled = false; break;
             }

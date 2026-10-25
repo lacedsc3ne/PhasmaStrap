@@ -208,7 +208,16 @@ namespace PhasmaStrap.Integrations
                 return false;
 
             App.Logger.WriteLine(LOG_IDENT, $"Joining private server {server.Id} in place {server.PlaceId}");
-            Process.Start(Paths.Application, $"-player \"{PhasmaStrap.Utility.RobloxLaunch.DeepLink(server.PlaceId, accessCode: accessCode)}\"");
+            try
+            {
+                if (!PhasmaStrap.Utility.RobloxLaunch.Launch(PhasmaStrap.Utility.RobloxLaunch.DeepLink(server.PlaceId, accessCode: accessCode)))
+                    return false;
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not start Roblox for private server {server.Id}: {ex.Message}");
+                return false;
+            }
             return true;
         }
 

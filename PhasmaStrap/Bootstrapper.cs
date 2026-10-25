@@ -58,6 +58,8 @@ namespace PhasmaStrap
 
         private bool _isInstalling = false;
         private double _progressIncrement;
+
+        private int _progressUpdateQueued;
         private double _taskbarProgressIncrement;
         private double _taskbarProgressMaximum;
         private long _totalDownloadedBytes = 0;
@@ -125,7 +127,15 @@ namespace PhasmaStrap
 
             if (System.Windows.Application.Current is not null && !System.Windows.Application.Current.Dispatcher.CheckAccess())
             {
-                System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(UpdateProgressBar));
+                if (Interlocked.Exchange(ref _progressUpdateQueued, 1) == 0)
+                {
+                    System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        Interlocked.Exchange(ref _progressUpdateQueued, 0);
+                        UpdateProgressBar();
+                    }));
+                }
+
                 return;
             }
 
@@ -355,6 +365,10 @@ namespace PhasmaStrap
                 {
                     if (App.Settings.Prop.FullscreenOnLaunch)
                         ApplyFullscreenOnLaunch();
+                }
+                else if (_launchMode == LaunchMode.Studio)
+                {
+                    StudioPluginInstaller.EnsureInstalled(force: true);
                 }
 
                 if (!Utility.PartyLauncher.RobloxRunning())
@@ -670,8 +684,14 @@ namespace PhasmaStrap
                 string query = uriMatch.Groups[1].Value;
                 var queryParams = HttpUtility.ParseQueryString(query);
 
-                if (!string.IsNullOrEmpty(queryParams["gameInstanceId"]))
+                string? targetedKey = new[] { "gameInstanceId", "accessCode", "linkCode", "privateServerLinkCode", "userId" }
+                    .FirstOrDefault(key => !string.IsNullOrEmpty(queryParams[key]));
+
+                if (targetedKey is not null)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Launch already targets a server ({targetedKey}), leaving it alone");
                     return;
+                }
 
                 if (!long.TryParse(queryParams["placeId"], out long placeId) || placeId <= 0)
                     return;
@@ -720,6 +740,18 @@ namespace PhasmaStrap
                 return;
 
             var queryParams = HttpUtility.ParseQueryString(decodedUrl[(queryIndex + 1)..]);
+
+            string? request = queryParams["request"];
+            bool isPlainJoin = string.Equals(request, "RequestGame", StringComparison.OrdinalIgnoreCase)
+                && string.IsNullOrEmpty(queryParams["gameId"])
+                && string.IsNullOrEmpty(queryParams["accessCode"])
+                && string.IsNullOrEmpty(queryParams["linkCode"]);
+
+            if (!isPlainJoin)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Launch is not a plain public join (request {request ?? "none"}), leaving it alone");
+                return;
+            }
 
             if (!long.TryParse(queryParams["placeId"], out long placeId) || placeId <= 0)
                 return;
@@ -942,7 +974,7 @@ namespace PhasmaStrap
             }
             else if (_launchMode == LaunchMode.StudioAuth)
             {
-                Process.Start(startInfo);
+                CpuCoreLimiter.StartWithoutLimit(startInfo)?.Dispose();
                 return;
             }
 
@@ -956,7 +988,7 @@ namespace PhasmaStrap
             if (!Directory.Exists(rbxLogDir))
                 Directory.CreateDirectory(rbxLogDir);
 
-            var logWatcher = new FileSystemWatcher()
+            using var logWatcher = new FileSystemWatcher()
             {
                 Path = rbxLogDir,
                 Filter = "*.log",
@@ -974,7 +1006,7 @@ namespace PhasmaStrap
 
             try
             {
-                using var process = Process.Start(startInfo)!;
+                using var process = CpuCoreLimiter.StartWithoutLimit(startInfo)!;
                 _appPid = process.Id;
             }
             catch (Win32Exception ex) when (ex.NativeErrorCode == 1223)
@@ -1093,17 +1125,19 @@ namespace PhasmaStrap
 #endregion
 
         #region App Install
+        private InterProcessLock? _updaterLock;
+
         private async Task<bool> CheckForUpdates()
         {
             const string LOG_IDENT = "Bootstrapper::CheckForUpdates";
 
-            using (var probe = new InterProcessLock("AutoUpdater"))
+            var updaterLock = new InterProcessLock("AutoUpdater");
+
+            if (!updaterLock.IsAcquired)
             {
-                if (!probe.IsAcquired)
-                {
-                    App.Logger.WriteLine(LOG_IDENT, "Another PhasmaStrap is already updating, skipping the update check");
-                    return false;
-                }
+                updaterLock.Dispose();
+                App.Logger.WriteLine(LOG_IDENT, "Another PhasmaStrap is already updating, skipping the update check");
+                return false;
             }
 
             App.Logger.WriteLine(LOG_IDENT, "Checking for updates...");
@@ -1112,13 +1146,28 @@ namespace PhasmaStrap
             var releaseInfo = await App.GetLatestRelease();
 
             if (releaseInfo is null)
+            {
+                updaterLock.Dispose();
                 return false;
+            }
 
-            var versionComparison = Utilities.CompareVersions(App.Version, releaseInfo.TagName);
+            VersionComparison versionComparison;
+
+            try
+            {
+                versionComparison = Utilities.CompareVersions(App.Version, releaseInfo.TagName);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not read the latest release version '{releaseInfo.TagName}', skipping the update: {ex.Message}");
+                updaterLock.Dispose();
+                return false;
+            }
 
             if (versionComparison == VersionComparison.Equal || versionComparison == VersionComparison.GreaterThan)
             {
                 App.Logger.WriteLine(LOG_IDENT, "No updates found");
+                updaterLock.Dispose();
                 return false;
             }
 
@@ -1197,9 +1246,9 @@ namespace PhasmaStrap
 
                 App.Settings.Save();
 
-                new InterProcessLock("AutoUpdater");
-
                 Process.Start(startInfo);
+
+                _updaterLock = updaterLock;
 
                 return true;
             }
@@ -1207,6 +1256,8 @@ namespace PhasmaStrap
             {
                 App.Logger.WriteLine(LOG_IDENT, "An exception occurred when running the auto-updater");
                 App.Logger.WriteException(LOG_IDENT, ex);
+
+                updaterLock.Dispose();
 
                 Frontend.ShowMessageBox(
                     string.Format(Strings.Bootstrapper_AutoUpdateFailed, version),
@@ -1549,28 +1600,39 @@ namespace PhasmaStrap
 
                         if (package is null)
                         {
-                            App.Logger.WriteLine(LOG_IDENT, "Aborted runtime install because package does not exist, has WebView2 been added in this Roblox version yet?");
-                            return;
+                            App.Logger.WriteLine(LOG_IDENT, "Skipped runtime install because package does not exist, has WebView2 been added in this Roblox version yet?");
                         }
-
-                        string baseDirectory = Path.Combine(_latestVersionDirectory, AppData.PackageDirectoryMap[package.Name]);
-
-                        ExtractPackage(package);
-
-                        SetStatus(Strings.Bootstrapper_Status_InstallingWebView2);
-
-                        var startInfo = new ProcessStartInfo()
+                        else
                         {
-                            WorkingDirectory = baseDirectory,
-                            FileName = Path.Combine(baseDirectory, "MicrosoftEdgeWebview2Setup.exe"),
-                            Arguments = "/silent /install"
-                        };
+                            string baseDirectory = Path.Combine(_latestVersionDirectory, AppData.PackageDirectoryMap[package.Name]);
 
-                        await Process.Start(startInfo)!.WaitForExitAsync();
+                            ExtractPackage(package);
 
-                        App.Logger.WriteLine(LOG_IDENT, "Finished installing runtime");
+                            SetStatus(Strings.Bootstrapper_Status_InstallingWebView2);
 
-                        Directory.Delete(baseDirectory, true);
+                            var startInfo = new ProcessStartInfo()
+                            {
+                                WorkingDirectory = baseDirectory,
+                                FileName = Path.Combine(baseDirectory, "MicrosoftEdgeWebview2Setup.exe"),
+                                Arguments = "/silent /install"
+                            };
+
+                            try
+                            {
+                                using Process? setup = Process.Start(startInfo);
+
+                                if (setup is not null)
+                                    await setup.WaitForExitAsync();
+
+                                App.Logger.WriteLine(LOG_IDENT, "Finished installing runtime");
+
+                                Directory.Delete(baseDirectory, true);
+                            }
+                            catch (Exception ex)
+                            {
+                                App.Logger.WriteLine(LOG_IDENT, $"WebView2 runtime install failed, carrying on without it: {ex.Message}");
+                            }
+                        }
                     }
                 }
             }
@@ -1627,7 +1689,7 @@ namespace PhasmaStrap
 
             AppData.DistributionState.Size = distributionSize;
 
-            int totalSize = App.PlayerState.Prop.Size + App.PlayerState.Prop.Size;
+            int totalSize = App.PlayerState.Prop.Size + App.StudioState.Prop.Size;
 
             using (var uninstallKey = Registry.CurrentUser.CreateSubKey(App.UninstallKey))
             {
@@ -1735,7 +1797,7 @@ namespace PhasmaStrap
                 }
 
                 foreach ((string id, string message) in managedScan.Failures)
-                    App.Logger.WriteLine(LOG_IDENT, $"Managed mod {id[..8]} could not be indexed: {message}");
+                    App.Logger.WriteLine(LOG_IDENT, $"Managed mod {(id.Length > 8 ? id[..8] : id)} could not be indexed: {message}");
 
                 AppData.DistributionState.ManagedModManifest = currentManagedManifest;
             }
@@ -1968,13 +2030,20 @@ namespace PhasmaStrap
             }
             else if (File.Exists(robloxPackageLocation))
             {
-                App.Logger.WriteLine(LOG_IDENT, $"Found existing copy at '{robloxPackageLocation}'! Copying to Downloads folder...");
-                File.Copy(robloxPackageLocation, package.DownloadPath);
+                string robloxCopyMD5 = MD5Hash.FromFile(robloxPackageLocation);
 
-                Interlocked.Add(ref _totalDownloadedBytes, package.PackedSize);
-                UpdateProgressBar();
+                if (robloxCopyMD5 == package.Signature)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Found existing copy at '{robloxPackageLocation}'! Copying to Downloads folder...");
+                    File.Copy(robloxPackageLocation, package.DownloadPath);
 
-                return;
+                    Interlocked.Add(ref _totalDownloadedBytes, package.PackedSize);
+                    UpdateProgressBar();
+
+                    return;
+                }
+
+                App.Logger.WriteLine(LOG_IDENT, $"Roblox's own copy at '{robloxPackageLocation}' does not match ({robloxCopyMD5} != {package.Signature}), downloading instead");
             }
 
             if (File.Exists(package.DownloadPath))
@@ -2003,6 +2072,16 @@ namespace PhasmaStrap
                     {
                         Interlocked.Exchange(ref totalBytesRead, 0);
                         totalBytesRead = await DownloadPackageSingleStream(package, packageUrl, bufferSize);
+                    }
+
+                    if (_cancelTokenSource.IsCancellationRequested)
+                    {
+                        App.Logger.WriteLine(LOG_IDENT, $"Download of {package.Name} was cancelled, removing the partial file");
+
+                        if (File.Exists(package.DownloadPath))
+                            File.Delete(package.DownloadPath);
+
+                        return;
                     }
 
                     string hash = MD5Hash.FromFile(package.DownloadPath);

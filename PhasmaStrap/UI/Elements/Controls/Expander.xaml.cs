@@ -47,7 +47,7 @@ namespace PhasmaStrap.UI.Elements.Controls
     public SymbolRegular HeaderIcon
     {
       get { return (SymbolRegular)GetValue(HeaderIconProperty); }
-      set { SetValue(HeaderTextProperty, value); }
+      set { SetValue(HeaderIconProperty, value); }
     }
 
     public object InnerContent

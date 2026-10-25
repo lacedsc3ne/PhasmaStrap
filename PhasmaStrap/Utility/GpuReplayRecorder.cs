@@ -52,6 +52,9 @@ namespace PhasmaStrap.Utility
 
         private readonly List<Segment> _limbo = new();
 
+        private const long MaxBufferedBytes = 1024L * 1024 * 1024;
+        private bool _capLogged;
+
         private long _presented;
         private long _presentedSince;
 
@@ -193,11 +196,15 @@ namespace PhasmaStrap.Utility
                     }
                     catch (Exception ex)
                     {
-                        Log?.Invoke($"Capture tick failed: {ex.Message.Trim()}");
                         ReleaseDuplication();
                         DropCurrent();
 
-                        if (++_failures >= 6 && !_everWorked)
+                        _failures++;
+
+                        if (_failures <= 6 || _failures % 60 == 0)
+                            Log?.Invoke($"Capture tick failed ({_failures} in a row): {ex.Message.Trim()}");
+
+                        if (_failures >= 6 && !_everWorked)
                         {
                             Unavailable = true;
                             UnavailableReason = ex.Message;
@@ -205,7 +212,7 @@ namespace PhasmaStrap.Utility
                             break;
                         }
 
-                        Thread.Sleep(500);
+                        Thread.Sleep(_failures > 20 ? 1500 : 500);
                         nextMs = clock.Elapsed.TotalMilliseconds;
                         continue;
                     }
@@ -325,7 +332,7 @@ namespace PhasmaStrap.Utility
                 int width = _lastWidth, height = _lastHeight;
 
                 int outWidth = width, outHeight = height;
-                if (settings.MaxHeight > 0)
+                if (settings.MaxHeight > 0 && height > settings.MaxHeight)
                 {
                     outHeight = settings.MaxHeight & ~1;
                     outWidth = Math.Min(8192, (int)Math.Round(width * (double)outHeight / height)) & ~1;
@@ -649,6 +656,23 @@ namespace PhasmaStrap.Utility
 
                 while (Volatile.Read(ref _cutsOutstanding) == 0 && _closed.Count > 1 && _closed[0].EndTicks < keepFrom)
                 {
+                    expired.Add(_closed[0]);
+                    _closed.RemoveAt(0);
+                }
+
+                long buffered = 0;
+                foreach (Segment kept in _closed)
+                    buffered += kept.Memory?.Length ?? 0;
+
+                while (Volatile.Read(ref _cutsOutstanding) == 0 && _closed.Count > 1 && buffered > MaxBufferedBytes)
+                {
+                    if (!_capLogged)
+                    {
+                        _capLogged = true;
+                        Log?.Invoke($"Replay buffer reached {buffered / 1048576} MB, dropping the oldest footage to stay under {MaxBufferedBytes / 1048576} MB");
+                    }
+
+                    buffered -= _closed[0].Memory?.Length ?? 0;
                     expired.Add(_closed[0]);
                     _closed.RemoveAt(0);
                 }
@@ -1006,6 +1030,13 @@ namespace PhasmaStrap.Utility
             {
                 all = new List<Segment>(_closed);
                 _closed.Clear();
+
+                if (Volatile.Read(ref _cutsOutstanding) > 0)
+                {
+                    Log?.Invoke($"A clip is still being saved, keeping {all.Count} segment(s) until it is done");
+                    _limbo.AddRange(all);
+                    all.Clear();
+                }
             }
 
             foreach (Segment segment in all)

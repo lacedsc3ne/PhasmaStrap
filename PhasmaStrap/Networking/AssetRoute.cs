@@ -90,6 +90,9 @@ namespace PhasmaStrap.Networking
                 if (info.OriginalUrl.Length > 0 && !IsRobloxContentUrl(info.OriginalUrl))
                     return null;
 
+                if (info.OriginalUrl.Length > 0 && info.Key != ContentKey(info.OriginalUrl))
+                    return null;
+
                 return info.OriginalUrl.Length == 0 && info.SwapPack.Length == 0 ? null : info;
             }
             catch

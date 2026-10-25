@@ -21,8 +21,11 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
     {
         public BehaviourPage()
         {
-            DataContext = new BehaviourViewModel();
+            var viewModel = new BehaviourViewModel();
+            DataContext = viewModel;
             InitializeComponent();
+
+            Loaded += (_, _) => viewModel.LoadModSummary();
         }
 
         private void ToggleSwitch_Checked(object sender, RoutedEventArgs e)

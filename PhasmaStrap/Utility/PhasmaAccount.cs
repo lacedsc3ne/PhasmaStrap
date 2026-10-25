@@ -1,4 +1,5 @@
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -87,7 +88,23 @@ namespace PhasmaStrap.Utility
             {
                 try
                 {
-                    return File.Exists(TokenPath) ? File.ReadAllText(TokenPath).Trim() : null;
+                    if (!File.Exists(TokenPath))
+                        return null;
+
+                    string saved = File.ReadAllText(TokenPath).Trim();
+
+                    if (saved.Length == 0)
+                        return null;
+
+                    if (saved.StartsWith(ProtectedPrefix, StringComparison.Ordinal))
+                    {
+                        byte[] plain = ProtectedData.Unprotect(Convert.FromBase64String(saved.Substring(ProtectedPrefix.Length)), null, DataProtectionScope.CurrentUser);
+                        return Encoding.UTF8.GetString(plain);
+                    }
+
+                    App.Logger.WriteLine(LOG_IDENT, "Found an unprotected account token, saving it protected");
+                    StoreToken(saved);
+                    return saved;
                 }
                 catch (Exception ex)
                 {
@@ -96,6 +113,8 @@ namespace PhasmaStrap.Utility
                 }
             }
         }
+
+        private const string ProtectedPrefix = "dpapi:";
 
         private static void StoreToken(string? token)
         {
@@ -109,8 +128,10 @@ namespace PhasmaStrap.Utility
                     return;
                 }
 
+                byte[] protectedToken = ProtectedData.Protect(Encoding.UTF8.GetBytes(token), null, DataProtectionScope.CurrentUser);
+
                 Directory.CreateDirectory(Paths.Base);
-                File.WriteAllText(TokenPath, token);
+                File.WriteAllText(TokenPath, ProtectedPrefix + Convert.ToBase64String(protectedToken));
             }
             catch (Exception ex)
             {
@@ -277,6 +298,8 @@ namespace PhasmaStrap.Utility
                 status?.Invoke("Could not reach the server. Check your connection and try again.");
                 return false;
             }
+
+            cancel.ThrowIfCancellationRequested();
 
             Utilities.ShellExecute(start.VerifyUrlComplete);
             status?.Invoke($"Approve the code {start.UserCode} in the browser window that just opened. Waiting...");
@@ -457,7 +480,7 @@ namespace PhasmaStrap.Utility
         public static async Task<(string? Problem, string? Url)> PublishToGalleryAsync(string kind, string name, string summary, string code)
         {
             if (!SignedIn)
-                return ("Sign in on the Accounts page first.", null);
+                return ("Sign in first under Settings > Account and backup.", null);
 
             try
             {
@@ -484,7 +507,7 @@ namespace PhasmaStrap.Utility
             }
         }
 
-        public static async Task<List<GalleryItem>> GalleryAsync(string kind, string query)
+        public static async Task<List<GalleryItem>?> GalleryAsync(string kind, string query)
         {
             var found = new List<GalleryItem>();
 
@@ -493,7 +516,10 @@ namespace PhasmaStrap.Utility
                 string url = $"{App.ServerBase}/v1/gallery/list?kind={Uri.EscapeDataString(kind)}&q={Uri.EscapeDataString(query ?? "")}";
                 using var response = await App.HttpClient.GetAsync(url);
                 if (!response.IsSuccessStatusCode)
-                    return found;
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"The gallery list answered {(int)response.StatusCode}");
+                    return null;
+                }
 
                 using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
                 if (!document.RootElement.TryGetProperty("items", out var items))
@@ -514,6 +540,7 @@ namespace PhasmaStrap.Utility
             catch (Exception ex)
             {
                 App.Logger.WriteException($"{LOG_IDENT}::GalleryAsync", ex);
+                return null;
             }
 
             return found;

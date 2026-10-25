@@ -120,7 +120,7 @@
                 </Grid>
             </Button>
 
-            <Button Margin="0,8,0,0" Command="{Binding LaunchRobloxStudioCommand, Mode=OneTime}" Style="{StaticResource LaunchChoice}">
+            <Button Margin="0,8,0,0" TabIndex="1" Command="{Binding LaunchRobloxStudioCommand, Mode=OneTime}" Style="{StaticResource LaunchChoice}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -133,7 +133,7 @@
                 </Grid>
             </Button>
 
-            <Button Margin="0,8,0,0" TabIndex="1" Command="{Binding LaunchSettingsCommand, Mode=OneTime}" Style="{StaticResource LaunchChoice}">
+            <Button Margin="0,8,0,0" TabIndex="2" Command="{Binding LaunchSettingsCommand, Mode=OneTime}" Style="{StaticResource LaunchChoice}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />

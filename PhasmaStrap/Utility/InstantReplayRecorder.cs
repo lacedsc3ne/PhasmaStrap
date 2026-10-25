@@ -241,44 +241,46 @@ namespace PhasmaStrap.Utility
 
         public void Stop()
         {
-            if (!_running)
-                return;
-
-            _running = false;
-
             lock (_modeLock)
+            {
+                if (!_running)
+                    return;
+
+                _running = false;
+
                 StopGpu();
 
-            BlockingCollection<RawFrame>? queue = _queue;
-            _queue = null;
+                BlockingCollection<RawFrame>? queue = _queue;
+                _queue = null;
 
-            try { _captureThread?.Join(1500); } catch { }
-            _captureThread = null;
+                try { _captureThread?.Join(1500); } catch { }
+                _captureThread = null;
 
-            queue?.CompleteAdding();
-            foreach (Thread worker in _workers)
-            {
-                try { worker.Join(1500); } catch { }
+                queue?.CompleteAdding();
+                foreach (Thread worker in _workers)
+                {
+                    try { worker.Join(1500); } catch { }
+                }
+                _workers = Array.Empty<Thread>();
+
+                if (queue is not null)
+                {
+                    while (queue.TryTake(out RawFrame? leftover))
+                        leftover.Bitmap.Dispose();
+                    queue.Dispose();
+                }
+
+                _duplication?.Dispose();
+                _duplication = null;
+
+                lock (_sync)
+                {
+                    _frames.Clear();
+                    _bufferBytes = 0;
+                }
+
+                App.Logger.WriteLine(LOG_IDENT, "Stopped");
             }
-            _workers = Array.Empty<Thread>();
-
-            if (queue is not null)
-            {
-                while (queue.TryTake(out RawFrame? leftover))
-                    leftover.Bitmap.Dispose();
-                queue.Dispose();
-            }
-
-            _duplication?.Dispose();
-            _duplication = null;
-
-            lock (_sync)
-            {
-                _frames.Clear();
-                _bufferBytes = 0;
-            }
-
-            App.Logger.WriteLine(LOG_IDENT, "Stopped");
         }
 
         private void CaptureLoop(object? state)
@@ -468,7 +470,7 @@ namespace PhasmaStrap.Utility
                         int maxHeight = MaxHeight;
                         Bitmap? scaled = null;
 
-                        if (maxHeight > 0 && source.Height != maxHeight)
+                        if (maxHeight > 0 && source.Height > maxHeight)
                         {
                             int h = maxHeight & ~1;
                             int w = Math.Max(2, (int)Math.Round(source.Width * (double)h / source.Height)) & ~1;

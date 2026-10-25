@@ -15,6 +15,13 @@ namespace PhasmaStrap.Utility
 
         private static readonly int[] IconSizes = { 16, 24, 32, 48, 64, 128, 256 };
 
+        private static readonly HashSet<string> ReservedNames = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "CON", "PRN", "AUX", "NUL",
+            "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+            "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+        };
+
         public static string IconCacheFolder => Path.Combine(Paths.Base, "GameShortcutIcons");
 
         public sealed record Result(bool Success, string Message);
@@ -40,7 +47,9 @@ namespace PhasmaStrap.Utility
                 string name = string.IsNullOrWhiteSpace(details.Data.Name) ? $"Game {placeId}" : details.Data.Name;
                 string icoPath = await EnsureIconAsync(placeId, details.Thumbnail.ImageUrl!);
 
-                string sanitizedName = string.Join("_", name.Split(Path.GetInvalidFileNameChars()));
+                string sanitizedName = string.Join("_", name.Split(Path.GetInvalidFileNameChars())).Trim().TrimEnd('.');
+                if (sanitizedName.Length == 0 || ReservedNames.Contains(sanitizedName.Split('.')[0].Trim()))
+                    sanitizedName = $"Game {placeId}";
                 string lnkPath = Path.Combine(folder, $"{sanitizedName}.lnk");
                 string exeArgs = RobloxLaunch.DeepLink(placeId);
 

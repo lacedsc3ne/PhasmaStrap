@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 
 using PhasmaStrap.Utility;
@@ -38,6 +39,16 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
             var close = new Button { Content = "Cancel", Margin = new Thickness(0, 18, 0, 0), Padding = new Thickness(18, 6, 18, 6), HorizontalAlignment = HorizontalAlignment.Center };
             close.Click += (_, _) => Close();
+
+            KeyDown += (_, e) =>
+            {
+                if (e.Key != Key.Escape)
+                    return;
+
+                App.Logger.WriteLine(LOG_IDENT, "Escape pressed, closing");
+                e.Handled = true;
+                Close();
+            };
 
             var panel = new StackPanel { Margin = new Thickness(24) };
             panel.Children.Add(steps);

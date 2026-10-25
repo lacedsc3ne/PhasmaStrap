@@ -45,6 +45,27 @@ namespace PhasmaStrap.Utility
             }
         }
 
+        public static bool OwnsPartyHere()
+        {
+            if (_mutex is not null)
+                return true;
+
+            try
+            {
+                if (Mutex.TryOpenExisting(MutexName, out Mutex? existing))
+                {
+                    existing.Dispose();
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not check for the party watcher: {ex.Message}");
+            }
+
+            return true;
+        }
+
         private static Mutex? _mutex;
         public static void RunBackground()
         {

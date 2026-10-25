@@ -78,10 +78,14 @@ namespace PhasmaStrap
 
                     if (!String.IsNullOrEmpty(message))
                         Frontend.ShowMessageBox($"{message}\n\n{ex.Message}", System.Windows.MessageBoxImage.Warning);
+                }
 
+                if (ex is not IOException && File.Exists(FileLocation))
+                {
                     try
                     {
                         File.Copy(FileLocation, FileLocation + ".bak", true);
+                        App.Logger.WriteLine(LOG_IDENT, $"Kept a copy of the unreadable file at {FileLocation}.bak");
                     }
                     catch (Exception copyEx)
                     {
@@ -90,12 +94,15 @@ namespace PhasmaStrap
                     }
                 }
 
+                App.Logger.WriteLine(LOG_IDENT, "Keeping the settings already in memory and leaving the file on disk untouched");
+
                 Loaded = true;
-                Save();
 
                 return false;
             }
         }
+
+        private readonly object _saveLock = new();
 
         private System.Threading.Timer? _deferredSaveTimer;
 
@@ -127,24 +134,40 @@ namespace PhasmaStrap
 
             Directory.CreateDirectory(Path.GetDirectoryName(FileLocation)!);
 
+            string tempLocation = $"{FileLocation}.{Environment.ProcessId}.tmp";
+
             try
             {
-                string contents = JsonSerializer.Serialize(Prop, new JsonSerializerOptions { WriteIndented = true });
-
-                if (Utility.SettingsBackups.IsTracked(FileLocation))
+                lock (_saveLock)
                 {
-                    Utility.SettingsBackups.Log ??= message => App.Logger.WriteLine("SettingsBackups", message);
-                    Utility.SettingsBackups.BeforeSave(Paths.SettingsBackups, FileLocation, contents);
+                    string contents = JsonSerializer.Serialize(Prop, new JsonSerializerOptions { WriteIndented = true });
+
+                    if (Utility.SettingsBackups.IsTracked(FileLocation))
+                    {
+                        Utility.SettingsBackups.Log ??= message => App.Logger.WriteLine("SettingsBackups", message);
+                        Utility.SettingsBackups.BeforeSave(Paths.SettingsBackups, FileLocation, contents);
+                    }
+
+                    File.WriteAllText(tempLocation, contents);
+                    ReplaceWithTempFile(tempLocation);
+
+                    LastFileHash = MD5Hash.FromString(contents);
                 }
-
-                File.WriteAllText(FileLocation, contents);
-
-                LastFileHash = MD5Hash.FromString(contents);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
                 App.Logger.WriteLine(LOG_IDENT, "Failed to save");
                 App.Logger.WriteException(LOG_IDENT, ex);
+
+                try
+                {
+                    if (File.Exists(tempLocation))
+                        File.Delete(tempLocation);
+                }
+                catch (Exception deleteEx)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Could not remove {tempLocation}: {deleteEx.Message}");
+                }
 
                 string errorMessage = string.Format(Resources.Strings.Bootstrapper_JsonManagerSaveFailed, ClassName, ex.Message);
                 Frontend.ShowMessageBox(errorMessage, System.Windows.MessageBoxImage.Warning);
@@ -153,6 +176,25 @@ namespace PhasmaStrap
             }
 
             App.Logger.WriteLine(LOG_IDENT, "Save complete!");
+        }
+
+        private void ReplaceWithTempFile(string tempLocation)
+        {
+            if (!File.Exists(FileLocation))
+            {
+                File.Move(tempLocation, FileLocation, true);
+                return;
+            }
+
+            try
+            {
+                File.Replace(tempLocation, FileLocation, null, true);
+            }
+            catch (IOException ex)
+            {
+                App.Logger.WriteLine($"{LOG_IDENT_CLASS}::Save", $"File.Replace failed for {FileLocation} ({ex.Message}), moving the new file over it instead");
+                File.Move(tempLocation, FileLocation, true);
+            }
         }
 
         public virtual void Delete()

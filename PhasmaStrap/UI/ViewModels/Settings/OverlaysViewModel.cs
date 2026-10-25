@@ -150,6 +150,8 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             S.OverlayHudShowLabels = d.OverlayHudShowLabels;
             S.OverlayHudTextShadow = d.OverlayHudTextShadow;
             S.OverlayHudCornerRadius = d.OverlayHudCornerRadius;
+            App.Logger.WriteLine("OverlaysViewModel::ResetHudLook", "Reset the HUD look to defaults");
+            OverlayHub.Refresh();
             OnPropertyChanged(string.Empty);
         });
 

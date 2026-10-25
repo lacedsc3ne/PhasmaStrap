@@ -20,7 +20,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
         {
             _isIdTaken = isIdTaken;
             InitializeComponent();
-            NameTextBox.Focus();
+            Loaded += (_, _) => NameTextBox.Focus();
         }
 
         private void OKButton_Click(object sender, RoutedEventArgs e)

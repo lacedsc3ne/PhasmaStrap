@@ -320,7 +320,17 @@ namespace PhasmaStrap.Integrations
             if (geo is null)
             {
                 lock (_ipLookupCache)
+                {
+                    if (_ipLookupFailUtc.Count >= MaxIpLookupEntries)
+                    {
+                        DateTime cutoff = DateTime.UtcNow - IpLookupFailCooldown;
+                        foreach (string stale in _ipLookupFailUtc.Where(item => item.Value < cutoff).Select(item => item.Key).ToList())
+                            _ipLookupFailUtc.Remove(stale);
+                        if (_ipLookupFailUtc.Count >= MaxIpLookupEntries)
+                            _ipLookupFailUtc.Clear();
+                    }
                     _ipLookupFailUtc[ip] = DateTime.UtcNow;
+                }
                 return null;
             }
 
@@ -853,7 +863,11 @@ namespace PhasmaStrap.Integrations
                     }
 
                     lock (_resolvedServerCache)
+                    {
                         _resolvedServerCache[cacheKey] = (ip, port, DateTime.UtcNow);
+                        if (_resolvedServerCache.Count > MaxResolvedServerEntries)
+                            PruneResolvedServerCache();
+                    }
 
                     return (ip, port);
                 }
@@ -880,6 +894,22 @@ namespace PhasmaStrap.Integrations
         }
 
         private static long _lastProbeFailureLogTicks;
+
+        private static void PruneResolvedServerCache()
+        {
+            DateTime cutoff = DateTime.UtcNow - ResolvedServerCacheTtl;
+            List<string> stale = _resolvedServerCache.Where(item => item.Value.ResolvedUtc < cutoff).Select(item => item.Key).ToList();
+            foreach (string key in stale)
+                _resolvedServerCache.Remove(key);
+
+            if (_resolvedServerCache.Count > MaxResolvedServerEntries)
+            {
+                foreach (string key in _resolvedServerCache.OrderBy(item => item.Value.ResolvedUtc).Take(_resolvedServerCache.Count - MaxResolvedServerEntries).Select(item => item.Key).ToList())
+                    _resolvedServerCache.Remove(key);
+            }
+
+            App.Logger.WriteLine(LOG_IDENT, $"Trimmed the resolved server cache to {_resolvedServerCache.Count} entries");
+        }
 
         private static void LogProbeFailure(string jobId, string reason)
         {

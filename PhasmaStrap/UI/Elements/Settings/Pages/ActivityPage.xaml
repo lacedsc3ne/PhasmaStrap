@@ -114,10 +114,11 @@
                                                     </ItemsControl.ItemsPanel>
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate>
-                                                            <Border Margin="0,2,4,2" Height="30" MinWidth="44" CornerRadius="6" ToolTip="{Binding FileName}" Cursor="Hand"
+                                                            <Border Margin="0,2,4,2" Height="30" MinWidth="44" CornerRadius="6" ToolTip="{Binding FileName}" Cursor="Hand" Focusable="True"
                                                                     Background="{DynamicResource PhasmaSelectedBrush}" ClipToBounds="True">
                                                                 <Border.InputBindings>
                                                                     <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.OpenCaptureCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}" />
+                                                                    <KeyBinding Key="Enter" Command="{Binding DataContext.OpenCaptureCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}" />
                                                                 </Border.InputBindings>
                                                                 <Grid>
                                                                     <Image Source="{Binding Thumbnail}" Height="30" Stretch="Uniform" Visibility="{Binding ThumbnailVisibility}" RenderOptions.BitmapScalingMode="HighQuality" />

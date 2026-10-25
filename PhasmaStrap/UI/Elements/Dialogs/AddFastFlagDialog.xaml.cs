@@ -23,7 +23,15 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             if (dialog.ShowDialog() != true)
                 return;
 
-            JsonTextBox.Text = File.ReadAllText(dialog.FileName);
+            try
+            {
+                JsonTextBox.Text = File.ReadAllText(dialog.FileName);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine("AddFastFlagDialog", $"Could not read {dialog.FileName}: {ex.Message}");
+                Frontend.ShowMessageBox($"That file couldn't be opened.\n\n{ex.Message}", MessageBoxImage.Error);
+            }
         }
 
         private void PresetValuesButton_Click(object sender, RoutedEventArgs e)

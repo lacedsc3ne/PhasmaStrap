@@ -18,7 +18,6 @@
             <Setter Property="Padding" Value="10,5" />
             <Setter Property="FontWeight" Value="Normal" />
             <Setter Property="FontSize" Value="12" />
-            <Setter Property="Focusable" Value="False" />
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
             <Setter Property="ToolTip" Value="Click, then press the key or combination. Esc cancels and keeps the current hotkey." />
             <Style.Triggers>
@@ -95,7 +94,7 @@
                         <!--  Uid="Capture" and Tag are used by the code behind to keep listening when this is clicked  -->
                         <Button Uid="Capture" DataContext="{Binding ScreenshotHotkey}" Style="{StaticResource HotkeyCaptureButton}"
                                 Content="{Binding ButtonText}" Tag="{Binding}" Click="CaptureButton_Click" />
-                        <Button Margin="6,0,0,0" Focusable="False" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold"
+                        <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold"
                                 Content="{x:Static resources:Strings.ContextMenu_OutputConsole_Clear}"
                                 IsEnabled="{Binding ScreenshotHotkey.HasGesture}" Tag="{Binding ScreenshotHotkey}" Click="ClearButton_Click" />
                     </StackPanel>

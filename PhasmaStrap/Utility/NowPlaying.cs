@@ -8,6 +8,7 @@ namespace PhasmaStrap.Utility
 
         private static volatile string _name = "";
         private static long _nameForUniverse;
+        private static DateTime _retryFetchAt = DateTime.MinValue;
 
         private static ActivityWatcher? _watcher;
 
@@ -49,9 +50,10 @@ namespace PhasmaStrap.Utility
                     return _name;
                 }
 
-                if (_nameForUniverse != universeId)
+                if (_nameForUniverse != universeId && DateTime.UtcNow >= _retryFetchAt)
                 {
                     _nameForUniverse = universeId;
+                    _name = "";
                     _ = FetchAsync(universeId);
                 }
             }
@@ -73,13 +75,25 @@ namespace PhasmaStrap.Utility
 
                 if (UniverseDetails.LoadFromCache(universeId)?.Data?.Name is string name && name.Length > 0)
                 {
+                    if (_nameForUniverse != universeId)
+                        return;
+
                     _name = ServerRegion.Shorten(name, 22);
                     NameResolved?.Invoke(null, EventArgs.Empty);
+                    return;
                 }
+
+                App.Logger.WriteLine(LOG_IDENT, $"No name came back for universe {universeId}, trying again in 30 seconds");
             }
             catch (Exception ex)
             {
                 App.Logger.WriteException($"{LOG_IDENT}::FetchAsync", ex);
+            }
+
+            if (_nameForUniverse == universeId)
+            {
+                _nameForUniverse = 0;
+                _retryFetchAt = DateTime.UtcNow.AddSeconds(30);
             }
         }
 

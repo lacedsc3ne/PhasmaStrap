@@ -10,7 +10,14 @@ namespace PhasmaStrap
         public bool NoWriteMode = false;
         public string? FileLocation;
 
-        public string AsDocument => String.Join('\n', History);
+        public string AsDocument
+        {
+            get
+            {
+                lock (History)
+                    return String.Join('\n', History);
+            }
+        }
 
         public void Initialize(bool useTempDir = false)
         {
@@ -67,8 +74,13 @@ namespace PhasmaStrap
 
             Initialized = true;
 
-            if (History.Count > 0)
-                WriteToLog(string.Join("\r\n", History));
+            string earlier;
+
+            lock (History)
+                earlier = string.Join("\r\n", History);
+
+            if (earlier.Length > 0)
+                WriteToLog(earlier);
 
             WriteLine(LOG_IDENT, "Finished initializing!");
 
@@ -108,10 +120,13 @@ namespace PhasmaStrap
             Debug.WriteLine(outcon);
             WriteToLog(outlog);
 
-            History.Add(outlog);
+            lock (History)
+            {
+                History.Add(outlog);
 
-            if (History.Count > 6000)
-                History.RemoveRange(0, History.Count - 5000);
+                if (History.Count > 6000)
+                    History.RemoveRange(0, History.Count - 5000);
+            }
         }
 
         public void WriteLine(string identifier, string message) => WriteLine($"[{identifier}] {message}");

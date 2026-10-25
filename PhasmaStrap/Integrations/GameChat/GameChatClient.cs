@@ -37,6 +37,7 @@ namespace PhasmaStrap.Integrations.GameChat
         private const int MinPollMs = 5000;
         private const int MaxPollMs = 60000;
         private const int HiddenPollMs = 60000;
+        private const int ConnectRetryMs = 30000;
 
         private CancellationTokenSource _cts = new();
         private string? _token;
@@ -127,8 +128,42 @@ namespace PhasmaStrap.Integrations.GameChat
             }
             catch (Exception ex)
             {
-                if (!ct.IsCancellationRequested)
+                if (ct.IsCancellationRequested)
+                    return;
+
+                App.Logger.WriteLine(Tag, $"Could not connect to the chat server, trying again in {ConnectRetryMs / 1000} s: {ex.Message}");
+                if (announce)
                     EmitSystem(string.Format(GameChatStrings.ConnectionFailed, ex.Message));
+                _ = RetryConnectAsync(generation, ct);
+            }
+        }
+
+        private async Task RetryConnectAsync(int generation, CancellationToken ct)
+        {
+            try
+            {
+                await Task.Delay(ConnectRetryMs, ct).ConfigureAwait(false);
+                await _connectionLock.WaitAsync(ct).ConfigureAwait(false);
+                try
+                {
+                    if (_disposed || generation != Volatile.Read(ref _connectionGeneration) || _token != null)
+                        return;
+                    await ConnectAsync(ct, announce: false).ConfigureAwait(false);
+                }
+                finally
+                {
+                    _connectionLock.Release();
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(Tag, "Chat reconnect error: " + ex.Message);
             }
         }
 

@@ -52,7 +52,9 @@ namespace PhasmaStrap.Utility
         {
             try
             {
-                File.WriteAllText(MarkerPath, JsonSerializer.Serialize(marker));
+                string temp = MarkerPath + "." + Guid.NewGuid().ToString("N") + ".tmp";
+                File.WriteAllText(temp, JsonSerializer.Serialize(marker));
+                File.Move(temp, MarkerPath, true);
             }
             catch (Exception ex)
             {
@@ -208,7 +210,9 @@ namespace PhasmaStrap.Utility
             try
             {
                 var request = new OneTimeRequest { ProfileId = profileId ?? "", UniverseId = universeId, PlaceId = placeId, RequestedUtc = DateTime.UtcNow };
-                File.WriteAllText(OneTimePath, JsonSerializer.Serialize(request));
+                string temp = OneTimePath + "." + Guid.NewGuid().ToString("N") + ".tmp";
+                File.WriteAllText(temp, JsonSerializer.Serialize(request));
+                File.Move(temp, OneTimePath, true);
                 App.Logger.WriteLine(LOG_IDENT, $"Next launch of place {placeId} uses {(request.ProfileId.Length > 0 ? $"profile {request.ProfileId}" : "your usual flags")} once");
             }
             catch (Exception ex)

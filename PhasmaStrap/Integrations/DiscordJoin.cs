@@ -68,7 +68,7 @@ namespace PhasmaStrap.Integrations
             }
 
             App.Logger.WriteLine(LOG_IDENT, $"Joining place {placeId}, server {jobId} from Discord");
-            Process.Start(Paths.Application, $"-player \"{PhasmaStrap.Utility.RobloxLaunch.DeepLink(placeId, jobId)}\"");
+            PhasmaStrap.Utility.RobloxLaunch.Join(placeId, jobId);
             return true;
         }
 
@@ -126,23 +126,32 @@ namespace PhasmaStrap.Integrations
 
             Task.Run(async () =>
             {
-                using var client = new DiscordRpcClient(appId);
-                var received = new TaskCompletionSource<string>();
+                try
+                {
+                    using var client = new DiscordRpcClient(appId);
+                    var received = new TaskCompletionSource<string>();
 
-                client.OnJoin += (_, e) => received.TrySetResult(e.Secret);
-                client.OnError += (_, e) => App.Logger.WriteLine(LOG_IDENT, $"Discord error: {e.Message}");
+                    client.OnJoin += (_, e) => received.TrySetResult(e.Secret);
+                    client.OnError += (_, e) => App.Logger.WriteLine(LOG_IDENT, $"Discord error: {e.Message}");
 
-                Subscribe(client, appId);
-                client.Initialize();
+                    Subscribe(client, appId);
+                    client.Initialize();
 
-                Task finished = await Task.WhenAny(received.Task, Task.Delay(TimeSpan.FromSeconds(20)));
+                    Task finished = await Task.WhenAny(received.Task, Task.Delay(TimeSpan.FromSeconds(20)));
 
-                if (finished == received.Task)
-                    Launch(received.Task.Result);
-                else
-                    App.Logger.WriteLine(LOG_IDENT, "Discord started PhasmaStrap for a join, but no join arrived");
-
-                App.Current.Dispatcher.Invoke(() => App.Terminate());
+                    if (finished == received.Task)
+                        Launch(received.Task.Result);
+                    else
+                        App.Logger.WriteLine(LOG_IDENT, "Discord started PhasmaStrap for a join, but no join arrived");
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"The Discord join handler failed for {appId}: {ex.Message}");
+                }
+                finally
+                {
+                    App.Current.Dispatcher.Invoke(() => App.Terminate());
+                }
             });
         }
     }

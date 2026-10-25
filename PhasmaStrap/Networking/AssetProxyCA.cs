@@ -1,3 +1,4 @@
+using System.Formats.Asn1;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
@@ -9,7 +10,17 @@ namespace PhasmaStrap.Networking
 
         private const string SubjectName = "CN=PhasmaStrap Local Proxy CA";
 
-        private static string CertificateFile => Path.Combine(Paths.LocalAppData, "PhasmaStrap", "AssetProxy", "ca.pfx");
+        private const string NameConstraintsOid = "2.5.29.30";
+
+        private static readonly string[] PermittedDomains = { "roblox.com", "rbxcdn.com" };
+
+        private static readonly byte[] KeyEntropy = Encoding.UTF8.GetBytes("PhasmaStrap Local Proxy CA");
+
+        private static string CertificateFolder => Path.Combine(Paths.LocalAppData, "PhasmaStrap", "AssetProxy");
+
+        private static string CertificateFile => Path.Combine(CertificateFolder, "ca.dat");
+
+        private static string LegacyCertificateFile => Path.Combine(CertificateFolder, "ca.pfx");
 
         private static X509Certificate2? _cached;
 
@@ -28,16 +39,77 @@ namespace PhasmaStrap.Networking
                     return existing;
 
                 string path = CertificateFile;
-                var created = CreateRootCertificate();
+                var created = CreateRootCertificate(out byte[] pfx);
                 Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-                File.WriteAllBytes(path, created.Export(X509ContentType.Pfx));
-                App.Logger.WriteLine(LOG_IDENT, $"Generated new local proxy CA, valid until {created.NotAfter}");
+                File.WriteAllBytes(path, ProtectedData.Protect(pfx, KeyEntropy, DataProtectionScope.CurrentUser));
+                CryptographicOperations.ZeroMemory(pfx);
+                App.Logger.WriteLine(LOG_IDENT, $"Generated new local proxy CA limited to {string.Join(", ", PermittedDomains)}, valid until {created.NotAfter}");
+
+                DeleteLegacyCertificateFile();
 
                 ForgetDerived();
                 _cached = created;
                 _cachedWriteTimeUtc = File.GetLastWriteTimeUtc(path);
                 return created;
             }
+        }
+
+        private static void DeleteLegacyCertificateFile()
+        {
+            try
+            {
+                if (!File.Exists(LegacyCertificateFile))
+                    return;
+
+                File.Delete(LegacyCertificateFile);
+                App.Logger.WriteLine(LOG_IDENT, $"Deleted the old unprotected proxy CA file {LegacyCertificateFile}");
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not delete the old proxy CA file {LegacyCertificateFile}: {ex.Message}");
+            }
+        }
+
+        private static byte[] BuildNameConstraints()
+        {
+            var writer = new AsnWriter(AsnEncodingRules.DER);
+            var permittedSubtrees = new Asn1Tag(TagClass.ContextSpecific, 0, true);
+            var dnsName = new Asn1Tag(TagClass.ContextSpecific, 2);
+
+            writer.PushSequence();
+            writer.PushSequence(permittedSubtrees);
+
+            foreach (string domain in PermittedDomains)
+            {
+                writer.PushSequence();
+                writer.WriteCharacterString(UniversalTagNumber.IA5String, domain, dnsName);
+                writer.PopSequence();
+            }
+
+            writer.PopSequence(permittedSubtrees);
+            writer.PopSequence();
+
+            return writer.Encode();
+        }
+
+        private static bool HasCurrentNameConstraints(X509Certificate2 certificate)
+        {
+            X509Extension? extension = certificate.Extensions[NameConstraintsOid];
+            return extension is not null && extension.Critical && extension.RawData.AsSpan().SequenceEqual(BuildNameConstraints());
+        }
+
+        public static bool IsPermittedHost(string? hostname)
+        {
+            if (string.IsNullOrEmpty(hostname))
+                return false;
+
+            foreach (string domain in PermittedDomains)
+            {
+                if (hostname.Equals(domain, StringComparison.OrdinalIgnoreCase) || hostname.EndsWith("." + domain, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
         }
 
         private static X509Certificate2? LoadRoot()
@@ -54,9 +126,23 @@ namespace PhasmaStrap.Networking
 
                 try
                 {
-                    var existing = new X509Certificate2(path, (string?)null, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet);
+                    byte[] pfx = ProtectedData.Unprotect(File.ReadAllBytes(path), KeyEntropy, DataProtectionScope.CurrentUser);
+                    var existing = new X509Certificate2(pfx, (string?)null, X509KeyStorageFlags.EphemeralKeySet);
+                    CryptographicOperations.ZeroMemory(pfx);
+
                     if (existing.NotAfter <= DateTime.Now.AddDays(7))
+                    {
+                        App.Logger.WriteLine(LOG_IDENT, $"The proxy CA expires on {existing.NotAfter}, making a new one");
+                        existing.Dispose();
                         return null;
+                    }
+
+                    if (!HasCurrentNameConstraints(existing))
+                    {
+                        App.Logger.WriteLine(LOG_IDENT, "The stored proxy CA is not limited to the Roblox domains, making a new one");
+                        existing.Dispose();
+                        return null;
+                    }
 
                     if (_cached is not null)
                         App.Logger.WriteLine(LOG_IDENT, "The proxy CA was replaced by another PhasmaStrap process - using the new one");
@@ -82,22 +168,30 @@ namespace PhasmaStrap.Networking
             BundleStateCache.Clear();
         }
 
-        private static X509Certificate2 CreateRootCertificate()
+        private static X509Certificate2 CreateRootCertificate(out byte[] pfx)
         {
             using RSA rsa = RSA.Create(2048);
 
             var request = new CertificateRequest(SubjectName, rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-            request.CertificateExtensions.Add(new X509BasicConstraintsExtension(true, false, 0, true));
+            request.CertificateExtensions.Add(new X509BasicConstraintsExtension(true, true, 0, true));
             request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.KeyCertSign | X509KeyUsageFlags.CrlSign | X509KeyUsageFlags.DigitalSignature, true));
             request.CertificateExtensions.Add(new X509SubjectKeyIdentifierExtension(request.PublicKey, false));
+            request.CertificateExtensions.Add(new X509Extension(NameConstraintsOid, BuildNameConstraints(), true));
 
-            X509Certificate2 cert = request.CreateSelfSigned(DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddYears(2));
+            using X509Certificate2 cert = request.CreateSelfSigned(DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddYears(2));
 
-            return new X509Certificate2(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet);
+            pfx = cert.Export(X509ContentType.Pfx);
+            return new X509Certificate2(pfx, (string?)null, X509KeyStorageFlags.EphemeralKeySet);
         }
 
         public static X509Certificate2 GetLeafCertificate(string hostname)
         {
+            if (!IsPermittedHost(hostname))
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Refusing to make a certificate for {hostname}, it is outside {string.Join(", ", PermittedDomains)}");
+                throw new ArgumentException($"{hostname} is not a Roblox host", nameof(hostname));
+            }
+
             lock (Sync)
             {
                 X509Certificate2 root = GetOrCreateRootCertificate();
@@ -122,12 +216,12 @@ namespace PhasmaStrap.Networking
                 if (notAfter > rootEnd)
                     notAfter = rootEnd;
 
-                X509Certificate2 leaf = request.Create(root, DateTimeOffset.Now.AddDays(-1), notAfter, serial);
-                X509Certificate2 leafWithKey = leaf.CopyWithPrivateKey(rsa);
+                using X509Certificate2 leaf = request.Create(root, DateTimeOffset.Now.AddDays(-1), notAfter, serial);
+                using X509Certificate2 leafWithKey = leaf.CopyWithPrivateKey(rsa);
 
-                var exportable = new X509Certificate2(leafWithKey.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet);
-                LeafCache[hostname] = exportable;
-                return exportable;
+                var usable = new X509Certificate2(leafWithKey.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.DefaultKeySet);
+                LeafCache[hostname] = usable;
+                return usable;
             }
         }
 
@@ -160,9 +254,13 @@ namespace PhasmaStrap.Networking
                 X509Certificate2 root = GetOrCreateRootCertificate();
                 using var store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
                 store.Open(OpenFlags.ReadWrite);
-                store.Add(root);
+
+                RemoveOurRoots(store, root.Thumbprint);
+
+                using var publicOnly = new X509Certificate2(root.RawData);
+                store.Add(publicOnly);
                 lock (Sync) { _trustStoreCached = true; _trustStoreCheckedUtc = DateTime.UtcNow; }
-                App.Logger.WriteLine(LOG_IDENT, "Root CA installed to CurrentUser trust store");
+                App.Logger.WriteLine(LOG_IDENT, $"Root CA {root.Thumbprint} installed to CurrentUser trust store");
                 return true;
             }
             catch (Exception ex)
@@ -176,21 +274,46 @@ namespace PhasmaStrap.Networking
         {
             try
             {
-                X509Certificate2? root = LoadRoot();
-                if (root is null)
-                    return true;
-
                 using var store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
                 store.Open(OpenFlags.ReadWrite);
-                store.Remove(root);
+                RemoveOurRoots(store, null);
                 lock (Sync) { _trustStoreCached = false; _trustStoreCheckedUtc = DateTime.UtcNow; }
-                App.Logger.WriteLine(LOG_IDENT, "Root CA removed from CurrentUser trust store");
                 return true;
             }
             catch (Exception ex)
             {
                 App.Logger.WriteException(LOG_IDENT, ex);
                 return false;
+            }
+        }
+
+        public static bool IsAnyRootInTrustStore()
+        {
+            try
+            {
+                using var store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
+                store.Open(OpenFlags.ReadOnly);
+                return store.Certificates.Find(X509FindType.FindBySubjectDistinguishedName, SubjectName, false).Count > 0;
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not read the CurrentUser trust store: {ex.Message}");
+                return false;
+            }
+        }
+
+        private static void RemoveOurRoots(X509Store store, string? keepThumbprint)
+        {
+            foreach (X509Certificate2 found in store.Certificates.Find(X509FindType.FindBySubjectDistinguishedName, SubjectName, false))
+            {
+                using (found)
+                {
+                    if (keepThumbprint is not null && found.Thumbprint.Equals(keepThumbprint, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    store.Remove(found);
+                    App.Logger.WriteLine(LOG_IDENT, $"Root CA {found.Thumbprint} (valid until {found.NotAfter}) removed from CurrentUser trust store");
+                }
             }
         }
 

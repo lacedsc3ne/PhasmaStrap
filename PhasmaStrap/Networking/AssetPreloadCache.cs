@@ -27,6 +27,8 @@ namespace PhasmaStrap.Networking
 
         private const int MinEvictionIntervalMs = 30000;
 
+        private static readonly TimeSpan MaxEntryAge = TimeSpan.FromHours(24);
+
         public static ProxiedResponse? TryServeFromCache(ProxiedRequest request)
         {
             if (!App.Settings.Prop.AssetWarpPreloadEnabled)
@@ -40,6 +42,14 @@ namespace PhasmaStrap.Networking
                 string path = CacheFilePath(request);
                 if (!File.Exists(path))
                     return null;
+
+                DateTime writtenUtc = File.GetLastWriteTimeUtc(path);
+                if (DateTime.UtcNow - writtenUtc > MaxEntryAge)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Preload cache entry for {request.Host}{request.Path} is from {writtenUtc:u}, too old, asking Roblox again");
+                    File.Delete(path);
+                    return null;
+                }
 
                 byte[] cached = File.ReadAllBytes(path);
                 File.SetLastAccessTimeUtc(path, DateTime.UtcNow);
@@ -83,9 +93,24 @@ namespace PhasmaStrap.Networking
         private static string CacheFilePath(ProxiedRequest request)
         {
             using SHA256 sha = SHA256.Create();
-            byte[] keyBytes = Encoding.UTF8.GetBytes($"{request.Host}{request.Path}").Concat(request.Body).ToArray();
+            byte[] keyBytes = Encoding.UTF8.GetBytes($"{AccountOf(request)}|{request.Host}{request.Path}").Concat(request.Body).ToArray();
             string hash = Convert.ToHexString(sha.ComputeHash(keyBytes));
             return Path.Combine(CacheDir, $"{hash}.json");
+        }
+
+        private static string AccountOf(ProxiedRequest request)
+        {
+            if (!request.Headers.TryGetValue("Cookie", out string? cookies))
+                return "";
+
+            foreach (string part in cookies.Split(';'))
+            {
+                string trimmed = part.Trim();
+                if (trimmed.StartsWith(".ROBLOSECURITY=", StringComparison.OrdinalIgnoreCase))
+                    return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(trimmed)));
+            }
+
+            return "";
         }
 
         private static void MaybeEvict()
@@ -164,7 +189,7 @@ namespace PhasmaStrap.Networking
         {
             try
             {
-                string path = Path.Combine(CacheDir, fileName);
+                string path = Path.Combine(CacheDir, Path.GetFileName(fileName));
                 if (File.Exists(path))
                     File.Delete(path);
             }

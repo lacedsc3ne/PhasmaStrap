@@ -28,7 +28,7 @@
 
                 <Border Margin="0,0,0,12" Padding="14,10" CornerRadius="{DynamicResource PhasmaCornerRadius}" BorderThickness="1"
                         BorderBrush="{DynamicResource PhasmaWarnBrush}" Background="{DynamicResource PhasmaPanelRaisedBrush}"
-                        Visibility="{Binding ManagerDisabledVisibility, Mode=OneTime}">
+                        Visibility="{Binding ManagerDisabledVisibility, Mode=OneWay}">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -105,7 +105,7 @@
 
                 <controls:SettingsCard Margin="0,6,0,0" Header="{x:Static resources:Strings.Menu_FastFlagGames_WhenRobloxAlreadyOpen}"
                                        Description="Roblox only reads FastFlags when it starts. Joining from inside Roblox keeps the flags it started with.">
-                    <TextBlock Margin="0,0,0,10" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource PhasmaWarnBrush}" Visibility="{Binding TrackingOffVisibility, Mode=OneTime}"
+                    <TextBlock Margin="0,0,0,10" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource PhasmaWarnBrush}" Visibility="{Binding TrackingOffVisibility, Mode=OneWay}"
                                Text="{x:Static resources:Strings.Menu_FastFlagGames_ActivityTrackingOffIntegrationsPageSo}" />
 
                     <controls:OptionControl Header="{x:Static resources:Strings.Menu_FastFlagGames_CloseRobloxFirstWhenLaunchNeeds}"

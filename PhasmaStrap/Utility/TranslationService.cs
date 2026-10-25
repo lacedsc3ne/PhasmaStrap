@@ -472,7 +472,13 @@ namespace PhasmaStrap.Utility
 
         private static void QueueSave()
         {
-            try { Application.Current?.Dispatcher.BeginInvoke(new Action(() => { _saveTimer?.Stop(); _saveTimer?.Start(); })); }
+            if (Application.Current is null || _saveTimer is null)
+            {
+                SaveCache();
+                return;
+            }
+
+            try { Application.Current.Dispatcher.BeginInvoke(new Action(() => { _saveTimer?.Stop(); _saveTimer?.Start(); })); }
             catch { SaveCache(); }
         }
 

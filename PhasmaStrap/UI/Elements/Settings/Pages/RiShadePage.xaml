@@ -49,7 +49,7 @@
                 </controls:SettingsCard>
             </controls:CardColumns>
 
-            <TextBlock Style="{DynamicResource PhasmaSectionLabel}" Text="COLOR AND TONE" />
+            <TextBlock Style="{DynamicResource PhasmaSectionLabel}" Text="COLOUR AND TONE" />
             <controls:CardColumns MinColumnWidth="290">
                 <controls:SettingsCard Header="{x:Static resources:Strings.Menu_RiShade_ColorGrade}">
                     <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_Common_Enabled}">
@@ -172,7 +172,8 @@
         <StackPanel Grid.Column="1">
             <Border x:Name="PreviewFrame" Height="200" Margin="0,0,0,8" CornerRadius="{DynamicResource PhasmaCornerRadius}" BorderThickness="1"
                     BorderBrush="{DynamicResource PhasmaStrokeBrush}" Background="{DynamicResource PhasmaPanelBrush}" Cursor="SizeWE"
-                    ToolTip="Drag to compare" AutomationProperties.Name="RiShade preview"
+                    ToolTip="Drag to compare, or use the left and right arrow keys" AutomationProperties.Name="RiShade preview" Focusable="True"
+                    KeyDown="PreviewFrame_KeyDown"
                     MouseLeftButtonDown="PreviewFrame_MouseLeftButtonDown" MouseMove="PreviewFrame_MouseMove" MouseLeftButtonUp="PreviewFrame_MouseLeftButtonUp">
                 <Grid x:Name="PreviewGrid" SizeChanged="PreviewGrid_SizeChanged">
                     <Image x:Name="PreviewBefore" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />

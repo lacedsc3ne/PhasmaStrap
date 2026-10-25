@@ -50,7 +50,9 @@ namespace PhasmaStrap.Utility
                 try
                 {
                     Directory.CreateDirectory(Path.GetDirectoryName(CachePath)!);
-                    File.WriteAllText(CachePath, JsonSerializer.Serialize(places));
+                    string temp = CachePath + "." + Guid.NewGuid().ToString("N") + ".tmp";
+                    File.WriteAllText(temp, JsonSerializer.Serialize(places));
+                    File.Move(temp, CachePath, true);
                 }
                 catch (Exception ex)
                 {

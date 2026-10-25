@@ -77,6 +77,11 @@ namespace PhasmaStrap.Utility
                 })
                 {
                     string? resolved = FromPath(command);
+                    if (resolved != null && command == "code.cmd")
+                    {
+                        string? bin = Path.GetDirectoryName(resolved);
+                        resolved = bin == null ? null : Path.GetFullPath(Path.Combine(bin, "..", "Code.exe"));
+                    }
                     if (resolved != null)
                         Add(name, resolved);
                 }
@@ -121,7 +126,6 @@ namespace PhasmaStrap.Utility
                     FileName = editor.Path,
                     Arguments = string.Format(editor.Arguments, filePath),
                     UseShellExecute = false,
-                    CreateNoWindow = true,
                     WorkingDirectory = Path.GetDirectoryName(filePath) ?? Environment.CurrentDirectory
                 });
                 return true;

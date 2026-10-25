@@ -219,11 +219,6 @@
                     <ui:ToggleSwitch IsChecked="{Binding FullscreenOnLaunch, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="Remove the 60 Hz cap on menus" Description="{Binding FrameRateCapDescription, Mode=OneWay}"
-                                        ToolTip="Sets the frame rate limit (Performance) to your display's refresh rate, up to 240">
-                    <ui:ToggleSwitch IsChecked="{Binding RemoveFrameRateCap, Mode=TwoWay}" />
-                </controls:OptionControl>
-
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_OptimizeRoblox_Title}" Description="{x:Static resources:Strings.Menu_Performance_OptimizeRoblox_Description}">
                     <ui:ToggleSwitch IsChecked="{Binding OptimizeRoblox, Mode=TwoWay}" />
                 </controls:OptionControl>

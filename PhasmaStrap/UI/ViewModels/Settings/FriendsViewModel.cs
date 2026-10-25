@@ -313,20 +313,20 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool AlertOnline
         {
             get => App.Settings.Prop.FriendAlertOnline;
-            set { App.Settings.Prop.FriendAlertOnline = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(AlertOnline)); }
+            set { App.Settings.Prop.FriendAlertOnline = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.FriendAlertOnline)); OnPropertyChanged(nameof(AlertOnline)); }
         }
 
         /// <summary>Friend alerts: a pop up when a friend starts playing a game (for friends on their usual alerts).</summary>
         public bool AlertGame
         {
             get => App.Settings.Prop.FriendAlertGame;
-            set { App.Settings.Prop.FriendAlertGame = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(AlertGame)); }
+            set { App.Settings.Prop.FriendAlertGame = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.FriendAlertGame)); OnPropertyChanged(nameof(AlertGame)); }
         }
 
         public bool AlertFavouritesOnly
         {
             get => App.Settings.Prop.FriendActivityFavouritesOnly;
-            set { App.Settings.Prop.FriendActivityFavouritesOnly = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(AlertFavouritesOnly)); }
+            set { App.Settings.Prop.FriendActivityFavouritesOnly = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.FriendActivityFavouritesOnly)); OnPropertyChanged(nameof(AlertFavouritesOnly)); }
         }
 
         private void ApplyView()
@@ -396,6 +396,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             set
             {
                 App.Settings.Prop.FriendActivityAlertsEnabled = value;
+                App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.FriendActivityAlertsEnabled));
                 OnPropertyChanged(nameof(AlertsEnabled));
 
                 if (!App.OwnsBackgroundServices)

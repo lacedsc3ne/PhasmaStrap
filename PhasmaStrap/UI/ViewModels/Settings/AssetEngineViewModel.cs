@@ -132,7 +132,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool RouteEnabled
         {
             get => App.Settings.Prop.AssetRouteEnabled;
-            set { App.Settings.Prop.AssetRouteEnabled = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(RouteEnabled)); OnPropertyChanged(nameof(StatusText)); }
+            set { App.Settings.Prop.AssetRouteEnabled = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.AssetRouteEnabled)); OnPropertyChanged(nameof(RouteEnabled)); OnPropertyChanged(nameof(StatusText)); }
         }
 
         private static readonly int[] LimitValuesMb = { 1024, 2048, 4096, 8192, 16384, 32768 };
@@ -141,7 +141,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool CacheEnabled
         {
             get => App.Settings.Prop.AssetCacheEnabled;
-            set { App.Settings.Prop.AssetCacheEnabled = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(CacheEnabled)); }
+            set { App.Settings.Prop.AssetCacheEnabled = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.AssetCacheEnabled)); OnPropertyChanged(nameof(CacheEnabled)); }
         }
 
         public string SelectedCacheLimit
@@ -154,7 +154,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                     return;
 
                 App.Settings.Prop.AssetCacheLimitMb = LimitValuesMb[index];
-                App.Settings.SaveDeferred();
+                App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.AssetCacheLimitMb));
                 OnPropertyChanged(nameof(SelectedCacheLimit));
             }
         }
@@ -214,7 +214,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool ShrinkEnabled
         {
             get => App.Settings.Prop.TextureShrinkEnabled;
-            set { App.Settings.Prop.TextureShrinkEnabled = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(ShrinkEnabled)); }
+            set { App.Settings.Prop.TextureShrinkEnabled = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.TextureShrinkEnabled)); OnPropertyChanged(nameof(ShrinkEnabled)); }
         }
 
         public string SelectedShrink
@@ -227,7 +227,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                     return;
 
                 App.Settings.Prop.TextureShrinkMaxSize = ShrinkValues[index];
-                App.Settings.SaveDeferred();
+                App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.TextureShrinkMaxSize));
                 OnPropertyChanged(nameof(SelectedShrink));
             }
         }
@@ -235,7 +235,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool SwapsEnabled
         {
             get => App.Settings.Prop.SwapPacksEnabled;
-            set { App.Settings.Prop.SwapPacksEnabled = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(SwapsEnabled)); }
+            set { App.Settings.Prop.SwapPacksEnabled = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.SwapPacksEnabled)); OnPropertyChanged(nameof(SwapsEnabled)); }
         }
 
         public Visibility PacksEmptyVisibility => Packs.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -392,7 +392,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             set
             {
                 App.Settings.Prop.JoinServerPickerEnabled = value;
-                App.Settings.Save();
+                App.Settings.SaveFields(nameof(App.Settings.Prop.JoinServerPickerEnabled));
 
                 if (App.Settings.Prop.NetworkingProxyEnabled && !HostsFileManager.IsBlockCurrent())
                 {
@@ -401,7 +401,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                     if (!ok)
                     {
                         App.Settings.Prop.JoinServerPickerEnabled = !value;
-                        App.Settings.Save();
+                        App.Settings.SaveFields(nameof(App.Settings.Prop.JoinServerPickerEnabled));
                         PickerStatus = "The hosts file could not be updated (the Windows prompt was declined), so nothing was changed.";
                     }
                     else
@@ -421,7 +421,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool TrafficEnabled
         {
             get => App.Settings.Prop.TrafficReportEnabled;
-            set { App.Settings.Prop.TrafficReportEnabled = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(TrafficEnabled)); }
+            set { App.Settings.Prop.TrafficReportEnabled = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.TrafficReportEnabled)); OnPropertyChanged(nameof(TrafficEnabled)); }
         }
 
         public Visibility TrafficEmptyVisibility => Traffic.Count == 0 ? Visibility.Visible : Visibility.Collapsed;

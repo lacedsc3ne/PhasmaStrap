@@ -508,6 +508,12 @@ namespace PhasmaStrap
         {
             const string LOG_IDENT = "Installer::HandleUpgrade";
 
+            if (Environment.GetEnvironmentVariable("PHASMASTRAP_UITEST_BACKGROUND") == "1")
+            {
+                App.Logger.WriteLine(LOG_IDENT, "Background UI test, leaving the installed copy alone");
+                return;
+            }
+
             DeleteReplacedExecutables();
 
             if (!File.Exists(Paths.Application) || Paths.Process == Paths.Application)

@@ -27,7 +27,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 }
 
                 App.Settings.Prop.AssetWarpEnabled = value;
-                App.Settings.Save();
+                App.Settings.SaveFields(nameof(App.Settings.Prop.AssetWarpEnabled));
 
                 OnPropertyChanged(nameof(AssetWarpEnabled));
                 OnPropertyChanged(nameof(StatusText));
@@ -37,31 +37,31 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool DisableAllTextures
         {
             get => App.Settings.Prop.AssetWarpDisableAllTextures;
-            set { App.Settings.Prop.AssetWarpDisableAllTextures = value; App.Settings.Save(); OnPropertyChanged(nameof(DisableAllTextures)); OnPropertyChanged(nameof(StatusText)); }
+            set { App.Settings.Prop.AssetWarpDisableAllTextures = value; App.Settings.SaveFields(nameof(App.Settings.Prop.AssetWarpDisableAllTextures)); OnPropertyChanged(nameof(DisableAllTextures)); OnPropertyChanged(nameof(StatusText)); }
         }
 
         public bool DisableAllDecals
         {
             get => App.Settings.Prop.AssetWarpDisableAllDecals;
-            set { App.Settings.Prop.AssetWarpDisableAllDecals = value; App.Settings.Save(); OnPropertyChanged(nameof(DisableAllDecals)); OnPropertyChanged(nameof(StatusText)); }
+            set { App.Settings.Prop.AssetWarpDisableAllDecals = value; App.Settings.SaveFields(nameof(App.Settings.Prop.AssetWarpDisableAllDecals)); OnPropertyChanged(nameof(DisableAllDecals)); OnPropertyChanged(nameof(StatusText)); }
         }
 
         public bool DisableAllImages
         {
             get => App.Settings.Prop.AssetWarpDisableAllImages;
-            set { App.Settings.Prop.AssetWarpDisableAllImages = value; App.Settings.Save(); OnPropertyChanged(nameof(DisableAllImages)); OnPropertyChanged(nameof(StatusText)); }
+            set { App.Settings.Prop.AssetWarpDisableAllImages = value; App.Settings.SaveFields(nameof(App.Settings.Prop.AssetWarpDisableAllImages)); OnPropertyChanged(nameof(DisableAllImages)); OnPropertyChanged(nameof(StatusText)); }
         }
 
         public bool DisableAllAnimations
         {
             get => App.Settings.Prop.AssetWarpDisableAllAnimations;
-            set { App.Settings.Prop.AssetWarpDisableAllAnimations = value; App.Settings.Save(); OnPropertyChanged(nameof(DisableAllAnimations)); OnPropertyChanged(nameof(StatusText)); }
+            set { App.Settings.Prop.AssetWarpDisableAllAnimations = value; App.Settings.SaveFields(nameof(App.Settings.Prop.AssetWarpDisableAllAnimations)); OnPropertyChanged(nameof(DisableAllAnimations)); OnPropertyChanged(nameof(StatusText)); }
         }
 
         public bool DisableAllMeshes
         {
             get => App.Settings.Prop.AssetWarpDisableAllMeshes;
-            set { App.Settings.Prop.AssetWarpDisableAllMeshes = value; App.Settings.Save(); OnPropertyChanged(nameof(DisableAllMeshes)); OnPropertyChanged(nameof(StatusText)); }
+            set { App.Settings.Prop.AssetWarpDisableAllMeshes = value; App.Settings.SaveFields(nameof(App.Settings.Prop.AssetWarpDisableAllMeshes)); OnPropertyChanged(nameof(DisableAllMeshes)); OnPropertyChanged(nameof(StatusText)); }
         }
 
         private bool EnsureProxyForSpoofer(bool turningOn)
@@ -110,7 +110,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 }
 
                 App.Settings.Prop.PresenceSpoofMode = value;
-                App.Settings.Save();
+                App.Settings.SaveFields(nameof(App.Settings.Prop.PresenceSpoofMode));
                 OnPropertyChanged(nameof(SelectedPresenceSpoofMode));
             }
         }
@@ -118,13 +118,13 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool PreloadEnabled
         {
             get => App.Settings.Prop.AssetWarpPreloadEnabled;
-            set { App.Settings.Prop.AssetWarpPreloadEnabled = value; App.Settings.Save(); }
+            set { App.Settings.Prop.AssetWarpPreloadEnabled = value; App.Settings.SaveFields(nameof(App.Settings.Prop.AssetWarpPreloadEnabled)); }
         }
 
         public int PreloadCacheMb
         {
             get => App.Settings.Prop.AssetWarpPreloadCacheMb;
-            set { App.Settings.Prop.AssetWarpPreloadCacheMb = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(PreloadCacheMb)); OnPropertyChanged(nameof(PreloadCacheSizeDisplay)); }
+            set { App.Settings.Prop.AssetWarpPreloadCacheMb = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.AssetWarpPreloadCacheMb)); OnPropertyChanged(nameof(PreloadCacheMb)); OnPropertyChanged(nameof(PreloadCacheSizeDisplay)); }
         }
 
         public string PreloadCacheSizeDisplay => PreloadCacheMb >= 1024 ? $"{PreloadCacheMb / 1024.0:0.#} GB" : $"{PreloadCacheMb} MB";
@@ -132,19 +132,19 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool PreloadAvatar
         {
             get => App.Settings.Prop.AssetWarpPreloadAvatar;
-            set { App.Settings.Prop.AssetWarpPreloadAvatar = value; App.Settings.Save(); }
+            set { App.Settings.Prop.AssetWarpPreloadAvatar = value; App.Settings.SaveFields(nameof(App.Settings.Prop.AssetWarpPreloadAvatar)); }
         }
 
         public bool PreloadCrossGame
         {
             get => App.Settings.Prop.AssetWarpPreloadCrossGame;
-            set { App.Settings.Prop.AssetWarpPreloadCrossGame = value; App.Settings.Save(); }
+            set { App.Settings.Prop.AssetWarpPreloadCrossGame = value; App.Settings.SaveFields(nameof(App.Settings.Prop.AssetWarpPreloadCrossGame)); }
         }
 
         public string SpoofOthersName
         {
             get => App.Settings.Prop.SpoofOthersName;
-            set { App.Settings.Prop.SpoofOthersName = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(SpoofOthersName)); }
+            set { App.Settings.Prop.SpoofOthersName = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.SpoofOthersName)); OnPropertyChanged(nameof(SpoofOthersName)); }
         }
 
         public bool SpoofOthersApplyIngame
@@ -162,7 +162,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string SpoofSelfName
         {
             get => App.Settings.Prop.SpoofSelfName;
-            set { App.Settings.Prop.SpoofSelfName = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(SpoofSelfName)); }
+            set { App.Settings.Prop.SpoofSelfName = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.SpoofSelfName)); OnPropertyChanged(nameof(SpoofSelfName)); }
         }
 
         public bool SpoofSelfApplyIngame
@@ -192,7 +192,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
 
             write(value);
-            App.Settings.Save();
+            App.Settings.SaveFields(propertyName);
             OnPropertyChanged(propertyName);
         }
 
@@ -208,7 +208,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 }
 
                 App.Settings.Prop.RobuxSpoofAmount = value;
-                App.Settings.SaveDeferred();
+                App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.RobuxSpoofAmount));
                 OnPropertyChanged(nameof(RobuxSpoofAmount));
                 OnPropertyChanged(nameof(RobuxSpoofSummary));
             }

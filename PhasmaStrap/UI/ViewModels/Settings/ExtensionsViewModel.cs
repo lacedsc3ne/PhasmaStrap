@@ -51,7 +51,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             private set
             {
                 App.Settings.Prop.RojoLastProjectPath = value;
-                App.Settings.Save();
+                App.Settings.SaveFields(nameof(App.Settings.Prop.RojoLastProjectPath));
                 OnPropertyChanged(nameof(ProjectPath));
                 OnPropertyChanged(nameof(ProjectPathText));
                 OnPropertyChanged(nameof(CanServe));
@@ -241,7 +241,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             if (dialog.ShowDialog() == true)
             {
                 ExtensionManager.SetSavedPath(entry.Extension.Id, dialog.FileName);
-                App.Settings.Save();
+                App.Settings.SaveFields(nameof(App.Settings.Prop.ExtensionPaths));
                 entry.Refresh();
             }
         }
@@ -252,7 +252,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 return;
 
             ExtensionManager.ClearSavedPath(entry.Extension.Id);
-            App.Settings.Save();
+            App.Settings.SaveFields(nameof(App.Settings.Prop.ExtensionPaths));
             entry.Refresh();
         }
     }

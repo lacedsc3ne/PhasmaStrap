@@ -221,42 +221,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             set { App.Settings.Prop.FullscreenOnLaunch = value; OnPropertyChanged(nameof(FullscreenOnLaunch)); }
         }
 
-        /// <summary>
-        /// "Remove the 60 Hz cap on menus": the same FastFlag preset as the frame rate limit on Performance (Rendering.Framerate,
-        /// DFIntTaskSchedulerTargetFps). On sets it to this display's refresh rate (at least 120, at most 240); off clears it.
-        /// </summary>
-        public bool RemoveFrameRateCap
-        {
-            get => int.TryParse(App.FastFlags.GetPreset("Rendering.Framerate"), out int fps) && fps > 60;
-            set
-            {
-                if (value == RemoveFrameRateCap)
-                    return;
-
-                if (value)
-                {
-                    int refresh = 0;
-                    try { refresh = DisplaySystem.GetCurrentMode(null)?.RefreshRate ?? 0; } catch { }
-
-                    int target = Math.Clamp(refresh, 120, 240);
-                    App.FastFlags.SetPreset("Rendering.Framerate", target.ToString());
-                    App.FastFlags.SetPreset("Rendering.LimitFramerate", null);
-                }
-                else
-                {
-                    App.FastFlags.SetPreset("Rendering.Framerate", null);
-                    App.FastFlags.SetPreset("Rendering.LimitFramerate", null);
-                }
-
-                OnPropertyChanged(nameof(RemoveFrameRateCap));
-                OnPropertyChanged(nameof(FrameRateCapDescription));
-            }
-        }
-
-        public string FrameRateCapDescription => int.TryParse(App.FastFlags.GetPreset("Rendering.Framerate"), out int fps) && fps > 0
-            ? $"Smoother loading screens. Capped at {fps} FPS now."
-            : "Smoother loading screens";
-
         // ---- Mods summary: what is swapped in every time Roblox starts (read only, the Mods page changes them)
 
         public System.Windows.Input.ICommand OpenModsCommand { get; }

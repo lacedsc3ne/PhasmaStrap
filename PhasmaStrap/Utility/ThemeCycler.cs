@@ -54,7 +54,7 @@ namespace PhasmaStrap.Utility
 
             settings.SelectedCustomTheme = next;
             settings.ThemeCycleLastUtc = DateTime.UtcNow;
-            App.Settings.Save();
+            App.Settings.SaveFields(nameof(App.Settings.Prop.SelectedCustomTheme), nameof(App.Settings.Prop.ThemeCycleLastUtc));
 
             App.Logger.WriteLine(LOG_IDENT, $"Launch theme is now \"{next}\" ({themes.Count} in the rotation, {settings.ThemeCycleEvery.ToLowerInvariant()})");
         }

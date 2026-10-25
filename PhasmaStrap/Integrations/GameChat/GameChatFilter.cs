@@ -99,7 +99,7 @@ namespace PhasmaStrap.Integrations.GameChat
         public static string SetPreference(string preference)
         {
             App.Settings.Prop.GameChatFilterPreference = preference;
-            App.Settings.Save();
+            App.Settings.SaveFields(nameof(App.Settings.Prop.GameChatFilterPreference));
             return preference;
         }
     }

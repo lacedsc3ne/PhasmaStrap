@@ -37,7 +37,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool CrashAnalyzerEnabled
         {
             get => App.Settings.Prop.CrashAnalyzerEnabled;
-            set { App.Settings.Prop.CrashAnalyzerEnabled = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(CrashAnalyzerEnabled)); }
+            set { App.Settings.Prop.CrashAnalyzerEnabled = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.CrashAnalyzerEnabled)); OnPropertyChanged(nameof(CrashAnalyzerEnabled)); }
         }
 
         private static CrashRow ToRow(CrashReport report) => new()

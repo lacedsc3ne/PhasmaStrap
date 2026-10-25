@@ -61,6 +61,8 @@ namespace PhasmaStrap.UI.Elements.Settings
 
         private string? _savedSettingsHash;
 
+        private string? _hashBeforeFieldSave;
+
         private readonly System.Windows.Threading.DispatcherTimer _unsavedTimer = new() { Interval = TimeSpan.FromSeconds(1) };
 
         private int _seenNotifications;
@@ -69,6 +71,8 @@ namespace PhasmaStrap.UI.Elements.Settings
         {
             var viewModel = (MainWindowViewModel)DataContext;
             viewModel.RequestSaveNoticeEvent += (_, _) => TakeSettingsSnapshot();
+            App.Settings.FieldsSaved += Settings_FieldsSaved;
+            Closed += (_, _) => App.Settings.FieldsSaved -= Settings_FieldsSaved;
 
             TakeSettingsSnapshot();
             _unsavedTimer.Tick += (_, _) => RefreshUnsavedBar();
@@ -98,10 +102,53 @@ namespace PhasmaStrap.UI.Elements.Settings
             }
         }
 
+        private readonly object _snapshotLock = new();
+
         private void TakeSettingsSnapshot()
         {
-            _savedSettingsSnapshot = SerializeSettings();
-            _savedSettingsHash = App.Settings.LastFileHash;
+            lock (_snapshotLock)
+            {
+                _savedSettingsSnapshot = SerializeSettings();
+                _savedSettingsHash = App.Settings.LastFileHash;
+            }
+        }
+
+        private bool FileChangedElsewhere()
+        {
+            lock (_snapshotLock)
+            {
+                string? now = App.Settings.LastFileHash;
+                return !string.Equals(now, _savedSettingsHash, StringComparison.Ordinal) && !string.Equals(now, _hashBeforeFieldSave, StringComparison.Ordinal);
+            }
+        }
+
+        private void Settings_FieldsSaved(string[] names, string newHash)
+        {
+            lock (_snapshotLock)
+            {
+                try
+                {
+                    var saved = System.Text.Json.Nodes.JsonNode.Parse(_savedSettingsSnapshot) as System.Text.Json.Nodes.JsonObject;
+                    var current = JsonSerializer.SerializeToNode(App.Settings.Prop) as System.Text.Json.Nodes.JsonObject;
+
+                    if (saved is null || current is null)
+                        return;
+
+                    foreach (string name in names)
+                    {
+                        if (current.TryGetPropertyValue(name, out System.Text.Json.Nodes.JsonNode? value))
+                            saved[name] = value is null ? null : System.Text.Json.Nodes.JsonNode.Parse(value.ToJsonString());
+                    }
+
+                    _savedSettingsSnapshot = saved.ToJsonString();
+                    _hashBeforeFieldSave = _savedSettingsHash;
+                    _savedSettingsHash = newHash;
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine("MainWindow::FieldsSaved", $"Could not update the saved settings baseline: {ex.Message}");
+                }
+            }
         }
 
         private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -117,12 +164,14 @@ namespace PhasmaStrap.UI.Elements.Settings
                 return true;
 
             string now = SerializeSettings();
-            return now.Length > 0 && _savedSettingsSnapshot.Length > 0 && now != _savedSettingsSnapshot;
+
+            lock (_snapshotLock)
+                return now.Length > 0 && _savedSettingsSnapshot.Length > 0 && now != _savedSettingsSnapshot;
         }
 
         private bool HasUnsavedChangesOnClose()
         {
-            if (!string.Equals(App.Settings.LastFileHash, _savedSettingsHash, StringComparison.Ordinal))
+            if (FileChangedElsewhere())
                 TakeSettingsSnapshot();
 
             try
@@ -142,7 +191,7 @@ namespace PhasmaStrap.UI.Elements.Settings
                 return;
 
             // Pages that save on their own (deferred saves) move the file on; treat that as the new baseline.
-            if (!string.Equals(App.Settings.LastFileHash, _savedSettingsHash, StringComparison.Ordinal))
+            if (FileChangedElsewhere())
                 TakeSettingsSnapshot();
 
             bool dirty;

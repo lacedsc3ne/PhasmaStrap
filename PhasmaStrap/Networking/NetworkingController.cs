@@ -59,7 +59,7 @@ namespace PhasmaStrap.Networking
             }
 
             App.Settings.Prop.NetworkingProxyEnabled = true;
-            App.Settings.Save();
+            App.Settings.SaveFields(nameof(App.Settings.Prop.NetworkingProxyEnabled));
 
             UsernameSpoofer.WarmUpIdentity();
             StartKeeper();
@@ -93,7 +93,7 @@ namespace PhasmaStrap.Networking
             App.Logger.WriteLine(LOG_IDENT, certificateRemoved ? "Removed the proxy root certificate" : "Could not remove the proxy root certificate");
 
             App.Settings.Prop.NetworkingProxyEnabled = false;
-            App.Settings.Save();
+            App.Settings.SaveFields(nameof(App.Settings.Prop.NetworkingProxyEnabled));
             return true;
         }
 

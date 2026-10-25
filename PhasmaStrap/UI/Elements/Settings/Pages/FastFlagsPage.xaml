@@ -198,7 +198,7 @@
                             <ui:NumberBox ClearButtonEnabled="False" IntegersOnly="True" Width="140" Min="0" Max="100" Value="{Binding FPSBufferPercentage, Mode=TwoWay}" />
                         </controls:OptionControl>
 
-                        <controls:OptionControl Header="{x:Static resources:Strings.Menu_FastFlags_FramerateLimitFFlag_Title}" Description="Separate from the Performance cap">
+                        <controls:OptionControl Header="{x:Static resources:Strings.Menu_FastFlags_FramerateLimitFFlag_Title}" Description="Highest frame rate Roblox runs at. 0 lets Roblox decide.">
                             <ui:NumberBox ClearButtonEnabled="False" IntegersOnly="True" Width="140" Min="0" Max="2000" Value="{Binding FramerateLimit, Mode=TwoWay}" />
                         </controls:OptionControl>
 

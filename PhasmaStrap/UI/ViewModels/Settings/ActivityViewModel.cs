@@ -135,13 +135,13 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool HistoryEnabled
         {
             get => App.Settings.Prop.SessionHistoryEnabled;
-            set { App.Settings.Prop.SessionHistoryEnabled = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(HistoryEnabled)); }
+            set { App.Settings.Prop.SessionHistoryEnabled = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.SessionHistoryEnabled)); OnPropertyChanged(nameof(HistoryEnabled)); }
         }
 
         public bool TrackFriends
         {
             get => App.Settings.Prop.SessionTrackFriends;
-            set { App.Settings.Prop.SessionTrackFriends = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(TrackFriends)); OnPropertyChanged(nameof(CompanionsEmptyText)); }
+            set { App.Settings.Prop.SessionTrackFriends = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.SessionTrackFriends)); OnPropertyChanged(nameof(TrackFriends)); OnPropertyChanged(nameof(CompanionsEmptyText)); }
         }
 
         private string _totalsText = "";

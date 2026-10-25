@@ -101,7 +101,7 @@ namespace PhasmaStrap.UI
         public static bool SetFromFile(string sourcePath)
         {
             App.Settings.Prop.AppFontPath = sourcePath;
-            App.Settings.Save();
+            App.Settings.SaveFields(nameof(App.Settings.Prop.AppFontPath));
             Load();
             ApplyToAllWindows();
             return _current != null;
@@ -110,7 +110,7 @@ namespace PhasmaStrap.UI
         public static void Clear()
         {
             App.Settings.Prop.AppFontPath = "";
-            App.Settings.Save();
+            App.Settings.SaveFields(nameof(App.Settings.Prop.AppFontPath));
             _current = null;
             ApplyToAllWindows();
         }

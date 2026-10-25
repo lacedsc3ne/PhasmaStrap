@@ -431,7 +431,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             set
             {
                 App.Settings.Prop.GlobalBackgroundEnabled = value;
-                App.Settings.SaveDeferred();
+                App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.GlobalBackgroundEnabled));
                 OnPropertyChanged(nameof(GlobalBackgroundEnabled));
                 Elements.Base.WpfUiWindow.RefreshGlobalBackgroundOnAllWindows();
             }
@@ -443,7 +443,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             set
             {
                 App.Settings.Prop.GlobalBackgroundFilePath = value ?? "";
-                App.Settings.SaveDeferred();
+                App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.GlobalBackgroundFilePath));
                 OnPropertyChanged(nameof(GlobalBackgroundFilePath));
 
                 foreach (BackgroundItem item in Backgrounds)
@@ -459,7 +459,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             set
             {
                 App.Settings.Prop.GlobalBackgroundOverlayOpacity = value;
-                App.Settings.SaveDeferred();
+                App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.GlobalBackgroundOverlayOpacity));
                 OnPropertyChanged(nameof(GlobalBackgroundOverlayOpacity));
 
                 Elements.Base.WpfUiWindow.RefreshGlobalBackgroundOnAllWindows();
@@ -559,7 +559,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool VideoPauseInactive
         {
             get => App.Settings.Prop.GlobalBackgroundVideoPauseInactive;
-            set { App.Settings.Prop.GlobalBackgroundVideoPauseInactive = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(VideoPauseInactive)); }
+            set { App.Settings.Prop.GlobalBackgroundVideoPauseInactive = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.GlobalBackgroundVideoPauseInactive)); OnPropertyChanged(nameof(VideoPauseInactive)); }
         }
 
         private bool _importing;

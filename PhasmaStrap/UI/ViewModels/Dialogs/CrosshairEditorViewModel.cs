@@ -276,7 +276,7 @@ namespace PhasmaStrap.UI.ViewModels.Dialogs
             else
                 library.Add(copy);
 
-            App.Settings.Save();
+            App.Settings.SaveFields(nameof(App.Settings.Prop.CrosshairLibrary));
             RefreshMine();
             Status = existing >= 0 ? $"Updated \"{name}\"." : $"Saved \"{name}\" to your designs.";
         });
@@ -287,7 +287,7 @@ namespace PhasmaStrap.UI.ViewModels.Dialogs
                 return;
 
             App.Settings.Prop.CrosshairLibrary.RemoveAll(s => string.Equals(s.Name, choice.Style.Name, StringComparison.OrdinalIgnoreCase));
-            App.Settings.Save();
+            App.Settings.SaveFields(nameof(App.Settings.Prop.CrosshairLibrary));
             RefreshMine();
             Status = $"Deleted \"{choice.Name}\".";
         });
@@ -385,7 +385,7 @@ namespace PhasmaStrap.UI.ViewModels.Dialogs
         public void Apply()
         {
             App.Settings.Prop.CrosshairActive = _style.Clamped();
-            App.Settings.Save();
+            App.Settings.SaveFields(nameof(App.Settings.Prop.CrosshairActive));
             _original = _style.Signature;
             OnPropertyChanged(nameof(HasChanges));
             Applied?.Invoke();

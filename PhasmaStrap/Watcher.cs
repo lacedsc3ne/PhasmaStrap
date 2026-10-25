@@ -308,7 +308,7 @@ namespace PhasmaStrap
 
             bool enabled = !App.Settings.Prop.HeadsetAudioEnabled;
             App.Settings.Prop.HeadsetAudioEnabled = enabled;
-            App.Settings.Save();
+            App.Settings.SaveFields(nameof(App.Settings.Prop.HeadsetAudioEnabled));
 
             if (enabled)
                 HeadsetAudio.Start();
@@ -507,7 +507,7 @@ namespace PhasmaStrap
 
             bool enabled = !App.Settings.Prop.OverlayFocusModeEnabled;
             App.Settings.Prop.OverlayFocusModeEnabled = enabled;
-            App.Settings.Save();
+            App.Settings.SaveFields(nameof(App.Settings.Prop.OverlayFocusModeEnabled));
             OverlayHub.Refresh();
 
             NotificationCenter.Notify(

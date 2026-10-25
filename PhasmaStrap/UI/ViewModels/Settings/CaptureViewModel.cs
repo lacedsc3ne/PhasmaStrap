@@ -181,7 +181,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             set
             {
                 App.Settings.Prop.InstantReplayEnabled = value;
-                App.Settings.Save();
+                App.Settings.SaveFields(nameof(App.Settings.Prop.InstantReplayEnabled));
                 OnPropertyChanged(nameof(InstantReplayEnabled));
                 ReplayStatusChanged();
             }
@@ -274,13 +274,13 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool ShareHideNames
         {
             get => App.Settings.Prop.CaptureShareHideNames;
-            set { App.Settings.Prop.CaptureShareHideNames = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(ShareHideNames)); }
+            set { App.Settings.Prop.CaptureShareHideNames = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.CaptureShareHideNames)); OnPropertyChanged(nameof(ShareHideNames)); }
         }
 
         public bool ShareStamp
         {
             get => App.Settings.Prop.CaptureShareStamp;
-            set { App.Settings.Prop.CaptureShareStamp = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(ShareStamp)); }
+            set { App.Settings.Prop.CaptureShareStamp = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.CaptureShareStamp)); OnPropertyChanged(nameof(ShareStamp)); }
         }
 
         /// <summary>Everything in the Library tab: screenshots, clips and GIFs.</summary>
@@ -421,7 +421,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 prop.InstantReplayQuality = preset.Quality;
                 prop.InstantReplayGpuEncoding = preset.Gpu;
 
-                App.Settings.SaveDeferred();
+                App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.InstantReplayFps), nameof(App.Settings.Prop.InstantReplayMaxHeight), nameof(App.Settings.Prop.InstantReplayQuality), nameof(App.Settings.Prop.InstantReplayGpuEncoding));
 
                 OnPropertyChanged(nameof(SelectedFps));
                 OnPropertyChanged(nameof(SelectedResolution));
@@ -555,13 +555,13 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool CopyScreenshotToClipboard
         {
             get => App.Settings.Prop.CaptureCopyScreenshotToClipboard;
-            set { App.Settings.Prop.CaptureCopyScreenshotToClipboard = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(CopyScreenshotToClipboard)); }
+            set { App.Settings.Prop.CaptureCopyScreenshotToClipboard = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.CaptureCopyScreenshotToClipboard)); OnPropertyChanged(nameof(CopyScreenshotToClipboard)); }
         }
 
         public bool CopyReplayToClipboard
         {
             get => App.Settings.Prop.CaptureCopyReplayToClipboard;
-            set { App.Settings.Prop.CaptureCopyReplayToClipboard = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(CopyReplayToClipboard)); }
+            set { App.Settings.Prop.CaptureCopyReplayToClipboard = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.CaptureCopyReplayToClipboard)); OnPropertyChanged(nameof(CopyReplayToClipboard)); }
         }
 
         private static readonly int[] LimitValuesMb = { 0, 1024, 2048, 5120, 10240, 25600, 51200 };
@@ -577,7 +577,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                     return;
 
                 App.Settings.Prop.CaptureStorageLimitMB = LimitValuesMb[index];
-                App.Settings.SaveDeferred();
+                App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.CaptureStorageLimitMB));
                 OnPropertyChanged(nameof(SelectedStorageLimit));
                 OnPropertyChanged(nameof(StorageUsageText));
                 OnPropertyChanged(nameof(Storage));
@@ -597,7 +597,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                     return;
 
                 App.Settings.Prop.CaptureMaxAgeDays = AgeValuesDays[index];
-                App.Settings.SaveDeferred();
+                App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.CaptureMaxAgeDays));
                 OnPropertyChanged(nameof(SelectedMaxAge));
                 OnPropertyChanged(nameof(StorageUsageText));
                 OnPropertyChanged(nameof(Storage));
@@ -743,9 +743,14 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public ICommand CopyReplayPathCommand => new RelayCommand<ReplayClipItem>(item => { if (item is not null) CopyPath(item.Path, image: false); });
         public ICommand RevealReplayCommand => new RelayCommand<ReplayClipItem>(item => { if (item is not null) NotificationCenter.RevealFile(item.Path)(); });
 
+        private static readonly string[] ReplaySettingNames = typeof(Models.Persistable.Settings).GetProperties()
+            .Select(property => property.Name)
+            .Where(name => name.StartsWith("InstantReplay", StringComparison.Ordinal))
+            .ToArray();
+
         private void ReplaySettingChanged(string property)
         {
-            App.Settings.SaveDeferred();
+            App.Settings.SaveFieldsDeferred(ReplaySettingNames);
             OnPropertyChanged(property);
             OnPropertyChanged(nameof(ReplayEstimateText));
             OnPropertyChanged(nameof(ReplayBufferText));
@@ -810,7 +815,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool ScreenshotPickArea
         {
             get => App.Settings.Prop.ScreenshotPickArea;
-            set { App.Settings.Prop.ScreenshotPickArea = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(ScreenshotPickArea)); }
+            set { App.Settings.Prop.ScreenshotPickArea = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.ScreenshotPickArea)); OnPropertyChanged(nameof(ScreenshotPickArea)); }
         }
 
         public bool HasReplays => Replays.Count > 0;

@@ -175,7 +175,7 @@ namespace PhasmaStrap.Integrations.GameChat
                     if (App.Settings.Prop.GameChatEnabled)
                     {
                         App.Settings.Prop.GameChatEnabled = false;
-                        App.Settings.Save();
+                        App.Settings.SaveFields(nameof(App.Settings.Prop.GameChatEnabled));
                     }
                 }
             }

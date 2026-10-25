@@ -12,6 +12,8 @@ namespace PhasmaStrap
 
         public string? LastFileHash { get; private set; }
 
+        public event Action<string[], string>? FieldsSaved;
+
         public bool Loaded { get; protected set; } = false;
 
         public virtual string ClassName { get; }
@@ -176,6 +178,126 @@ namespace PhasmaStrap
             }
 
             App.Logger.WriteLine(LOG_IDENT, "Save complete!");
+        }
+
+        private readonly HashSet<string> _pendingFields = new();
+
+        private System.Threading.Timer? _deferredFieldsTimer;
+
+        public void SaveFieldsDeferred(params string[] names)
+        {
+            lock (_pendingFields)
+            {
+                foreach (string name in names)
+                    _pendingFields.Add(name);
+
+                _deferredFieldsTimer ??= new System.Threading.Timer(_ =>
+                {
+                    string[] pending;
+
+                    lock (_pendingFields)
+                    {
+                        pending = _pendingFields.ToArray();
+                        _pendingFields.Clear();
+                    }
+
+                    try
+                    {
+                        SaveFields(pending);
+                    }
+                    catch (Exception ex)
+                    {
+                        App.Logger.WriteException($"{LOG_IDENT_CLASS}::SaveFieldsDeferred", ex);
+                    }
+                }, null, System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+
+                _deferredFieldsTimer.Change(500, System.Threading.Timeout.Infinite);
+            }
+        }
+
+        public void SaveFields(params string[] names)
+        {
+            string LOG_IDENT = $"{LOG_IDENT_CLASS}::SaveFields";
+
+            if (names.Length == 0)
+                return;
+
+            string tempLocation = $"{FileLocation}.{Environment.ProcessId}.tmp";
+
+            try
+            {
+                lock (_saveLock)
+                {
+                    System.Text.Json.Nodes.JsonObject? onDisk = null;
+
+                    try
+                    {
+                        if (File.Exists(FileLocation))
+                            onDisk = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(FileLocation)) as System.Text.Json.Nodes.JsonObject;
+                    }
+                    catch (Exception ex)
+                    {
+                        App.Logger.WriteLine(LOG_IDENT, $"Could not read {FileLocation} ({ex.Message})");
+                    }
+
+                    if (onDisk is null)
+                    {
+                        App.Logger.WriteLine(LOG_IDENT, $"There is no readable file to update, saving everything instead of only {string.Join(", ", names)}");
+                        Save();
+                        return;
+                    }
+
+                    var current = JsonSerializer.SerializeToNode(Prop) as System.Text.Json.Nodes.JsonObject;
+                    if (current is null)
+                        return;
+
+                    foreach (string name in names)
+                    {
+                        if (!current.TryGetPropertyValue(name, out System.Text.Json.Nodes.JsonNode? value))
+                        {
+                            App.Logger.WriteLine(LOG_IDENT, $"{name} is not a {ClassName} setting, skipping it");
+                            continue;
+                        }
+
+                        onDisk[name] = value is null ? null : System.Text.Json.Nodes.JsonNode.Parse(value.ToJsonString());
+                    }
+
+                    string contents = onDisk.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
+
+                    if (Utility.SettingsBackups.IsTracked(FileLocation))
+                    {
+                        Utility.SettingsBackups.Log ??= message => App.Logger.WriteLine("SettingsBackups", message);
+                        Utility.SettingsBackups.BeforeSave(Paths.SettingsBackups, FileLocation, contents);
+                    }
+
+                    File.WriteAllText(tempLocation, contents);
+                    ReplaceWithTempFile(tempLocation);
+
+                    string hash = MD5Hash.FromString(contents);
+                    FieldsSaved?.Invoke(names, hash);
+                    LastFileHash = hash;
+                }
+
+                App.Logger.WriteLine(LOG_IDENT, $"Saved {string.Join(", ", names)} to {FileLocation}, other changes were left alone");
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Failed to save {string.Join(", ", names)}");
+                App.Logger.WriteException(LOG_IDENT, ex);
+
+                try
+                {
+                    if (File.Exists(tempLocation))
+                        File.Delete(tempLocation);
+                }
+                catch (Exception deleteEx)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Could not remove {tempLocation}: {deleteEx.Message}");
+                }
+
+                string errorMessage = string.Format(Resources.Strings.Bootstrapper_JsonManagerSaveFailed, ClassName, ex.Message);
+                Frontend.ShowMessageBox(errorMessage, System.Windows.MessageBoxImage.Warning);
+            }
         }
 
         private void ReplaceWithTempFile(string tempLocation)

@@ -28,7 +28,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 else
                     App.Settings.Prop.HotkeyBindings[Id] = value;
 
-                App.Settings.Save();
+                App.Settings.SaveFields(nameof(App.Settings.Prop.HotkeyBindings));
                 OnPropertyChanged(nameof(GestureText));
                 OnPropertyChanged(nameof(HasGesture));
                 OnPropertyChanged(nameof(ButtonText));

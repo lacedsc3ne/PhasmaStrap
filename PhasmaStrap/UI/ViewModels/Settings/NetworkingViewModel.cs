@@ -201,7 +201,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string UsernameSpoofName
         {
             get => App.Settings.Prop.UsernameSpoofName;
-            set { App.Settings.Prop.UsernameSpoofName = value; App.Settings.SaveDeferred(); OnPropertyChanged(nameof(UsernameSpoofName)); }
+            set { App.Settings.Prop.UsernameSpoofName = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.UsernameSpoofName)); OnPropertyChanged(nameof(UsernameSpoofName)); }
         }
 
         public ICommand OpenAssetWarpCommand => new RelayCommand(() =>

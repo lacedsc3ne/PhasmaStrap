@@ -78,7 +78,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             set
             {
                 App.Settings.Prop.PartyEnabled = value;
-                App.Settings.Save();
+                App.Settings.SaveFields(nameof(App.Settings.Prop.PartyEnabled));
 
                 PartyBackground.ApplyStartup();
 
@@ -96,7 +96,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             set
             {
                 App.Settings.Prop.PartyBackgroundEnabled = value;
-                App.Settings.Save();
+                App.Settings.SaveFields(nameof(App.Settings.Prop.PartyBackgroundEnabled));
 
                 PartyBackground.ApplyStartup();
 
@@ -124,7 +124,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                     return;
 
                 App.Settings.Prop.PartyJoinMode = JoinModeKeys[value];
-                App.Settings.Save();
+                App.Settings.SaveFields(nameof(App.Settings.Prop.PartyJoinMode));
                 OnPropertyChanged(nameof(JoinModeIndex));
             }
         }

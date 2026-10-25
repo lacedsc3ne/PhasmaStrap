@@ -415,7 +415,7 @@ namespace PhasmaStrap.UI.Elements.ContextMenu
             }
 
             App.Settings.Prop.CustomColorThemeEnabled = true;
-            App.Settings.Save();
+            App.Settings.SaveFields(nameof(App.Settings.Prop.CustomColorThemeEnabled));
             _saved = true;
             _savedXaml = xaml;
 

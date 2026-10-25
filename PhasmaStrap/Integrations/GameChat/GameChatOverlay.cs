@@ -334,7 +334,7 @@ namespace PhasmaStrap.Integrations.GameChat
             {
                 _client.OwnRobloxId = _activityWatcher.Data.UserId;
                 App.Settings.Prop.GameChatRobloxUserId = _activityWatcher.Data.UserId;
-                App.Settings.Save();
+                App.Settings.SaveFields(nameof(App.Settings.Prop.GameChatRobloxUserId));
             }
             _trackerTimer.Start();
             _ = SwitchChannelAsync(_selectedTab == TabGlobalIndex ? "global" : _jobId);
@@ -528,7 +528,7 @@ namespace PhasmaStrap.Integrations.GameChat
             prop.GameChatOffsetY = (int)_currentOffset.Y;
             prop.GameChatWindowWidth = (int)_baseWidth;
             prop.GameChatWindowHeight = (int)_baseHeight;
-            App.Settings.Save();
+            App.Settings.SaveFields(nameof(App.Settings.Prop.GameChatOffsetX), nameof(App.Settings.Prop.GameChatOffsetY), nameof(App.Settings.Prop.GameChatWindowWidth), nameof(App.Settings.Prop.GameChatWindowHeight));
         }
 
         private void ApplyWindowSize()

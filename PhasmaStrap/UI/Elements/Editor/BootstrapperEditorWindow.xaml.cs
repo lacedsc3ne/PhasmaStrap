@@ -315,7 +315,7 @@ namespace PhasmaStrap.UI.Elements.Editor
 
                 chosen = dialog.SelectedEditor;
                 App.Settings.Prop.PreferredExternalEditorPath = chosen.Path;
-                App.Settings.Save();
+                App.Settings.SaveFields(nameof(App.Settings.Prop.PreferredExternalEditorPath));
             }
 
             LaunchExternal(chosen);

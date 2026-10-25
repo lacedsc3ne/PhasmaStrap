@@ -233,7 +233,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             set
             {
                 App.Settings.Prop.AutoBackupEnabled = value;
-                App.Settings.SaveDeferred();
+                App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.AutoBackupEnabled));
 
                 if (value)
                     _ = PhasmaStrap.Utility.PhasmaAccount.MaybeAutoBackUpAsync();
@@ -249,7 +249,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             set
             {
                 App.Settings.Prop.BackupScope = value == BackupScopes[1] ? "Everything" : "Standard";
-                App.Settings.SaveDeferred();
+                App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.BackupScope));
                 OnPropertyChanged(nameof(BackupScope));
             }
         }

@@ -522,7 +522,7 @@ namespace PhasmaStrap.Utility
                     FastFlagSnapshotManager.Delete(name);
 
                 App.Settings.Prop.FastFlagPlacePresets = new();
-                App.Settings.Save();
+                App.Settings.SaveFields(nameof(App.Settings.Prop.FastFlagPlacePresets));
 
                 App.Logger.WriteLine(LOG_IDENT, $"Moved {created.Count} preset(s) and {Prop.Rules.Count} assignment(s) to profiles");
             }

@@ -86,7 +86,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             {
                 App.Settings.Prop.TrayDoubleClickAction = value;
 
-                App.Settings.SaveDeferred();
+                App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.TrayDoubleClickAction));
                 OnPropertyChanged(nameof(TrayDoubleClickAction));
             }
         }

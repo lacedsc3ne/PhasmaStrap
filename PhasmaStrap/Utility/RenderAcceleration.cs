@@ -104,7 +104,7 @@ namespace PhasmaStrap.Utility
                     return;
 
                 App.Settings.Prop.WPFSoftwareRender = true;
-                App.Settings.Save();
+                App.Settings.SaveFields(nameof(App.Settings.Prop.WPFSoftwareRender));
                 App.Logger?.WriteLine("RenderAcceleration::TripSentinel", "The last hardware rendered session never drew a frame, falling back to software rendering");
             }
             catch (Exception ex)

@@ -16,8 +16,7 @@
     </ui:UiPage.Resources>
 
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="Per game overrides" />
-        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="Skip the runtime optimiser for some games, or give them a preset of their own." />
+        <controls:PageHeader Title="Per game overrides" Subtitle="Skip the runtime optimiser for some games, or give them a preset of their own." />
 
         <controls:CardColumns>
             <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Performance_EngineExcludedPlaces_Title}"

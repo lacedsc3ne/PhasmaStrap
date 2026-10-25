@@ -231,6 +231,7 @@ namespace PhasmaStrap.Models.Persistable
 
         public bool InstantReplayGpuEncoding { get; set; } = true;
         public bool InstantReplayAudio { get; set; } = true;
+        public bool InstantReplayAllAudio { get; set; } = false;
         public bool InstantReplayMicrophone { get; set; } = false;
 
         public string InstantReplayMicrophoneDevice { get; set; } = "";
@@ -312,12 +313,16 @@ namespace PhasmaStrap.Models.Persistable
         public bool SnowEffectEnabled { get; set; } = false;
 
         public string ThemeAccent { get; set; } = "";
-        public double ThemePanelOpacity { get; set; } = 0.6;
+        public double ThemePanelOpacity { get; set; } = 1.0;
         public string ThemePanelColor { get; set; } = "";
         public int ThemeCornerRadius { get; set; } = 12;
         public double ThemeWindowTintOpacity { get; set; } = 0.91;
         public bool ThemeCompact { get; set; } = false;
         public bool ThemeMistEnabled { get; set; } = true;
+        public bool ThemeSectionColors { get; set; } = true;
+
+        /// <summary>Which look the saved theme values were last reset to. Lets a new default look replace old saved values once.</summary>
+        public int ThemeLookVersion { get; set; } = 0;
 
         public bool OptimizeRoblox { get; set; } = false;
         public bool RobloxEfficiencyMode { get; set; } = false;

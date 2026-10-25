@@ -288,7 +288,7 @@ namespace PhasmaStrap
                         if (page is not null)
                             window.Dispatcher.BeginInvoke(new Action(() => window.Navigate(page)), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
 
-                        if (double.TryParse(Environment.GetEnvironmentVariable("PHASMASTRAP_UITEST_SCROLL"), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double percent))
+                        if (double.TryParse(Environment.GetEnvironmentVariable("PHASMASTRAP_UITEST_SCROLL"),System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double percent))
                         {
                             if (!double.TryParse(Environment.GetEnvironmentVariable("PHASMASTRAP_UITEST_SCROLL_DELAY"), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double delay))
                                 delay = 2.5;
@@ -369,8 +369,13 @@ namespace PhasmaStrap
                 return false;
 
             window.WindowStartupLocation = System.Windows.WindowStartupLocation.Manual;
-            window.Left = 40;
-            window.Top = 40;
+            window.Left = double.TryParse(Environment.GetEnvironmentVariable("PHASMASTRAP_UITEST_X"), out double x) ? x : 40;
+            window.Top = double.TryParse(Environment.GetEnvironmentVariable("PHASMASTRAP_UITEST_Y"), out double y) ? y : 40;
+
+            // PHASMASTRAP_UITEST_VISIBLE=1 keeps the window on top where it was placed, so it can be watched on another monitor.
+            if (Environment.GetEnvironmentVariable("PHASMASTRAP_UITEST_VISIBLE") == "1")
+                return true;
+
             window.ShowActivated = false;
             window.ShowInTaskbar = false;
             window.SourceInitialized += (_, _) =>

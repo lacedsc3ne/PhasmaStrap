@@ -133,17 +133,17 @@
                 </controls:OptionControl>
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_Background}">
                     <StackPanel Orientation="Horizontal">
-                        <Slider Width="96" VerticalAlignment="Center" Minimum="0" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True" Value="{Binding HudBackgroundOpacity, Mode=TwoWay}"
+                        <Slider Width="76" VerticalAlignment="Center" Minimum="0" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True" Value="{Binding HudBackgroundOpacity, Mode=TwoWay}"
                                 ToolTip="{Binding HudBackgroundOpacity}" />
-                        <TextBlock Width="38" Margin="8,0,0,0" VerticalAlignment="Center" TextAlignment="Right" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                        <TextBlock Width="40" Margin="6,0,0,0" VerticalAlignment="Center" TextAlignment="Right" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                    Text="{Binding HudBackgroundOpacity, StringFormat={}{0}%}" />
                     </StackPanel>
                 </controls:OptionControl>
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Overlays_CrosshairSize_Title}">
                     <StackPanel Orientation="Horizontal">
-                        <Slider Width="96" VerticalAlignment="Center" Minimum="50" Maximum="250" TickFrequency="10" IsSnapToTickEnabled="True" Value="{Binding HudScale, Mode=TwoWay}"
+                        <Slider Width="76" VerticalAlignment="Center" Minimum="50" Maximum="250" TickFrequency="10" IsSnapToTickEnabled="True" Value="{Binding HudScale, Mode=TwoWay}"
                                 ToolTip="{Binding HudScale}" />
-                        <TextBlock Width="38" Margin="8,0,0,0" VerticalAlignment="Center" TextAlignment="Right" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                        <TextBlock Width="40" Margin="6,0,0,0" VerticalAlignment="Center" TextAlignment="Right" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                    Text="{Binding HudScale, StringFormat={}{0}%}" />
                     </StackPanel>
                 </controls:OptionControl>

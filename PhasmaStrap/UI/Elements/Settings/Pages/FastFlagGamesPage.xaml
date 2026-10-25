@@ -24,8 +24,7 @@
         <!--  Left: the games that have their own flags  -->
         <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel Margin="0,0,20,14">
-                <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="{x:Static resources:Strings.Menu_FastFlagGames_Games}" />
-                <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="When you launch one through PhasmaStrap it starts with your flags plus the changes in its profile." />
+                <controls:PageHeader Title="{x:Static resources:Strings.Menu_FastFlagGames_Games}" Subtitle="When you launch one through PhasmaStrap it starts with your flags plus the changes in its profile." />
 
                 <Border Margin="0,0,0,12" Padding="14,10" CornerRadius="{DynamicResource PhasmaCornerRadius}" BorderThickness="1"
                         BorderBrush="{DynamicResource PhasmaWarnBrush}" Background="{DynamicResource PhasmaPanelRaisedBrush}"

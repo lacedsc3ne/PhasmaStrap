@@ -205,6 +205,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             Player.Visibility = Visibility.Collapsed;
             StillImage.Visibility = Visibility.Visible;
             PlayButton.IsEnabled = false;
+            BigPlay.Visibility = Visibility.Collapsed;
             PlayButton.ToolTip = "Windows can't play MP4 video here (the Media Feature Pack is missing), so there is no live preview. Trimming, cropping and saving still work.";
             VideoMessage.Text = "No live playback on this system - showing still frames";
             VideoMessage.Visibility = Visibility.Visible;
@@ -332,8 +333,9 @@ namespace PhasmaStrap.UI.Elements.Dialogs
                 }
             }
 
-            PlayButton.Icon = playing ? Wpf.Ui.Common.SymbolRegular.Pause24 : Wpf.Ui.Common.SymbolRegular.Play24;
-            PlayButton.Content = playing ? "Pause" : "Play";
+            PlayIcon.Symbol = playing ? Wpf.Ui.Common.SymbolRegular.Pause24 : Wpf.Ui.Common.SymbolRegular.Play24;
+            PlayLabel.Text = playing ? "Pause" : "Play";
+            BigPlay.Visibility = playing || !PlayButton.IsEnabled ? Visibility.Collapsed : Visibility.Visible;
         }
 
         private void Play_Click(object sender, RoutedEventArgs e) => SetPlaying(!_playing);
@@ -494,7 +496,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
         private void SetCropMode(bool enabled)
         {
             _cropMode = enabled;
-            CropButton.Appearance = enabled ? Wpf.Ui.Common.ControlAppearance.Primary : Wpf.Ui.Common.ControlAppearance.Secondary;
+            CropButton.Style = (Style)FindResource(enabled ? "CropActiveButton" : "ToolButton");
             CropCanvas.Cursor = enabled ? Cursors.Cross : Cursors.Hand;
 
             if (enabled)
@@ -694,6 +696,32 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
         private async void SaveCopy_Click(object sender, RoutedEventArgs e) => await ExportAsync(overwrite: false);
 
+        private string? _lastCopy;
+
+        /// <summary>Puts the clip on the clipboard as a file, ready to paste into a chat. With edits it saves them as a copy first.</summary>
+        private async void CopyClip_Click(object sender, RoutedEventArgs e)
+        {
+            if (_busy)
+                return;
+
+            string file = _path;
+
+            if (HasChanges)
+            {
+                _lastCopy = null;
+                await ExportAsync(overwrite: false);
+
+                if (_lastCopy is null || !File.Exists(_lastCopy))
+                    return;
+
+                file = _lastCopy;
+            }
+
+            ClipboardShare.Log ??= message => App.Logger.WriteLine("ClipboardShare", message);
+            bool copied = ClipboardShare.CopyFile(file);
+            UpdateStatus(copied ? $"copied {System.IO.Path.GetFileName(file)} - paste it anywhere" : "could not reach the clipboard - another program is holding it");
+        }
+
         private async void Save_Click(object sender, RoutedEventArgs e) => await ExportAsync(overwrite: true);
 
         private async Task ExportAsync(bool overwrite)
@@ -758,6 +786,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
                 }
 
                 Saved = true;
+                _lastCopy = destination;
                 App.Logger.WriteLine(LOG_IDENT, $"Saved copy {destination} in {clock.Elapsed.TotalSeconds:0.0}s");
                 SetBusy(false);
                 UpdateStatus($"saved {System.IO.Path.GetFileName(destination)}");

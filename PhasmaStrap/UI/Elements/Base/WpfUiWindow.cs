@@ -105,15 +105,21 @@ namespace PhasmaStrap.UI.Elements.Base
 
         public static void ApplyAccentFrom(ResourceDictionary? theme)
         {
-            Color accent = PhasmaStrap.UI.ThemeTokens.ResolveAccent();
-
             // An accent picked in the theme studio wins over the colour theme file's accent.
+            Color? fromFile = null;
             if (PhasmaStrap.UI.ThemeTokens.UserAccent is null
                 && theme is not null && theme.Contains(PhasmaStrap.Utility.AppColorTheme.AccentColorKey)
                 && theme[PhasmaStrap.Utility.AppColorTheme.AccentColorKey] is Color custom)
             {
-                accent = Color.FromRgb(custom.R, custom.G, custom.B);
+                Color opaque = Color.FromRgb(custom.R, custom.G, custom.B);
+
+                // The file always lists an accent; only one that was changed from the built in red counts
+                if (opaque != PhasmaStrap.UI.ThemeTokens.DefaultAccent)
+                    fromFile = opaque;
             }
+
+            PhasmaStrap.UI.ThemeTokens.CustomAccent = fromFile;
+            Color accent = PhasmaStrap.UI.ThemeTokens.ResolveAccent();
 
             Wpf.Ui.Appearance.Accent.Apply(accent, Wpf.Ui.Appearance.Theme.GetAppTheme());
             PublishAccentBrushes();

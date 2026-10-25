@@ -10,16 +10,16 @@ namespace PhasmaStrap.UI
     /// </summary>
     public static class ThemeTokens
     {
-        public static readonly Color DefaultAccent = Color.FromRgb(0xF4, 0x55, 0x4B);
+        public static readonly Color DefaultAccent = Color.FromRgb(0xE5, 0x32, 0x2D);
 
         public static readonly string[] AccentPresets =
         {
-            "#F4554B", "#FF8A3D", "#F5B841", "#3DDC97", "#38BDF8", "#7C8CFF", "#C26BFF", "#F06FB0"
+            "#E5322D", "#FF8A3D", "#F5B841", "#3DDC97", "#38BDF8", "#7C8CFF", "#C26BFF", "#F06FB0"
         };
 
         public static readonly string[] PanelPresets =
         {
-            "#16161B", "#0B0B0F", "#1A1F2E", "#221A2B", "#16241F", "#2A1A1A", "#F4F4F8"
+            "#131315", "#0B0B0F", "#1A1F2E", "#221A2B", "#16241F", "#2A1A1A", "#F4F4F8"
         };
 
         public const double MinWindowTint = 0.4;
@@ -29,7 +29,13 @@ namespace PhasmaStrap.UI
 
         public static Color? UserPanelColor => Opaque(App.Settings.Prop.ThemePanelColor);
 
-        public static Color ResolveAccent() => UserAccent ?? DefaultAccent;
+        /// <summary>The accent of the section being shown (Social blue, Performance green and so on). Null for the built in accent.</summary>
+        public static Color? SectionAccent { get; set; }
+
+        /// <summary>An accent chosen in the custom colour theme file (only when it differs from the built in one). It beats the section colours.</summary>
+        public static Color? CustomAccent { get; set; }
+
+        public static Color ResolveAccent() => CustomAccent ?? (App.Settings.Prop.ThemeSectionColors ? SectionAccent : null) ?? UserAccent ?? DefaultAccent;
 
         public static Color EffectiveAccent => LookupColor("SystemAccentColor", ResolveAccent());
 
@@ -41,7 +47,7 @@ namespace PhasmaStrap.UI
         {
             get
             {
-                Color background = LookupColor("ApplicationBackgroundColor", IsDark ? Color.FromRgb(0x0E, 0x0E, 0x12) : Color.FromRgb(0xF6, 0xF6, 0xF9));
+                Color background = LookupColor("ApplicationBackgroundColor", IsDark ? Color.FromRgb(0x0C, 0x0C, 0x0E) : Color.FromRgb(0xF6, 0xF6, 0xF9));
                 double opacity = Math.Clamp(App.Settings.Prop.ThemeWindowTintOpacity, MinWindowTint, 1.0);
                 return Color.FromArgb((byte)Math.Round(opacity * 255), background.R, background.G, background.B);
             }
@@ -83,20 +89,22 @@ namespace PhasmaStrap.UI
             Color surface = picked ?? ThemeSurface(dark);
             Color raised = picked is Color own
                 ? Mix(own, Luminance(own) > 0.5 ? Colors.Black : Colors.White, 0.06)
-                : LookupColor("SolidBackgroundFillColorTertiary", dark ? Color.FromRgb(0x1D, 0x1D, 0x23) : Color.FromRgb(0xF3, 0xF3, 0xF6));
+                : LookupColor("SolidBackgroundFillColorTertiary", dark ? Color.FromRgb(0x1A, 0x1A, 0x1D) : Color.FromRgb(0xF3, 0xF3, 0xF6));
 
             Paint(res, "PhasmaPanelBrush", WithAlpha(surface, panelOpacity));
             Paint(res, "PhasmaPanelRaisedBrush", WithAlpha(raised, Math.Clamp(panelOpacity + 0.2, 0.35, 1.0)));
             Paint(res, "PhasmaPopupBrush", WithAlpha(raised, 1.0));
+            Paint(res, "PhasmaToggleOffBrush", WithAlpha(ink, dark ? 0.20 : 0.22));
+            Paint(res, "PhasmaToggleOffHoverBrush", WithAlpha(ink, dark ? 0.28 : 0.30));
             Paint(res, "PhasmaStrokeBrush", WithAlpha(ink, dark ? 0.075 : 0.10));
             Paint(res, "PhasmaStrokeStrongBrush", WithAlpha(ink, dark ? 0.13 : 0.16));
             Paint(res, "PhasmaHoverBrush", WithAlpha(ink, dark ? 0.06 : 0.05));
             Paint(res, "PhasmaSelectedBrush", WithAlpha(ink, dark ? 0.09 : 0.08));
             Paint(res, "PhasmaScrimBrush", dark ? Color.FromArgb(0xF0, 0x0F, 0x0F, 0x14) : Color.FromArgb(0xF0, 0xF6, 0xF6, 0xF9));
 
-            double large = radius + (radius > 0 ? 4 : 0);
-            Put(res, "PhasmaCornerRadius", new CornerRadius(radius));
-            Put(res, "PhasmaCornerRadiusSmall", new CornerRadius(Math.Max(0, radius - 4)));
+            double large = Math.Max(0, radius - 2);
+            Put(res, "PhasmaCornerRadius", new CornerRadius(Math.Max(0, radius - 2)));
+            Put(res, "PhasmaCornerRadiusSmall", new CornerRadius(Math.Max(0, radius - 6)));
             Put(res, "PhasmaCornerRadiusLarge", new CornerRadius(large));
             Put(res, "PhasmaCornerRadiusTopLarge", new CornerRadius(large, large, 0, 0));
 
@@ -121,6 +129,17 @@ namespace PhasmaStrap.UI
             Paint(res, "PhasmaAccentBrush", accent);
             Paint(res, "PhasmaAccentSoftBrush", WithAlpha(accent, dark ? 0.16 : 0.14));
             Paint(res, "PhasmaAccentStrokeBrush", WithAlpha(accent, 0.55));
+            // Launch Roblox keeps the brand colour whichever section is open
+            Color brand = CustomAccent ?? UserAccent ?? DefaultAccent;
+            Paint(res, "PhasmaBrandBrush", brand);
+            Put(res, "PhasmaBrandTextColor", Luminance(brand) > 0.42 ? Color.FromRgb(0x16, 0x07, 0x06) : Colors.White);
+
+            // A colour theme with its own accent, or section colours turned off, paints every section the same; otherwise each keeps its own colour
+            string[] sections = { "Games", "Social", "Performance", "Flags", "Capture", "Settings" };
+            string[] defaults = { "#FF6A64", "#8FB0FF", "#5BE3AC", "#FFD070", "#C0A2FF", "#E1E3E8" };
+            for (int i = 0; i < sections.Length; i++)
+                Paint(res, "Section" + sections[i] + "Brush", CustomAccent ?? (settings.ThemeSectionColors ? (Color)ColorConverter.ConvertFromString(defaults[i]) : (UserAccent ?? DefaultAccent)));
+
             Paint(res, "PhasmaAccentTextBrush", Luminance(accent) > 0.42 ? Color.FromRgb(0x16, 0x07, 0x06) : Colors.White);
         }
 
@@ -143,7 +162,7 @@ namespace PhasmaStrap.UI
         }
 
         private static Color ThemeSurface(bool dark) =>
-            LookupColor("SolidBackgroundFillColorBase", dark ? Color.FromRgb(0x16, 0x16, 0x1B) : Color.FromRgb(0xFF, 0xFF, 0xFF));
+            LookupColor("SolidBackgroundFillColorBase", dark ? Color.FromRgb(0x13, 0x13, 0x15) : Color.FromRgb(0xFF, 0xFF, 0xFF));
 
         private static Color? Opaque(string? text)
         {

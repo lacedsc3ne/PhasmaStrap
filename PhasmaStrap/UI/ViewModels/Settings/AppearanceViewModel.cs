@@ -722,6 +722,9 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         private void ApplyAccent(string hex)
         {
             App.Settings.Prop.ThemeAccent = hex;
+
+            // Section colours would hide a picked accent, so picking one switches them off; clearing it brings them back
+            SectionColors = hex.Length == 0;
             WpfUiWindow.ApplyThemeToAllOpenWindows();
 
             OnPropertyChanged(nameof(AccentSwatches));
@@ -845,6 +848,22 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 App.Settings.Prop.ThemeMistEnabled = value;
                 WpfUiWindow.RefreshLookOnAllWindows();
                 OnPropertyChanged(nameof(MistEnabled));
+            }
+        }
+
+        public bool SectionColors
+        {
+            get => App.Settings.Prop.ThemeSectionColors;
+            set
+            {
+                App.Settings.Prop.ThemeSectionColors = value;
+                foreach (System.Windows.Window window in System.Windows.Application.Current.Windows)
+                {
+                    if (window is PhasmaStrap.UI.Elements.Settings.MainWindow main)
+                        main.ApplySectionAccent();
+                }
+                WpfUiWindow.RefreshLookOnAllWindows();
+                OnPropertyChanged(nameof(SectionColors));
             }
         }
 

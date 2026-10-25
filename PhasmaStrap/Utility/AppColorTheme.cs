@@ -66,31 +66,31 @@ namespace PhasmaStrap.Utility
 
         public static IReadOnlyList<ThemeKeyInfo> Schema { get; } = new List<ThemeKeyInfo>
         {
-            new() { Label = "App background", Group = "Window", ColorKey = "ApplicationBackgroundColor", BrushKey = "ApplicationBackgroundBrush", Fallback = "#FF0E0E12" },
+            new() { Label = "App background", Group = "Window", ColorKey = "ApplicationBackgroundColor", BrushKey = "ApplicationBackgroundBrush", Fallback = "#FF0C0C0E" },
 
-            new() { Label = "Background glow (top left)", Group = "Window", ColorKey = "BackgroundGlowPrimaryColor", BrushKey = "BackgroundGlowPrimaryBrush", Fallback = "#FFF4554B", AllowAlpha = true },
-            new() { Label = "Background glow (right)", Group = "Window", ColorKey = "BackgroundGlowSecondaryColor", BrushKey = "BackgroundGlowSecondaryBrush", Fallback = "#FFCF3B32", AllowAlpha = true },
+            new() { Label = "Background glow (top left)", Group = "Window", ColorKey = "BackgroundGlowPrimaryColor", BrushKey = "BackgroundGlowPrimaryBrush", Fallback = "#FFE5322D", AllowAlpha = true },
+            new() { Label = "Background glow (right)", Group = "Window", ColorKey = "BackgroundGlowSecondaryColor", BrushKey = "BackgroundGlowSecondaryBrush", Fallback = "#FFB8261F", AllowAlpha = true },
 
-            new() { Label = "Sidebar panel (raise opacity to show)", Group = "Window", ColorKey = "SidebarBackgroundColor", BrushKey = "SidebarBackgroundBrush", Fallback = "#002C2C38", AllowAlpha = true },
+            new() { Label = "Sidebar panel (raise opacity to show)", Group = "Window", ColorKey = "SidebarBackgroundColor", BrushKey = "SidebarBackgroundBrush", Fallback = "#00131315", AllowAlpha = true },
 
-            new() { Label = "Accent colour", Group = "Accent", ColorKey = AccentColorKey, Fallback = "#FFF4554B" },
+            new() { Label = "Accent colour", Group = "Accent", ColorKey = AccentColorKey, Fallback = "#FFE5322D" },
 
-            new() { Label = "Text", Group = "Text", ColorKey = "TextFillColorPrimary", BrushKey = "TextFillColorPrimaryBrush", Fallback = "#FFFFFFFF" },
-            new() { Label = "Text (secondary - descriptions)", Group = "Text", ColorKey = "TextFillColorSecondary", BrushKey = "TextFillColorSecondaryBrush", Fallback = "#C5FFFFFF", AllowAlpha = true },
-            new() { Label = "Text (tertiary - hints)", Group = "Text", ColorKey = "TextFillColorTertiary", BrushKey = "TextFillColorTertiaryBrush", Fallback = "#87FFFFFF", AllowAlpha = true },
+            new() { Label = "Text", Group = "Text", ColorKey = "TextFillColorPrimary", BrushKey = "TextFillColorPrimaryBrush", Fallback = "#FFECECEE" },
+            new() { Label = "Text (secondary - descriptions)", Group = "Text", ColorKey = "TextFillColorSecondary", BrushKey = "TextFillColorSecondaryBrush", Fallback = "#FFA3A3AA", AllowAlpha = true },
+            new() { Label = "Text (tertiary - hints)", Group = "Text", ColorKey = "TextFillColorTertiary", BrushKey = "TextFillColorTertiaryBrush", Fallback = "#FF86868F", AllowAlpha = true },
             new() { Label = "Text (disabled)", Group = "Text", ColorKey = "TextFillColorDisabled", BrushKey = "TextFillColorDisabledBrush", Fallback = "#5DFFFFFF", AllowAlpha = true },
-            new() { Label = "Base surface", Group = "Surfaces", ColorKey = "SolidBackgroundFillColorBase", BrushKey = "SolidBackgroundFillColorBaseBrush", Fallback = "#FF16161B" },
-            new() { Label = "Base surface (alt)", Group = "Surfaces", ColorKey = "SolidBackgroundFillColorBaseAlt", BrushKey = "SolidBackgroundFillColorBaseAltBrush", Fallback = "#FF0A0A0D" },
-            new() { Label = "Secondary surface", Group = "Surfaces", ColorKey = "SolidBackgroundFillColorSecondary", BrushKey = "SolidBackgroundFillColorSecondaryBrush", Fallback = "#FF121216" },
-            new() { Label = "Tertiary surface", Group = "Surfaces", ColorKey = "SolidBackgroundFillColorTertiary", BrushKey = "SolidBackgroundFillColorTertiaryBrush", Fallback = "#FF1D1D23" },
-            new() { Label = "Quaternary surface", Group = "Surfaces", ColorKey = "SolidBackgroundFillColorQuarternary", BrushKey = "SolidBackgroundFillColorQuarternaryBrush", Fallback = "#FF25252C" },
-            new() { Label = "Card background", Group = "Cards", ColorKey = "CardBackgroundFillColorDefault", BrushKey = "CardBackgroundFillColorDefaultBrush", Fallback = "#FF16161B" },
-            new() { Label = "Card background (secondary)", Group = "Cards", ColorKey = "CardBackgroundFillColorSecondary", BrushKey = "CardBackgroundFillColorSecondaryBrush", Fallback = "#FF1D1D23" },
-            new() { Label = "Card border", Group = "Cards", ColorKey = "CardStrokeColorDefaultSolid", BrushKey = "CardStrokeColorDefaultSolidBrush", Fallback = "#FF2A2A30" },
-            new() { Label = "Control fill", Group = "Controls", ColorKey = "ControlSolidFillColorDefault", BrushKey = "ControlSolidFillColorDefaultBrush", Fallback = "#FF1D1D23" },
-            new() { Label = "Editor background", Group = "Code editor", BrushKey = "NewTextEditorBackground", Fallback = "#FF16161B" },
+            new() { Label = "Base surface", Group = "Surfaces", ColorKey = "SolidBackgroundFillColorBase", BrushKey = "SolidBackgroundFillColorBaseBrush", Fallback = "#FF131315" },
+            new() { Label = "Base surface (alt)", Group = "Surfaces", ColorKey = "SolidBackgroundFillColorBaseAlt", BrushKey = "SolidBackgroundFillColorBaseAltBrush", Fallback = "#FF09090B" },
+            new() { Label = "Secondary surface", Group = "Surfaces", ColorKey = "SolidBackgroundFillColorSecondary", BrushKey = "SolidBackgroundFillColorSecondaryBrush", Fallback = "#FF0F0F11" },
+            new() { Label = "Tertiary surface", Group = "Surfaces", ColorKey = "SolidBackgroundFillColorTertiary", BrushKey = "SolidBackgroundFillColorTertiaryBrush", Fallback = "#FF1A1A1D" },
+            new() { Label = "Quaternary surface", Group = "Surfaces", ColorKey = "SolidBackgroundFillColorQuarternary", BrushKey = "SolidBackgroundFillColorQuarternaryBrush", Fallback = "#FF202024" },
+            new() { Label = "Card background", Group = "Cards", ColorKey = "CardBackgroundFillColorDefault", BrushKey = "CardBackgroundFillColorDefaultBrush", Fallback = "#FF131315" },
+            new() { Label = "Card background (secondary)", Group = "Cards", ColorKey = "CardBackgroundFillColorSecondary", BrushKey = "CardBackgroundFillColorSecondaryBrush", Fallback = "#FF1A1A1D" },
+            new() { Label = "Card border", Group = "Cards", ColorKey = "CardStrokeColorDefaultSolid", BrushKey = "CardStrokeColorDefaultSolidBrush", Fallback = "#FF252528" },
+            new() { Label = "Control fill", Group = "Controls", ColorKey = "ControlSolidFillColorDefault", BrushKey = "ControlSolidFillColorDefaultBrush", Fallback = "#FF1A1A1D" },
+            new() { Label = "Editor background", Group = "Code editor", BrushKey = "NewTextEditorBackground", Fallback = "#FF131315" },
             new() { Label = "Editor text", Group = "Code editor", BrushKey = "NewTextEditorForeground", Fallback = "#FFF2F2F5" },
-            new() { Label = "Editor link / accent", Group = "Code editor", BrushKey = "NewTextEditorLink", Fallback = "#FFF4554B" },
+            new() { Label = "Editor link / accent", Group = "Code editor", BrushKey = "NewTextEditorLink", Fallback = "#FFE5322D" },
         };
 
         public static ThemeValidationResult Validate(string xaml)

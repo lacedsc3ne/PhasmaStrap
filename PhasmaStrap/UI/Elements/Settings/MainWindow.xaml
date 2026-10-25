@@ -8,6 +8,7 @@
              xmlns:base="clr-namespace:PhasmaStrap.UI.Elements.Base"
              xmlns:resources="clr-namespace:PhasmaStrap.Resources"
              xmlns:dmodels="clr-namespace:PhasmaStrap.UI.ViewModels.Settings"
+             xmlns:convs="clr-namespace:PhasmaStrap.UI.Converters"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance dmodels:MainWindowViewModel, IsDesignTimeCreatable=True}"
              Title="{x:Static resources:Strings.Menu_Title}"
@@ -23,6 +24,35 @@
              Loaded="MainWindow_MistLoaded">
 
     <Window.Resources>
+        <convs:UpperCaseConverter x:Key="UpperCase" />
+        <ControlTemplate x:Key="PlainTextBoxTemplate" TargetType="{x:Type TextBox}">
+            <ScrollViewer x:Name="PART_ContentHost" Focusable="False" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" />
+        </ControlTemplate>
+
+        <!--  A result row in the search palette: no marker, a soft fill on the highlighted one  -->
+        <Style x:Key="PaletteItem" TargetType="{x:Type ListBoxItem}">
+            <Setter Property="Padding" Value="20,7" />
+            <Setter Property="MinHeight" Value="52" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                        <Border x:Name="Fill" Padding="{TemplateBinding Padding}" Background="Transparent" SnapsToDevicePixels="True">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaSelectedBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <BlurEffect x:Key="MistBlurLarge" Radius="70" />
 
         <Storyboard x:Key="MistDrift" Timeline.DesiredFrameRate="30" RepeatBehavior="Forever">
@@ -48,46 +78,71 @@
             </DoubleAnimation>
         </Storyboard>
 
-        <!--  The navigation control laid out as a row of tabs in the top bar. Footer items stay registered but are not drawn.  -->
-        <ControlTemplate x:Key="TopNavigation" TargetType="{x:Type ui:NavigationFluent}">
-            <Grid>
+        <!--  The navigation control laid out as a column in the side menu. Footer items (Settings) sit under the main ones.  -->
+        <ControlTemplate x:Key="SideNavigation" TargetType="{x:Type ui:NavigationFluent}">
+            <StackPanel>
                 <ItemsControl
                     Focusable="False"
                     ItemsSource="{TemplateBinding Items}"
                     KeyboardNavigation.DirectionalNavigation="Contained">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal" IsItemsHost="True" />
+                            <StackPanel Orientation="Vertical" IsItemsHost="True" />
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                 </ItemsControl>
-                <ItemsControl Focusable="False" ItemsSource="{TemplateBinding Footer}" Visibility="Collapsed" />
-            </Grid>
+                <ItemsControl
+                    Margin="0,2,0,0"
+                    Focusable="False"
+                    ItemsSource="{TemplateBinding Footer}"
+                    KeyboardNavigation.DirectionalNavigation="Contained">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Vertical" IsItemsHost="True" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+            </StackPanel>
         </ControlTemplate>
 
-        <Style x:Key="TopTab" TargetType="{x:Type ui:NavigationItem}">
+        <!--  One entry in the side menu: a tinted icon tile in the section's colour, the label, and a marker when active.  -->
+        <Style x:Key="SideTab" TargetType="{x:Type ui:NavigationItem}">
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Height" Value="56" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Height" Value="38" />
             <Setter Property="Focusable" Value="True" />
             <Setter Property="FocusVisualStyle" Value="{DynamicResource PhasmaFocusVisual}" />
             <Setter Property="OverridesDefaultStyle" Value="True" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type ui:NavigationItem}">
-                        <Grid Background="Transparent">
-                            <Border x:Name="Hover" Margin="2,11" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="Transparent" />
-                            <ContentPresenter Margin="14,0" VerticalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}" />
+                        <Grid Background="Transparent" Margin="0,1">
+                            <Border x:Name="Hover" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="Transparent" />
+                            <Border x:Name="ActiveFill" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="{TemplateBinding Tag}" Opacity="0" />
                             <Border
-                                x:Name="Underline"
-                                Height="2"
-                                Margin="12,0"
-                                VerticalAlignment="Bottom"
-                                CornerRadius="1"
-                                Background="{DynamicResource PhasmaAccentBrush}"
+                                x:Name="Marker"
+                                Width="3"
+                                Height="24"
+                                Margin="-12,0,0,0"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                CornerRadius="0,2,2,0"
+                                Background="{TemplateBinding Tag}"
                                 Opacity="0" />
+                            <StackPanel Margin="8,0,10,0" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Grid Width="28" Height="28">
+                                    <Border CornerRadius="7" Background="{TemplateBinding Tag}" Opacity="0.18" />
+                                    <ui:SymbolIcon
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="15"
+                                        Foreground="{TemplateBinding Tag}"
+                                        Symbol="{TemplateBinding Icon}" />
+                                </Grid>
+                                <ContentPresenter Margin="10,0,0,0" VerticalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}" />
+                            </StackPanel>
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -95,8 +150,39 @@
                                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                             </Trigger>
                             <Trigger Property="IsActive" Value="True">
-                                <Setter TargetName="Underline" Property="Opacity" Value="1" />
+                                <Setter TargetName="ActiveFill" Property="Opacity" Value="0.16" />
+                                <Setter TargetName="Marker" Property="Opacity" Value="1" />
                                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--  Games sub link: Library, Server browser and so on, under the Games entry  -->
+        <Style x:Key="SubLink" TargetType="{x:Type RadioButton}">
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Margin" Value="0,0,0,0" />
+            <Setter Property="Cursor" Value="Arrow" />
+            <Setter Property="FocusVisualStyle" Value="{DynamicResource PhasmaFocusVisual}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type RadioButton}">
+                        <Border x:Name="Fill" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="Transparent" Padding="10,0,10,3" SnapsToDevicePixels="True">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaHoverBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaAccentSoftBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource PhasmaAccentBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -106,13 +192,17 @@
     </Window.Resources>
 
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="256" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="56" />
+            <RowDefinition Height="50" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <!--  Drifting mist behind everything (Look and feel can turn it off)  -->
-        <Canvas Grid.RowSpan="2" ClipToBounds="True" IsHitTestVisible="False" Opacity="{DynamicResource PhasmaMistOpacity}">
+        <Canvas Grid.RowSpan="2" Grid.ColumnSpan="2" ClipToBounds="True" IsHitTestVisible="False" Opacity="{DynamicResource PhasmaMistOpacity}">
             <Ellipse x:Name="Mist1" Width="480" Height="480" Canvas.Left="-160" Canvas.Top="-200" Opacity="0.12" Effect="{StaticResource MistBlurLarge}" Fill="{DynamicResource BackgroundGlowPrimaryBrush}">
                 <Ellipse.RenderTransform>
                     <TranslateTransform x:Name="MistTranslate1" X="-80" Y="30" />
@@ -141,231 +231,339 @@
             x:Name="AlreadyRunningSnackbar"
             Title="{x:Static resources:Strings.Menu_AlreadyRunning_Title}"
             Message="{x:Static resources:Strings.Menu_AlreadyRunning_Caption}"
-            Icon="Info20" Timeout="10000" Margin="200,0,200,20" Grid.RowSpan="2" Panel.ZIndex="10" />
+            Icon="Info20" Timeout="10000" Margin="200,0,200,20" Grid.RowSpan="2" Grid.ColumnSpan="2" Panel.ZIndex="10" />
 
         <ui:Snackbar
             x:Name="SettingsSavedSnackbar"
             Title="{x:Static resources:Strings.Menu_SettingsSaved_Title}"
             Message="{x:Static resources:Strings.Menu_SettingsSaved_Message}"
-            Appearance="Success" Icon="CheckmarkCircle32" Timeout="3000" Margin="200,0,200,84" Grid.RowSpan="2" Panel.ZIndex="9" />
+            Appearance="Success" Icon="CheckmarkCircle32" Timeout="3000" Margin="200,0,200,84" Grid.RowSpan="2" Grid.ColumnSpan="2" Panel.ZIndex="9" />
 
-        <!--  Top bar: brand, page tabs, search, launch, notifications, settings, account  -->
+        <!--  Title bar across the top (window buttons on the right). The brand sits over its left end.  -->
         <ui:TitleBar
             x:Name="RootTitleBar"
             Grid.Row="0"
+            Grid.ColumnSpan="2"
             Title=""
-            MinHeight="56"
+            MinHeight="50"
             Padding="0"
             ForceShutdown="False"
             MinimizeToTray="False"
             UseSnapLayout="True" />
 
-        <!--  Sits over the title bar. The grid has no background, so its empty space still drags the window.  -->
-        <Grid x:Name="TopBar" Grid.Row="0" Margin="16,0,140,0" Panel.ZIndex="5">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-
-            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0" IsHitTestVisible="False">
-                <Border Width="28" Height="28">
-                    <Image Width="20" Height="20" Source="pack://application:,,,/PhasmaStrap.ico" RenderOptions.BitmapScalingMode="HighQuality" />
-                </Border>
-                <TextBlock x:Name="BrandText" Margin="10,0,4,0" VerticalAlignment="Center" FontSize="14" Text="PhasmaStrap" Style="{DynamicResource PhasmaHeading}" />
+        <StackPanel x:Name="BrandBar" Grid.Row="0" Grid.Column="0" Margin="16,0,0,0" VerticalAlignment="Center" Orientation="Horizontal" IsHitTestVisible="False" Panel.ZIndex="5">
+            <Image Width="34" Height="34" Source="pack://application:,,,/Resources/PhasmaStrapLogo.png" RenderOptions.BitmapScalingMode="HighQuality" SnapsToDevicePixels="True" />
+            <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                <TextBlock x:Name="BrandText" FontSize="16" FontWeight="SemiBold" Text="PhasmaStrap" />
+                <TextBlock Margin="0,-1,0,0" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Roblox launcher" />
             </StackPanel>
+        </StackPanel>
 
-            <ui:NavigationFluent
-                x:Name="RootNavigation"
-                Grid.Column="1"
-                VerticalAlignment="Stretch"
-                Template="{StaticResource TopNavigation}"
-                Frame="{Binding ElementName=RootFrame}"
-                SelectedPageIndex="0">
-                <ui:NavigationFluent.Items>
-                    <ui:NavigationItem Style="{StaticResource TopTab}" Content="Games" PageType="{x:Type pages:HomePage}" Icon="Games24" PageTag="games" />
-                    <ui:NavigationItem Style="{StaticResource TopTab}" Content="Social" PageType="{x:Type pages:PeoplePage}" Icon="People24" PageTag="people" />
-                    <ui:NavigationItem Style="{StaticResource TopTab}" Content="Performance" PageType="{x:Type pages:PerformancePage}" Icon="Gauge24" PageTag="performance" />
-                    <ui:NavigationItem Style="{StaticResource TopTab}" Content="FastFlags" PageType="{x:Type pages:FastFlagSettingsPage}" Icon="Flag24" PageTag="fastflagsettings" />
-                    <ui:NavigationItem Style="{StaticResource TopTab}" Content="Capture" PageType="{x:Type pages:CapturePage}" Icon="Camera24" PageTag="capture" />
-                </ui:NavigationFluent.Items>
-                <ui:NavigationFluent.Footer>
-                    <ui:NavigationItem Content="Settings" PageType="{x:Type pages:SettingsPage}" Icon="Settings24" PageTag="settings" />
-                </ui:NavigationFluent.Footer>
-            </ui:NavigationFluent>
-
-            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
-                <ui:TextBox
-                    x:Name="SettingsSearchBox"
-                    Width="250"
-                    Margin="0,0,8,0"
-                    VerticalAlignment="Center"
-                    PlaceholderText="{x:Static resources:Strings.Menu_Settings_SearchPlaceholder}"
-                    Icon="Search24"
-                    ClearButtonEnabled="True"
-                    TextChanged="SettingsSearchBox_TextChanged"
-                    PreviewKeyDown="SettingsSearchBox_PreviewKeyDown"
-                    GotKeyboardFocus="SettingsSearchBox_GotKeyboardFocus"
-                    LostKeyboardFocus="SettingsSearchBox_LostKeyboardFocus" />
-
-                <Border
-                    Height="32"
-                    Margin="2,0,8,0"
-                    VerticalAlignment="Center"
-                    Background="{DynamicResource PhasmaAccentSoftBrush}"
-                    BorderBrush="{DynamicResource PhasmaAccentStrokeBrush}"
-                    BorderThickness="1"
-                    CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}">
-                    <StackPanel Orientation="Horizontal">
-                        <Button
-                            x:Name="LaunchButton"
-                            Padding="11,0,10,0"
-                            Click="LaunchButton_Click"
-                            Style="{DynamicResource PhasmaSplitPart}"
-                            ToolTip="Save your settings and start Roblox">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Play24" Filled="True" FontSize="12" Margin="0,0,6,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
-                                <TextBlock Text="Launch" FontSize="13" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-                        <Rectangle Width="1" Margin="0,7" Fill="{DynamicResource PhasmaAccentStrokeBrush}" />
-                        <Button
-                            x:Name="LaunchMenuButton"
-                            Width="26"
-                            Padding="0"
-                            Click="LaunchMenuButton_Click"
-                            Style="{DynamicResource PhasmaSplitPart}"
-                            ToolTip="More launch options"
-                            AutomationProperties.Name="More launch options">
-                            <ui:SymbolIcon Symbol="ChevronDown24" FontSize="11" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
-                            <Button.ContextMenu>
-                            <ContextMenu x:Name="LaunchMenu">
-                                <MenuItem Header="{x:Static resources:Strings.Menu_Settings_SaveAndLaunch}" Click="LaunchButton_Click" />
-                                <MenuItem x:Name="TestModeMenuItem" Header="{x:Static resources:Strings.Menu_TestMode}" IsCheckable="True" Click="TestModeMenuItem_Click" />
-                                <Separator />
-                                <MenuItem Header="{x:Static resources:Strings.Menu_Save}" Click="SaveMenuItem_Click" />
-                                <MenuItem Header="{x:Static resources:Strings.Menu_Settings_Restart}" Click="RestartMenuItem_Click" />
-                            </ContextMenu>
-                        </Button.ContextMenu>
-                        </Button>
-                    </StackPanel>
-                </Border>
-
-                <Button
-                    x:Name="NotificationsButton"
-                    Click="NotificationsButton_Click"
-                    Style="{DynamicResource PhasmaIconButton}"
-                    ToolTip="Notifications"
-                    AutomationProperties.Name="Notifications">
-                    <Grid>
-                        <ui:SymbolIcon Symbol="Alert24" FontSize="18" />
-                        <Ellipse
-                            x:Name="NotificationsBadge"
-                            Width="8"
-                            Height="8"
-                            Margin="0,-2,-3,0"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Top"
-                            Fill="{DynamicResource PhasmaAccentBrush}"
-                            Visibility="Collapsed" />
-                    </Grid>
-                </Button>
-
-                <Button
-                    x:Name="SettingsButton"
-                    Click="SettingsButton_Click"
-                    Style="{DynamicResource PhasmaIconButton}"
-                    ToolTip="Settings"
-                    AutomationProperties.Name="Settings">
-                    <ui:SymbolIcon x:Name="SettingsButtonIcon" Symbol="Settings24" FontSize="18" />
-                </Button>
-
-                <Button
-                    x:Name="AccountButton"
-                    Height="34"
-                    Margin="6,0,0,0"
-                    Padding="5,0,10,0"
-                    Click="AccountButton_Click"
-                    Style="{DynamicResource PhasmaSoftButton}"
-                    ToolTip="Sign in to PhasmaStrap">
-                    <StackPanel Orientation="Horizontal">
-                        <Border x:Name="AccountAvatar" Width="22" Height="22" CornerRadius="11" Visibility="Collapsed" Margin="0,0,7,0">
-                            <Border.Background>
-                                <ImageBrush x:Name="AccountAvatarBrush" Stretch="UniformToFill" />
-                            </Border.Background>
-                        </Border>
-                        <ui:SymbolIcon x:Name="AccountIcon" Symbol="Person24" FontSize="15" Margin="4,0,6,0" VerticalAlignment="Center" />
-                        <StackPanel x:Name="AccountTextPanel" Orientation="Horizontal">
-                            <TextBlock x:Name="AccountLabel" VerticalAlignment="Center" FontSize="12.5" MaxWidth="120" TextTrimming="CharacterEllipsis" Text="Log in" />
-                            <ui:SymbolIcon x:Name="AccountChevron" Symbol="ChevronDown24" FontSize="11" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="Collapsed" />
-                        </StackPanel>
-                    </StackPanel>
-                    <Button.ContextMenu>
-                        <ContextMenu x:Name="AccountMenu">
-                            <MenuItem x:Name="AccountWhoItem" IsEnabled="False" />
-                            <Separator />
-                            <MenuItem Header="Account settings" Click="AccountSettings_Click" />
-                            <MenuItem Header="Open my profile on the website" Click="AccountWebsite_Click" />
-                            <MenuItem Header="{x:Static resources:Strings.Menu_About_Title}" Click="About_Click" />
-                            <Separator />
-                            <MenuItem Header="Sign out" Click="AccountSignOut_Click" />
-                        </ContextMenu>
-                    </Button.ContextMenu>
-                </Button>
-
-            </StackPanel>
-        </Grid>
-
-        <Border Grid.Row="0" Height="1" VerticalAlignment="Bottom" Background="{DynamicResource PhasmaStrokeBrush}" IsHitTestVisible="False" />
-
-        <!--  Search everything: settings, pages, your flags and games you've played  -->
-        <Popup x:Name="SettingsSearchPopup"
-               PlacementTarget="{Binding ElementName=SettingsSearchBox}"
-               Placement="Bottom"
-               VerticalOffset="6"
-               StaysOpen="True"
-               AllowsTransparency="True"
-               PopupAnimation="Fade"
-               Focusable="False">
-            <Border Width="780" Height="470" Margin="0,0,8,8" Padding="0" Style="{DynamicResource PhasmaPopupSurface}">
-                <DockPanel>
-                    <StackPanel x:Name="SearchChips" DockPanel.Dock="Top" Orientation="Horizontal" Margin="12,10,12,8">
-                        <ToggleButton x:Name="SearchChipAll" Style="{DynamicResource PhasmaChip}" Focusable="False" Tag="All" Click="SearchChip_Click" IsChecked="True" Content="All" />
-                        <ToggleButton x:Name="SearchChipSettings" Style="{DynamicResource PhasmaChip}" Focusable="False" Tag="Settings" Click="SearchChip_Click" Content="Settings" />
-                        <ToggleButton x:Name="SearchChipFlags" Style="{DynamicResource PhasmaChip}" Focusable="False" Tag="Flags" Click="SearchChip_Click" Content="Your flags" />
-                        <ToggleButton x:Name="SearchChipGames" Style="{DynamicResource PhasmaChip}" Focusable="False" Tag="Games" Click="SearchChip_Click" Content="Games" />
-                    </StackPanel>
-
-                    <Border DockPanel.Dock="Bottom" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}" Padding="12,7">
+        <!--  Side menu: search, the six sections, then Launch, notifications and the account  -->
+        <Border
+            x:Name="SideRail"
+            Grid.Row="1"
+            Grid.Column="0"
+            Padding="12,6,12,14"
+            Panel.ZIndex="5"
+            BorderBrush="{DynamicResource PhasmaStrokeBrush}"
+            BorderThickness="0,0,1,0">
+            <DockPanel LastChildFill="True">
+                <StackPanel DockPanel.Dock="Bottom">
+                    <Border
+                        Height="40"
+                        Margin="0,0,0,8"
+                        Background="{DynamicResource PhasmaBrandBrush}"
+                        CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}">
+                        <Border.Resources>
+                            <!--  Launch keeps the brand red whichever section is open; the text is white on it  -->
+                            <SolidColorBrush x:Key="PhasmaAccentBrush" Color="{DynamicResource PhasmaBrandTextColor}" />
+                            <SolidColorBrush x:Key="PhasmaAccentTextBrush" Color="{DynamicResource PhasmaBrandTextColor}" />
+                            <SolidColorBrush x:Key="PhasmaAccentSoftBrush" Color="#29FFFFFF" />
+                            <SolidColorBrush x:Key="PhasmaAccentStrokeBrush" Color="#55FFFFFF" />
+                        </Border.Resources>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="1" />
+                                <ColumnDefinition Width="34" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock x:Name="SettingsSearchFooter" Grid.Column="0" FontSize="11" TextTrimming="CharacterEllipsis"
-                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                            <TextBlock Grid.Column="1" Margin="12,0,0,0" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                                       Text="↑↓ move    Enter open    Tab filter    Esc close" />
+                            <Button
+                                x:Name="LaunchButton"
+                                Grid.Column="0"
+                                HorizontalContentAlignment="Center"
+                                Click="LaunchButton_Click"
+                                Style="{DynamicResource PhasmaSplitPart}"
+                                ToolTip="Save your settings and start Roblox">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Play24" Filled="True" FontSize="13" Margin="0,0,8,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                    <TextBlock Text="Launch Roblox" FontSize="14.5" FontWeight="Medium" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Rectangle Grid.Column="1" Width="1" Margin="0,9" Fill="{DynamicResource PhasmaAccentStrokeBrush}" />
+                            <Button
+                                x:Name="LaunchMenuButton"
+                                Grid.Column="2"
+                                Padding="0"
+                                Click="LaunchMenuButton_Click"
+                                Style="{DynamicResource PhasmaSplitPart}"
+                                ToolTip="More launch options"
+                                AutomationProperties.Name="More launch options">
+                                <ui:SymbolIcon Symbol="ChevronDown24" FontSize="12" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                <Button.ContextMenu>
+                                    <ContextMenu x:Name="LaunchMenu">
+                                        <MenuItem Header="{x:Static resources:Strings.Menu_Settings_SaveAndLaunch}" Click="LaunchButton_Click" />
+                                        <MenuItem x:Name="TestModeMenuItem" Header="{x:Static resources:Strings.Menu_TestMode}" IsCheckable="True" Click="TestModeMenuItem_Click" />
+                                        <Separator />
+                                        <MenuItem Header="{x:Static resources:Strings.Menu_Save}" Click="SaveMenuItem_Click" />
+                                        <MenuItem Header="{x:Static resources:Strings.Menu_Settings_Restart}" Click="RestartMenuItem_Click" />
+                                    </ContextMenu>
+                                </Button.ContextMenu>
+                            </Button>
                         </Grid>
                     </Border>
 
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="1" />
-                            <ColumnDefinition Width="270" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
+                        <Button
+                            x:Name="AccountButton"
+                            Grid.Column="0"
+                            Height="40"
+                            Padding="7,0,10,0"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            Click="AccountButton_Click"
+                            Style="{DynamicResource PhasmaSoftButton}"
+                            Background="{DynamicResource PhasmaPanelBrush}"
+                            BorderBrush="{DynamicResource PhasmaStrokeBrush}"
+                            ToolTip="Sign in to PhasmaStrap">
+                            <StackPanel Orientation="Horizontal">
+                                <Border x:Name="AccountAvatar" Width="24" Height="24" CornerRadius="12" Visibility="Collapsed" Margin="0,0,8,0">
+                                    <Border.Background>
+                                        <ImageBrush x:Name="AccountAvatarBrush" Stretch="UniformToFill" />
+                                    </Border.Background>
+                                </Border>
+                                <ui:SymbolIcon x:Name="AccountIcon" Symbol="Person24" FontSize="16" Margin="4,0,8,0" VerticalAlignment="Center" />
+                                <StackPanel x:Name="AccountTextPanel" Orientation="Horizontal">
+                                    <TextBlock x:Name="AccountLabel" VerticalAlignment="Center" FontSize="13" MaxWidth="108" TextTrimming="CharacterEllipsis" Text="Log in" />
+                                    <ui:SymbolIcon x:Name="AccountChevron" Symbol="ChevronDown24" FontSize="11" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="Collapsed" />
+                                </StackPanel>
+                            </StackPanel>
+                            <Button.ContextMenu>
+                                <ContextMenu x:Name="AccountMenu">
+                                    <MenuItem x:Name="AccountWhoItem" IsEnabled="False" />
+                                    <Separator />
+                                    <MenuItem Header="Account settings" Click="AccountSettings_Click" />
+                                    <MenuItem Header="Open my profile on the website" Click="AccountWebsite_Click" />
+                                    <MenuItem Header="{x:Static resources:Strings.Menu_About_Title}" Click="About_Click" />
+                                    <Separator />
+                                    <MenuItem Header="Sign out" Click="AccountSignOut_Click" />
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                        </Button>
 
+                        <Button
+                            x:Name="NotificationsButton"
+                            Grid.Column="1"
+                            Width="40"
+                            Height="40"
+                            Margin="6,0,0,0"
+                            Click="NotificationsButton_Click"
+                            Style="{DynamicResource PhasmaIconButton}"
+                            ToolTip="Notifications"
+                            AutomationProperties.Name="Notifications">
+                            <Grid>
+                                <ui:SymbolIcon Symbol="Alert24" FontSize="18" />
+                                <Ellipse
+                                    x:Name="NotificationsBadge"
+                                    Width="8"
+                                    Height="8"
+                                    Margin="0,-2,-3,0"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Top"
+                                    Fill="{DynamicResource PhasmaAccentBrush}"
+                                    Visibility="Collapsed" />
+                            </Grid>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel>
+                    <Grid>
+                    <ui:TextBox
+                        x:Name="SettingsSearchBox"
+                        Margin="0,2,0,12"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Center"
+                        PlaceholderText="Search" IsReadOnly="True" Cursor="Arrow"
+                        Icon="Search24"
+                        ClearButtonEnabled="True"
+                        TextChanged="SettingsSearchBox_TextChanged"
+                        PreviewKeyDown="SettingsSearchBox_PreviewKeyDown"
+                        GotKeyboardFocus="SettingsSearchBox_GotKeyboardFocus"
+                        LostKeyboardFocus="SettingsSearchBox_LostKeyboardFocus" />
+                    <Border Margin="0,2,34,12" HorizontalAlignment="Right" VerticalAlignment="Center" Padding="5,1" CornerRadius="4" BorderThickness="1" IsHitTestVisible="False"
+                            BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Text, ElementName=SettingsSearchBox}" Value="">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock Text="Ctrl K" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    </Border>
+                    </Grid>
+
+                    <TextBlock Margin="10,2,0,6" Text="MENU" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Opacity="0.8" />
+
+                    <Grid>
+                    <ui:NavigationFluent
+                        x:Name="RootNavigation"
+                        VerticalAlignment="Top"
+                        Template="{StaticResource SideNavigation}"
+                        Frame="{Binding ElementName=RootFrame}"
+                        SelectedPageIndex="0">
+                        <ui:NavigationFluent.Items>
+                            <ui:NavigationItem Style="{StaticResource SideTab}" Tag="{DynamicResource SectionGamesBrush}" Content="Games" PageType="{x:Type pages:HomePage}" Icon="Games24" PageTag="games" />
+                            <ui:NavigationItem Style="{StaticResource SideTab}" Tag="{DynamicResource SectionSocialBrush}" Content="Social" PageType="{x:Type pages:PeoplePage}" Icon="People24" PageTag="people" />
+                            <ui:NavigationItem Style="{StaticResource SideTab}" Tag="{DynamicResource SectionPerformanceBrush}" Content="Performance" PageType="{x:Type pages:PerformancePage}" Icon="Gauge24" PageTag="performance" />
+                            <ui:NavigationItem Style="{StaticResource SideTab}" Tag="{DynamicResource SectionFlagsBrush}" Content="FastFlags" PageType="{x:Type pages:FastFlagSettingsPage}" Icon="Flag24" PageTag="fastflagsettings" />
+                            <ui:NavigationItem Style="{StaticResource SideTab}" Tag="{DynamicResource SectionCaptureBrush}" Content="Capture" PageType="{x:Type pages:CapturePage}" Icon="Camera24" PageTag="capture" />
+                        </ui:NavigationFluent.Items>
+                        <ui:NavigationFluent.Footer>
+                            <ui:NavigationItem Style="{StaticResource SideTab}" Tag="{DynamicResource SectionSettingsBrush}" Content="Settings" PageType="{x:Type pages:SettingsPage}" Icon="Settings24" PageTag="settings" />
+                        </ui:NavigationFluent.Footer>
+                    </ui:NavigationFluent>
+
+                    <!--  Sub links of the open section, drawn over the gap left under its entry  -->
+                    <StackPanel x:Name="SubNav" Margin="18,40,0,0" Visibility="Collapsed" VerticalAlignment="Top">
+                        <Border x:Name="SubNavBorder" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1,0,0,0" Padding="10,0,0,0">
+                            <StackPanel x:Name="SubNavItems" />
+                        </Border>
+                    </StackPanel>
+                    </Grid>
+
+                    <!--  The old gear button. The Settings entry in the menu replaces it; the element stays so the page-change code keeps working.  -->
+                    <Button x:Name="SettingsButton" Visibility="Collapsed" Click="SettingsButton_Click" Style="{DynamicResource PhasmaIconButton}">
+                        <ui:SymbolIcon x:Name="SettingsButtonIcon" Symbol="Settings24" FontSize="18" />
+                    </Button>
+                </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+
+        <!--  Search palette: a centred panel over a dimmed window (Ctrl K)  -->
+        <Grid x:Name="SearchOverlay" Grid.RowSpan="2" Grid.ColumnSpan="2" Panel.ZIndex="30" Visibility="Collapsed">
+            <Border x:Name="SearchScrim" Background="#99000000" MouseLeftButtonDown="SearchScrim_MouseDown" />
+
+            <Border x:Name="SearchPanel"
+                    Width="680"
+                    MaxHeight="560"
+                    Margin="0,84,0,0"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Top"
+                    Background="{DynamicResource PhasmaPopupBrush}"
+                    BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}"
+                    BorderThickness="1"
+                    CornerRadius="{DynamicResource PhasmaCornerRadiusLarge}"
+                    ClipToBounds="True">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="60" ShadowDepth="20" Direction="270" Opacity="0.7" Color="Black" />
+                </Border.Effect>
+
+                <DockPanel>
+                    <!--  The box you type in  -->
+                    <Grid DockPanel.Dock="Top" Height="58" Margin="20,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Symbol="Search24" FontSize="20" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                        <Grid Grid.Column="1" Margin="14,0,12,0" VerticalAlignment="Center">
+                            <TextBlock Text="Search settings, your flags and games" FontSize="17" IsHitTestVisible="False" Foreground="{DynamicResource TextFillColorTertiaryBrush}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Text, ElementName=PaletteBox}" Value="">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBox x:Name="PaletteBox"
+                                     Background="Transparent"
+                                     FocusVisualStyle="{x:Null}"
+                                     Template="{DynamicResource PlainTextBoxTemplate}"
+                                     BorderThickness="0"
+                                     Padding="0"
+                                     FontSize="17"
+                                     Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                                     CaretBrush="{DynamicResource PhasmaAccentBrush}"
+                                     Text="{Binding Text, ElementName=SettingsSearchBox, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PreviewKeyDown="SettingsSearchBox_PreviewKeyDown"
+                                     LostKeyboardFocus="SettingsSearchBox_LostKeyboardFocus" />
+                        </Grid>
+                        <Border Grid.Column="2" VerticalAlignment="Center" Padding="6,1" CornerRadius="4" BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}">
+                            <TextBlock Text="Esc" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                        </Border>
+                    </Grid>
+                    <Border DockPanel.Dock="Top" Height="1" Background="{DynamicResource PhasmaStrokeBrush}" />
+
+                    <!--  Filters, with how many each one finds  -->
+                    <Border DockPanel.Dock="Top" Padding="16,10,16,6">
+                        <StackPanel x:Name="SearchChips" Orientation="Horizontal">
+                            <ToggleButton x:Name="SearchChipAll" Style="{DynamicResource PhasmaChip}" Focusable="False" Tag="All" Click="SearchChip_Click" IsChecked="True" Content="All" />
+                            <ToggleButton x:Name="SearchChipSettings" Style="{DynamicResource PhasmaChip}" Focusable="False" Tag="Settings" Click="SearchChip_Click" Content="Settings" />
+                            <ToggleButton x:Name="SearchChipFlags" Style="{DynamicResource PhasmaChip}" Focusable="False" Tag="Flags" Click="SearchChip_Click" Content="Your flags" />
+                            <ToggleButton x:Name="SearchChipGames" Style="{DynamicResource PhasmaChip}" Focusable="False" Tag="Games" Click="SearchChip_Click" Content="Games" />
+                        </StackPanel>
+                    </Border>
+
+                    <!--  Footer: result count and the keys  -->
+                    <Border DockPanel.Dock="Bottom" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}" Padding="20,0" Height="40">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="SettingsSearchFooter" Grid.Column="0" VerticalAlignment="Center" FontSize="12.5" TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="↑↓" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Margin="6,0,16,0" Text="move" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Text="Enter" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Margin="6,0,16,0" Text="open" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Text="Tab" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Margin="6,0,0,0" Text="filter" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!--  Kept so the code that fills the old detail pane still has somewhere to point  -->
+                    <DockPanel DockPanel.Dock="Bottom" x:Name="SearchDetail" Visibility="Collapsed" DataContext="{Binding SelectedItem, ElementName=SettingsSearchResults}">
+                        <Button x:Name="SearchDetailOpen" Visibility="Collapsed" Click="SearchDetailOpen_Click" />
+                    </DockPanel>
+                    <Grid>
                         <ListBox x:Name="SettingsSearchResults"
-                                 Grid.Column="0"
-                                 Margin="6,0,6,6"
+                                 MinHeight="120"
+                                 Margin="0,0,0,6"
                                  Background="Transparent" BorderThickness="0" Padding="0"
                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                  VirtualizingPanel.IsVirtualizing="True"
                                  VirtualizingPanel.IsVirtualizingWhenGrouping="True"
                                  VirtualizingPanel.ScrollUnit="Pixel"
-                                 ItemContainerStyle="{DynamicResource PhasmaListItem}"
+                                 ItemContainerStyle="{StaticResource PaletteItem}"
                                  MouseMove="SettingsSearchResults_MouseMove"
                                  PreviewMouseLeftButtonUp="SettingsSearchResults_PreviewMouseLeftButtonUp"
                                  PreviewKeyDown="SettingsSearchBox_PreviewKeyDown">
@@ -373,9 +571,11 @@
                                 <GroupStyle>
                                     <GroupStyle.HeaderTemplate>
                                         <DataTemplate>
-                                            <StackPanel Orientation="Horizontal" Margin="8,10,8,4">
-                                                <TextBlock Text="{Binding Name}" Style="{DynamicResource PhasmaCaption}" />
-                                                <TextBlock Text="{Binding ItemCount}" Margin="6,0,0,0" Style="{DynamicResource PhasmaCaption}" Opacity="0.6" />
+                                            <StackPanel Orientation="Horizontal" Margin="20,14,20,4">
+                                                <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                                           Text="{Binding Name, Converter={StaticResource UpperCase}}" />
+                                                <TextBlock Margin="8,0,0,0" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Opacity="0.6"
+                                                           Text="{Binding ItemCount}" />
                                             </StackPanel>
                                         </DataTemplate>
                                     </GroupStyle.HeaderTemplate>
@@ -388,16 +588,17 @@
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <Border Grid.Column="0" Width="28" Height="28" Margin="0,0,10,0" VerticalAlignment="Center"
-                                                CornerRadius="7" Background="{DynamicResource PhasmaSelectedBrush}">
-                                            <ui:SymbolIcon Symbol="{Binding Icon}" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        <Border Grid.Column="0" Width="30" Height="30" Margin="0,0,14,0" VerticalAlignment="Center"
+                                                CornerRadius="7" Background="{DynamicResource PhasmaPanelRaisedBrush}">
+                                            <ui:SymbolIcon Symbol="{Binding Icon}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"
                                                            Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                                         </Border>
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Header}" FontWeight="SemiBold" FontSize="13" TextTrimming="CharacterEllipsis" />
-                                            <TextBlock Text="{Binding Subtitle}" FontSize="11" Margin="0,1,0,0" TextTrimming="CharacterEllipsis"
-                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                                            <TextBlock Text="{Binding Header}" FontWeight="Medium" FontSize="14.5" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding Subtitle}" FontSize="12.5" Margin="0,1,0,0" TextTrimming="CharacterEllipsis"
+                                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
                                                         <Style.Triggers>
@@ -409,7 +610,7 @@
                                                 </TextBlock.Style>
                                             </TextBlock>
                                         </StackPanel>
-                                        <Border Grid.Column="2" VerticalAlignment="Center" Margin="10,0,0,0" Style="{DynamicResource PhasmaTagNeutral}">
+                                        <Border Grid.Column="2" VerticalAlignment="Center" Margin="12,0,0,0" Style="{DynamicResource PhasmaTagNeutral}">
                                             <Border.Visibility>
                                                 <Binding Path="HasBadge">
                                                     <Binding.Converter>
@@ -417,48 +618,42 @@
                                                     </Binding.Converter>
                                                 </Binding>
                                             </Border.Visibility>
-                                            <TextBlock Text="{Binding Badge}" FontSize="10" />
+                                            <TextBlock Text="{Binding Badge}" FontSize="11" />
+                                        </Border>
+                                        <!--  Only the highlighted row shows the Enter key  -->
+                                        <Border Grid.Column="3" VerticalAlignment="Center" Margin="12,0,0,0" Padding="6,1" CornerRadius="4" BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="Enter" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                                         </Border>
                                     </Grid>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
 
-                        <TextBlock x:Name="SettingsSearchEmpty" Grid.Column="0" Margin="24" Visibility="Collapsed" TextWrapping="Wrap"
+                        <TextBlock x:Name="SettingsSearchEmpty" Margin="24,40" Visibility="Collapsed" TextWrapping="Wrap"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"
                                    Style="{DynamicResource PhasmaSubtle}" />
-
-                        <Border Grid.Column="1" Background="{DynamicResource PhasmaStrokeBrush}" />
-
-                        <DockPanel x:Name="SearchDetail" Grid.Column="2" Margin="16,8,16,12"
-                                   DataContext="{Binding SelectedItem, ElementName=SettingsSearchResults}">
-                            <Button x:Name="SearchDetailOpen" DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" Focusable="False"
-                                    Style="{DynamicResource PhasmaAccentButton}" Content="{Binding OpenLabel}" Click="SearchDetailOpen_Click" />
-                            <StackPanel>
-                                <Border Width="40" Height="40" HorizontalAlignment="Left" CornerRadius="10" Background="{DynamicResource PhasmaAccentSoftBrush}">
-                                    <ui:SymbolIcon Symbol="{Binding Icon}" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                </Border>
-                                <TextBlock Text="{Binding Header}" Margin="0,12,0,0" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                <Border Margin="0,8,0,0" Style="{DynamicResource PhasmaTagNeutral}">
-                                    <TextBlock Text="{Binding KindLabel}" FontSize="10" />
-                                </Border>
-                                <TextBlock Text="Where" Margin="0,16,0,4" Style="{DynamicResource PhasmaCaption}" />
-                                <TextBlock Text="{Binding Subtitle}" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <TextBlock Text="{Binding Description}" Margin="0,14,0,0" FontSize="12" TextWrapping="Wrap" MaxHeight="150" TextTrimming="CharacterEllipsis"
-                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                            </StackPanel>
-                        </DockPanel>
                     </Grid>
+
                 </DockPanel>
             </Border>
-        </Popup>
+        </Grid>
 
         <!--  Notification history  -->
         <Popup x:Name="NotificationsPopup"
                PlacementTarget="{Binding ElementName=NotificationsButton}"
-               Placement="Bottom"
-               HorizontalOffset="-310"
-               VerticalOffset="8"
+               Placement="Top"
+               HorizontalOffset="0"
+               VerticalOffset="-8"
                StaysOpen="False"
                AllowsTransparency="True"
                PopupAnimation="Fade">
@@ -544,8 +739,18 @@
             </Border>
         </Popup>
 
-        <!--  Page content on one glass panel  -->
-        <Border Grid.Row="1" Margin="14,12,14,14" Style="{DynamicResource PhasmaPanel}">
+        <!--  Section glow in the top right corner, in the open section's colour  -->
+        <Border Grid.RowSpan="2" Grid.Column="1" IsHitTestVisible="False" Background="{DynamicResource PhasmaAccentBrush}" Opacity="0.2">
+            <Border.OpacityMask>
+                <RadialGradientBrush Center="0.88,-0.1" GradientOrigin="0.88,-0.1" RadiusX="0.6" RadiusY="0.42">
+                    <GradientStop Color="#FF000000" Offset="0" />
+                    <GradientStop Color="#00000000" Offset="1" />
+                </RadialGradientBrush>
+            </Border.OpacityMask>
+        </Border>
+
+        <!--  Pages sit straight on the window  -->
+        <Border Grid.Row="1" Grid.Column="1" Margin="22,18,26,0">
             <Frame x:Name="RootFrame" />
         </Border>
 
@@ -553,6 +758,7 @@
         <Border
             x:Name="UnsavedBar"
             Grid.Row="1"
+            Grid.Column="1"
             Margin="0,0,0,30"
             Padding="16,8,8,8"
             HorizontalAlignment="Center"

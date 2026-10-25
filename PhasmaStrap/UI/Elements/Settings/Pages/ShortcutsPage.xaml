@@ -15,12 +15,7 @@
       Scrollable="True">
 
     <StackPanel Margin="0,0,14,14">
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-            <TextBlock Style="{DynamicResource PhasmaPageTitle}" VerticalAlignment="Center" Text="{x:Static resources:Strings.Common_Shortcuts}" />
-            <Border Style="{DynamicResource PhasmaTagNeutral}" Margin="12,0,0,0">
-                <TextBlock FontSize="11" Text="Look and feel" />
-            </Border>
-        </StackPanel>
+        <controls:PageHeader Title="{x:Static resources:Strings.Common_Shortcuts}" />
 
         <controls:CardColumns>
             <!--  Create a shortcut: one row of fields  -->

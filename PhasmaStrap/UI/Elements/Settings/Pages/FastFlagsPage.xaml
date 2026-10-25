@@ -23,24 +23,26 @@
 
         <!--  Inner tabs drawn as pills. Kept as a real TabControl so settings search can still switch tabs.  -->
         <Style x:Key="FlagTabItem" TargetType="TabItem">
-            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Margin" Value="0,0,4,0" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Margin" Value="0,0,2,0" />
             <Setter Property="FocusVisualStyle" Value="{StaticResource PhasmaFocusVisual}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TabItem">
-                        <Border x:Name="Fill" Padding="12,6" Background="Transparent" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" SnapsToDevicePixels="True">
-                            <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
-                        </Border>
+                        <Grid SnapsToDevicePixels="True" Background="Transparent">
+                            <Border x:Name="Fill" Padding="14,9" Background="Transparent">
+                                <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
+                            </Border>
+                            <Border x:Name="Underline" Height="2" VerticalAlignment="Bottom" Background="{DynamicResource PhasmaAccentBrush}" Opacity="0" />
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaHoverBrush}" />
                                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaSelectedBrush}" />
+                                <Setter TargetName="Underline" Property="Opacity" Value="1" />
                                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -64,7 +66,7 @@
                                 <!--  The "Fast Flag Editor" button now sits in the FastFlags header (FastFlagSettingsPage)  -->
                                 <WrapPanel IsItemsHost="True" VerticalAlignment="Center" KeyboardNavigation.TabIndex="1" />
                             </DockPanel>
-                            <Border Grid.Row="1" Margin="0,8,0,14" Style="{DynamicResource PhasmaDivider}" />
+                            <Border Grid.Row="1" Margin="0,-1,0,18" Style="{DynamicResource PhasmaDivider}" />
                             <ContentPresenter Grid.Row="2" x:Name="PART_SelectedContentHost" ContentSource="SelectedContent" />
                         </Grid>
                     </ControlTemplate>

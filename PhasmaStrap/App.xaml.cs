@@ -526,6 +526,36 @@ namespace PhasmaStrap
                 }
 
                 Settings.Load();
+
+                // The redesigned look: solid panels, no window tint and no drifting mist. Done once so older saved values don't hide it.
+                if (Settings.Prop.ThemeLookVersion < 1)
+                {
+                    Settings.Prop.ThemePanelOpacity = 1.0;
+                    Settings.Prop.ThemePanelColor = "";
+                    Settings.Prop.ThemeWindowTintOpacity = 1.0;
+                    Settings.Prop.ThemeMistEnabled = false;
+                    Settings.Prop.ThemeLookVersion = 1;
+                    Settings.Save();
+                }
+
+                // A custom colour theme saved before the redesign repaints everything in the old palette. Keep a copy, then switch it off.
+                if (Settings.Prop.ThemeLookVersion < 2)
+                {
+                    try
+                    {
+                        if (File.Exists(Paths.CustomColorThemeXaml) && !File.Exists(Paths.CustomColorThemeXaml + ".before-redesign"))
+                            File.Copy(Paths.CustomColorThemeXaml, Paths.CustomColorThemeXaml + ".before-redesign");
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.WriteLine(LOG_IDENT, $"Could not back up the custom colour theme: {ex.Message}");
+                    }
+
+                    Settings.Prop.CustomColorThemeEnabled = false;
+                    Settings.Prop.ThemeLookVersion = 2;
+                    Settings.Save();
+                }
+
                 State.Load();
                 FastFlags.Load();
                 FlagProfiles.Load(false);

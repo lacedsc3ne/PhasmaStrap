@@ -30,8 +30,7 @@
     </ui:UiPage.Resources>
 
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="{x:Static resources:Strings.Menu_Nvidia_Title}" />
-        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="Applied to a dedicated Roblox driver profile, separate from the game's own FastFlags. Needs an NVIDIA GPU." />
+        <controls:PageHeader Title="{x:Static resources:Strings.Menu_Nvidia_Title}" Subtitle="Applied to a dedicated Roblox driver profile, separate from the game's own FastFlags. Needs an NVIDIA GPU." />
 
         <!--  No NVIDIA GPU or driver: empty state  -->
         <Border Style="{DynamicResource PhasmaCard}" Padding="20" Visibility="{Binding UnavailableVisibility}">

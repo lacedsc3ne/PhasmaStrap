@@ -11,13 +11,15 @@ namespace PhasmaStrap.Utility
 
         private readonly Func<int> _seconds;
         private readonly string _processName;
+        private readonly bool _allAudio;
         private readonly bool _microphone;
         private readonly string _microphoneId;
         private readonly List<Source> _sources = new();
         private volatile bool _running;
 
-        public ReplayAudio(Func<int> bufferSeconds, string processName, bool microphone = false, string microphoneId = "")
+        public ReplayAudio(Func<int> bufferSeconds, string processName, bool microphone = false, string microphoneId = "", bool allAudio = false)
         {
+            _allAudio = allAudio;
             _seconds = bufferSeconds;
             _processName = processName;
             _microphone = microphone;
@@ -248,20 +250,29 @@ namespace PhasmaStrap.Utility
                     {
                         flags |= AUDCLNT_STREAMFLAGS_LOOPBACK;
 
-                        int pid = FindProcess(_owner._processName);
-                        if (pid == 0)
-                            return;
-
-                        try
+                        if (_owner._allAudio)
                         {
-                            client = ActivateProcessLoopback(pid);
-                            how = $"process loopback of PID {pid}";
-                        }
-                        catch (Exception ex)
-                        {
-                            Log?.Invoke($"Process loopback is not available ({ex.Message}) - recording everything the default output plays instead");
+                            // Everything the PC plays, whether or not Roblox is open
                             client = ActivateEndpoint(capture: false);
-                            how = "loopback of the default output";
+                            how = "loopback of the default output (all PC audio)";
+                        }
+                        else
+                        {
+                            int pid = FindProcess(_owner._processName);
+                            if (pid == 0)
+                                return;
+
+                            try
+                            {
+                                client = ActivateProcessLoopback(pid);
+                                how = $"process loopback of PID {pid}";
+                            }
+                            catch (Exception ex)
+                            {
+                                Log?.Invoke($"Process loopback is not available ({ex.Message}) - recording everything the default output plays instead");
+                                client = ActivateEndpoint(capture: false);
+                                how = "loopback of the default output";
+                            }
                         }
                     }
 
@@ -299,7 +310,7 @@ namespace PhasmaStrap.Utility
                     {
                         if (WaitForSingleObject(ready, 200) != 0)
                         {
-                            if (_kind == SourceKind.Game && ++idle % 25 == 0 && FindProcess(_owner._processName) == 0)
+                            if (_kind == SourceKind.Game && !_owner._allAudio && ++idle % 25 == 0 && FindProcess(_owner._processName) == 0)
                                 return;
                             continue;
                         }

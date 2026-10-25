@@ -27,8 +27,7 @@
         </Grid.ColumnDefinitions>
 
         <StackPanel Grid.Column="0" Margin="0,0,16,0">
-            <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="{x:Static resources:Strings.Menu_RiShade_Title}" />
-            <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="Shader effects over the Roblox window. Made for screenshots, since it costs GPU time every frame." />
+            <controls:PageHeader Title="{x:Static resources:Strings.Menu_RiShade_Title}" Subtitle="Shader effects over the Roblox window. Made for screenshots, since it costs GPU time every frame." />
 
             <controls:CardColumns MinColumnWidth="290">
                 <controls:SettingsCard controls:CardColumns.FullRow="True" Header="{x:Static resources:Strings.Menu_Shortcuts_General_Title}">

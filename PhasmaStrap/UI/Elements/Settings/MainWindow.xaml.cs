@@ -74,7 +74,12 @@ namespace PhasmaStrap.UI.Elements.Settings
             _unsavedTimer.Tick += (_, _) => RefreshUnsavedBar();
             _unsavedTimer.Start();
 
-            RootFrame.Navigated += (_, _) => RefreshSettingsButton();
+            RootFrame.Navigated += (_, _) =>
+            {
+                RefreshSettingsButton();
+                ApplySectionAccent();
+                UpdateSubNav();
+            };
 
             _seenNotifications = PhasmaStrap.UI.NotificationCenter.History.Count;
             PhasmaStrap.UI.NotificationCenter.HistoryChanged += NotificationCenter_HistoryChanged;
@@ -101,11 +106,9 @@ namespace PhasmaStrap.UI.Elements.Settings
 
         private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            // Keep the top bar on one line: drop the brand name, then the account name, as the window narrows.
-            double width = e.NewSize.Width;
-            BrandText.Visibility = width < 1180 ? Visibility.Collapsed : Visibility.Visible;
-            AccountTextPanel.Visibility = width < 1090 ? Visibility.Collapsed : Visibility.Visible;
-            SettingsSearchBox.Width = width < 1120 ? 170 : 220;
+            // The side menu has a fixed width, so there is nothing to shrink as the window narrows.
+            // the brand lives in the side menu now
+            AccountTextPanel.Visibility = Visibility.Visible;
         }
 
         private bool HasUnsavedChanges()
@@ -158,6 +161,179 @@ namespace PhasmaStrap.UI.Elements.Settings
         }
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e) => RootNavigation.Navigate("settings");
+
+        /// <summary>
+        /// Each section has its own accent colour (Games red, Social blue, Performance green and so on). Turning section
+        /// colours off in Appearance goes back to the single accent the user picked.
+        /// </summary>
+        private PhasmaStrap.UI.ViewModels.Settings.HomeViewModel? _watchedHome;
+        private UI.Elements.Controls.SectionHost? _watchedHost;
+
+        private static readonly (string Tag, string Label)[] GamesLinks =
+        {
+            ("home", "Home"), ("library", "Library"), ("serverbrowser", "Server browser"), ("privateservers", "Private servers"), ("history", "History"),
+        };
+
+        /// <summary>Lists the pages of the open section under its menu entry and keeps the highlighted one in step with the page.</summary>
+        private void UpdateSubNav()
+        {
+            if (_watchedHome is not null)
+            {
+                _watchedHome.PropertyChanged -= WatchedHome_PropertyChanged;
+                _watchedHome = null;
+            }
+
+            if (_watchedHost is not null)
+            {
+                _watchedHost.SectionChanged -= WatchedHost_SectionChanged;
+                _watchedHost = null;
+            }
+
+            var entries = new List<(object Tag, string Label, string Group)>();
+
+            if (RootFrame.Content is Pages.HomePage home && home.DataContext is PhasmaStrap.UI.ViewModels.Settings.HomeViewModel vm)
+            {
+                foreach ((string tag, string label) in GamesLinks)
+                    entries.Add((tag, label, ""));
+
+                _watchedHome = vm;
+                vm.PropertyChanged += WatchedHome_PropertyChanged;
+            }
+            else if (RootFrame.Content is UI.Elements.Controls.ISectionHostPage page)
+            {
+                foreach (UI.Elements.Controls.SectionItem section in page.SectionHost.NavSections)
+                    if (section.PageType is not null)
+                        entries.Add((section.PageType, section.Label, ""));
+
+                _watchedHost = page.SectionHost;
+                _watchedHost.SectionChanged += WatchedHost_SectionChanged;
+            }
+
+            // Every menu entry gives its space back, then the open one reserves room for its links.
+            FrameworkElement? open = null;
+            int openIndex = -1;
+            var all = new List<FrameworkElement>();
+            foreach (object item in RootNavigation.Items)
+                if (item is FrameworkElement fe) all.Add(fe);
+            int mainCount = all.Count;
+            foreach (object item in RootNavigation.Footer)
+                if (item is FrameworkElement fe) all.Add(fe);
+
+            for (int n = 0; n < all.Count; n++)
+            {
+                all[n].Margin = new Thickness(0);
+                if (all[n] is NavigationItem nav && nav.PageType == RootFrame.Content?.GetType())
+                {
+                    open = all[n];
+                    openIndex = n;
+                }
+            }
+
+            SubNavItems.Children.Clear();
+            if (open is null || entries.Count == 0)
+            {
+                SubNav.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            string lastGroup = "";
+            double height = 0;
+            foreach ((object tag, string label, string group) in entries)
+            {
+                if (group.Length > 0 && group != lastGroup)
+                {
+                    SubNavItems.Children.Add(new TextBlock
+                    {
+                        Text = group,
+                        FontSize = 10.5,
+                        FontWeight = FontWeights.SemiBold,
+                        Margin = new Thickness(10, 8, 0, 3),
+                        Foreground = (System.Windows.Media.Brush)FindResource("TextFillColorTertiaryBrush"),
+                        Opacity = 0.8,
+                    });
+                    height += 24;
+                    lastGroup = group;
+                }
+
+                var link = new System.Windows.Controls.RadioButton
+                {
+                    Content = label,
+                    Tag = tag,
+                    GroupName = "SubNav",
+                    Style = (Style)FindResource("SubLink"),
+                };
+                link.Click += SubLink_Click;
+                SubNavItems.Children.Add(link);
+                height += 28;
+            }
+
+            open.Margin = new Thickness(0, 0, 0, height + 4);
+            double top = (openIndex + 1) * 40 + (openIndex >= mainCount ? 2 : 0);
+            SubNav.Margin = new Thickness(18, top, 0, 0);
+            SubNav.Visibility = Visibility.Visible;
+
+            SyncSubNav();
+        }
+
+        private void WatchedHome_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(PhasmaStrap.UI.ViewModels.Settings.HomeViewModel.Tab))
+                SyncSubNav();
+        }
+
+        private void WatchedHost_SectionChanged(object? sender, EventArgs e) => SyncSubNav();
+
+        private void SyncSubNav()
+        {
+            object? current = null;
+
+            if (_watchedHome is not null)
+                current = _watchedHome.Tab;
+            else if (_watchedHost is not null)
+                current = _watchedHost.NavKeyFor(_watchedHost.CurrentSection);
+
+            foreach (UIElement child in SubNavItems.Children)
+            {
+                if (child is System.Windows.Controls.RadioButton rb)
+                    rb.IsChecked = current is not null && (current is string s ? string.Equals(rb.Tag as string, s, StringComparison.OrdinalIgnoreCase) : Equals(rb.Tag, current));
+            }
+        }
+
+        private void SubLink_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not System.Windows.Controls.RadioButton rb)
+                return;
+
+            if (_watchedHome is not null)
+                _watchedHome.ShowTab(rb.Tag as string);
+            else if (_watchedHost is not null && rb.Tag is Type page)
+                _watchedHost.Show(page);
+        }
+
+        public void ApplySectionAccent()
+        {
+            System.Windows.Media.Color? wanted = null;
+
+            if (App.Settings.Prop.ThemeSectionColors)
+            {
+                wanted = RootFrame.Content switch
+                {
+                    Pages.HomePage => ThemeTokens.DefaultAccent,
+                    Pages.PeoplePage => System.Windows.Media.Color.FromRgb(0x5B, 0x8C, 0xFF),
+                    Pages.PerformancePage => System.Windows.Media.Color.FromRgb(0x34, 0xD3, 0x99),
+                    Pages.FastFlagSettingsPage => System.Windows.Media.Color.FromRgb(0xF5, 0xB8, 0x41),
+                    Pages.CapturePage => System.Windows.Media.Color.FromRgb(0xA0, 0x7B, 0xFF),
+                    Pages.SettingsPage => System.Windows.Media.Color.FromRgb(0xC9, 0xCC, 0xD4),
+                    _ => null,
+                };
+            }
+
+            if (Nullable.Equals(ThemeTokens.SectionAccent, wanted))
+                return;
+
+            ThemeTokens.SectionAccent = wanted;
+            Base.WpfUiWindow.ApplyAccentFrom(App.Settings.Prop.CustomColorThemeEnabled ? PhasmaStrap.Utility.AppColorTheme.LoadForApp() : null);
+        }
 
         private void LaunchButton_Click(object sender, RoutedEventArgs e) => ((MainWindowViewModel)DataContext).SaveAndLaunchCommand.Execute(null);
 
@@ -323,8 +499,6 @@ namespace PhasmaStrap.UI.Elements.Settings
 
             PreviewKeyDown += MainWindow_SearchShortcut;
             Deactivated += (_, _) => CloseSearchPopup();
-            LocationChanged += (_, _) => CloseSearchPopup();
-            SizeChanged += (_, _) => CloseSearchPopup();
         }
 
         private void MainWindow_SearchShortcut(object sender, KeyEventArgs e)
@@ -340,8 +514,7 @@ namespace PhasmaStrap.UI.Elements.Settings
 
             if (searchShortcut)
             {
-                SettingsSearchBox.Focus();
-                SettingsSearchBox.SelectAll();
+                OpenSearchPalette(selectAll: true);
                 e.Handled = true;
             }
         }
@@ -504,7 +677,7 @@ namespace PhasmaStrap.UI.Elements.Settings
             if (sender is FrameworkElement { Tag: string tag } && Enum.TryParse(tag, out Search.PaletteFilter filter))
                 SetSearchFilter(filter);
 
-            SettingsSearchBox.Focus();
+            PaletteBox.Focus();
         }
 
         private void SetSearchFilter(Search.PaletteFilter filter)
@@ -588,12 +761,12 @@ namespace PhasmaStrap.UI.Elements.Settings
             IReadOnlyList<string> also = Search.SettingsSearchEngine.AlsoMatching(query);
             SettingsSearchFooter.Text = also.Count > 0 ? $"{counted}  ·  also matching {string.Join(", ", also)}" : counted;
 
-            SettingsSearchPopup.IsOpen = true;
+            SearchOpen = true;
         }
 
         private void ShowRecentSearches()
         {
-            if (!SettingsSearchBox.IsKeyboardFocusWithin)
+            if (!SettingsSearchBox.IsKeyboardFocusWithin && !PaletteBox.IsKeyboardFocusWithin)
             {
                 CloseSearchPopup();
                 return;
@@ -603,7 +776,52 @@ namespace PhasmaStrap.UI.Elements.Settings
             UpdateSearchChips(null);
             SettingsSearchEmpty.Visibility = Visibility.Collapsed;
             SettingsSearchFooter.Text = "Type to search settings, your flags and games you've played";
-            SettingsSearchPopup.IsOpen = true;
+            SearchOpen = true;
+        }
+
+        private bool SearchOpen
+        {
+            get => SearchOverlay.Visibility == Visibility.Visible;
+            set
+            {
+                SearchOverlay.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
+
+                if (value)
+                    Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input, new Action(FocusPaletteBox));
+            }
+        }
+
+        private void FocusPaletteBox()
+        {
+            if (!SearchOpen || PaletteBox.IsKeyboardFocusWithin)
+                return;
+
+            PaletteBox.Focus();
+            Keyboard.Focus(PaletteBox);
+            PaletteBox.CaretIndex = PaletteBox.Text.Length;
+        }
+
+        private void OpenSearchPalette(bool selectAll)
+        {
+            if (!SearchOpen)
+            {
+                if ((SettingsSearchBox.Text ?? "").Trim().Length > 0)
+                    RunSettingsSearch();
+                else
+                    ShowRecentSearches();
+            }
+
+            SearchOpen = true;
+            FocusPaletteBox();
+
+            if (selectAll)
+                PaletteBox.SelectAll();
+        }
+
+        private void SearchScrim_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            CloseSearchPopup();
+            e.Handled = true;
         }
 
         private void CloseSearchPopup()
@@ -611,23 +829,18 @@ namespace PhasmaStrap.UI.Elements.Settings
             if (_suppressSearchClose)
                 return;
 
-            SettingsSearchPopup.IsOpen = false;
+            SearchOpen = false;
         }
 
         private void SettingsSearchBox_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
         {
-            if (SettingsSearchPopup.IsOpen)
-                return;
-
-            if ((SettingsSearchBox.Text ?? "").Trim().Length > 0)
-                RunSettingsSearch();
-            else
-                ShowRecentSearches();
+            if (!SearchOpen)
+                OpenSearchPalette(selectAll: false);
         }
 
         private void SettingsSearchBox_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
         {
-            if (e.NewFocus is DependencyObject target && IsInsidePopup(target))
+            if (e.NewFocus is DependencyObject target && (IsInsidePopup(target) || ReferenceEquals(target, SettingsSearchBox)))
                 return;
 
             CloseSearchPopup();
@@ -638,7 +851,7 @@ namespace PhasmaStrap.UI.Elements.Settings
             DependencyObject? current = element;
             while (current is not null)
             {
-                if (ReferenceEquals(current, SettingsSearchPopup.Child))
+                if (ReferenceEquals(current, SearchPanel))
                     return true;
 
                 current = current is System.Windows.Media.Visual ? System.Windows.Media.VisualTreeHelper.GetParent(current) : LogicalTreeHelper.GetParent(current);
@@ -653,8 +866,8 @@ namespace PhasmaStrap.UI.Elements.Settings
             if (count == 0)
                 return;
 
-            if (!SettingsSearchPopup.IsOpen)
-                SettingsSearchPopup.IsOpen = true;
+            if (!SearchOpen)
+                SearchOpen = true;
 
             SettingsSearchResults.SelectedIndex = Math.Clamp(SettingsSearchResults.SelectedIndex + by, 0, count - 1);
             SettingsSearchResults.ScrollIntoView(SettingsSearchResults.SelectedItem);
@@ -684,10 +897,10 @@ namespace PhasmaStrap.UI.Elements.Settings
                     e.Handled = true;
                     break;
 
-                case Key.Tab when SettingsSearchPopup.IsOpen && (SettingsSearchBox.Text ?? "").Trim().Length > 0:
+                case Key.Tab when SearchOpen && (SettingsSearchBox.Text ?? "").Trim().Length > 0:
                     CycleSearchFilter((Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift);
-                    if (!SettingsSearchBox.IsKeyboardFocusWithin)
-                        SettingsSearchBox.Focus();
+                    if (!PaletteBox.IsKeyboardFocusWithin)
+                        PaletteBox.Focus();
                     e.Handled = true;
                     break;
 
@@ -707,7 +920,7 @@ namespace PhasmaStrap.UI.Elements.Settings
                     break;
 
                 case Key.Escape:
-                    if (SettingsSearchPopup.IsOpen)
+                    if (SearchOpen)
                         CloseSearchPopup();
                     else
                         SettingsSearchBox.Text = "";
@@ -762,7 +975,7 @@ namespace PhasmaStrap.UI.Elements.Settings
             _suppressSearchClose = true;
             try
             {
-                SettingsSearchPopup.IsOpen = false;
+                SearchOpen = false;
                 SettingsSearchBox.Text = "";
                 SettingsSearchResults.ItemsSource = null;
                 _searchDebounce.Stop();
@@ -869,8 +1082,7 @@ namespace PhasmaStrap.UI.Elements.Settings
         public void SearchFor(string text)
         {
             SettingsSearchBox.Text = text ?? "";
-            SettingsSearchBox.Focus();
-            SettingsSearchBox.CaretIndex = SettingsSearchBox.Text.Length;
+            OpenSearchPalette(selectAll: false);
         }
 
         #endregion Settings search
@@ -1148,6 +1360,12 @@ namespace PhasmaStrap.UI.Elements.Settings
         private void WpfUiWindow_Closed(object sender, EventArgs e)
         {
             _closed = true;
+
+            if (ThemeTokens.SectionAccent is not null)
+            {
+                ThemeTokens.SectionAccent = null;
+                Base.WpfUiWindow.ApplyAccentFrom(App.Settings.Prop.CustomColorThemeEnabled ? PhasmaStrap.Utility.AppColorTheme.LoadForApp() : null);
+            }
 
             _ = PhasmaStrap.Utility.PhasmaAccount.MaybeAutoBackUpAsync();
 

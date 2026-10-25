@@ -31,7 +31,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Padding="8" Title="Stream-safe areas" Icon="pack://application:,,,/PhasmaStrap.ico" />
+        <ui:TitleBar Grid.Row="0" Padding="12,0,0,0" MinHeight="40" Title="Stream-safe areas" Icon="pack://application:,,,/PhasmaStrap.ico" />
 
         <Grid Grid.Row="1" Margin="12,4,12,0">
             <Grid.ColumnDefinitions>
@@ -39,8 +39,8 @@
                 <ColumnDefinition Width="320" />
             </Grid.ColumnDefinitions>
 
-            <Border x:Name="StageHost" Grid.Column="0" Margin="0,0,12,0" CornerRadius="8" ClipToBounds="True" Background="#FF15171B"
-                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" SizeChanged="StageHost_SizeChanged">
+            <Border x:Name="StageHost" Grid.Column="0" Margin="0,0,12,0" CornerRadius="{DynamicResource PhasmaCornerRadius}" ClipToBounds="True" Background="#FF15171B"
+                    BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1" SizeChanged="StageHost_SizeChanged">
                 <Canvas x:Name="Stage" HorizontalAlignment="Center" VerticalAlignment="Center" Background="#FF24262C" ClipToBounds="True" Cursor="Cross"
                         MouseLeftButtonDown="Stage_MouseLeftButtonDown" MouseMove="Stage_MouseMove" MouseLeftButtonUp="Stage_MouseLeftButtonUp" LostMouseCapture="Stage_LostMouseCapture">
                     <Image x:Name="Picture" Stretch="Fill" IsHitTestVisible="False" />
@@ -105,8 +105,8 @@
                     <TextBlock Style="{StaticResource Section}" Text="Picture" />
                     <TextBlock x:Name="PictureStatus" Style="{StaticResource Hint}" Text="Looking for Roblox..." />
                     <WrapPanel Margin="0,10,0,0">
-                        <ui:Button Margin="0,0,8,8" Content="Grab from Roblox" Icon="Camera24" Appearance="Secondary" Click="Grab_Click" />
-                        <ui:Button Margin="0,0,8,8" Content="Use a screenshot..." Icon="Image24" Appearance="Secondary" Click="Browse_Click" />
+                        <Button Margin="0,0,8,8" Content="Grab from Roblox" Click="Grab_Click" Padding="14,7" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" />
+                        <Button Margin="0,0,8,8" Content="Use a screenshot..." Click="Browse_Click" Padding="14,7" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" />
                     </WrapPanel>
                     <TextBlock Margin="0,4,0,12" Style="{StaticResource Hint}" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                                Text="The picture is only a guide. Areas are kept as a share of the Roblox window, so they stay in place at any window size." />
@@ -121,8 +121,8 @@
             </Grid.ColumnDefinitions>
             <TextBlock x:Name="StatusText" Grid.Column="0" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <ui:Button Content="Apply" Icon="Checkmark24" Appearance="Primary" Click="Apply_Click" />
-                <ui:Button Margin="8,0,0,0" Content="Close" Click="Close_Click" />
+                <Button Content="Apply" Click="Apply_Click" Padding="16,7" Focusable="False" Style="{DynamicResource PhasmaAccentButton}" />
+                <Button Margin="8,0,0,0" Content="Close" Click="Close_Click" Padding="14,7" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" />
             </StackPanel>
         </Grid>
     </Grid>

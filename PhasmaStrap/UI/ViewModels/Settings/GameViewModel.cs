@@ -256,6 +256,10 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public const string TabAbout = "about";
         public const string TabPrivate = "private";
         public const string TabHistory = "history";
+        public const string TabSettings = "settings";
+        public const string TabPasses = "passes";
+        public const string TabBadges = "badges";
+        public const string TabMedia = "media";
 
         private readonly CancellationTokenSource _cts = new();
         private readonly long _requestedPlaceId;
@@ -335,6 +339,10 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 OnPropertyChanged(nameof(OverviewTabVisibility));
                 OnPropertyChanged(nameof(PlacesTabVisibility));
                 OnPropertyChanged(nameof(HistoryTabVisibility));
+                OnPropertyChanged(nameof(PassesTabVisibility));
+                OnPropertyChanged(nameof(SettingsTabVisibility));
+                OnPropertyChanged(nameof(BadgesTabVisibility));
+                OnPropertyChanged(nameof(MediaTabVisibility));
             }
         }
 
@@ -344,6 +352,10 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool IsServersTab { get => _tab == TabServers; set { if (value) ShowTab(TabServers); } }
         public bool IsAboutTab { get => _tab == TabAbout; set { if (value) ShowTab(TabAbout); } }
         public bool IsPrivateTab { get => _tab == TabPrivate; set { if (value) ShowTab(TabPrivate); } }
+        public bool IsSettingsTab { get => _tab == TabSettings; set { if (value) ShowTab(TabSettings); } }
+        public bool IsPassesTab { get => _tab == TabPasses; set { if (value) ShowTab(TabPasses); } }
+        public bool IsBadgesTab { get => _tab == TabBadges; set { if (value) ShowTab(TabBadges); } }
+        public bool IsMediaTab { get => _tab == TabMedia; set { if (value) ShowTab(TabMedia); } }
 
         private void ShowTab(string tab)
         {
@@ -356,6 +368,19 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             OnPropertyChanged(nameof(IsOverviewTab));
             OnPropertyChanged(nameof(IsPlacesTab));
             OnPropertyChanged(nameof(IsHistoryTab));
+            OnPropertyChanged(nameof(IsSettingsTab));
+            OnPropertyChanged(nameof(IsPassesTab));
+            OnPropertyChanged(nameof(IsBadgesTab));
+            OnPropertyChanged(nameof(IsMediaTab));
+
+            if (tab == TabPasses && !_passesLoaded)
+                _ = LoadPassesAsync();
+
+            if (tab == TabBadges && !_badgesLoaded)
+                _ = LoadBadgesAsync();
+
+            if (tab == TabMedia && !_mediaLoaded)
+                _ = LoadMediaAsync();
 
             if (tab == TabPrivate && !_privateLoaded)
                 _ = LoadPrivateServersAsync();
@@ -370,6 +395,10 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public Visibility OverviewTabVisibility => _tab == TabOverview ? Visibility.Visible : Visibility.Collapsed;
         public Visibility PlacesTabVisibility => _tab == TabPlaces ? Visibility.Visible : Visibility.Collapsed;
         public Visibility HistoryTabVisibility => _tab == TabHistory ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility SettingsTabVisibility => _tab == TabSettings ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility PassesTabVisibility => _tab == TabPasses ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility BadgesTabVisibility => _tab == TabBadges ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility MediaTabVisibility => _tab == TabMedia ? Visibility.Visible : Visibility.Collapsed;
 
         public ICommand ShowTabCommand => new RelayCommand<string>(tab =>
         {
@@ -412,6 +441,13 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                         parts.Add($"updated {updated.ToLocalTime():d MMM yyyy}");
                     StatsText = string.Join("  ·  ", parts);
 
+                    StatPlaying = GameCatalog.Compact(details.Playing);
+                    StatVisits = GameCatalog.Compact(details.Visits);
+                    StatFavourites = GameCatalog.Compact(details.Favorites);
+                    StatMaxPlayers = details.MaxPlayers > 0 ? details.MaxPlayers.ToString() : "-";
+                    StatUpdated = details.Updated is DateTime when ? Ago(when) : "-";
+                    Genre = details.Genre.Length > 0 && !details.Genre.Equals("All", StringComparison.OrdinalIgnoreCase) ? details.Genre : "";
+
                     AboutText = string.IsNullOrWhiteSpace(details.Description) ? "This game has no description." : details.Description.Trim();
                 }
 
@@ -441,6 +477,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 OnPropertyChanged(nameof(NotFavouriteVisibility));
                 _ = LoadPlaceStatsAsync();
                 _ = LoadFriendsAsync();
+                _ = LoadFactsAsync();
 
                 // Loaded straight away so the tab count and the places rail can show them.
                 if (!_privateLoaded)
@@ -454,6 +491,214 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 App.Logger.WriteLine(LOG_IDENT, $"Loading the game failed: {ex.Message}");
                 Status = $"Couldn't load everything for this game: {ex.Message}";
             }
+        }
+
+        #endregion
+
+
+        #region Facts, passes, badges and media
+
+        private string _statPlaying = "-";
+        public string StatPlaying { get => _statPlaying; private set { _statPlaying = value; OnPropertyChanged(nameof(StatPlaying)); } }
+
+        private string _statVisits = "-";
+        public string StatVisits { get => _statVisits; private set { _statVisits = value; OnPropertyChanged(nameof(StatVisits)); } }
+
+        private string _statFavourites = "-";
+        public string StatFavourites { get => _statFavourites; private set { _statFavourites = value; OnPropertyChanged(nameof(StatFavourites)); } }
+
+        private string _statLikes = "-";
+        public string StatLikes { get => _statLikes; private set { _statLikes = value; OnPropertyChanged(nameof(StatLikes)); } }
+
+        private string _statLikesDetail = "";
+        public string StatLikesDetail { get => _statLikesDetail; private set { _statLikesDetail = value; OnPropertyChanged(nameof(StatLikesDetail)); } }
+
+        private string _statMaxPlayers = "-";
+        public string StatMaxPlayers { get => _statMaxPlayers; private set { _statMaxPlayers = value; OnPropertyChanged(nameof(StatMaxPlayers)); OnPropertyChanged(nameof(ServerSizeText)); } }
+
+        private string _statCreated = "-";
+        public string StatCreated { get => _statCreated; private set { _statCreated = value; OnPropertyChanged(nameof(StatCreated)); } }
+
+        private string _statUpdated = "-";
+        public string StatUpdated { get => _statUpdated; private set { _statUpdated = value; OnPropertyChanged(nameof(StatUpdated)); } }
+
+        private string _genre = "";
+        public string Genre { get => _genre; private set { _genre = value; OnPropertyChanged(nameof(Genre)); OnPropertyChanged(nameof(GenreText)); OnPropertyChanged(nameof(GenreTagVisibility)); } }
+
+        public string GenreText => Genre.Length > 0 ? Genre : "Not set";
+        public Visibility GenreTagVisibility => Genre.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        private string _creatorLine = "";
+        public string CreatorLine { get => _creatorLine; private set { _creatorLine = value; OnPropertyChanged(nameof(CreatorLine)); } }
+
+        private string _createdText = "-";
+        public string CreatedText { get => _createdText; private set { _createdText = value; OnPropertyChanged(nameof(CreatedText)); } }
+
+        private string _avatarTypeText = "-";
+        public string AvatarTypeText { get => _avatarTypeText; private set { _avatarTypeText = value; OnPropertyChanged(nameof(AvatarTypeText)); } }
+
+        private string _copyingText = "-";
+        public string CopyingText { get => _copyingText; private set { _copyingText = value; OnPropertyChanged(nameof(CopyingText)); } }
+
+        private string _accessText = "-";
+        public string AccessText { get => _accessText; private set { _accessText = value; OnPropertyChanged(nameof(AccessText)); } }
+
+        private string _privateServersText = "-";
+        public string PrivateServersText { get => _privateServersText; private set { _privateServersText = value; OnPropertyChanged(nameof(PrivateServersText)); } }
+
+        public Visibility VerifiedTagVisibility { get; private set; } = Visibility.Collapsed;
+
+        private string _ageText = "-";
+        public string AgeText { get => _ageText; private set { _ageText = value; OnPropertyChanged(nameof(AgeText)); OnPropertyChanged(nameof(AgeTagVisibility)); } }
+        public Visibility AgeTagVisibility => _ageText != "-" ? Visibility.Visible : Visibility.Collapsed;
+
+        private string _descriptorsText = "None listed";
+        public string DescriptorsText { get => _descriptorsText; private set { _descriptorsText = value; OnPropertyChanged(nameof(DescriptorsText)); } }
+
+        public string ServerSizeText => StatMaxPlayers == "-" ? "-" : $"{StatMaxPlayers} players";
+
+        public string UniverseIdText => UniverseId > 0 ? UniverseId.ToString() : "-";
+
+        public string PlaceCountText => Places.Count > 0 ? Places.Count.ToString() : "-";
+
+        public string PassCountText => _passesLoaded && Passes.Count > 0 ? Passes.Count.ToString() : "";
+        public string BadgeCountText => _badgesLoaded && Badges.Count > 0 ? Badges.Count.ToString() : "";
+
+        public ObservableCollection<GamePassInfo> Passes { get; } = new();
+        public ObservableCollection<BadgeInfo> Badges { get; } = new();
+        public ObservableCollection<MediaInfo> Media { get; } = new();
+
+        private bool _passesLoaded;
+        private bool _badgesLoaded;
+        private bool _mediaLoaded;
+
+        private string _passesNote = "Loading...";
+        public string PassesNote { get => _passesNote; private set { _passesNote = value; OnPropertyChanged(nameof(PassesNote)); OnPropertyChanged(nameof(PassesNoteVisibility)); } }
+        public Visibility PassesNoteVisibility => _passesNote.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        private string _badgesNote = "Loading...";
+        public string BadgesNote { get => _badgesNote; private set { _badgesNote = value; OnPropertyChanged(nameof(BadgesNote)); OnPropertyChanged(nameof(BadgesNoteVisibility)); } }
+        public Visibility BadgesNoteVisibility => _badgesNote.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        private string _mediaNote = "Loading...";
+        public string MediaNote { get => _mediaNote; private set { _mediaNote = value; OnPropertyChanged(nameof(MediaNote)); OnPropertyChanged(nameof(MediaNoteVisibility)); } }
+        public Visibility MediaNoteVisibility => _mediaNote.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        private static string Ago(DateTime utc)
+        {
+            TimeSpan span = DateTime.UtcNow - utc.ToUniversalTime();
+            if (span.TotalMinutes < 1) return "just now";
+            if (span.TotalHours < 1) return $"{(int)span.TotalMinutes} min ago";
+            if (span.TotalDays < 1) return $"{(int)span.TotalHours} h ago";
+            if (span.TotalDays < 30) return $"{(int)span.TotalDays} d ago";
+            return utc.ToLocalTime().ToString("MMM yyyy", System.Globalization.CultureInfo.CurrentCulture);
+        }
+
+        private async Task LoadFactsAsync()
+        {
+            if (UniverseId <= 0)
+                return;
+
+            try
+            {
+                GameFacts? facts = await GameExtras.GetFactsAsync(UniverseId, _cts.Token);
+                if (facts is null)
+                    return;
+
+                CreatedText = facts.Created is DateTime created ? created.ToLocalTime().ToString("d MMM yyyy") : "-";
+                StatCreated = facts.Created is DateTime made ? made.ToLocalTime().ToString("MMM yyyy") : "-";
+                AvatarTypeText = facts.AvatarType switch
+                {
+                    "MorphToR6" => "R6 only",
+                    "MorphToR15" => "R15 only",
+                    "PlayerChoice" => "Player's choice",
+                    { Length: > 0 } other => other,
+                    _ => "-",
+                };
+                CopyingText = facts.CopyingAllowed ? "Allowed" : "Locked";
+                AccessText = facts.Price > 0 ? $"{facts.Price:N0} R$" : "Free";
+                PrivateServersText = facts.PrivateServersAllowed ? (facts.PrivateServerPrice > 0 ? $"{facts.PrivateServerPrice:N0} R$ / month" : "Available") : "Off";
+                CreatorLine = facts.CreatorType.Length > 0 ? $"{Creator} ({facts.CreatorType})" : Creator;
+                VerifiedTagVisibility = facts.CreatorVerified ? Visibility.Visible : Visibility.Collapsed;
+                OnPropertyChanged(nameof(VerifiedTagVisibility));
+
+                long votes = facts.Likes + facts.Dislikes;
+                if (votes > 0)
+                {
+                    StatLikes = $"{(int)Math.Round(facts.Likes * 100.0 / votes)}%";
+                    StatLikesDetail = $"{GameCatalog.Compact(facts.Likes)} · {GameCatalog.Compact(facts.Dislikes)}";
+                }
+
+                OnPropertyChanged(nameof(UniverseIdText));
+                OnPropertyChanged(nameof(PlaceCountText));
+
+                AgeInfo? age = await GameExtras.GetAgeAsync(UniverseId, _cts.Token);
+                if (age is not null)
+                {
+                    AgeText = age.Rating;
+                    DescriptorsText = age.Descriptors.Length > 0 ? age.Descriptors : "None listed";
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Facts failed: {ex.Message}");
+            }
+        }
+
+        private async Task LoadPassesAsync()
+        {
+            _passesLoaded = true;
+            if (UniverseId <= 0)
+            {
+                PassesNote = "Passes aren't available for this game.";
+                return;
+            }
+
+            List<GamePassInfo> found = await GameExtras.GetPassesAsync(UniverseId, _cts.Token);
+            Passes.Clear();
+            foreach (GamePassInfo pass in found)
+                Passes.Add(pass);
+
+            PassesNote = Passes.Count == 0 ? "This game has no passes." : "";
+            OnPropertyChanged(nameof(PassCountText));
+        }
+
+        private async Task LoadBadgesAsync()
+        {
+            _badgesLoaded = true;
+            if (UniverseId <= 0)
+            {
+                BadgesNote = "Badges aren't available for this game.";
+                return;
+            }
+
+            List<BadgeInfo> found = await GameExtras.GetBadgesAsync(UniverseId, _cts.Token);
+            Badges.Clear();
+            foreach (BadgeInfo badge in found)
+                Badges.Add(badge);
+
+            BadgesNote = Badges.Count == 0 ? "This game has no badges." : "";
+            OnPropertyChanged(nameof(BadgeCountText));
+        }
+
+        private async Task LoadMediaAsync()
+        {
+            _mediaLoaded = true;
+            if (UniverseId <= 0)
+            {
+                MediaNote = "Media isn't available for this game.";
+                return;
+            }
+
+            List<MediaInfo> found = await GameExtras.GetMediaAsync(UniverseId, _cts.Token);
+            Media.Clear();
+            foreach (MediaInfo item in found)
+                Media.Add(item);
+
+            MediaNote = Media.Count == 0 ? "This game has no screenshots or videos." : "";
         }
 
         #endregion

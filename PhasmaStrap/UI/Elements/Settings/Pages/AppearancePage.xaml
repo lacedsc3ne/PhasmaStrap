@@ -16,13 +16,7 @@
     </ui:UiPage.Resources>
 
     <StackPanel Margin="0,0,14,14">
-        <StackPanel Orientation="Horizontal">
-            <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="{x:Static resources:Strings.Menu_Appearance_Title}" />
-            <Border Margin="10,2,0,0" Style="{DynamicResource PhasmaTagNeutral}">
-                <TextBlock Text="Look and feel" />
-            </Border>
-        </StackPanel>
-        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="Theme, effects and background for PhasmaStrap." />
+        <controls:PageHeader Title="{x:Static resources:Strings.Menu_Appearance_Title}" Subtitle="Theme, effects and background for PhasmaStrap." />
 
         <controls:CardColumns>
             <controls:SettingsCard Header="Theme and language">
@@ -398,6 +392,14 @@
                         <ui:ToggleSwitch HorizontalAlignment="Right" VerticalAlignment="Center" IsChecked="{Binding MistEnabled, Mode=TwoWay}" />
                     </Grid>
 
+                    <Grid Margin="0,12,0,0">
+                        <StackPanel>
+                            <TextBlock Text="Section colours" FontWeight="SemiBold" FontSize="13" />
+                            <TextBlock Style="{DynamicResource PhasmaSubtle}" FontSize="11.5" Text="Each section gets its own colour. Turn this off to use the one accent you picked everywhere." />
+                        </StackPanel>
+                        <ui:ToggleSwitch HorizontalAlignment="Right" VerticalAlignment="Center" IsChecked="{Binding SectionColors, Mode=TwoWay}" />
+                    </Grid>
+
                     <Button Margin="-8,12,0,0" HorizontalAlignment="Left" Style="{DynamicResource PhasmaGhostButton}" Command="{Binding EditColorThemeCommand}">
                         <TextBlock Text="Edit every colour in the colour theme editor" FontSize="12" Foreground="{DynamicResource PhasmaAccentBrush}" />
                     </Button>
@@ -450,7 +452,7 @@
                                             </Border>
                                             <StackPanel Margin="6,6,0,0" Orientation="Horizontal">
                                                 <ui:SymbolIcon Symbol="People24" FontSize="10" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                                <TextBlock Margin="5,0,0,0" FontSize="9.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="People" />
+                                                <TextBlock Margin="5,0,0,0" FontSize="9.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Social" />
                                             </StackPanel>
                                             <StackPanel Margin="6,6,0,0" Orientation="Horizontal">
                                                 <ui:SymbolIcon Symbol="Gauge24" FontSize="10" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
@@ -462,7 +464,7 @@
                                             </StackPanel>
                                             <StackPanel Margin="6,6,0,0" Orientation="Horizontal">
                                                 <ui:SymbolIcon Symbol="Color24" FontSize="10" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                                <TextBlock Margin="5,0,0,0" FontSize="9.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Look and feel" />
+                                                <TextBlock Margin="5,0,0,0" FontSize="9.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Capture" />
                                             </StackPanel>
                                         </StackPanel>
 

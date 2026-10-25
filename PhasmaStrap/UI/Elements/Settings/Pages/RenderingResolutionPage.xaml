@@ -27,8 +27,7 @@
     </ui:UiPage.Resources>
 
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="{x:Static resources:Strings.Menu_Performance_InGameResolutionMode_Title}" />
-        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="Run the game at a set resolution and refresh rate, then put the screen back when you leave." />
+        <controls:PageHeader Title="{x:Static resources:Strings.Menu_Performance_InGameResolutionMode_Title}" Subtitle="Run the game at a set resolution and refresh rate, then put the screen back when you leave." />
 
         <controls:SettingsCard Header="Forced resolution">
             <controls:OptionControl Header="Force a resolution while in game">

@@ -31,7 +31,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Padding="8" Title="Make a GIF" Icon="pack://application:,,,/PhasmaStrap.ico" />
+        <ui:TitleBar Grid.Row="0" Padding="12,0,0,0" MinHeight="40" Title="Make a GIF" Icon="pack://application:,,,/PhasmaStrap.ico" />
 
         <Grid Grid.Row="1" Margin="12,4,12,0">
             <Grid.ColumnDefinitions>
@@ -44,7 +44,7 @@
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <Border Grid.Row="0" CornerRadius="8" ClipToBounds="True" Background="#FF15171B" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1">
+                <Border Grid.Row="0" CornerRadius="{DynamicResource PhasmaCornerRadius}" ClipToBounds="True" Background="#FF15171B" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1">
                     <Image x:Name="PreviewImage" Stretch="Uniform" Margin="8" RenderOptions.BitmapScalingMode="HighQuality" />
                 </Border>
                 <TextBlock x:Name="InfoText" Grid.Row="1" Margin="2,8,0,0" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
@@ -70,7 +70,7 @@
                     </ListBox>
 
                     <WrapPanel Margin="0,8,0,0">
-                        <ui:Button Margin="0,0,6,6" Content="Add screenshots" Icon="Add24" Click="Add_Click" />
+                        <Button Margin="0,0,6,6" Content="Add screenshots" Click="Add_Click" Padding="14,7" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" />
                         <ui:Button x:Name="UpButton" Margin="0,0,6,6" Padding="8,6" Icon="ArrowUp24" Appearance="Secondary" ToolTip="Earlier" Click="Up_Click" />
                         <ui:Button x:Name="DownButton" Margin="0,0,6,6" Padding="8,6" Icon="ArrowDown24" Appearance="Secondary" ToolTip="Later" Click="Down_Click" />
                         <ui:Button x:Name="RemoveButton" Margin="0,0,6,6" Padding="8,6" Icon="Delete24" Appearance="Secondary" ToolTip="Remove from the GIF" Click="Remove_Click" />
@@ -137,9 +137,9 @@
                 <TextBlock x:Name="StatusText" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <ui:Button x:Name="RevealButton" Margin="0,0,8,0" Content="Show in folder" Icon="FolderOpen24" Visibility="Collapsed" Click="Reveal_Click" />
-                <ui:Button x:Name="SaveButton" Margin="0,0,8,0" Content="Save GIF" Icon="Gif24" Appearance="Primary" Click="Save_Click" />
-                <ui:Button Content="Close" Click="Close_Click" />
+                <Button x:Name="RevealButton" Margin="0,0,8,0" Content="Show in folder" Visibility="Collapsed" Click="Reveal_Click" Padding="14,7" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" />
+                <Button x:Name="SaveButton" Margin="0,0,8,0" Content="Save GIF" Click="Save_Click" Padding="16,7" Focusable="False" Style="{DynamicResource PhasmaAccentButton}" />
+                <Button Content="Close" Click="Close_Click" Padding="14,7" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" />
             </StackPanel>
         </Grid>
     </Grid>

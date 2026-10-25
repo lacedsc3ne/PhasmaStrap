@@ -1,4 +1,4 @@
-<ResourceDictionary
+﻿<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:sys="clr-namespace:System;assembly=mscorlib"
@@ -11,30 +11,40 @@
         user's theme settings at start up and whenever the theme studio changes something.
     -->
 
-    <FontFamily x:Key="PhasmaHeadingFont">pack://application:,,,/Resources/Fonts/#Sora</FontFamily>
+    <FontFamily x:Key="PhasmaHeadingFont">pack://application:,,,/Resources/Fonts/#IBM Plex Sans</FontFamily>
 
-    <SolidColorBrush x:Key="PhasmaPanelBrush" Color="#9916161B" />
-    <SolidColorBrush x:Key="PhasmaPanelRaisedBrush" Color="#CC1D1D23" />
-    <SolidColorBrush x:Key="PhasmaPopupBrush" Color="#FF1D1D23" />
+    <SolidColorBrush x:Key="PhasmaPanelBrush" Color="#FF131315" />
+    <SolidColorBrush x:Key="PhasmaPanelRaisedBrush" Color="#FF1A1A1D" />
+    <SolidColorBrush x:Key="PhasmaPopupBrush" Color="#FF1A1A1D" />
     <SolidColorBrush x:Key="PhasmaStrokeBrush" Color="#13FFFFFF" />
     <SolidColorBrush x:Key="PhasmaStrokeStrongBrush" Color="#21FFFFFF" />
     <SolidColorBrush x:Key="PhasmaHoverBrush" Color="#0FFFFFFF" />
     <SolidColorBrush x:Key="PhasmaSelectedBrush" Color="#17FFFFFF" />
     <SolidColorBrush x:Key="PhasmaScrimBrush" Color="#F00F0F14" />
-    <Color x:Key="PhasmaAccentColor">#FFF4554B</Color>
-    <SolidColorBrush x:Key="PhasmaAccentBrush" Color="#FFF4554B" />
-    <SolidColorBrush x:Key="PhasmaAccentSoftBrush" Color="#29F4554B" />
-    <SolidColorBrush x:Key="PhasmaAccentStrokeBrush" Color="#8CF4554B" />
-    <SolidColorBrush x:Key="PhasmaAccentTextBrush" Color="#FF160706" />
+    <Color x:Key="PhasmaAccentColor">#FFE5322D</Color>
+    <SolidColorBrush x:Key="PhasmaAccentBrush" Color="#FFE5322D" />
+    <SolidColorBrush x:Key="PhasmaBrandBrush" Color="#FFE5322D" />
+    <SolidColorBrush x:Key="PhasmaToggleOffBrush" Color="#33FFFFFF" />
+    <SolidColorBrush x:Key="PhasmaToggleOffHoverBrush" Color="#47FFFFFF" />
+    <SolidColorBrush x:Key="SectionGamesBrush" Color="#FF6A64" />
+    <SolidColorBrush x:Key="SectionSocialBrush" Color="#8FB0FF" />
+    <SolidColorBrush x:Key="SectionPerformanceBrush" Color="#5BE3AC" />
+    <SolidColorBrush x:Key="SectionFlagsBrush" Color="#FFD070" />
+    <SolidColorBrush x:Key="SectionCaptureBrush" Color="#C0A2FF" />
+    <SolidColorBrush x:Key="SectionSettingsBrush" Color="#E1E3E8" />
+    <Color x:Key="PhasmaBrandTextColor">#FFFFFFFF</Color>
+    <SolidColorBrush x:Key="PhasmaAccentSoftBrush" Color="#29E5322D" />
+    <SolidColorBrush x:Key="PhasmaAccentStrokeBrush" Color="#8CE5322D" />
+    <SolidColorBrush x:Key="PhasmaAccentTextBrush" Color="#FFFFFFFF" />
     <SolidColorBrush x:Key="PhasmaGoodBrush" Color="#FF3DDC97" />
     <SolidColorBrush x:Key="PhasmaWarnBrush" Color="#FFF5B841" />
-    <SolidColorBrush x:Key="PhasmaBadBrush" Color="#FFF4554B" />
+    <SolidColorBrush x:Key="PhasmaBadBrush" Color="#FFE5322D" />
 
-    <CornerRadius x:Key="PhasmaCornerRadius">12</CornerRadius>
-    <CornerRadius x:Key="PhasmaCornerRadiusSmall">8</CornerRadius>
-    <CornerRadius x:Key="PhasmaCornerRadiusLarge">16</CornerRadius>
-    <CornerRadius x:Key="PhasmaCornerRadiusTopLarge">16,16,0,0</CornerRadius>
-    <sys:Double x:Key="PhasmaRowHeight">38</sys:Double>
+    <CornerRadius x:Key="PhasmaCornerRadius">10</CornerRadius>
+    <CornerRadius x:Key="PhasmaCornerRadiusSmall">6</CornerRadius>
+    <CornerRadius x:Key="PhasmaCornerRadiusLarge">10</CornerRadius>
+    <CornerRadius x:Key="PhasmaCornerRadiusTopLarge">10,10,0,0</CornerRadius>
+    <sys:Double x:Key="PhasmaRowHeight">52</sys:Double>
     <Thickness x:Key="PhasmaRowPadding">10,8,10,8</Thickness>
     <Thickness x:Key="PhasmaOptionMargin">0,8,0,0</Thickness>
     <Thickness x:Key="PhasmaOptionPadding">14,16,14,16</Thickness>
@@ -53,7 +63,7 @@
     </Style>
 
     <Style x:Key="PhasmaCard" TargetType="{x:Type Border}">
-        <Setter Property="Background" Value="{DynamicResource PhasmaPanelRaisedBrush}" />
+        <Setter Property="Background" Value="{DynamicResource PhasmaPanelBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource PhasmaStrokeBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource PhasmaCornerRadius}" />
@@ -115,12 +125,12 @@
 
     <Style x:Key="PhasmaTag" TargetType="{x:Type Border}">
         <Setter Property="Background" Value="{DynamicResource PhasmaAccentSoftBrush}" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="3" />
         <Setter Property="Padding" Value="7,2" />
         <Setter Property="HorizontalAlignment" Value="Left" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="TextElement.FontSize" Value="11" />
-        <Setter Property="TextElement.FontWeight" Value="SemiBold" />
+        <Setter Property="TextElement.FontWeight" Value="Medium" />
         <Setter Property="TextElement.Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
     </Style>
 
@@ -180,17 +190,47 @@
     </Style>
 
     <Style x:Key="PhasmaSoftButton" TargetType="{x:Type ButtonBase}" BasedOn="{StaticResource PhasmaGhostButton}">
-        <Setter Property="Background" Value="{DynamicResource PhasmaHoverBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource PhasmaStrokeBrush}" />
-        <Setter Property="Padding" Value="12,7" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ButtonBase}">
+                    <Border
+                        x:Name="Fill"
+                        Padding="{TemplateBinding Padding}"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}"
+                        SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" RecognizesAccessKey="True" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaSelectedBrush}" />
+                            <Setter TargetName="Fill" Property="BorderBrush" Value="{DynamicResource PhasmaStrokeStrongBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaSelectedBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Background" Value="{DynamicResource PhasmaPanelRaisedBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource PhasmaStrokeStrongBrush}" />
+        <Setter Property="Padding" Value="14,7" />
+        <Setter Property="FontSize" Value="13.5" />
+        <Setter Property="FontWeight" Value="Medium" />
     </Style>
 
     <Style x:Key="PhasmaAccentButton" TargetType="{x:Type ButtonBase}" BasedOn="{StaticResource PhasmaGhostButton}">
         <Setter Property="Background" Value="{DynamicResource PhasmaAccentBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource PhasmaAccentTextBrush}" />
         <Setter Property="Padding" Value="14,7" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="13.5" />
+        <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ButtonBase}">
@@ -268,10 +308,10 @@
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="{DynamicResource PhasmaStrokeStrongBrush}" />
-        <Setter Property="Padding" Value="12,5" />
+        <Setter Property="Padding" Value="11,4" />
         <Setter Property="Margin" Value="0,0,6,0" />
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="FocusVisualStyle" Value="{StaticResource PhasmaFocusVisual}" />
         <Setter Property="Template">
             <Setter.Value>
@@ -282,7 +322,7 @@
                         Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="1"
-                        CornerRadius="14"
+                        CornerRadius="6"
                         SnapsToDevicePixels="True">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
@@ -306,22 +346,49 @@
     </Style>
 
     <Style x:Key="PhasmaTab" TargetType="{x:Type ToggleButton}">
-        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Padding" Value="12,6" />
-        <Setter Property="Margin" Value="0,0,4,0" />
-        <Setter Property="FontSize" Value="13" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Padding" Value="14,9" />
+        <Setter Property="Margin" Value="0,0,2,0" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="FocusVisualStyle" Value="{StaticResource PhasmaFocusVisual}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ToggleButton}">
-                    <Border
-                        x:Name="Fill"
-                        Padding="{TemplateBinding Padding}"
-                        Background="{TemplateBinding Background}"
-                        CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}"
-                        SnapsToDevicePixels="True">
+                    <Grid SnapsToDevicePixels="True" Background="Transparent">
+                        <Border x:Name="Fill" Padding="{TemplateBinding Padding}" CornerRadius="6,6,0,0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <Border x:Name="Underline" Height="2" VerticalAlignment="Bottom" Background="{DynamicResource PhasmaAccentBrush}" Opacity="0" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaHoverBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Underline" Property="Opacity" Value="1" />
+                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  Segmented control button (mockup .seg): a raised pill on the chosen one  -->
+    <Style x:Key="PhasmaSegButton" TargetType="{x:Type ToggleButton}">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="12,4" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource PhasmaFocusVisual}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                    <Border x:Name="Fill" Padding="{TemplateBinding Padding}" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" CornerRadius="5" SnapsToDevicePixels="True">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
@@ -330,7 +397,8 @@
                             <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaSelectedBrush}" />
+                            <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaPanelRaisedBrush}" />
+                            <Setter TargetName="Fill" Property="BorderBrush" Value="{DynamicResource PhasmaStrokeStrongBrush}" />
                             <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -397,6 +465,68 @@
         </Setter>
     </Style>
 
+    <!--  Game card in the library grid: panel with artwork on top  -->
+    <Style x:Key="PhasmaGameCard" TargetType="{x:Type Border}" BasedOn="{StaticResource PhasmaPanel}">
+        <Setter Property="ClipToBounds" Value="True" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="BorderBrush" Value="{DynamicResource PhasmaStrokeStrongBrush}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  Table inside a panel (mockup .tr): header caption and a row with a top line  -->
+    <Style x:Key="PhasmaTableHead" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="11.5" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="PhasmaTableRow" TargetType="{x:Type Border}">
+        <Setter Property="BorderBrush" Value="{DynamicResource PhasmaStrokeBrush}" />
+        <Setter Property="BorderThickness" Value="0,1,0,0" />
+        <Setter Property="Padding" Value="20,8" />
+        <Setter Property="MinHeight" Value="44" />
+        <Setter Property="Background" Value="Transparent" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource PhasmaHoverBrush}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  Thin progress bar (mockup .pb)  -->
+    <Style x:Key="PhasmaMiniBar" TargetType="{x:Type ProgressBar}">
+        <Setter Property="Height" Value="4" />
+        <Setter Property="Minimum" Value="0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ProgressBar}">
+                    <Grid>
+                        <Border x:Name="PART_Track" CornerRadius="2" Background="{DynamicResource PhasmaSelectedBrush}" />
+                        <Border x:Name="PART_Indicator" HorizontalAlignment="Left" CornerRadius="2" Background="{DynamicResource PhasmaAccentBrush}" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  Mockup .tag in good / warn / bad flavours  -->
+    <Style x:Key="PhasmaTagGood" TargetType="{x:Type Border}" BasedOn="{StaticResource PhasmaTag}">
+        <Setter Property="Background" Value="#1F3DDC97" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource PhasmaGoodBrush}" />
+    </Style>
+    <Style x:Key="PhasmaTagWarn" TargetType="{x:Type Border}" BasedOn="{StaticResource PhasmaTag}">
+        <Setter Property="Background" Value="#1FF5B841" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource PhasmaWarnBrush}" />
+    </Style>
+    <Style x:Key="PhasmaTagBad" TargetType="{x:Type Border}" BasedOn="{StaticResource PhasmaTag}">
+        <Setter Property="Background" Value="#1FFF6A64" />
+        <Setter Property="TextElement.Foreground" Value="#FF6A64" />
+    </Style>
+
     <!--  Image tile used for game icons: rounded, clipped, placeholder fill  -->
     <Style x:Key="PhasmaThumb" TargetType="{x:Type Border}">
         <Setter Property="Background" Value="{DynamicResource PhasmaSelectedBrush}" />
@@ -442,20 +572,23 @@
                             BorderThickness="1"
                             CornerRadius="{DynamicResource PhasmaCornerRadius}"
                             x:Name="CardBorder"
-                            Padding="16,14,16,6"
+                            Padding="0,0,0,0"
                             SnapsToDevicePixels="True">
                         <StackPanel ClipToBounds="True">
-                            <Grid x:Name="HeaderRow" Margin="0,0,0,10">
+                            <Grid x:Name="HeaderRow" Margin="20,16,20,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                    <TextBlock Text="{TemplateBinding Header}" FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap"
-                                               Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                                    <TextBlock x:Name="DescriptionText" Text="{TemplateBinding Description}" Margin="0,2,0,0" FontSize="11.5" TextWrapping="Wrap"
+                                <WrapPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="3" Height="14" Margin="0,1,10,0" CornerRadius="2" Background="{DynamicResource PhasmaAccentBrush}" />
+                                        <TextBlock Text="{TemplateBinding Header}" FontSize="14.5" FontWeight="SemiBold" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                    </StackPanel>
+                                    <TextBlock x:Name="DescriptionText" Text="{TemplateBinding Description}" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="12.5" TextWrapping="Wrap"
                                                Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                                </StackPanel>
+                                </WrapPanel>
                                 <ContentPresenter Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Content="{TemplateBinding HeaderContent}" />
                             </Grid>
                             <ItemsPresenter x:Name="Rows" />
@@ -472,7 +605,7 @@
                         <Trigger Property="Header" Value="">
                             <Setter TargetName="HeaderRow" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="Rows" Property="Margin" Value="0,-1,0,0" />
-                            <Setter TargetName="CardBorder" Property="Padding" Value="16,4,16,6" />
+                            <Setter TargetName="CardBorder" Property="Padding" Value="0" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

@@ -12,8 +12,7 @@
       Loaded="Page_Loaded">
 
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="Frame rate" />
-        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="Smoothing and limits that sit on top of the game." />
+        <controls:PageHeader Title="Frame rate" Subtitle="Smoothing and limits that sit on top of the game." />
 
         <!--  Last session: recorded locally by the watcher while you play; hidden until there is one  -->
         <ItemsControl Margin="0,0,0,12" ItemsSource="{Binding SessionTiles}" Visibility="{Binding SessionTilesVisibility}" Focusable="False">

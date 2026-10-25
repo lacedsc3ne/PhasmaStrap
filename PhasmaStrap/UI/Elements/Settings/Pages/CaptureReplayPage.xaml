@@ -167,6 +167,10 @@
                     <ui:ToggleSwitch IsChecked="{Binding RecordSound, Mode=TwoWay}" />
                 </controls:OptionControl>
 
+                <controls:OptionControl Header="Record all PC audio" Description="Everything you hear, including Discord and music, even before Roblox opens" IsEnabled="{Binding SoundAvailable, Mode=OneWay}">
+                    <ui:ToggleSwitch IsChecked="{Binding RecordAllAudio, Mode=TwoWay}" />
+                </controls:OptionControl>
+
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Capture_RecordMyMicrophoneToo}" Description="Mixed in exactly as it sounds" IsEnabled="{Binding SoundAvailable, Mode=OneWay}">
                     <ui:ToggleSwitch IsChecked="{Binding RecordMicrophone, Mode=TwoWay}" />
                 </controls:OptionControl>

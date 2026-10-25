@@ -31,6 +31,18 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             InitializeComponent();
 
             Loaded += (_, _) => ApplyHomeBackground();
+            Loaded += async (_, _) => // TEMP-UITEST
+            {
+                string? tabName = Environment.GetEnvironmentVariable("PHASMASTRAP_UITEST_GAMESTAB");
+                if (!string.IsNullOrEmpty(tabName)) _viewModel.ShowTab(tabName);
+                string? g = Environment.GetEnvironmentVariable("PHASMASTRAP_UITEST_GAME");
+                if (string.IsNullOrEmpty(g)) return;
+                string[] ids = g.Split(',');
+                _viewModel.OpenGame(long.Parse(ids[0]), long.Parse(ids[1]), "Test", "");
+                await System.Threading.Tasks.Task.Delay(2500);
+                string? tab = Environment.GetEnvironmentVariable("PHASMASTRAP_UITEST_GAMETAB");
+                if (!string.IsNullOrEmpty(tab)) _viewModel.Game?.ShowTabCommand.Execute(tab);
+            }; // TEMP-UITEST
 
             // Every tile list on the page shares one menu.
             ItemMenu.Attach<GameCard>(GamesRoot, BuildGameMenu);

@@ -459,6 +459,12 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             set { App.Settings.Prop.InstantReplayAudio = value; ReplaySettingChanged(nameof(RecordSound)); }
         }
 
+        public bool RecordAllAudio
+        {
+            get => App.Settings.Prop.InstantReplayAllAudio;
+            set { App.Settings.Prop.InstantReplayAllAudio = value; ReplaySettingChanged(nameof(RecordAllAudio)); }
+        }
+
         public bool RecordMicrophone
         {
             get => App.Settings.Prop.InstantReplayMicrophone;

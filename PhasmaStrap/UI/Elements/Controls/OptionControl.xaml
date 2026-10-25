@@ -19,34 +19,43 @@
                     <DataTrigger Binding="{Binding Flat, ElementName=Control}" Value="True">
                         <Setter Property="Background" Value="Transparent" />
                         <Setter Property="BorderThickness" Value="0,1,0,0" />
-                        <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource PhasmaStrokeBrush}" />
                         <Setter Property="Border.CornerRadius" Value="0" />
                         <Setter Property="Margin" Value="0" />
-                        <Setter Property="Padding" Value="2,10,2,10" />
+                        <Setter Property="Padding" Value="22,12,22,12" />
+                        <Setter Property="MinHeight" Value="52" />
                     </DataTrigger>
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding Flat, ElementName=Control}" Value="True" />
+                            <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True" />
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Background" Value="{DynamicResource PhasmaHoverBrush}" />
+                    </MultiDataTrigger>
                 </Style.Triggers>
             </Style>
         </ui:Card.Style>
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" MinWidth="90" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" MaxWidth="9999" />
+                        <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" TextWrapping="Wrap" Text="{Binding Header, ElementName=Control}">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="FontSize" Value="14" />
+                                <Setter Property="FontWeight" Value="Medium" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding Flat, ElementName=Control}" Value="True">
-                                        <Setter Property="FontSize" Value="13.5" />
-                                        <Setter Property="FontWeight" Value="SemiBold" />
+                                        <Setter Property="FontSize" Value="14" />
+                                        <Setter Property="FontWeight" Value="Medium" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -86,7 +95,7 @@
                         </Hyperlink>
                     </TextBlock>
                 </Grid>
-                <local:MarkdownTextBlock Margin="0,2,0,0" FontSize="12" MarkdownText="{Binding Description, ElementName=Control}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}">
+                <local:MarkdownTextBlock Margin="0,1,0,0" FontSize="12.5" MarkdownText="{Binding Description, ElementName=Control}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}">
                     <local:MarkdownTextBlock.Style>
                         <Style TargetType="local:MarkdownTextBlock">
                             <Style.Triggers>

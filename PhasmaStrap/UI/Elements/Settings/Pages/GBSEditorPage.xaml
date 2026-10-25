@@ -68,7 +68,7 @@
                     <ControlTemplate TargetType="{x:Type TabControl}">
                         <Grid KeyboardNavigation.TabNavigation="Local">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="176" />
+                                <ColumnDefinition Width="200" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Border Grid.Column="0" Margin="0,0,18,0" Padding="0,0,10,0" BorderThickness="0,0,1,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
@@ -88,8 +88,7 @@
     </ui:UiPage.Resources>
 
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="Global settings" />
-        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="Every key in the game's own settings file, not just the curated toggles." />
+        <controls:PageHeader Title="Global settings" Subtitle="Every key in the game's own settings file, not just the curated toggles." />
 
         <!--  Caution banner with the lock switch  -->
         <Border Style="{DynamicResource PhasmaCard}" Margin="0,0,0,12" Padding="16,10,16,10"

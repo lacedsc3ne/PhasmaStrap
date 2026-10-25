@@ -44,6 +44,37 @@ namespace PhasmaStrap.UI.Elements.Controls
 
         // Rows are real elements, not data, so they are their own containers.
         protected override bool IsItemItsOwnContainerOverride(object item) => item is UIElement;
+
+        private readonly System.Runtime.CompilerServices.ConditionalWeakTable<FrameworkElement, object> _padded = new();
+
+        private static bool HoldsRow(DependencyObject parent)
+        {
+            foreach (object child in LogicalTreeHelper.GetChildren(parent))
+            {
+                if (child is OptionControl)
+                    return true;
+
+                if (child is DependencyObject inner && HoldsRow(inner))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Rows (OptionControl) draw their own side padding and full width lines. Anything else put in a card (a chart, a note,
+        /// a custom list) gets the same side padding so it never touches the card edge.
+        /// </summary>
+        protected override void PrepareContainerForItemOverride(DependencyObject element, object item)
+        {
+            base.PrepareContainerForItemOverride(element, item);
+
+            if (element is FrameworkElement fe && element is not OptionControl && !HoldsRow(fe) && fe.Margin.Left < 18 && fe.Margin.Right < 18 && !_padded.TryGetValue(fe, out _))
+            {
+                _padded.Add(fe, new object());
+                fe.Margin = new Thickness(Math.Max(fe.Margin.Left, 20), fe.Margin.Top, Math.Max(fe.Margin.Right, 20), fe.Margin.Bottom);
+            }
+        }
     }
 
     /// <summary>Lays cards out two to a row when there is room, and one per row when the window is narrow.</summary>

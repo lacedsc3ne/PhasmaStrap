@@ -139,7 +139,8 @@ namespace PhasmaStrap.Utility
                     () => Math.Clamp(App.Settings.Prop.InstantReplayClipSeconds, 5, MaxClipSeconds) + GpuReplayRecorder.SegmentSeconds + 2,
                     App.RobloxPlayerAppName,
                     App.Settings.Prop.InstantReplayMicrophone,
-                    App.Settings.Prop.InstantReplayMicrophoneDevice);
+                    App.Settings.Prop.InstantReplayMicrophoneDevice,
+                    App.Settings.Prop.InstantReplayAllAudio);
                 _audio.Start();
             }
 

@@ -5,6 +5,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
+      xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       xmlns:dmodels="clr-namespace:PhasmaStrap.UI.ViewModels.Settings"
       mc:Ignorable="d"
       d:DataContext="{d:DesignInstance dmodels:HistoryViewModel, IsDesignTimeCreatable=True}"
@@ -13,15 +14,15 @@
     <ui:UiPage.Resources>
         <!--  Thin bar for the Most played card  -->
         <Style x:Key="ShareBar" TargetType="{x:Type ProgressBar}">
-            <Setter Property="Height" Value="6" />
+            <Setter Property="Height" Value="4" />
             <Setter Property="Minimum" Value="0" />
             <Setter Property="Maximum" Value="1" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type ProgressBar}">
                         <Grid>
-                            <Border x:Name="PART_Track" CornerRadius="3" Background="{DynamicResource PhasmaSelectedBrush}" />
-                            <Border x:Name="PART_Indicator" HorizontalAlignment="Left" CornerRadius="3" Background="{DynamicResource PhasmaAccentBrush}" />
+                            <Border x:Name="PART_Track" CornerRadius="2" Background="{DynamicResource PhasmaSelectedBrush}" />
+                            <Border x:Name="PART_Indicator" HorizontalAlignment="Left" CornerRadius="2" Background="{DynamicResource PhasmaAccentBrush}" />
                         </Grid>
                     </ControlTemplate>
                 </Setter.Value>
@@ -29,22 +30,17 @@
         </Style>
     </ui:UiPage.Resources>
 
-    <Grid Margin="0,8,14,14">
+    <StackPanel Margin="0,0,14,14">
+    <controls:PageHeader Eyebrow="Games" Title="History" Subtitle="{Binding SummaryText, Mode=OneWay}">
+        <Button Height="34" Padding="14,0" Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" Command="{Binding RefreshCommand, Mode=OneTime}" />
+    </controls:PageHeader>
+    <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="300" />
         </Grid.ColumnDefinitions>
 
         <StackPanel Grid.Column="0" Margin="0,0,16,0">
-            <Grid Margin="0,0,0,12">
-                <TextBlock VerticalAlignment="Center" Text="{Binding SummaryText, Mode=OneWay}" Style="{DynamicResource PhasmaSubtle}" FontSize="12.5" />
-                <Button HorizontalAlignment="Right" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Command="{Binding RefreshCommand, Mode=OneTime}">
-                    <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="13" Margin="0,0,6,0" />
-                        <TextBlock Text="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" FontSize="12.5" VerticalAlignment="Center" />
-                    </StackPanel>
-                </Button>
-            </Grid>
 
             <!--  Empty state  -->
             <Border Padding="26,22" Style="{DynamicResource PhasmaCard}" Visibility="{Binding EmptyVisibility}">
@@ -55,10 +51,10 @@
                 </StackPanel>
             </Border>
 
-            <ItemsControl ItemsSource="{Binding Entries, Mode=OneWay}" Focusable="False">
+            <Border Style="{DynamicResource PhasmaPanel}"><ItemsControl ItemsSource="{Binding Entries, Mode=OneWay}" Focusable="False">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Margin="0,0,0,8" Padding="14,10" Style="{DynamicResource PhasmaCard}">
+                        <Border Style="{DynamicResource PhasmaTableRow}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
@@ -103,11 +99,11 @@
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            </ItemsControl></Border>
         </StackPanel>
 
         <StackPanel Grid.Column="1">
-            <Border Padding="14,12" Style="{DynamicResource PhasmaCard}" Background="{DynamicResource PhasmaPanelBrush}">
+            <Border Padding="16,14" Style="{DynamicResource PhasmaPanel}">
                 <DockPanel>
                     <ui:SymbolIcon DockPanel.Dock="Left" Margin="0,1,10,0" VerticalAlignment="Top" Symbol="Info24" FontSize="14" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                     <TextBlock TextWrapping="Wrap" FontSize="11.5" LineHeight="17" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
@@ -115,9 +111,9 @@
                 </DockPanel>
             </Border>
 
-            <Border Margin="0,12,0,0" Padding="16,14" Style="{DynamicResource PhasmaCard}" Visibility="{Binding ListVisibility}">
+            <Border Margin="0,12,0,0" Padding="20,16" Style="{DynamicResource PhasmaPanel}" Visibility="{Binding ListVisibility}">
                 <StackPanel>
-                    <TextBlock Margin="0,0,0,10" Text="Most played" FontSize="13.5" Style="{DynamicResource PhasmaHeading}" />
+                    <StackPanel Margin="0,0,0,12" Orientation="Horizontal"><Border Width="3" Height="14" Margin="0,1,10,0" CornerRadius="2" Background="{DynamicResource PhasmaAccentBrush}" /><TextBlock Text="Most played" FontSize="14.5" Style="{DynamicResource PhasmaHeading}" /></StackPanel>
                     <ItemsControl ItemsSource="{Binding MostPlayed}" Focusable="False">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type dmodels:MostPlayedRow}">
@@ -135,4 +131,5 @@
             </Border>
         </StackPanel>
     </Grid>
+    </StackPanel>
 </ui:UiPage>

@@ -11,8 +11,7 @@
       Scrollable="True">
 
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="{x:Static resources:Strings.Menu_Rendering_System}" />
-        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="Window, sound and launcher tweaks that do not touch the game's own settings." />
+        <controls:PageHeader Title="{x:Static resources:Strings.Menu_Rendering_System}" Subtitle="Window, sound and launcher tweaks that do not touch the game's own settings." />
 
         <controls:CardColumns>
             <controls:SettingsCard Header="Window">

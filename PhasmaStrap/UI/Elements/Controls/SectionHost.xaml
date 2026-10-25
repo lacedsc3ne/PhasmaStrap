@@ -5,6 +5,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:local="clr-namespace:PhasmaStrap.UI.Elements.Controls"
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -64,28 +65,37 @@
 
         <!--  Horizontal tab item (Social, Performance, FastFlags, Capture)  -->
         <Style x:Key="SectionTabItemStyle" TargetType="{x:Type ListBoxItem}">
-            <Setter Property="Padding" Value="12,6" />
-            <Setter Property="Margin" Value="0,0,4,0" />
+            <Setter Property="Padding" Value="14,9" />
+            <Setter Property="Margin" Value="0,0,2,0" />
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
             <Setter Property="FocusVisualStyle" Value="{DynamicResource PhasmaFocusVisual}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                        <Border
-                            x:Name="Fill"
-                            Background="Transparent"
-                            CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}"
-                            Padding="{TemplateBinding Padding}"
-                            SnapsToDevicePixels="True">
-                            <ContentPresenter VerticalAlignment="Center" />
-                        </Border>
+                        <Grid SnapsToDevicePixels="True">
+                            <Border
+                                x:Name="Fill"
+                                Background="Transparent"
+                                CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}"
+                                Padding="{TemplateBinding Padding}">
+                                <ContentPresenter VerticalAlignment="Center" />
+                            </Border>
+                            <Border
+                                x:Name="Underline"
+                                Height="2"
+                                Margin="12,0"
+                                VerticalAlignment="Bottom"
+                                CornerRadius="1"
+                                Background="{DynamicResource PhasmaAccentBrush}"
+                                Opacity="0" />
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaHoverBrush}" />
                                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaSelectedBrush}" />
+                                <Setter TargetName="Underline" Property="Opacity" Value="1" />
                                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -192,6 +202,9 @@
             </DockPanel>
         </Border>
 
+
+        <!--  Header card for pages that don't draw their own  -->
+        <local:PageHeader x:Name="HostHeader" Grid.Row="0" Grid.Column="1" Margin="4,0,18,0" Visibility="Collapsed" />
 
         <Frame
             x:Name="SectionFrame"

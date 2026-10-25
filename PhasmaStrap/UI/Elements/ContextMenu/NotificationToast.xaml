@@ -42,8 +42,8 @@
                     BorderThickness="1,1,1,0" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" />
 
             <Border x:Name="CardBorder" CornerRadius="10" MouseLeftButtonUp="NotificationBorder_MouseLeftButtonUp"
-                    Background="{DynamicResource ApplicationBackgroundBrush}"
-                    BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                    Background="{DynamicResource PhasmaPopupBrush}"
+                    BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}">
                 <Border.Effect>
                     <DropShadowEffect Color="#000000" Opacity="0.42" BlurRadius="24" ShadowDepth="6" Direction="270" />
                 </Border.Effect>
@@ -61,7 +61,7 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <Border Grid.Column="0" Width="26" Height="26" CornerRadius="13" Margin="0,1,11,0" VerticalAlignment="Top">
+                        <Border Grid.Column="0" Width="32" Height="32" CornerRadius="8" Margin="0,0,12,0" VerticalAlignment="Top">
                             <Border.Background>
                                 <SolidColorBrush x:Name="IconBackground" Color="{DynamicResource SystemAccentColorPrimary}" Opacity="0.16" />
                             </Border.Background>
@@ -70,10 +70,10 @@
                         </Border>
 
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock x:Name="TitleText" Foreground="{DynamicResource TextFillColorPrimaryBrush}" FontWeight="SemiBold" FontSize="13.5"
+                            <TextBlock x:Name="TitleText" Foreground="{DynamicResource TextFillColorPrimaryBrush}" FontWeight="SemiBold" FontSize="14"
                                        TextWrapping="Wrap" LineHeight="17" />
-                            <TextBlock x:Name="MessageText" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" LineHeight="16"
-                                       TextWrapping="Wrap" Margin="0,3,0,0" MaxHeight="150" TextTrimming="CharacterEllipsis" />
+                            <TextBlock x:Name="MessageText" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="13" LineHeight="17"
+                                       TextWrapping="Wrap" Margin="0,2,0,0" MaxHeight="150" TextTrimming="CharacterEllipsis" />
                             <TextBlock x:Name="HintText" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11" Margin="0,4,0,0"
                                        Visibility="Collapsed" Text="Click to open" />
                             <ui:Button x:Name="ActionButton" Margin="0,9,0,0" Padding="11,4" HorizontalAlignment="Left" Appearance="Secondary" Icon="Edit16"

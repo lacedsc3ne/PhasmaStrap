@@ -76,8 +76,7 @@
     </ui:UiPage.Resources>
 
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="{x:Static resources:Strings.Menu_FastFlags_Section_Networking}" />
-        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="A local proxy that changes what your own client is told, plus the asset engine." />
+        <controls:PageHeader Title="{x:Static resources:Strings.Menu_FastFlags_Section_Networking}" Subtitle="A local proxy that changes what your own client is told, plus the asset engine." />
 
         <TabControl Tag="NETWORKING" Style="{StaticResource PillTabControl}">
             <TabItem>

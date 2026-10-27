@@ -12,6 +12,13 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <Product>PhasmaStrap</Product>
+    <AssemblyTitle>PhasmaStrap, a launcher and settings manager for Roblox</AssemblyTitle>
+    <Description>Installs, updates and launches Roblox with your own settings, mods and FastFlags.</Description>
+    <Authors>lacedsc3ne</Authors>
+    <Company>lacedsc3ne</Company>
+    <Copyright>Copyright (c) 2026 lacedsc3ne. Based on Bloxstrap, MIT licence.</Copyright>
+    <RepositoryUrl>https://github.com/lacedsc3ne/PhasmaStrap</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>

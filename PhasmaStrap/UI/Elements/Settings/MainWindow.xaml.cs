@@ -1464,14 +1464,7 @@ namespace PhasmaStrap.UI.Elements.Settings
 
             if (viewModel.RestartAfterClose)
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = "cmd.exe",
-                    Arguments = $"/c timeout /t 1 /nobreak >nul & start \"\" \"{Paths.Process}\" -settings",
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                    CreateNoWindow = true,
-                    UseShellExecute = false,
-                });
+                Process.Start(Paths.Process, "-settings -restart");
                 App.SoftTerminate();
                 return;
             }

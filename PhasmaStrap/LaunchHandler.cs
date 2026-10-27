@@ -216,7 +216,7 @@ namespace PhasmaStrap
         {
             const string LOG_IDENT = "LaunchHandler::LaunchSettings";
 
-            using var interlock = new InterProcessLock("Settings");
+            using var interlock = new InterProcessLock("Settings", App.LaunchSettings.RestartFlag.Active ? TimeSpan.FromSeconds(15) : TimeSpan.Zero);
 
             bool uiTest = Environment.GetEnvironmentVariable("PHASMASTRAP_UITEST_BACKGROUND") == "1";
 

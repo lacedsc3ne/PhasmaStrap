@@ -66,6 +66,8 @@ namespace PhasmaStrap
         /// <summary>A PhasmaStrap link, like phasmastrap://settings/&lt;key&gt;, to open in the settings window.</summary>
         public LaunchFlag LinkFlag                  { get; } = new("link");
 
+        public LaunchFlag RestartFlag               { get; } = new("restart");
+
 #if DEBUG
         public bool BypassUpdateCheck => true;
 #else

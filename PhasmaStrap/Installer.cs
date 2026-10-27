@@ -389,24 +389,43 @@ namespace PhasmaStrap
             }
 
             if (Directory.Exists(Paths.Base))
-            {
-                string deleteCommand;
-
-                if (deleteFolder)
-                    deleteCommand = $"del /Q \"{Paths.Base}\\*\" && rmdir \"{Paths.Base}\"";
-                else
-                    deleteCommand = $"del /Q \"{Paths.Application}\"";
-
-                Process.Start(new ProcessStartInfo()
-                {
-                    FileName = "cmd.exe",
-                    Arguments = $"/c timeout 5 && {deleteCommand}",
-                    UseShellExecute = true,
-                    WindowStyle = ProcessWindowStyle.Hidden
-                });
-            }
+                RemoveRunningApplication(LOG_IDENT, deleteFolder);
 
             App.SendStat("installAction", "uninstall");
+        }
+
+        private static void RemoveRunningApplication(string LOG_IDENT, bool deleteFolder)
+        {
+            if (File.Exists(Paths.Application))
+            {
+                string parked = Path.Combine(Path.GetTempPath(), $"PhasmaStrap-removed-{Guid.NewGuid():N}.exe");
+
+                try
+                {
+                    File.Move(Paths.Application, parked);
+                    App.Logger.WriteLine(LOG_IDENT, $"Moved the running app out of the install folder to {parked}");
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, "Could not move the running app out of the install folder");
+                    App.Logger.WriteException(LOG_IDENT, ex);
+                    return;
+                }
+            }
+
+            if (!deleteFolder)
+                return;
+
+            try
+            {
+                Directory.Delete(Paths.Base, true);
+                App.Logger.WriteLine(LOG_IDENT, "Removed the install folder");
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, "Could not remove the install folder");
+                App.Logger.WriteException(LOG_IDENT, ex);
+            }
         }
 
         private const string ReplacedSuffix = ".old";

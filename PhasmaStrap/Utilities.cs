@@ -20,11 +20,8 @@ namespace PhasmaStrap
                 if (ex.NativeErrorCode != (int)ErrorCode.CO_E_APPNOTFOUND)
                     throw;
 
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = "rundll32.exe",
-                    Arguments = $"shell32,OpenAs_RunDLL {website}"
-                });
+                App.Logger.WriteLine("Utilities::ShellExecute", $"No app is set to open {website}");
+                Frontend.ShowMessageBox($"Windows has no app set to open this:\n{website}", System.Windows.MessageBoxImage.Warning);
             }
         }
 

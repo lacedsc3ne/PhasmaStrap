@@ -448,29 +448,31 @@
                 <!--  Private servers in this game, under the places  -->
                 <StackPanel DockPanel.Dock="Bottom" Margin="0,10,0,0" Visibility="{Binding PrivateRailVisibility}">
                     <TextBlock Margin="10,0,0,6" Text="PRIVATE SERVERS" Style="{DynamicResource PhasmaCaption}" />
-                    <ItemsControl x:Name="PrivateRail" ItemsSource="{Binding PrivateServers}" Focusable="False">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="{x:Type dmodels:GamePrivateServerRow}">
-                                <Button Margin="0,0,6,2" Padding="8,6" HorizontalContentAlignment="Stretch" Style="{DynamicResource PhasmaGhostButton}"
-                                        Command="{Binding DataContext.ShowTabCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="private"
-                                        ToolTip="Right click to join or copy its link">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <Border Width="30" Height="30" CornerRadius="8" Background="{DynamicResource PhasmaSelectedBrush}">
-                                            <ui:SymbolIcon Symbol="LockClosed24" FontSize="13" />
-                                        </Border>
-                                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                            <TextBlock Text="{Binding RailText}" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
-                                        </StackPanel>
-                                    </Grid>
-                                </Button>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                    <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+                        <ItemsControl x:Name="PrivateRail" ItemsSource="{Binding PrivateServers}" Focusable="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type dmodels:GamePrivateServerRow}">
+                                    <Button Margin="0,0,6,2" Padding="8,6" HorizontalContentAlignment="Stretch" Style="{DynamicResource PhasmaGhostButton}"
+                                            Command="{Binding DataContext.ShowTabCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="private"
+                                            ToolTip="Right click to join or copy its link">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border Width="30" Height="30" CornerRadius="8" Background="{DynamicResource PhasmaSelectedBrush}">
+                                                <ui:SymbolIcon Symbol="LockClosed24" FontSize="13" />
+                                            </Border>
+                                            <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding RailText}" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
                 </StackPanel>
 
                 <ui:TextBox

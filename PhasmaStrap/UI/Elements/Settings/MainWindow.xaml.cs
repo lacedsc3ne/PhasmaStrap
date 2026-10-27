@@ -680,24 +680,55 @@ namespace PhasmaStrap.UI.Elements.Settings
             AccountButton.ToolTip = signedIn ? "Your PhasmaStrap account" : "Sign in to PhasmaStrap";
             AccountWhoItem.Header = signedIn ? $"Signed in as {PhasmaStrap.Utility.PhasmaAccount.DisplayName}" : "Not signed in";
 
-            string avatar = App.State.Prop.AccountAvatar;
-            bool hasAvatar = signedIn && !string.IsNullOrEmpty(avatar);
+            string avatar = signedIn ? App.State.Prop.AccountAvatar : "";
 
-            if (hasAvatar)
+            if (avatar != _loadedAvatar)
             {
-                try
-                {
-                    AccountAvatarBrush.ImageSource = new System.Windows.Media.Imaging.BitmapImage(new Uri(avatar, UriKind.Absolute));
-                }
-                catch (Exception ex)
-                {
-                    App.Logger.WriteException("MainWindow::RefreshAccountButton", ex);
-                    hasAvatar = false;
-                }
+                _loadedAvatar = avatar;
+                AccountAvatarBrush.ImageSource = null;
+
+                if (!string.IsNullOrEmpty(avatar))
+                    _ = LoadAccountAvatarAsync(avatar);
             }
 
-            AccountAvatar.Visibility = hasAvatar ? Visibility.Visible : Visibility.Collapsed;
-            AccountIcon.Visibility = hasAvatar ? Visibility.Collapsed : Visibility.Visible;
+            ShowAccountAvatar(AccountAvatarBrush.ImageSource is not null);
+        }
+
+        private string _loadedAvatar = "";
+
+        private void ShowAccountAvatar(bool show)
+        {
+            AccountAvatar.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            AccountIcon.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        private async Task LoadAccountAvatarAsync(string url)
+        {
+            const string LOG_IDENT = "MainWindow::LoadAccountAvatarAsync";
+
+            try
+            {
+                byte[] data = await App.HttpClient.GetByteArrayAsync(url);
+
+                var image = new System.Windows.Media.Imaging.BitmapImage();
+                image.BeginInit();
+                image.StreamSource = new MemoryStream(data);
+                image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                image.EndInit();
+                image.Freeze();
+
+                if (url != _loadedAvatar)
+                    return;
+
+                AccountAvatarBrush.ImageSource = image;
+                ShowAccountAvatar(true);
+                App.Logger.WriteLine(LOG_IDENT, "Loaded the account picture");
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not load the account picture from {url}");
+                App.Logger.WriteException(LOG_IDENT, ex);
+            }
         }
 
         private async void AccountButton_Click(object sender, RoutedEventArgs e)

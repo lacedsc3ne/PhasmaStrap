@@ -67,7 +67,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public List<TimelineCapture> Captures { get; init; } = new();
         public Visibility CapturesVisibility => Captures.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
-        /// <summary>When this server visit started and ended, for opening its screenshots and clips in the capture library.</summary>
         public DateTime JoinedUtc { get; init; }
         public DateTime LeftUtc { get; init; }
         public int ScreenshotCount { get; init; }
@@ -110,7 +109,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
     public sealed class ActivityViewModel : NotifyPropertyChangedViewModel
     {
         private const int MaxSessionsShown = 60;
-        // Sized for the narrow side panel on the Activity page
         private const double ChartHeight = 72;
         private const double GameBarWidth = 250;
 
@@ -401,7 +399,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        /// <summary>Opens the capture library on just the screenshots or clips taken during this visit.</summary>
         public static void OpenCapturesOf(TimelineVisit visit, bool clips)
         {
             var range = new PhasmaStrap.UI.ViewModels.Dialogs.CaptureTimeFilter(

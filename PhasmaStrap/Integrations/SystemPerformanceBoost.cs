@@ -37,6 +37,8 @@ namespace PhasmaStrap.Integrations
 
         private static bool _timerResolutionActive;
 
+        private static bool _powerPlanActive;
+
         private static string BackupPath => Path.Combine(Paths.Base, "SystemBoostBackup.json");
 
         internal sealed class Backup
@@ -223,8 +225,56 @@ namespace PhasmaStrap.Integrations
                 key.SetValue(name, previous.Value, RegistryValueKind.DWord);
         }
 
+        public static void RestoreLeftovers()
+        {
+            try
+            {
+                Process[] running = Process.GetProcessesByName("RobloxPlayerBeta");
+                bool robloxRunning = running.Length > 0;
+                foreach (Process process in running)
+                    process.Dispose();
+
+                if (robloxRunning)
+                    return;
+
+                WithBackup(backup =>
+                {
+                    if (backup.PowerScheme is null)
+                        return;
+
+                    Guid previous = backup.PowerScheme.Value;
+                    uint result = PowerSetActiveScheme(IntPtr.Zero, ref previous);
+                    App.Logger.WriteLine(LOG_IDENT, result == 0
+                        ? $"Power plan put back to {previous} after PhasmaStrap closed without restoring it"
+                        : $"Could not put the power plan left over from the last session back to {previous}, error {result}");
+
+                    backup.PowerScheme = null;
+                    WriteBackup(backup);
+                });
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteException(LOG_IDENT, ex);
+            }
+        }
+
+        private const int LeaveGraceMs = 20000;
+
+        private static CancellationTokenSource? _pendingLeave;
+
+        private static void CancelPendingLeave()
+        {
+            CancellationTokenSource? pending = Interlocked.Exchange(ref _pendingLeave, null);
+            if (pending is null)
+                return;
+            try { pending.Cancel(); } catch { }
+            pending.Dispose();
+        }
+
         public static void OnGameJoin()
         {
+            CancelPendingLeave();
+
             lock (_sessionLock)
             {
                 if (App.Settings.Prop.BoostTimerResolution && !_timerResolutionActive)
@@ -241,7 +291,7 @@ namespace PhasmaStrap.Integrations
                     }
                 }
 
-                if (App.Settings.Prop.UseHighPerformancePowerPlan)
+                if (App.Settings.Prop.UseHighPerformancePowerPlan && !_powerPlanActive)
                 {
                     try
                     {
@@ -261,6 +311,7 @@ namespace PhasmaStrap.Integrations
 
                             Guid target = HighPerformanceScheme;
                             uint result = PowerSetActiveScheme(IntPtr.Zero, ref target);
+                            _powerPlanActive = result == 0;
                             App.Logger.WriteLine(LOG_IDENT, result == 0
                                 ? $"Switched to the High performance power plan for this session (was {backup.PowerScheme?.ToString() ?? "already High performance"})"
                                 : $"Could not switch to the High performance power plan, error {result}. The plan may be missing on this PC");
@@ -274,10 +325,44 @@ namespace PhasmaStrap.Integrations
             }
         }
 
-        public static void OnGameLeave() => EndSession();
+        public static void OnGameLeave()
+        {
+            var cts = new CancellationTokenSource();
+            CancellationTokenSource? previous = Interlocked.Exchange(ref _pendingLeave, cts);
+            if (previous is not null)
+            {
+                try { previous.Cancel(); } catch { }
+                previous.Dispose();
+            }
+
+            CancellationToken token = cts.Token;
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(LeaveGraceMs, token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+                catch (ObjectDisposedException)
+                {
+                    return;
+                }
+
+                if (Interlocked.CompareExchange(ref _pendingLeave, null, cts) == cts)
+                {
+                    cts.Dispose();
+                    EndSession();
+                }
+            });
+        }
 
         public static void EndSession()
         {
+            CancelPendingLeave();
+
             lock (_sessionLock)
             {
                 if (_timerResolutionActive)
@@ -293,6 +378,8 @@ namespace PhasmaStrap.Integrations
                     }
                     _timerResolutionActive = false;
                 }
+
+                _powerPlanActive = false;
 
                 try
                 {

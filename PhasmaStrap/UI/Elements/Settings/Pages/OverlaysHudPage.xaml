@@ -6,108 +6,195 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       mc:Ignorable="d"
       Title="OverlaysHudPage"
       Scrollable="True">
 
+    <ui:UiPage.Resources>
+        <Style x:Key="PickCell" TargetType="{x:Type ListBoxItem}">
+            <Setter Property="Margin" Value="0,0,6,6" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource PhasmaFocusVisual}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                        <Border x:Name="Fill" Height="30" Padding="4,0" Background="{DynamicResource PhasmaS3Brush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1" phui:CutCorners.Size="6" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" TextElement.FontSize="12.5" TextElement.FontWeight="Medium" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaS4Brush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaAccentSoftBrush}" />
+                                <Setter TargetName="Fill" Property="BorderBrush" Value="{DynamicResource PhasmaAccentBrush}" />
+                                <Setter Property="Foreground" Value="White" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PickList" TargetType="{x:Type ListBox}">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="ItemContainerStyle" Value="{StaticResource PickCell}" />
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ListBox}">
+                        <ItemsPresenter />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ValueText" TargetType="{x:Type TextBlock}">
+            <Setter Property="Width" Value="44" />
+            <Setter Property="Margin" Value="10,0,0,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextAlignment" Value="Right" />
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaMono}" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        </Style>
+
+        <Style x:Key="ColourLabel" TargetType="{x:Type TextBlock}">
+            <Setter Property="Width" Value="90" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        </Style>
+    </ui:UiPage.Resources>
+
     <Grid Margin="0,0,14,14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" MinWidth="320" />
-            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="360" />
         </Grid.ColumnDefinitions>
 
-        <!--  Left: what the HUD shows  -->
-        <StackPanel Grid.Column="0" Margin="0,0,16,0">
-            <controls:SettingsCard>
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Overlays_ShowFps_Title}" Description="A small FPS readout in the corner of the game">
+        <controls:PageHeader Grid.ColumnSpan="2" Eyebrow="Performance · Overlays" Title="Stats overlay"
+                             Subtitle="A small stats HUD drawn over the game window while you are in a game. Pick what it shows and how it looks." />
+
+        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,20,0">
+            <controls:SettingsCard Margin="0,0,0,18">
+                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Overlays_ShowFps_Title}" Description="A small FPS readout in the corner of the game">
                     <ui:ToggleSwitch IsChecked="{Binding HudEnabled, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Overlays_Diagnostics_Title}" Description="Adds a Can't see overlays? item to the tray menu">
+                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Overlays_Diagnostics_Title}" Description="Adds a Can't see overlays? item to the tray menu">
                     <ui:ToggleSwitch IsChecked="{Binding DiagnosticsEnabled, Mode=TwoWay}" />
                 </controls:OptionControl>
             </controls:SettingsCard>
 
-            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Rendering_ExtraHUDRows}" Description="{Binding ExtraRowsSummary, Mode=OneWay}">
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_FrameTime}" Description="Milliseconds per frame">
+            <controls:SettingsCard Margin="0,0,0,18" IsEnabled="{Binding HudEnabled, Mode=OneWay}" Header="{x:Static resources:Strings.Menu_Rendering_ExtraHUDRows}" Description="{Binding ExtraRowsSummary, Mode=OneWay}">
+                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Rendering_FrameTime}" Description="Milliseconds per frame">
                     <ui:ToggleSwitch IsChecked="{Binding ShowFrameTime, Mode=TwoWay}" />
                 </controls:OptionControl>
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_CPUUsage}" Description="All cores">
+                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Rendering_CPUUsage}" Description="All cores">
                     <ui:ToggleSwitch IsChecked="{Binding ShowCpu, Mode=TwoWay}" />
                 </controls:OptionControl>
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_RAMUsage}">
+                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Rendering_RAMUsage}">
                     <ui:ToggleSwitch IsChecked="{Binding ShowRam, Mode=TwoWay}" />
                 </controls:OptionControl>
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_ServerPing}">
+                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Rendering_ServerPing}">
                     <ui:ToggleSwitch IsChecked="{Binding ShowPing, Mode=TwoWay}" />
                 </controls:OptionControl>
-                <controls:OptionControl Header="Game name">
+                <controls:OptionControl Flat="True" Header="Game name">
                     <ui:ToggleSwitch IsChecked="{Binding ShowGame, Mode=TwoWay}" />
                 </controls:OptionControl>
-                <controls:OptionControl Header="Session time">
+                <controls:OptionControl Flat="True" Header="Session time">
                     <ui:ToggleSwitch IsChecked="{Binding ShowSessionTime, Mode=TwoWay}" />
                 </controls:OptionControl>
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_ServerRegion}" Description="Such as Frankfurt, DE">
+                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Rendering_ServerRegion}" Description="Such as Frankfurt, DE">
                     <ui:ToggleSwitch IsChecked="{Binding ShowRegion, Mode=TwoWay}" />
                 </controls:OptionControl>
             </controls:SettingsCard>
 
-            <!--  Finer look settings that do not fit the narrow column  -->
-            <controls:SettingsCard Header="Fine tuning" Description="Exact spacing, corners, shadow and colours.">
-                <Border Margin="0,0,0,12" HorizontalAlignment="Left" MaxWidth="480" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" ClipToBounds="True"
-                        BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
-                    <Image Source="{Binding HudPreview}" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
-                </Border>
+            <controls:SettingsCard IsEnabled="{Binding HudEnabled, Mode=OneWay}" Header="Fine tuning" Description="Exact spacing, corners, shadow and colours.">
+                <StackPanel>
+                    <Border Margin="-20,0,-20,18" Style="{DynamicResource PhasmaDivider}" />
+                    <Border Margin="0,0,0,12" ClipToBounds="True" BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeBrush}" phui:CutCorners.Size="6">
+                        <Image Source="{Binding HudPreview}" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
+                    </Border>
+                </StackPanel>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_DistanceFromSide}" Description="{x:Static resources:Strings.Menu_Rendering_PixelsMiddlePositionsShiftRight}">
+                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Rendering_DistanceFromSide}" Description="{x:Static resources:Strings.Menu_Rendering_PixelsMiddlePositionsShiftRight}">
                     <StackPanel Orientation="Horizontal">
-                        <Slider Width="150" Minimum="0" Maximum="400" TickFrequency="2" IsSnapToTickEnabled="True" Value="{Binding HudOffsetX, Mode=TwoWay}" />
-                        <TextBlock Width="40" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding HudOffsetX}" />
+                        <Slider Width="130" VerticalAlignment="Center" Minimum="0" Maximum="400" TickFrequency="2" IsSnapToTickEnabled="True" Value="{Binding HudOffsetX, Mode=TwoWay}" />
+                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding HudOffsetX}" />
                     </StackPanel>
                 </controls:OptionControl>
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_DistanceFromTopBottom}" Description="{x:Static resources:Strings.Menu_Rendering_Pixels}">
+                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Rendering_DistanceFromTopBottom}" Description="{x:Static resources:Strings.Menu_Rendering_Pixels}">
                     <StackPanel Orientation="Horizontal">
-                        <Slider Width="150" Minimum="0" Maximum="400" TickFrequency="2" IsSnapToTickEnabled="True" Value="{Binding HudOffsetY, Mode=TwoWay}" />
-                        <TextBlock Width="40" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding HudOffsetY}" />
+                        <Slider Width="130" VerticalAlignment="Center" Minimum="0" Maximum="400" TickFrequency="2" IsSnapToTickEnabled="True" Value="{Binding HudOffsetY, Mode=TwoWay}" />
+                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding HudOffsetY}" />
                     </StackPanel>
                 </controls:OptionControl>
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_RoundedCorners}" Description="{x:Static resources:Strings.Menu_Rendering_HowRoundBackgroundSCornersAre}">
+                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Rendering_RoundedCorners}" Description="{x:Static resources:Strings.Menu_Rendering_HowRoundBackgroundSCornersAre}">
                     <StackPanel Orientation="Horizontal">
-                        <Slider Width="150" Minimum="0" Maximum="24" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding HudCornerRadius, Mode=TwoWay}" />
-                        <TextBlock Width="40" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding HudCornerRadius}" />
+                        <Slider Width="130" VerticalAlignment="Center" Minimum="0" Maximum="24" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding HudCornerRadius, Mode=TwoWay}" />
+                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding HudCornerRadius}" />
                     </StackPanel>
                 </controls:OptionControl>
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_TextShadow}" Description="Keeps text readable over bright scenes">
+                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Rendering_TextShadow}" Description="Keeps text readable over bright scenes">
                     <ui:ToggleSwitch IsChecked="{Binding HudTextShadow, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <!--  Colours: one line each so they fit any width  -->
-                <StackPanel Margin="0,0,0,4">
-                    <Border Style="{DynamicResource PhasmaDivider}" />
-                    <TextBlock Margin="2,10,0,0" FontSize="13.5" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_Appearance_ColorTheme_Editor_ColoursTab}" />
-                    <TextBlock Margin="2,2,0,8" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="As #RRGGBB" />
-                    <WrapPanel Margin="2,0,0,8">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,14,6">
-                            <Border Width="22" Height="22" CornerRadius="4" BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" Background="{Binding HudBackgroundBrush}" />
-                            <TextBlock Margin="8,0,6,0" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Rendering_Background}" />
-                            <ui:TextBox Width="92" ClearButtonEnabled="False" ToolTip="{x:Static resources:Strings.Menu_Rendering_Background}" Text="{Binding HudBackgroundColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <StackPanel>
+                    <Border Margin="-20,0,-20,0" Style="{DynamicResource PhasmaDivider}" />
+                    <Grid Margin="0,16,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,16,0">
+                            <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="White" Text="{x:Static resources:Strings.Menu_Appearance_ColorTheme_Editor_ColoursTab}" />
+                            <TextBlock Margin="0,1,0,0" FontSize="12.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="As #RRGGBB" />
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,14,6">
-                            <Border Width="22" Height="22" CornerRadius="4" BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" Background="{Binding HudLabelBrush}" />
-                            <TextBlock Margin="8,0,6,0" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Rendering_Labels}" />
-                            <ui:TextBox Width="92" ClearButtonEnabled="False" ToolTip="{x:Static resources:Strings.Menu_Rendering_Labels}" Text="{Binding HudLabelColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <StackPanel Grid.Column="1">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                <TextBlock Style="{StaticResource ColourLabel}" Text="{x:Static resources:Strings.Menu_Rendering_Background}" />
+                                <Border Width="22" Height="22" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" Background="{Binding HudBackgroundBrush}" />
+                                <ui:TextBox Width="104" FontFamily="{DynamicResource PhasmaMono}" ClearButtonEnabled="False" ToolTip="{x:Static resources:Strings.Menu_Rendering_Background}" Text="{Binding HudBackgroundColor, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                <TextBlock Style="{StaticResource ColourLabel}" Text="{x:Static resources:Strings.Menu_Rendering_Labels}" />
+                                <Border Width="22" Height="22" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" Background="{Binding HudLabelBrush}" />
+                                <ui:TextBox Width="104" FontFamily="{DynamicResource PhasmaMono}" ClearButtonEnabled="False" ToolTip="{x:Static resources:Strings.Menu_Rendering_Labels}" Text="{Binding HudLabelColor, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Style="{StaticResource ColourLabel}" Text="{x:Static resources:Strings.Menu_Rendering_Numbers}" />
+                                <Border Width="22" Height="22" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" Background="{Binding HudValueBrush}" />
+                                <ui:TextBox Width="104" FontFamily="{DynamicResource PhasmaMono}" ClearButtonEnabled="False" ToolTip="{x:Static resources:Strings.Menu_Rendering_Numbers}" Text="{Binding HudValueColor, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                            </StackPanel>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                            <Border Width="22" Height="22" CornerRadius="4" BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" Background="{Binding HudValueBrush}" />
-                            <TextBlock Margin="8,0,6,0" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Rendering_Numbers}" />
-                            <ui:TextBox Width="92" ClearButtonEnabled="False" ToolTip="{x:Static resources:Strings.Menu_Rendering_Numbers}" Text="{Binding HudValueColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
-                    </WrapPanel>
+                    </Grid>
+                    <TextBlock Margin="0,-4,0,14" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource PhasmaWarnBrush}" Text="{Binding HudColourHint, Mode=OneWay}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HudColourHint}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
 
-                <StackPanel Margin="0,0,0,10">
-                    <Border Style="{DynamicResource PhasmaDivider}" />
-                    <Button Margin="0,10,0,0" HorizontalAlignment="Left" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding ResetHudLookCommand, Mode=OneTime}">
+                <StackPanel Margin="0,0,0,16">
+                    <Border Margin="-20,0,-20,0" Style="{DynamicResource PhasmaDivider}" />
+                    <Button Margin="0,16,0,0" HorizontalAlignment="Left" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding ResetHudLookCommand, Mode=OneTime}">
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Symbol="ArrowReset24" FontSize="14" Margin="0,0,6,0" />
                             <TextBlock Text="{x:Static resources:Strings.Menu_Rendering_ResetHUDLook}" />
@@ -117,43 +204,59 @@
             </controls:SettingsCard>
         </StackPanel>
 
-        <!--  Right: live preview and the main look settings  -->
-        <StackPanel Grid.Column="1">
-            <TextBlock Margin="0,0,0,8" FontSize="13" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_Rendering_ActualSize}" />
-            <Border Height="210" CornerRadius="{DynamicResource PhasmaCornerRadius}" ClipToBounds="True" Padding="10" Background="#FF2A5A8C"
-                    BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
-                <Image Source="{Binding HudPreviewActual}" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" />
+        <StackPanel Grid.Row="1" Grid.Column="1">
+            <Border Margin="0,0,0,18" Style="{DynamicResource PhasmaCard}" Padding="20,18,20,18">
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,12" LastChildFill="True">
+                        <Border DockPanel.Dock="Right" Style="{DynamicResource PhasmaTagNeutral}"><TextBlock Text="1:1" /></Border>
+                        <TextBlock VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   Text="{Binding Source={x:Static resources:Strings.Menu_Rendering_ActualSize}, Converter={StaticResource PhasmaUpper}}" />
+                    </DockPanel>
+                    <Border Height="210" ClipToBounds="True" Padding="16" Background="#FF2A5A8C" BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                        <Image Source="{Binding HudPreviewActual}" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                    </Border>
+                    <TextBlock Margin="0,14,0,0" FontSize="12.5" LineHeight="18" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               Text="{x:Static resources:Strings.Menu_Rendering_FPSCountsFramesGameActuallyShows}" />
+                </StackPanel>
             </Border>
-            <TextBlock Margin="2,8,0,12" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                       Text="{x:Static resources:Strings.Menu_Rendering_FPSCountsFramesGameActuallyShows}" />
 
-            <controls:SettingsCard Header="Look and position">
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_Position}">
-                    <ComboBox Width="110" Padding="10,5,10,5" ItemsSource="{Binding HudPositionOptions, Mode=OneTime}" SelectedIndex="{Binding HudPositionIndex, Mode=TwoWay}" />
-                </controls:OptionControl>
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_Background}">
+            <controls:SettingsCard IsEnabled="{Binding HudEnabled, Mode=OneWay}" Header="Look and position">
+                <StackPanel>
+                    <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Rendering_Position}" />
+                    <ListBox Margin="20,-6,14,14" Style="{StaticResource PickList}" ItemsSource="{Binding HudPositionOptions, Mode=OneTime}" SelectedIndex="{Binding HudPositionIndex, Mode=TwoWay}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="3" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
+                </StackPanel>
+                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Rendering_Background}">
                     <StackPanel Orientation="Horizontal">
-                        <Slider Width="76" VerticalAlignment="Center" Minimum="0" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True" Value="{Binding HudBackgroundOpacity, Mode=TwoWay}"
+                        <Slider Width="84" VerticalAlignment="Center" Minimum="0" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True" Value="{Binding HudBackgroundOpacity, Mode=TwoWay}"
                                 ToolTip="{Binding HudBackgroundOpacity}" />
-                        <TextBlock Width="40" Margin="6,0,0,0" VerticalAlignment="Center" TextAlignment="Right" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                   Text="{Binding HudBackgroundOpacity, StringFormat={}{0}%}" />
+                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding HudBackgroundOpacity, StringFormat={}{0}%}" />
                     </StackPanel>
                 </controls:OptionControl>
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Overlays_CrosshairSize_Title}">
+                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Overlays_CrosshairSize_Title}">
                     <StackPanel Orientation="Horizontal">
-                        <Slider Width="76" VerticalAlignment="Center" Minimum="50" Maximum="250" TickFrequency="10" IsSnapToTickEnabled="True" Value="{Binding HudScale, Mode=TwoWay}"
+                        <Slider Width="84" VerticalAlignment="Center" Minimum="50" Maximum="250" TickFrequency="10" IsSnapToTickEnabled="True" Value="{Binding HudScale, Mode=TwoWay}"
                                 ToolTip="{Binding HudScale}" />
-                        <TextBlock Width="40" Margin="6,0,0,0" VerticalAlignment="Center" TextAlignment="Right" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                   Text="{Binding HudScale, StringFormat={}{0}%}" />
+                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding HudScale, StringFormat={}{0}%}" />
                     </StackPanel>
                 </controls:OptionControl>
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_Layout}">
-                    <ComboBox Width="100" Padding="10,5,10,5" SelectedIndex="{Binding HudLayoutIndex, Mode=TwoWay}">
-                        <ComboBoxItem Content="{x:Static resources:Strings.Menu_Rendering_List}" />
-                        <ComboBoxItem Content="{x:Static resources:Strings.Menu_Rendering_OneLine}" />
-                    </ComboBox>
+                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Rendering_Layout}">
+                    <ListBox Style="{StaticResource PickList}" SelectedIndex="{Binding HudLayoutIndex, Mode=TwoWay}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBoxItem Margin="0,6,4,6" Content="{x:Static resources:Strings.Menu_Rendering_List}" />
+                        <ListBoxItem Margin="0,6,0,6" Content="{x:Static resources:Strings.Menu_Rendering_OneLine}" />
+                    </ListBox>
                 </controls:OptionControl>
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_ShowLabels}">
+                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Rendering_ShowLabels}">
                     <ui:ToggleSwitch IsChecked="{Binding HudShowLabels, Mode=TwoWay}" />
                 </controls:OptionControl>
             </controls:SettingsCard>

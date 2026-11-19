@@ -12,7 +12,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             InitializeComponent();
         }
 
-        /// <summary>Edit on a row opens that program in the editor below the list.</summary>
         private void EditIntegration_Click(object sender, System.Windows.RoutedEventArgs e)
         {
             if (sender is System.Windows.FrameworkElement { DataContext: CustomIntegration integration })
@@ -24,6 +23,7 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             IntegrationsViewModel viewModel = (IntegrationsViewModel)DataContext;
             viewModel.SelectedCustomIntegration = (CustomIntegration)((ListBox)sender).SelectedItem;
             viewModel.OnPropertyChanged(nameof(viewModel.SelectedCustomIntegration));
+            viewModel.OnPropertyChanged(nameof(viewModel.IsCustomIntegrationSelected));
         }
     }
 }

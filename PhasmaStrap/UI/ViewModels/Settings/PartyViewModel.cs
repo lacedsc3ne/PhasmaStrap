@@ -16,7 +16,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public bool You { get; init; }
 
-        /// <summary>You lead, this is someone else, and the server knows who they are.</summary>
         public bool CanManage { get; init; }
 
         public Visibility ManageVisibility => CanManage ? Visibility.Visible : Visibility.Collapsed;
@@ -45,14 +44,12 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             ? "Not in a game"
             : Together ? Game + ", same server" : Game;
 
-        /// <summary>Where this member is playing, when the party server says.</summary>
         public long PlaceId { get; init; }
 
         public string JobId { get; init; } = "";
 
         public bool CanJoinGame => !You && PlaceId > 0;
 
-        /// <summary>The ⋯ button shows when there is anything in its menu besides copying the name.</summary>
         public Visibility MoreVisibility => CanManage || CanJoinGame ? Visibility.Visible : Visibility.Collapsed;
     }
 
@@ -192,15 +189,12 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public Visibility OfferFromAvatarVisibility => OfferFromAvatar is null ? Visibility.Collapsed : Visibility.Visible;
 
-        /// <summary>Choices for "If the leader leaves", in the order of PartyService.LeaderLeaves keys below.</summary>
         public string[] LeaderLeavesOptions { get; } = { "Longest member", "End the party" };
 
         private static readonly string[] LeaderLeavesKeys = { PartyService.LeaderLeaves.Pass, PartyService.LeaderLeaves.End };
 
-        /// <summary>Shown while in a party whose server knows this setting.</summary>
         public Visibility LeaderLeavesVisibility => PartyService.InParty && PartyService.Current.OnLeaderLeave.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
 
-        /// <summary>It's a party wide setting, so only the leader can change it. Everyone else sees what the leader picked.</summary>
         public bool CanSetLeaderLeaves => PartyService.IsLeader;
 
         public string LeaderLeavesHint => PartyService.IsLeader
@@ -242,7 +236,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public string OfferPendingText => Offer is { } offer ? $"Waiting for {offer.ToName} to accept" : "";
 
-        /// <summary>Members the leader can hand the party to, for the picker in the side panel.</summary>
         public ObservableCollection<PartyMemberRow> LeaderCandidates { get; } = new();
 
         public Visibility LeaderPickerVisibility => LeaderCandidates.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -382,7 +375,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 : "The party server didn't take that. It may need an update before the leader can be passed on.";
         }
 
-        /// <summary>Joins the exact server this member is in, or just their game when the server isn't known.</summary>
         public void JoinMemberGame(PartyMemberRow row)
         {
             if (!row.CanJoinGame)

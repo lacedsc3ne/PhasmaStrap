@@ -104,8 +104,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public string Username { get; init; } = "";
 
-        // ---- Alerts just for this friend
-
         private static readonly string[] AlertKeys =
         {
             PhasmaStrap.Utility.FriendNotesStore.AlertMode.Usual,
@@ -114,12 +112,10 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             PhasmaStrap.Utility.FriendNotesStore.AlertMode.Never,
         };
 
-        /// <summary>Same order as AlertKeys.</summary>
         public static readonly string[] AlertLabels = { "Use my usual alerts", "When they come online", "When they join a game", "Never" };
 
         private string _alerts = "";
 
-        /// <summary>Index into AlertLabels. Saved straight away and read by FriendActivityMonitor.</summary>
         public int AlertModeIndex
         {
             get => Math.Max(0, Array.IndexOf(AlertKeys, _alerts));
@@ -139,11 +135,8 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public void LoadAlerts(string? mode) => _alerts = Array.IndexOf(AlertKeys, mode ?? "") < 0 ? "" : mode!;
 
-        // ---- Friends since
-
         private DateTime? _friendsSinceUtc;
 
-        /// <summary>When you became friends, from this PC's own record or PhasmaStrap's server. Null when nobody knows.</summary>
         public DateTime? FriendsSinceUtc
         {
             get => _friendsSinceUtc;
@@ -162,20 +155,14 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        // ---- Same server
-
         public bool CanJoinServer => Presence is { Type: FriendPresenceType.InGame } p && p.PlaceId > 0 && !string.IsNullOrEmpty(p.GameId);
 
         public Visibility SameServerVisibility => CanJoinServer ? Visibility.Visible : Visibility.Collapsed;
 
-        // ---- Right now: how long they have played and which server they are on
-
-        /// <summary>"Playing for 42 minutes", counted from when this app first saw them in this game. Empty when unknown.</summary>
         public string PlayingForText => PhasmaStrap.Utility.FriendPlaySessions.PlayingForText(UserId, Presence);
 
         public Visibility PlayingForVisibility => PlayingForText.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
 
-        /// <summary>The plain "Right now" caption, shown when there is no play time to show instead.</summary>
         public Visibility RightNowCaptionVisibility => PlayingForText.Length > 0 ? Visibility.Collapsed : Visibility.Visible;
 
         public void RefreshPlayingFor()
@@ -187,7 +174,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         private string _serverText = "";
 
-        /// <summary>"Frankfurt · 9 of 12 players · 24 ms from you", with unknown parts left out. Empty when nothing is known.</summary>
         public string ServerText
         {
             get => _serverText;
@@ -201,7 +187,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         private string? _gameIconUrl;
 
-        /// <summary>Icon of the game they are in now, for the tile in the Right now card.</summary>
         public string? GameIconUrl
         {
             get => _gameIconUrl;
@@ -220,8 +205,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 return letters.Length > 0 ? letters : "?";
             }
         }
-
-        // ---- History together, from this PC's session history
 
         private List<PlayedTogetherTile> _playedTogether = new();
 
@@ -248,7 +231,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         }
     }
 
-    /// <summary>A game you were on the same server with a friend in, for "Played together recently".</summary>
     public sealed class PlayedTogetherTile
     {
         public string Name { get; init; } = "";
@@ -258,7 +240,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string ToolTip { get; init; } = "";
     }
 
-    /// <summary>A saved account, for the small Accounts card on the Friends page.</summary>
     public sealed class AccountSummaryRow
     {
         public string Name { get; init; } = "";
@@ -309,14 +290,12 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             set { _favouritesOnly = value; OnPropertyChanged(nameof(FavouritesOnly)); ApplyView(); }
         }
 
-        /// <summary>Friend alerts: a pop up when a friend comes online (for friends on their usual alerts).</summary>
         public bool AlertOnline
         {
             get => App.Settings.Prop.FriendAlertOnline;
             set { App.Settings.Prop.FriendAlertOnline = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.FriendAlertOnline)); OnPropertyChanged(nameof(AlertOnline)); }
         }
 
-        /// <summary>Friend alerts: a pop up when a friend starts playing a game (for friends on their usual alerts).</summary>
         public bool AlertGame
         {
             get => App.Settings.Prop.FriendAlertGame;
@@ -413,9 +392,11 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             get => App.Settings.Prop.FriendActivityPollSeconds;
             set
             {
-                App.Settings.Prop.FriendActivityPollSeconds = Math.Max(20, value);
+                int seconds = Math.Clamp(value, 20, 600);
+                App.Settings.Prop.FriendActivityPollSeconds = seconds;
+                App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.FriendActivityPollSeconds));
 
-                if (value < 20)
+                if (seconds != value)
                     OnPropertyChanged(nameof(PollSeconds));
             }
         }
@@ -557,8 +538,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        // ---- Friend details: history together, friends since, same server
-
         private SessionData _sessions = new();
         private long _accountId;
 
@@ -661,7 +640,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 foreach (FriendRow row in rows)
                     row.FriendsSinceUtc = PhasmaStrap.Utility.FriendHistoryStore.Shared.KnownSince(accountId, row.UserId);
 
-                // Roblox doesn't say when a friendship started, so ask PhasmaStrap's server for the rest
                 Dictionary<long, DateTime> remote = await PhasmaStrap.Utility.Backend.SocialApi.GetFriendsSinceAsync(
                     accountId,
                     rows.OrderByDescending(r => r.IsFavourite).ThenBy(r => r.GroupRank).Select(r => r.UserId)).ConfigureAwait(true);
@@ -678,15 +656,8 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        // ---- Right now: the friend's server (region, players, ping)
-
         private static readonly Dictionary<string, (DateTime At, string Text, string ToolTip, string? Icon)> _serverInfo = new();
 
-        /// <summary>
-        /// Fills "Frankfurt · 9 of 12 players · 24 ms from you" for the friend's server: players from Roblox's public server list,
-        /// region from your own session history or PhasmaStrap's server (GamesApi.FactsAsync), ping estimated from your distance to
-        /// that datacenter the same way the server browser does. Unknown parts are left out.
-        /// </summary>
         private static async Task LoadServerAsync(FriendRow? row)
         {
             if (row is null)
@@ -778,7 +749,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             row.ServerToolTip = toolTip;
         }
 
-        /// <summary>Same estimate as the server browser's datacenter list: your distance to the datacenter. -1 when unknown.</summary>
         private static async Task<int> EstimatePingAsync(string city, string country)
         {
             if (city.Length == 0)
@@ -810,7 +780,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public ICommand SameServerCommand { get; }
 
-        /// <summary>Joins the exact server the friend is in, not just their game.</summary>
         private static async Task SameServerAsync(FriendRow? row)
         {
             if (row is null)
@@ -837,8 +806,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             if (!RobloxLaunch.Join(placeId, now.GameId))
                 Frontend.ShowMessageBox("Could not start Roblox.", MessageBoxImage.Error);
         }
-
-        // ---- Right rail: party and saved accounts
 
         public ICommand StartPartyCommand { get; }
         public ICommand JoinPartyCommand { get; }
@@ -897,7 +864,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public Visibility PartyStartVisibility => PartyUsable && !PhasmaStrap.Utility.PartyService.InParty ? Visibility.Visible : Visibility.Collapsed;
         public Visibility PartyInVisibility => PartyUsable && PhasmaStrap.Utility.PartyService.InParty ? Visibility.Visible : Visibility.Collapsed;
-        /// <summary>Signed out or parties off: only a way to the Party tab.</summary>
         public Visibility PartyOpenVisibility => PartyUsable ? Visibility.Collapsed : Visibility.Visible;
 
         private string _partyJoinCode = "";
@@ -956,7 +922,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         private void OnPartyChanged(object? sender, EventArgs e) => Application.Current?.Dispatcher.BeginInvoke(new Action(RaisePartyChanged));
 
-        /// <summary>Called when the page shows, so the party card follows the party live.</summary>
         public void Attach()
         {
             PhasmaStrap.Utility.PartyService.Changed -= OnPartyChanged;
@@ -975,11 +940,12 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             if (_accountId > 0)
                 LoadAccounts(_accountId);
 
-            // Keeps "Playing for 42 minutes" ticking while the page is open
             _playingForTimer ??= new System.Windows.Threading.DispatcherTimer(TimeSpan.FromSeconds(30), System.Windows.Threading.DispatcherPriority.Background,
-                (_, _) => _selectedFriend?.RefreshPlayingFor(), Application.Current.Dispatcher);
+                (_, _) => PhasmaStrap.UI.SettingsWindowState.RunWhenShown(RefreshSelectedPlayingFor), Application.Current.Dispatcher);
             _playingForTimer.Start();
         }
+
+        private void RefreshSelectedPlayingFor() => _selectedFriend?.RefreshPlayingFor();
 
         public void Detach()
         {
@@ -1006,7 +972,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             public DateTime LastUsedUtc { get; set; }
         }
 
-        /// <summary>Reads the account switcher's saved list (read only) for the Accounts card.</summary>
         private void LoadAccounts(long currentUserId)
         {
             SavedAccounts.Clear();

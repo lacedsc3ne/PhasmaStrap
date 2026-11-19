@@ -7,7 +7,6 @@ namespace PhasmaStrap.Utility
             public bool Favourite { get; set; }
             public string Note { get; set; } = "";
 
-            /// <summary>Alert override for this friend: "" follows the usual settings, or one of the AlertMode values.</summary>
             public string Alerts { get; set; } = "";
 
             [System.Text.Json.Serialization.JsonIgnore]
@@ -92,7 +91,6 @@ namespace PhasmaStrap.Utility
 
                 var entry = new Entry { Favourite = favourite, Note = (note ?? "").Trim() };
 
-                // Keep this friend's alert choice when only the star or the note changes
                 if (_entries.TryGetValue(userId, out Entry? existing))
                     entry.Alerts = existing.Alerts ?? "";
 
@@ -108,7 +106,6 @@ namespace PhasmaStrap.Utility
             }
         }
 
-        /// <summary>The values an alert override can take. Anything else means "use the usual settings".</summary>
         public static class AlertMode
         {
             public const string Usual = "";
@@ -143,7 +140,6 @@ namespace PhasmaStrap.Utility
             }
         }
 
-        /// <summary>Friends with their own alert choice, keyed by user ID.</summary>
         public Dictionary<long, string> AlertOverrides()
         {
             lock (_lock)

@@ -5,10 +5,6 @@ using System.Windows.Input;
 
 namespace PhasmaStrap.UI.Elements.Dialogs
 {
-    /// <summary>
-    /// Deployment > "Ask which account": the saved accounts (from the account switcher's library) before Roblox starts.
-    /// PickedUserId is null when the launch was called off.
-    /// </summary>
     public partial class LaunchAccountPickerDialog
     {
         public sealed class Row : INotifyPropertyChanged
@@ -40,7 +36,6 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
         public long? PickedUserId { get; private set; }
 
-        /// <summary>The account Roblox is signed in to right now, once known. 0 when unknown.</summary>
         public long CurrentUserId { get; private set; }
 
         public LaunchAccountPickerDialog(IEnumerable<PhasmaStrap.Utility.AccountQuickSwitch.Account> accounts)
@@ -68,7 +63,6 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
                 try
                 {
-                    // Marks the account that is signed in now, and selects it so Enter keeps it
                     Integrations.RobloxCookie.RobloxAccount? current = await Integrations.RobloxCookie.GetAccountAsync();
                     if (current is null)
                         return;

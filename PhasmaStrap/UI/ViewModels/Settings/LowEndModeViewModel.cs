@@ -91,6 +91,13 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             OnPropertyChanged(nameof(StatusText));
             OnPropertyChanged(nameof(TurnOffVisibility));
 
+            PerformanceViewModel performance = RenderingViewModel.Shared.Performance;
+            performance.OnPropertyChanged(nameof(PerformanceViewModel.AntiAliasingEnabled));
+            performance.OnPropertyChanged(nameof(PerformanceViewModel.AntiAliasingMethodIndex));
+            performance.OnPropertyChanged(nameof(PerformanceViewModel.FrameGenEnabled));
+            performance.OnPropertyChanged(nameof(PerformanceViewModel.FrameGenQuality));
+            performance.OnPropertyChanged(nameof(PerformanceViewModel.FrameGenQualityDisplay));
+
             Integrations.Overlays.OverlayHub.Refresh();
         }
     }

@@ -6,133 +6,186 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       mc:Ignorable="d"
       Title="ExtensionsPage"
       Scrollable="True">
+    <ui:UiPage.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+
+        <Style x:Key="WhenNotInstalled" TargetType="{x:Type Border}" BasedOn="{StaticResource PhasmaTagNeutral}">
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsInstalled}" Value="False">
+                    <Setter Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </ui:UiPage.Resources>
+
     <StackPanel Margin="0,0,14,14">
-        <StackPanel Orientation="Horizontal">
-            <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="Extensions" />
-            <Border Margin="10,2,0,0" Style="{DynamicResource PhasmaTagNeutral}">
-                <TextBlock Text="Launching" />
-            </Border>
-        </StackPanel>
-        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="Rojo, plus other tools to launch alongside Roblox." />
+        <controls:PageHeader Eyebrow="Settings · Launching" Title="Extensions" Subtitle="Rojo, plus other tools to launch alongside Roblox." />
 
-        <!--  Rojo: downloaded and managed by PhasmaStrap  -->
-        <Border Margin="0,0,0,12" Padding="16,14,16,14" Style="{DynamicResource PhasmaCard}" DataContext="{Binding Rojo}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <Border Width="44" Height="44" Margin="0,0,14,0" VerticalAlignment="Top" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="{Binding TileBrush, Mode=OneTime}">
-                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Georgia" FontSize="15" FontWeight="SemiBold" Foreground="White" Text="{Binding Initials, Mode=OneTime}" />
+        <Border Margin="0,0,0,12" Padding="0" Style="{DynamicResource PhasmaCard}" DataContext="{Binding Rojo}">
+            <StackPanel>
+                <Grid Margin="20,20,20,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Width="56" Height="56" Margin="0,0,16,0" VerticalAlignment="Top" phui:CutCorners.Size="6" Background="{Binding TileBrush, Mode=OneTime}">
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="18" FontWeight="Bold" Foreground="White" Text="{Binding Initials, Mode=OneTime}" />
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="18" FontWeight="Bold"
+                                   Text="{Binding Source={x:Static resources:Strings.Menu_Extensions_Rojo}, Converter={StaticResource PhasmaUpper}}" />
+                        <TextBlock Margin="0,2,0,0" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                   Text="Syncs files into Roblox Studio. PhasmaStrap downloads and manages Rojo itself." />
+                        <TextBlock Margin="0,8,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="12" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                            <Run Text="{Binding VersionText, Mode=OneWay}" />
+                            <Run Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text=" · project " />
+                            <Run Text="{Binding ProjectPathText, Mode=OneWay}" />
+                        </TextBlock>
+                    </StackPanel>
+                    <Border Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Top" Style="{DynamicResource PhasmaTagGood}" Visibility="{Binding IsServing, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="5" Height="5" Margin="0,0,6,0" VerticalAlignment="Center" Fill="{DynamicResource PhasmaGoodBrush}" />
+                            <TextBlock Text="SERVING" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Border Padding="20,12,20,12" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <WrapPanel>
+                            <Button Margin="0,0,8,0" Style="{DynamicResource PhasmaGhostButton}" IsEnabled="{Binding CanInstallOrUpdate}" Command="{Binding InstallOrUpdateCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="ArrowDownload24" FontSize="14" Margin="0,0,6,0" />
+                                    <TextBlock Text="{Binding InstallOrUpdateButtonText}" />
+                                </StackPanel>
+                            </Button>
+                            <Button Margin="0,0,8,0" Style="{DynamicResource PhasmaGhostButton}" IsEnabled="{Binding CanInstallOrUpdate}" Command="{Binding BrowseProjectCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Folder24" FontSize="14" Margin="0,0,6,0" />
+                                    <TextBlock Text="{x:Static resources:Strings.Menu_Extensions_BrowseProject}" />
+                                </StackPanel>
+                            </Button>
+                            <Button Margin="0,0,8,0" Style="{DynamicResource PhasmaAccentButton}" IsEnabled="{Binding CanToggleServe}" Command="{Binding ToggleServeCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Play24" FontSize="13" Margin="0,0,6,0" />
+                                    <TextBlock Text="{Binding ServeButtonText}" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{DynamicResource PhasmaGhostButton}" IsEnabled="{Binding CanUninstall}" Command="{Binding UninstallCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Delete24" FontSize="14" Margin="0,0,6,0" Foreground="{DynamicResource PhasmaRedTextBrush}" />
+                                    <TextBlock Foreground="{DynamicResource PhasmaRedTextBrush}" Text="{x:Static resources:Strings.Uninstaller_Uninstall}" />
+                                </StackPanel>
+                            </Button>
+                        </WrapPanel>
+                        <TextBlock Grid.Column="1" Margin="16,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="13" TextWrapping="Wrap" TextAlignment="Right" Text="{Binding StatusText}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsServing}" Value="True">
+                                            <Setter Property="Foreground" Value="{DynamicResource PhasmaGoodBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
                 </Border>
-                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock FontSize="14" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_Extensions_Rojo}" />
-                    <TextBlock Margin="0,2,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                               Text="Syncs files into Roblox Studio. PhasmaStrap downloads and manages Rojo itself." />
-                    <TextBlock Margin="0,4,0,0" FontSize="12" TextTrimming="CharacterEllipsis">
-                        <Run Text="{Binding VersionText, Mode=OneWay}" />
-                        <Run Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text=" · project " />
-                        <Run FontFamily="{DynamicResource PhasmaMono}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ProjectPathText, Mode=OneWay}" />
-                    </TextBlock>
-                </StackPanel>
-
-                <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,10,0,0">
-                    <WrapPanel>
-                        <Button Margin="0,0,8,6" Style="{DynamicResource PhasmaSoftButton}" IsEnabled="{Binding CanInstallOrUpdate}" Command="{Binding InstallOrUpdateCommand}">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="ArrowDownload24" FontSize="14" Margin="0,0,6,0" />
-                                <TextBlock Text="{Binding InstallOrUpdateButtonText}" />
-                            </StackPanel>
-                        </Button>
-                        <Button Margin="0,0,8,6" Style="{DynamicResource PhasmaSoftButton}" IsEnabled="{Binding CanInstallOrUpdate}" Command="{Binding BrowseProjectCommand}">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Folder24" FontSize="14" Margin="0,0,6,0" />
-                                <TextBlock Text="{x:Static resources:Strings.Menu_Extensions_BrowseProject}" />
-                            </StackPanel>
-                        </Button>
-                        <Button Margin="0,0,8,6" Style="{DynamicResource PhasmaAccentButton}" IsEnabled="{Binding CanToggleServe}" Command="{Binding ToggleServeCommand}">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Play24" FontSize="13" Margin="0,0,6,0" />
-                                <TextBlock Text="{Binding ServeButtonText}" />
-                            </StackPanel>
-                        </Button>
-                        <Button Margin="0,0,0,6" Style="{DynamicResource PhasmaGhostButton}" IsEnabled="{Binding CanUninstall}" Command="{Binding UninstallCommand}">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Delete24" FontSize="14" Margin="0,0,6,0" />
-                                <TextBlock Text="{x:Static resources:Strings.Uninstaller_Uninstall}" />
-                            </StackPanel>
-                        </Button>
-                    </WrapPanel>
-                    <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding StatusText}" />
-                </StackPanel>
-            </Grid>
+            </StackPanel>
         </Border>
 
-        <WrapPanel Margin="0,8,0,10">
-            <TextBlock Margin="0,0,10,0" VerticalAlignment="Center" FontSize="13.5" FontWeight="SemiBold" Text="{x:Static resources:Strings.Installer_Extensions_Other_Title}" />
-            <TextBlock VerticalAlignment="Center" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                       Text="Point PhasmaStrap at a tool you already have. It does not bundle or download these." />
-        </WrapPanel>
+        <StackPanel Margin="0,14,0,0" Orientation="Horizontal">
+            <Border RenderTransformOrigin="0.5,0.5" Width="4" Height="20" Margin="3,0,12,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaAccentBrush}">
+                <Border.RenderTransform>
+                    <SkewTransform AngleX="-14" />
+                </Border.RenderTransform>
+            </Border>
+            <TextBlock VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="17" FontWeight="Bold" Foreground="White"
+                       Text="{Binding Source={x:Static resources:Strings.Installer_Extensions_Other_Title}, Converter={StaticResource PhasmaUpper}}" />
+            <TextBlock Margin="12,2,0,0" VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}">
+                <Run Text="{Binding Extensions.Count, Mode=OneWay}" /><Run Text=" KNOWN TOOLS" />
+            </TextBlock>
+        </StackPanel>
+        <TextBlock Margin="0,10,0,16" FontSize="13.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                   Text="Point PhasmaStrap at a tool you already have. It does not bundle or download these." />
 
         <ItemsControl ItemsSource="{Binding Extensions}" Focusable="False">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <controls:CardColumns />
+                    <controls:CardColumns Columns="3" MinColumnWidth="260" Spacing="16" />
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Border Padding="16,14,16,14" Style="{DynamicResource PhasmaCard}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <Border Width="38" Height="38" Margin="0,0,12,0" VerticalAlignment="Top" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="{Binding TileBrush, Mode=OneTime}">
-                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Georgia" FontSize="13" FontWeight="SemiBold" Foreground="White" Text="{Binding Initials, Mode=OneTime}" />
-                            </Border>
-                            <StackPanel Grid.Column="1" Margin="0,0,10,0" VerticalAlignment="Center">
-                                <TextBlock FontSize="13.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding DisplayName}" />
-                                <TextBlock Margin="0,2,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Description}" />
-                                <TextBlock Margin="0,2,0,0" FontSize="11.5" TextTrimming="CharacterEllipsis" Text="{Binding ShortStatusText}" ToolTip="{Binding PathText}">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
-                                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsInstalled}" Value="True">
-                                                    <Setter Property="Foreground" Value="{DynamicResource PhasmaGoodBrush}" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                            </StackPanel>
-                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                <Button Style="{DynamicResource PhasmaSoftButton}" IsEnabled="{Binding IsInstalled}"
-                                        Command="{Binding DataContext.LaunchCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
-                                    <StackPanel Orientation="Horizontal">
-                                        <ui:SymbolIcon Symbol="Play24" FontSize="13" Margin="0,0,6,0" />
-                                        <TextBlock Text="{x:Static resources:Strings.Common_Launch}" />
+                    <Border Padding="0" Style="{DynamicResource PhasmaCard}">
+                        <DockPanel LastChildFill="False">
+                            <Grid DockPanel.Dock="Top" Margin="20,18,20,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Border Width="40" Height="40" Margin="0,0,16,0" VerticalAlignment="Top" phui:CutCorners.Size="6" Background="{Binding TileBrush, Mode=OneTime}">
+                                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="14" FontWeight="Bold" Foreground="White" Text="{Binding Initials, Mode=OneTime}" />
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                                    <TextBlock FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding DisplayName}" />
+                                    <TextBlock Margin="0,2,0,0" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Description}" />
+                                </StackPanel>
+                                <Grid Grid.Column="2" VerticalAlignment="Top">
+                                    <Border Style="{DynamicResource PhasmaTagGood}" ToolTip="{Binding PathText}" Visibility="{Binding IsInstalled, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Ellipse Width="5" Height="5" Margin="0,0,6,0" VerticalAlignment="Center" Fill="{DynamicResource PhasmaGoodBrush}" />
+                                            <TextBlock Text="{Binding ShortStatusText, Converter={StaticResource PhasmaUpper}}" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource WhenNotInstalled}" ToolTip="{Binding PathText}">
+                                        <TextBlock Text="{Binding ShortStatusText, Converter={StaticResource PhasmaUpper}}" />
+                                    </Border>
+                                </Grid>
+                            </Grid>
+
+                            <TextBlock DockPanel.Dock="Top" Margin="20,0,20,14" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding PathText}" ToolTip="{Binding PathText}" />
+
+                            <Border DockPanel.Dock="Bottom" Padding="20,12,20,12" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button Style="{DynamicResource PhasmaAccentButton}" IsEnabled="{Binding IsInstalled}"
+                                            Command="{Binding DataContext.LaunchCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:SymbolIcon Symbol="Play24" FontSize="13" Margin="0,0,6,0" />
+                                            <TextBlock Text="{x:Static resources:Strings.Common_Launch}" />
+                                        </StackPanel>
+                                    </Button>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                        <Button Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Common_Browse}"
+                                                Command="{Binding DataContext.BrowseCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                            <ui:SymbolIcon Symbol="Folder24" FontSize="14" />
+                                        </Button>
+                                        <Button Margin="4,0,0,0" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.ContextMenu_OutputConsole_Clear}" IsEnabled="{Binding IsInstalled}"
+                                                Command="{Binding DataContext.ClearCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                            <ui:SymbolIcon Symbol="Delete24" FontSize="14" />
+                                        </Button>
                                     </StackPanel>
-                                </Button>
-                                <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Common_Browse}"
-                                        Command="{Binding DataContext.BrowseCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
-                                    <ui:SymbolIcon Symbol="Folder24" FontSize="14" />
-                                </Button>
-                                <Button Margin="4,0,0,0" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.ContextMenu_OutputConsole_Clear}" IsEnabled="{Binding IsInstalled}"
-                                        Command="{Binding DataContext.ClearCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
-                                    <ui:SymbolIcon Symbol="Delete24" FontSize="14" />
-                                </Button>
-                            </StackPanel>
-                        </Grid>
+                                </Grid>
+                            </Border>
+                        </DockPanel>
                     </Border>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>

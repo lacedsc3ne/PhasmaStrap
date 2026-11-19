@@ -255,6 +255,9 @@ namespace PhasmaStrap.UI
                 return;
             }
 
+            if (!_rendering && FindActiveWindow() == null)
+                return;
+
             XINPUT_STATE state = default;
             bool connected = TryGetState(ref state);
 
@@ -732,6 +735,8 @@ namespace PhasmaStrap.UI
             {
                 if (fe == null)
                     return;
+
+                PhasmaStrap.UI.Elements.Settings.MainWindow.MarkUnsavedCheckDueOnOpenWindows();
 
                 AutomationPeer peer = UIElementAutomationPeer.CreatePeerForElement(fe);
                 if (peer != null)

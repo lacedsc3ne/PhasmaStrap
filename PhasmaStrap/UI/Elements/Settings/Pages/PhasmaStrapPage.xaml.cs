@@ -20,7 +20,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             var account = new PhasmaAccountViewModel();
             PhasmaAccountSection.DataContext = account;
 
-            // Roblox link state and the newest backup come from the server; the page shows the local view until then.
             _ = account.LoadSummaryAsync();
         }
 

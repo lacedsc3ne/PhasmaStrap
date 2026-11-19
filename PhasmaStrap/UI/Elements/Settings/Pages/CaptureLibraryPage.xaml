@@ -7,128 +7,183 @@
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       xmlns:dmodels="clr-namespace:PhasmaStrap.UI.ViewModels.Settings"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       mc:Ignorable="d"
       d:DataContext="{d:DesignInstance dmodels:CaptureLibraryPageViewModel, IsDesignTimeCreatable=False}"
       d:DesignHeight="700" d:DesignWidth="1000"
       Title="CaptureLibraryPage"
       Scrollable="False">
     <ui:UiPage.Resources>
-        <!--  Kind filter chips: RadioButtons so one stays lit  -->
         <Style x:Key="KindChip" TargetType="RadioButton" BasedOn="{StaticResource PhasmaChip}">
             <Setter Property="GroupName" Value="LibraryKind" />
-            <Setter Property="Margin" Value="0,0,6,6" />
+            <Setter Property="Margin" Value="0,0,8,0" />
         </Style>
 
-        <!--  Equal width buttons in the detail panel  -->
         <Style x:Key="DetailButton" TargetType="Button" BasedOn="{StaticResource PhasmaSoftButton}">
             <Setter Property="Margin" Value="0,0,8,8" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
         </Style>
 
-        <!--  Thumbnail frame that lights up when its capture is picked  -->
-        <Style x:Key="TileFrame" TargetType="Border" BasedOn="{StaticResource PhasmaThumb}">
-            <Setter Property="CornerRadius" Value="{DynamicResource PhasmaCornerRadiusSmall}" />
-            <Setter Property="BorderThickness" Value="2" />
-            <Setter Property="BorderBrush" Value="Transparent" />
+        <Style x:Key="KindTag" TargetType="Border" BasedOn="{StaticResource PhasmaTagNeutral}">
+            <Setter Property="Margin" Value="8" />
+            <Setter Property="Padding" Value="7,2" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="IsHitTestVisible" Value="False" />
+            <Setter Property="Background" Value="#CC0D0D12" />
+            <Setter Property="phui:CutCorners.Size" Value="0" />
             <Style.Triggers>
-                <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                    <Setter Property="BorderBrush" Value="{DynamicResource PhasmaAccentBrush}" />
+                <DataTrigger Binding="{Binding Kind}" Value="Video">
+                    <Setter Property="TextElement.Foreground" Value="{DynamicResource PhasmaRedTextBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Kind}" Value="Gif">
+                    <Setter Property="TextElement.Foreground" Value="{DynamicResource PhasmaInfoBrush}" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
+        <Style x:Key="DayHeading" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,4,0,10" />
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaMono}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+        </Style>
     </ui:UiPage.Resources>
 
-    <!--  Focusable so Delete, F2, Enter and Ctrl C work on the picked capture  -->
     <Grid x:Name="LibraryRoot" Margin="0,0,14,14" Focusable="True" FocusVisualStyle="{x:Null}" Background="Transparent">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="340" />
         </Grid.ColumnDefinitions>
 
-        <!--  Left: filters and the grid  -->
-        <DockPanel Grid.Column="0" Margin="0,0,16,0">
-            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6" LastChildFill="False">
-                <TextBlock DockPanel.Dock="Right" Margin="12,0,0,6" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding StorageText, Mode=OneWay}" />
+        <WrapPanel Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,14" VerticalAlignment="Center">
+            <RadioButton Style="{StaticResource KindChip}" Content="Everything" IsChecked="{Binding ShowEverything, Mode=TwoWay}" />
+            <RadioButton Style="{StaticResource KindChip}" Content="Clips" IsChecked="{Binding ShowClips, Mode=TwoWay}" />
+            <RadioButton Style="{StaticResource KindChip}" Content="{x:Static resources:Strings.Menu_Capture_Screenshots}" IsChecked="{Binding ShowScreenshots, Mode=TwoWay}" />
+            <RadioButton Style="{StaticResource KindChip}" Content="GIFs" IsChecked="{Binding ShowGifs, Mode=TwoWay}" />
+            <ComboBox Width="170" Margin="4,0,0,0" VerticalAlignment="Center" ItemsSource="{Binding GameOptions}" SelectedItem="{Binding SelectedGame, Mode=TwoWay}" ToolTip="Only captures from this game" />
+        </WrapPanel>
 
-                <WrapPanel DockPanel.Dock="Left" VerticalAlignment="Center">
-                    <RadioButton Style="{StaticResource KindChip}" Content="Everything" IsChecked="{Binding ShowEverything, Mode=TwoWay}" />
-                    <RadioButton Style="{StaticResource KindChip}" Content="Clips" IsChecked="{Binding ShowClips, Mode=TwoWay}" />
-                    <RadioButton Style="{StaticResource KindChip}" Content="{x:Static resources:Strings.Menu_Capture_Screenshots}" IsChecked="{Binding ShowScreenshots, Mode=TwoWay}" />
-                    <RadioButton Style="{StaticResource KindChip}" Content="GIFs" IsChecked="{Binding ShowGifs, Mode=TwoWay}" />
-                    <ComboBox Width="170" Margin="4,0,0,6" ItemsSource="{Binding GameOptions}" SelectedItem="{Binding SelectedGame, Mode=TwoWay}" ToolTip="Only captures from this game" />
-                </WrapPanel>
-            </DockPanel>
-
-            <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8">
-                <TextBlock Margin="0,0,10,0" FontSize="11.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding CountText, Mode=OneWay}" />
-                <TextBlock FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Status, Mode=OneWay}" />
-            </WrapPanel>
-
-            <Grid>
-                <!--  Empty state  -->
-                <StackPanel Margin="0,60,0,0" HorizontalAlignment="Center" VerticalAlignment="Top" Visibility="{Binding EmptyVisibility}">
-                    <ui:SymbolIcon Symbol="ImageMultiple24" FontSize="32" Opacity="0.3" HorizontalAlignment="Center" />
-                    <TextBlock Margin="0,10,0,0" MaxWidth="320" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" FontSize="13"
-                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding EmptyText, Mode=OneWay}" />
-                </StackPanel>
-
-                <ScrollViewer x:Name="LibraryScroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
-                    <StackPanel>
-                        <ItemsControl x:Name="GroupsList" ItemsSource="{Binding Groups}" Focusable="False">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Margin="0,0,0,8">
-                                        <TextBlock Margin="0,0,0,10" Style="{DynamicResource PhasmaHeading}" FontSize="14" Text="{Binding Title}" />
-                                        <ItemsControl ItemsSource="{Binding Items}" Focusable="False">
-                                            <ItemsControl.ItemsPanel>
-                                                <ItemsPanelTemplate>
-                                                    <WrapPanel />
-                                                </ItemsPanelTemplate>
-                                            </ItemsControl.ItemsPanel>
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Border Width="188" Margin="0,0,12,14" Background="Transparent" Cursor="Hand" Tag="{Binding}" ToolTip="{Binding FileName}"
-                                                            MouseLeftButtonDown="Tile_MouseLeftButtonDown">
-                                                        <StackPanel>
-                                                            <Grid Height="106">
-                                                                <Border Style="{StaticResource TileFrame}">
-                                                                    <Grid>
-                                                                        <ui:SymbolIcon Symbol="{Binding Symbol}" FontSize="22" Opacity="0.4" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding PlaceholderVisibility}" />
-                                                                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
-                                                                    </Grid>
-                                                                </Border>
-                                                                <Border Width="30" Height="30" HorizontalAlignment="Center" VerticalAlignment="Center" CornerRadius="15" Background="#99000000" IsHitTestVisible="False" Visibility="{Binding PlayVisibility}">
-                                                                    <ui:SymbolIcon Symbol="Play12" FontSize="12" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                                </Border>
-                                                                <Border Margin="7" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Bottom" CornerRadius="5" Background="#AA000000" IsHitTestVisible="False">
-                                                                    <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="White" Text="{Binding TagText}" />
-                                                                </Border>
-                                                            </Grid>
-                                                            <DockPanel Margin="1,6,1,0">
-                                                                <TextBlock DockPanel.Dock="Right" Margin="8,0,0,0" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding WhenText}" />
-                                                                <TextBlock FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding GameText}" />
-                                                            </DockPanel>
-                                                        </StackPanel>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
-                        <Button HorizontalAlignment="Center" Margin="0,0,0,12" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding ShowMoreCommand}" Visibility="{Binding MoreVisibility}"
-                                Content="{Binding MoreText}" />
-                    </StackPanel>
-                </ScrollViewer>
-            </Grid>
+        <DockPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,0,0,16" LastChildFill="False">
+            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock FontFamily="{DynamicResource PhasmaMono}" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding CountText, Mode=OneWay}" />
+                <TextBlock Margin="10,0" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="·" />
+                <ui:SymbolIcon Symbol="HardDrive20" FontSize="13" Margin="0,0,6,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                <TextBlock FontFamily="{DynamicResource PhasmaMono}" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding StorageText, Mode=OneWay}" />
+            </StackPanel>
+            <TextBlock DockPanel.Dock="Right" Margin="16,0,0,0" MaxWidth="560" VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaMono}" FontSize="12" TextTrimming="CharacterEllipsis"
+                       Text="{Binding Status, Mode=OneWay}" ToolTip="{Binding Status, Mode=OneWay}">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Foreground" Value="{DynamicResource PhasmaGoodBrush}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding StatusIsError}" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource PhasmaRedTextBrush}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
         </DockPanel>
 
-        <!--  Right: the picked capture  -->
-        <Border Grid.Column="1" Padding="16,0,0,0" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+        <Grid Grid.Row="2" Grid.Column="0" Margin="0,0,20,0">
+            <StackPanel Margin="0,60,0,0" HorizontalAlignment="Center" VerticalAlignment="Top" Visibility="{Binding EmptyVisibility}">
+                <ui:SymbolIcon Symbol="ImageMultiple24" FontSize="32" Opacity="0.3" HorizontalAlignment="Center" />
+                <TextBlock Margin="0,10,0,0" MaxWidth="320" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" FontSize="13"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding EmptyText, Mode=OneWay}" />
+            </StackPanel>
+
+            <ScrollViewer x:Name="LibraryScroller" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+                <DockPanel>
+                    <Button DockPanel.Dock="Bottom" HorizontalAlignment="Center" Margin="0,4,0,4" Padding="12,6" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding ShowMoreCommand}" Visibility="{Binding MoreVisibility}"
+                            Content="{Binding MoreText}" />
+                    <ItemsControl x:Name="GroupsList" ItemsSource="{Binding Groups}" Focusable="False"
+                                  VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" VirtualizingPanel.ScrollUnit="Pixel" ScrollViewer.CanContentScroll="True">
+                        <ItemsControl.Template>
+                            <ControlTemplate TargetType="ItemsControl">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="True" Focusable="False">
+                                    <ItemsPresenter Margin="0,0,6,0" />
+                                </ScrollViewer>
+                            </ControlTemplate>
+                        </ItemsControl.Template>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,0,0,10">
+                                    <TextBlock Style="{StaticResource DayHeading}" Text="{Binding Title, Converter={StaticResource PhasmaUpper}}" />
+                                    <ItemsControl ItemsSource="{Binding Items}" Focusable="False" Margin="0,0,-12,0">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <UniformGrid Columns="4" VerticalAlignment="Top" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Margin="0,0,12,12" Background="{DynamicResource PhasmaPanelBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1" Cursor="Hand" Tag="{Binding}" ToolTip="{Binding FileName}"
+                                                        MouseLeftButtonDown="Tile_MouseLeftButtonDown">
+                                                    <Grid>
+                                                        <StackPanel>
+                                                            <Grid Height="112">
+                                                                <Border Background="{DynamicResource PhasmaS3Brush}" ClipToBounds="True">
+                                                                    <Grid>
+                                                                        <ui:SymbolIcon Symbol="{Binding Symbol}" FontSize="22" Opacity="0.4" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding PlaceholderVisibility}" />
+                                                                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" />
+                                                                    </Grid>
+                                                                </Border>
+                                                                <Border Style="{StaticResource KindTag}">
+                                                                    <TextBlock Text="{Binding TagText, Converter={StaticResource PhasmaUpper}}" />
+                                                                </Border>
+                                                                <Border Width="34" Height="34" Margin="0,0,10,10" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                                        Background="{DynamicResource PhasmaAccentBrush}" IsHitTestVisible="False" Visibility="{Binding PlayVisibility}">
+                                                                    <ui:SymbolIcon Symbol="Play12" FontSize="14" Filled="True" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                </Border>
+                                                            </Grid>
+                                                            <StackPanel Margin="12,10,12,12">
+                                                                <TextBlock FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="12.5" FontWeight="Bold" Foreground="White" TextTrimming="CharacterEllipsis"
+                                                                           Text="{Binding GameText, Converter={StaticResource PhasmaUpper}}" />
+                                                                <TextBlock Margin="0,4,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextTrimming="CharacterEllipsis"
+                                                                           Text="{Binding WhenText}" />
+                                                            </StackPanel>
+                                                        </StackPanel>
+                                                        <Border Height="2" VerticalAlignment="Bottom" Background="{DynamicResource PhasmaAccentBrush}" IsHitTestVisible="False">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Border.Style>
+                                                        </Border>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </DockPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <Border Grid.Row="2" Grid.Column="1" VerticalAlignment="Top" Padding="0" Style="{DynamicResource PhasmaCard}">
             <Grid>
-                <StackPanel Margin="0,60,0,0" HorizontalAlignment="Center" VerticalAlignment="Top" Visibility="{Binding NoDetailVisibility}">
+                <StackPanel Margin="20,60,20,60" HorizontalAlignment="Center" VerticalAlignment="Top" Visibility="{Binding NoDetailVisibility}">
                     <ui:SymbolIcon Symbol="Image24" FontSize="28" Opacity="0.3" HorizontalAlignment="Center" />
                     <TextBlock Margin="0,10,0,0" MaxWidth="220" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" FontSize="12.5"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Pick a capture to see it here. Double click opens it, right click shows everything you can do." />
@@ -136,79 +191,95 @@
 
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="{Binding DetailVisibility}">
                     <DockPanel LastChildFill="False">
-                        <Border DockPanel.Dock="Top" Height="170" Style="{DynamicResource PhasmaThumb}" Cursor="Hand" MouseLeftButtonDown="Preview_MouseLeftButtonDown" ToolTip="Open">
+                        <Border DockPanel.Dock="Top" Height="190" Background="{DynamicResource PhasmaS3Brush}" ClipToBounds="True" Cursor="Hand" MouseLeftButtonDown="Preview_MouseLeftButtonDown" ToolTip="Open">
                             <Grid>
                                 <ui:SymbolIcon Symbol="{Binding Selected.Symbol}" FontSize="28" Opacity="0.35" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                <Image Source="{Binding Preview}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
-                                <Border Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center" CornerRadius="20" Background="#99000000" IsHitTestVisible="False" Visibility="{Binding Selected.PlayVisibility}">
-                                    <ui:SymbolIcon Symbol="Play24" FontSize="16" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <Image Source="{Binding Preview}" Stretch="UniformToFill" />
+                                <Border DataContext="{Binding Selected}" Style="{StaticResource KindTag}">
+                                    <TextBlock Text="{Binding KindText, Converter={StaticResource PhasmaUpper}}" />
+                                </Border>
+                                <Border Width="44" Height="44" HorizontalAlignment="Center" VerticalAlignment="Center" phui:CutCorners.Size="6" Background="{DynamicResource PhasmaAccentBrush}" IsHitTestVisible="False"
+                                        Visibility="{Binding Selected.PlayVisibility}">
+                                    <ui:SymbolIcon Symbol="Play24" FontSize="18" Filled="True" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 </Border>
                             </Grid>
                         </Border>
 
-                        <StackPanel DockPanel.Dock="Top" Margin="0,12,0,12">
-                            <TextBlock Style="{DynamicResource PhasmaHeading}" FontSize="14" Text="{Binding Selected.GameText}" />
-                            <TextBlock Margin="0,2,0,0" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Selected.KindText}" />
-                            <TextBlock Margin="0,2,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding DetailMeta}" />
-                            <TextBlock Margin="0,2,0,0" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Selected.FileName}" ToolTip="{Binding Selected.Path}" />
+                        <StackPanel DockPanel.Dock="Top" Margin="18,16,18,4">
+                            <StackPanel Orientation="Horizontal">
+                                <Border RenderTransformOrigin="0.5,0.5" Width="4" Height="20" Margin="3,0,10,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaAccentBrush}">
+                                    <Border.RenderTransform>
+                                        <SkewTransform AngleX="-14" />
+                                    </Border.RenderTransform>
+                                </Border>
+                                <TextBlock VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="16" FontWeight="Bold" Foreground="White" TextTrimming="CharacterEllipsis"
+                                           Text="{Binding Selected.GameText, Converter={StaticResource PhasmaUpper}}" />
+                            </StackPanel>
+                            <TextBlock Margin="0,6,0,0" FontSize="12.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Selected.KindText}" />
+                            <TextBlock Margin="0,6,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding DetailMeta}" />
+                            <TextBlock Margin="0,4,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                       Text="{Binding Selected.FileName}" ToolTip="{Binding Selected.Path}" />
+
+                            <UniformGrid Columns="2" Margin="0,14,-8,0">
+                                <Button Style="{StaticResource DetailButton}" Command="{Binding EditCommand}" Visibility="{Binding EditVisibility}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Edit24" FontSize="14" Margin="0,0,6,0" />
+                                        <TextBlock Text="{x:Static resources:Strings.Common_Edit}" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Style="{StaticResource DetailButton}" Command="{Binding CopyCommand}" ToolTip="Ready to paste into a chat with Ctrl V">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Copy24" FontSize="14" Margin="0,0,6,0" />
+                                        <TextBlock Text="{x:Static resources:Strings.Common_Copy}" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Style="{StaticResource DetailButton}" Command="{Binding ShareCommand}" Visibility="{Binding ShareVisibility}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Globe24" FontSize="14" Margin="0,0,6,0" />
+                                        <TextBlock Text="Share to gallery" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Style="{StaticResource DetailButton}" Command="{Binding RevealCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="FolderOpen24" FontSize="14" Margin="0,0,6,0" />
+                                        <TextBlock Text="{x:Static resources:Strings.Menu_Capture_ShowFolder}" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Style="{StaticResource DetailButton}" Command="{Binding OpenCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Open24" FontSize="14" Margin="0,0,6,0" />
+                                        <TextBlock Text="{x:Static resources:Strings.Common_Open}" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Style="{StaticResource DetailButton}" Command="{Binding RenameCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Rename24" FontSize="14" Margin="0,0,6,0" />
+                                        <TextBlock Text="{x:Static resources:Strings.Common_Rename}" />
+                                    </StackPanel>
+                                </Button>
+                            </UniformGrid>
                         </StackPanel>
 
-                        <UniformGrid DockPanel.Dock="Top" Columns="2" Margin="0,0,-8,0">
-                            <Button Style="{StaticResource DetailButton}" Command="{Binding EditCommand}" Visibility="{Binding EditVisibility}">
-                                <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="Edit24" FontSize="14" Margin="0,0,6,0" />
-                                    <TextBlock Text="{x:Static resources:Strings.Common_Edit}" />
-                                </StackPanel>
-                            </Button>
-                            <Button Style="{StaticResource DetailButton}" Command="{Binding CopyCommand}" ToolTip="Ready to paste into a chat with Ctrl V">
-                                <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="Copy24" FontSize="14" Margin="0,0,6,0" />
-                                    <TextBlock Text="{x:Static resources:Strings.Common_Copy}" />
-                                </StackPanel>
-                            </Button>
-                            <Button Style="{StaticResource DetailButton}" Command="{Binding ShareCommand}" Visibility="{Binding ShareVisibility}">
-                                <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="Share24" FontSize="14" Margin="0,0,6,0" />
-                                    <TextBlock Text="Share to gallery" />
-                                </StackPanel>
-                            </Button>
-                            <Button Style="{StaticResource DetailButton}" Command="{Binding RevealCommand}">
-                                <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="FolderOpen24" FontSize="14" Margin="0,0,6,0" />
-                                    <TextBlock Text="{x:Static resources:Strings.Menu_Capture_ShowFolder}" />
-                                </StackPanel>
-                            </Button>
-                            <Button Style="{StaticResource DetailButton}" Command="{Binding OpenCommand}">
-                                <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="Open24" FontSize="14" Margin="0,0,6,0" />
-                                    <TextBlock Text="{x:Static resources:Strings.Common_Open}" />
-                                </StackPanel>
-                            </Button>
-                            <Button Style="{StaticResource DetailButton}" Command="{Binding RenameCommand}">
-                                <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="Rename24" FontSize="14" Margin="0,0,6,0" />
-                                    <TextBlock Text="{x:Static resources:Strings.Common_Rename}" />
-                                </StackPanel>
-                            </Button>
-                        </UniformGrid>
-
-                        <!--  Applied when a screenshot is shared to the gallery  -->
-                        <controls:SettingsCard DockPanel.Dock="Top" Margin="0,4,0,0" Header="Before sharing" Visibility="{Binding ShareVisibility}">
-                            <controls:OptionControl Header="Hide names" Description="Blurs the chat and player list, where usernames show">
+                        <StackPanel DockPanel.Dock="Top" Margin="0,12,0,0" Visibility="{Binding ShareVisibility}">
+                            <TextBlock Margin="20,0,20,10" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                       Text="{Binding Source='Before sharing', Converter={StaticResource PhasmaUpper}}" />
+                            <controls:OptionControl Flat="True" Header="Hide names" Description="Blurs the chat and player list, where usernames show">
                                 <ui:ToggleSwitch IsChecked="{Binding Capture.ShareHideNames, Mode=TwoWay}" />
                             </controls:OptionControl>
-                            <controls:OptionControl Header="Stamp game and time" Description="Small label in the corner">
+                            <controls:OptionControl Flat="True" Header="Stamp game and time" Description="Small label in the corner">
                                 <ui:ToggleSwitch IsChecked="{Binding Capture.ShareStamp, Mode=TwoWay}" />
                             </controls:OptionControl>
-                        </controls:SettingsCard>
+                        </StackPanel>
 
-                        <Button DockPanel.Dock="Top" Margin="0,12,0,0" HorizontalAlignment="Left" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold"
-                                Foreground="{DynamicResource PhasmaBadBrush}" Command="{Binding DeleteCommand}" ToolTip="Moves it to the Recycle Bin">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Delete24" FontSize="14" Margin="0,0,6,0" />
-                                <TextBlock Text="{x:Static resources:Strings.Common_Delete}" />
-                            </StackPanel>
-                        </Button>
+                        <Border DockPanel.Dock="Top" Margin="0,8,0,0" Padding="18,14,18,16" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                            <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold"
+                                    Foreground="{DynamicResource PhasmaRedTextBrush}" Command="{Binding DeleteCommand}" ToolTip="Moves it to the Recycle Bin">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Delete24" FontSize="14" Margin="0,0,6,0" />
+                                    <TextBlock Text="{x:Static resources:Strings.Common_Delete}" />
+                                </StackPanel>
+                            </Button>
+                        </Border>
                     </DockPanel>
                 </ScrollViewer>
             </Grid>

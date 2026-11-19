@@ -8,6 +8,8 @@
       xmlns:models="clr-namespace:PhasmaStrap.UI.ViewModels"
       xmlns:dmodels="clr-namespace:PhasmaStrap.UI.ViewModels.Installer"
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
+      xmlns:app="clr-namespace:PhasmaStrap"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       xmlns:enums="clr-namespace:PhasmaStrap.Enums"
       mc:Ignorable="d"
@@ -18,27 +20,51 @@
       Loaded="UiPage_Loaded">
 
     <StackPanel Margin="0,0,14,14">
-        <controls:MarkdownTextBlock FontSize="14" MarkdownText="{Binding MainText, Mode=OneWay}" TextWrapping="Wrap" />
+        <Grid Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Image Grid.Column="0" Width="54" Height="54" RenderOptions.BitmapScalingMode="HighQuality" Source="pack://application:,,,/Resources/PhasmaStrapLogo.png" />
+            <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
+                <TextBlock FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource PhasmaRedTextBrush}" Text="PHASMASTRAP" />
+                <TextBlock Margin="0,2,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static app:App.Version}" />
+            </StackPanel>
+        </Grid>
+        <controls:MarkdownTextBlock FontSize="14" LineHeight="21" Foreground="{DynamicResource TextFillColorSecondaryBrush}" MarkdownText="{Binding MainText, Mode=OneWay}" TextWrapping="Wrap" />
 
-        <Grid Margin="0,24,0,0">
-            <Grid.Style>
-                <Style TargetType="Grid">
+        <Border
+            Margin="0,18,0,0"
+            Padding="14,10"
+            phui:CutCorners.Size="9"
+            Background="#14FFB020"
+            BorderBrush="#73FFB020"
+            BorderThickness="1">
+            <Border.Style>
+                <Style TargetType="Border">
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding VersionNotice, Mode=OneWay}" Value="">
                             <Setter Property="Visibility" Value="Collapsed" />
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
-            </Grid.Style>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <Image Grid.Column="0" Width="32" RenderOptions.BitmapScalingMode="HighQuality" Source="pack://application:,,,/Resources/MessageBox/Warning.png" />
-            <TextBlock Grid.Column="1" FontSize="14" Margin="12,0,12,0" Text="{Binding VersionNotice, Mode=OneWay}" TextWrapping="Wrap" />
-            <ui:Button Grid.Column="2" Icon="ArrowDownload16" Content="Download" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="{Binding LatestReleaseUrl, Mode=OneWay}" />
-        </Grid>
+            </Border.Style>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ui:SymbolIcon Grid.Column="0" VerticalAlignment="Center" FontSize="18" Foreground="{DynamicResource PhasmaWarnBrush}" Symbol="Warning24" />
+                <TextBlock Grid.Column="1" Margin="12,0,12,0" VerticalAlignment="Center" FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding VersionNotice, Mode=OneWay}" TextWrapping="Wrap" />
+                <Button Grid.Column="2" Padding="12,7" VerticalAlignment="Center" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="{Binding LatestReleaseUrl, Mode=OneWay}" Style="{StaticResource PhasmaSoftButton}">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon FontSize="15" Foreground="{DynamicResource PhasmaWarnBrush}" Symbol="ArrowDownload16" />
+                        <TextBlock Margin="8,0,0,0" FontSize="13" Text="Download" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
 
         <StackPanel>
             <StackPanel.Style>
@@ -50,8 +76,7 @@
                     </Style.Triggers>
                 </Style>
             </StackPanel.Style>
-
-            <TextBlock Margin="0,24,0,0" FontSize="14" Text="{x:Static resources:Strings.Installer_Welcome_NextToContinue}" TextWrapping="Wrap" />
+            <TextBlock Margin="0,24,0,0" FontSize="13" LineHeight="19" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="{x:Static resources:Strings.Installer_Welcome_NextToContinue}" />
         </StackPanel>
     </StackPanel>
 </ui:UiPage>

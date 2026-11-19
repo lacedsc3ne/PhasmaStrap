@@ -6,13 +6,11 @@ using PhasmaStrap.Utility.Backend;
 
 namespace PhasmaStrap.UI.Elements.Dialogs
 {
-    /// <summary>What a list already knows about one public server when it opens the information window.</summary>
     public sealed class ServerInfoRequest
     {
         public long PlaceId { get; init; }
         public string JobId { get; init; } = "";
 
-        /// <summary>"Game · Place". Looked up when left empty.</summary>
         public string GameTitle { get; init; } = "";
 
         public int Playing { get; init; }
@@ -22,14 +20,12 @@ namespace PhasmaStrap.UI.Elements.Dialogs
         public string Region { get; init; } = "";
         public DateTime? FirstSeenUtc { get; init; }
 
-        /// <summary>Names of friends known to be in the server, or null to look them up.</summary>
         public IReadOnlyList<string>? Friends { get; init; }
 
         public Action? Join { get; init; }
         public bool CanJoin { get; init; } = true;
     }
 
-    /// <summary>A small window with everything known about one public server, opened from a server's right click menu.</summary>
     public partial class ServerInfoWindow
     {
         private const string LOG_IDENT = "ServerInfoWindow";
@@ -71,7 +67,6 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             Loaded += (_, _) => _ = FillAsync();
         }
 
-        /// <summary>Opens the window over <paramref name="owner"/>.</summary>
         public static void Open(DependencyObject? owner, ServerInfoRequest request)
         {
             var window = new ServerInfoWindow(request);

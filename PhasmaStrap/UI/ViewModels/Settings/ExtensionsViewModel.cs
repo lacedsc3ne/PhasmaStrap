@@ -38,7 +38,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public string InstalledVersionText => RojoManager.InstalledVersion is string v ? $"Installed ({v})" : "Not installed";
 
-        /// <summary>Shorter wording for the settings page card.</summary>
         public string VersionText => RojoManager.InstalledVersion is string v ? $"Version {v}" : "Not installed";
 
         public string Initials => InitialsTile.Initials("Rojo");
@@ -199,10 +198,8 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             ? ExtensionManager.GetSavedPath(Extension.Id)!
             : "Not located, browse to the executable to enable this";
 
-        /// <summary>Found or Not located, for the settings page card. The full path is in <see cref="PathText"/>.</summary>
         public string ShortStatusText => IsInstalled ? "Found" : "Not located";
 
-        /// <summary>Where the tool was found, or how to point PhasmaStrap at it. Shown on hover.</summary>
         public string PathText => IsInstalled
             ? ExtensionManager.GetSavedPath(Extension.Id) ?? ""
             : "Browse to the program to use it from here";

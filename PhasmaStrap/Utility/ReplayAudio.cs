@@ -252,7 +252,6 @@ namespace PhasmaStrap.Utility
 
                         if (_owner._allAudio)
                         {
-                            // Everything the PC plays, whether or not Roblox is open
                             client = ActivateEndpoint(capture: false);
                             how = "loopback of the default output (all PC audio)";
                         }

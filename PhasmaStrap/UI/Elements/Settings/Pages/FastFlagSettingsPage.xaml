@@ -13,7 +13,6 @@
       Scrollable="False">
     <controls:SectionHost x:Name="Host" Header="FastFlags" Layout="Tabs">
         <controls:SectionHost.HeaderContent>
-            <!--  Shown on the Roblox FFlags tab: jumps to the flag editor  -->
             <Button Loaded="EditorHeaderButton_Loaded" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="EditorHeaderButton_Click"
                     ToolTip="{x:Static resources:Strings.Menu_FastFlags_Editor_Description}">
                 <StackPanel Orientation="Horizontal">

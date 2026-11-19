@@ -30,7 +30,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public List<DiagnosticsBar> Bars { get; init; } = new();
     }
 
-    /// <summary>How a bar in a diagnostics chart is coloured: normal, a spike worth noticing, or a lost sample.</summary>
     public enum ChartBarKind
     {
         Normal,
@@ -38,7 +37,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         Lost,
     }
 
-    /// <summary>One bar of the Connection and Stutter charts. Height is in pixels for a chart of <see cref="DiagnosticsCharts.Height"/>.</summary>
     public sealed class DiagnosticsBar
     {
         public double Height { get; init; }
@@ -46,7 +44,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string Tip { get; init; } = "";
     }
 
-    /// <summary>Health check outcome at a glance, for the icon in the summary card.</summary>
     public enum HealthState
     {
         NotRun,
@@ -87,7 +84,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         private HealthState _healthOverall = HealthState.NotRun;
 
-        /// <summary>Good when every check passed, Warn when something is worth a look, Bad when something is broken.</summary>
         public HealthState HealthOverall
         {
             get => _healthOverall;

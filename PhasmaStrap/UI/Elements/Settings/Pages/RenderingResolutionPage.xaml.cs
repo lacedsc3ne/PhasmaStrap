@@ -14,7 +14,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            // Game icons come from play time history, then the Roblox thumbnails API; initials show until then.
             RenderingViewModel.Shared.Performance.LoadResolutionIcons();
         }
     }

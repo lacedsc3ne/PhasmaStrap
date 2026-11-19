@@ -5,10 +5,6 @@ using System.Windows.Media.Imaging;
 
 namespace PhasmaStrap.UI.Elements.Dialogs
 {
-    /// <summary>
-    /// The in-app "Make someone the party leader?" confirmation. It lays itself over the main window with a dim
-    /// backdrop and a card in the middle, instead of a system message box.
-    /// </summary>
     public partial class PartyLeaderDialog
     {
         public bool Confirmed { get; private set; }
@@ -52,7 +48,6 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             Loaded += (_, _) => ConfirmButton.Focus();
         }
 
-        /// <summary>Asks the leader to confirm handing the party over. True when they clicked "Make leader".</summary>
         public static bool Confirm(string name, string avatar, string code, int members)
         {
             var dialog = new PartyLeaderDialog(name, avatar, code, members);
@@ -79,7 +74,6 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             return dialog.Confirmed;
         }
 
-        /// <summary>Sizes this window to sit exactly over the owner's content.</summary>
         private bool CoverOwner(Window owner)
         {
             try
@@ -124,7 +118,6 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
         private void Scrim_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) => Close();
 
-        // Clicks on the card itself must not reach the backdrop
         private void Card_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) => e.Handled = true;
     }
 }

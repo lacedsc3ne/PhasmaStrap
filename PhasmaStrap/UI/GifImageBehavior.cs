@@ -41,6 +41,7 @@ namespace PhasmaStrap.UI
                 return;
 
             image.BeginAnimation(Image.SourceProperty, null);
+            image.ClearValue(FramesClockProperty);
             image.Source = null;
 
             string path = e.NewValue as string ?? "";
@@ -92,7 +93,7 @@ namespace PhasmaStrap.UI
 
                 if (image.IsLoaded)
                 {
-                    image.BeginAnimation(Image.SourceProperty, animation);
+                    StartFrames(image, animation);
                 }
                 else
                 {
@@ -100,7 +101,7 @@ namespace PhasmaStrap.UI
                     onLoaded = (_, _) =>
                     {
                         image.Loaded -= onLoaded;
-                        image.BeginAnimation(Image.SourceProperty, animation);
+                        StartFrames(image, animation);
                     };
                     image.Loaded += onLoaded;
                 }
@@ -110,6 +111,78 @@ namespace PhasmaStrap.UI
             {
                 EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
             });
+        }
+
+        private static readonly DependencyProperty FramesClockProperty =
+            DependencyProperty.RegisterAttached("FramesClock", typeof(AnimationClock), typeof(GifImageBehavior), new PropertyMetadata(null));
+
+        private static readonly DependencyProperty PauseHookProperty =
+            DependencyProperty.RegisterAttached("PauseHook", typeof(PauseHook), typeof(GifImageBehavior), new PropertyMetadata(null));
+
+        private static void StartFrames(Image image, ObjectAnimationUsingKeyFrames animation)
+        {
+            AnimationClock clock = animation.CreateClock();
+            image.SetValue(FramesClockProperty, clock);
+            image.ApplyAnimationClock(Image.SourceProperty, clock);
+
+            if (image.GetValue(PauseHookProperty) is not PauseHook hook)
+            {
+                hook = new PauseHook(image);
+                image.SetValue(PauseHookProperty, hook);
+            }
+
+            hook.Update();
+        }
+
+        private sealed class PauseHook
+        {
+            private readonly Image _image;
+            private Window? _window;
+
+            public PauseHook(Image image)
+            {
+                _image = image;
+                image.Loaded += (_, _) => Attach();
+                image.Unloaded += (_, _) => Detach();
+                if (image.IsLoaded)
+                    Attach();
+            }
+
+            private void Attach()
+            {
+                Detach();
+                _window = Window.GetWindow(_image);
+                if (_window is null)
+                    return;
+                _window.StateChanged += OnState;
+                _window.IsVisibleChanged += OnVisible;
+                Update();
+            }
+
+            private void Detach()
+            {
+                if (_window is null)
+                    return;
+                _window.StateChanged -= OnState;
+                _window.IsVisibleChanged -= OnVisible;
+                _window = null;
+            }
+
+            private void OnState(object? sender, EventArgs e) => Update();
+
+            private void OnVisible(object sender, DependencyPropertyChangedEventArgs e) => Update();
+
+            public void Update()
+            {
+                if (_image.GetValue(FramesClockProperty) is not AnimationClock clock || clock.Controller is null)
+                    return;
+
+                bool hidden = _window is not null && (_window.WindowState == System.Windows.WindowState.Minimized || !_window.IsVisible);
+                if (hidden && !clock.IsPaused)
+                    clock.Controller.Pause();
+                else if (!hidden && clock.IsPaused)
+                    clock.Controller.Resume();
+            }
         }
 
         private static readonly object _cacheLock = new();

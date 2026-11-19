@@ -7,22 +7,44 @@
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       xmlns:dmodels="clr-namespace:PhasmaStrap.UI.ViewModels.Settings"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       mc:Ignorable="d"
       d:DataContext="{d:DesignInstance dmodels:ActivityViewModel, IsDesignTimeCreatable=False}"
       Title="ActivityPage"
-      Scrollable="True">
+      Scrollable="False">
     <ui:UiPage.Resources>
-        <!--  One bar of the small playtime charts; the exact value is in the tooltip  -->
         <DataTemplate x:Key="ActivityChartBar">
             <Grid Height="92" ToolTip="{Binding ToolTip}" Background="Transparent">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <Border Grid.Row="0" Height="{Binding Height}" Margin="2,0" VerticalAlignment="Bottom" CornerRadius="3,3,0,0" Opacity="{Binding Opacity}" Background="{DynamicResource PhasmaAccentBrush}" />
+                <Border Grid.Row="0" Height="{Binding Height}" Margin="2,0" VerticalAlignment="Bottom" CornerRadius="2,2,0,0" Opacity="{Binding Opacity}" Background="{DynamicResource PhasmaAccentBrush}" />
                 <TextBlock Grid.Row="1" Margin="0,4,0,0" FontSize="9" HorizontalAlignment="Center" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Label}" />
             </Grid>
         </DataTemplate>
+
+        <Style x:Key="ActGlyph" TargetType="Border">
+            <Setter Property="Width" Value="34" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Background" Value="{DynamicResource PhasmaS3Brush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PhasmaStrokeBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="phui:CutCorners.Size" Value="6" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        </Style>
+
+        <Style x:Key="ActCardTitle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaHeadingFont}" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <Style x:Key="ActCap" TargetType="TextBlock" BasedOn="{StaticResource PhasmaCaption}">
+            <Setter Property="FontSize" Value="10.5" />
+        </Style>
     </ui:UiPage.Resources>
 
     <Grid Margin="0,0,14,14">
@@ -35,27 +57,26 @@
             <ColumnDefinition Width="320" />
         </Grid.ColumnDefinitions>
 
-        <!--  Totals and refresh  -->
-        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,14">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                <TextBlock Style="{DynamicResource PhasmaSubtle}" FontSize="12.5" TextWrapping="Wrap" TextTrimming="None" Text="{Binding TotalsText, Mode=OneWay}" />
-                <TextBlock Margin="0,3,0,0" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" TextWrapping="Wrap" TextTrimming="None" Text="{Binding TrackedSinceText, Mode=OneWay}" />
-            </StackPanel>
-            <Button Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Top" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Command="{Binding RefreshCommand, Mode=OneTime}">
+        <controls:PageHeader Grid.Row="0" Grid.ColumnSpan="2" Title="Activity" Subtitle="{Binding TotalsText, Mode=OneWay}">
+            <Button Style="{DynamicResource PhasmaGhostButton}" Padding="12,6" FontSize="13" Command="{Binding RefreshCommand, Mode=OneTime}">
                 <StackPanel Orientation="Horizontal">
                     <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14" VerticalAlignment="Center" />
                     <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" />
                 </StackPanel>
             </Button>
-        </Grid>
+        </controls:PageHeader>
 
-        <!--  Timeline  -->
-        <StackPanel Grid.Row="1" Grid.Column="0">
-            <Border Style="{DynamicResource PhasmaCard}" Padding="24,30" Visibility="{Binding TimelineEmptyVisibility, Mode=OneWay}">
+        <Grid Grid.Row="1" Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Margin="2,0,0,10" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" TextWrapping="Wrap" TextTrimming="None" Text="{Binding TrackedSinceText, Mode=OneWay}" />
+
+            <Border Grid.Row="1" Style="{DynamicResource PhasmaCard}" Padding="24,30" Visibility="{Binding TimelineEmptyVisibility, Mode=OneWay}">
                 <StackPanel HorizontalAlignment="Center">
                     <ui:SymbolIcon Symbol="Timeline24" FontSize="36" Opacity="0.3" HorizontalAlignment="Center" />
                     <TextBlock Margin="0,10,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" TextTrimming="None" Style="{DynamicResource PhasmaSubtle}" FontSize="13"
@@ -63,72 +84,91 @@
                 </StackPanel>
             </Border>
 
-            <ItemsControl x:Name="SessionsList" ItemsSource="{Binding Sessions, Mode=OneWay}">
+            <ItemsControl x:Name="SessionsList" Grid.Row="2" ItemsSource="{Binding Sessions, Mode=OneWay}"
+                          VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" VirtualizingPanel.ScrollUnit="Pixel"
+                          ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl.Template>
+                    <ControlTemplate TargetType="ItemsControl">
+                        <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+                            <ItemsPresenter />
+                        </ScrollViewer>
+                    </ControlTemplate>
+                </ItemsControl.Template>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <StackPanel Margin="0,0,0,14">
-                            <StackPanel Orientation="Horizontal" Margin="2,0,0,8">
-                                <TextBlock FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" Text="{Binding Header}" />
-                                <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="{Binding Summary}" />
+                        <StackPanel Margin="0,0,4,10">
+                            <StackPanel Orientation="Horizontal" Margin="2,4,0,12">
+                                <Border Width="4" Height="20" Margin="3,0,12,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaAccentBrush}" RenderTransformOrigin="0.5,0.5">
+                                    <Border.RenderTransform>
+                                        <SkewTransform AngleX="-14" />
+                                    </Border.RenderTransform>
+                                </Border>
+                                <TextBlock FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="17" FontWeight="Bold" Foreground="White" VerticalAlignment="Center" Text="{Binding Header, Converter={StaticResource PhasmaUpper}}" />
+                                <TextBlock Margin="12,2,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="{Binding Summary, Converter={StaticResource PhasmaUpper}}" />
                             </StackPanel>
 
                             <ItemsControl ItemsSource="{Binding Visits}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Margin="0,0,0,8" Style="{DynamicResource PhasmaCard}" Padding="14,12">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
+                                        <Border Margin="0,0,0,10" Background="{DynamicResource PhasmaPanelBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1">
+                                            <StackPanel>
+                                                <Grid Margin="20,14">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
 
-                                                <Border Grid.Column="0" Width="46" Height="46" VerticalAlignment="Center" Style="{DynamicResource PhasmaThumb}" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}">
-                                                    <Border.Clip>
-                                                        <RectangleGeometry Rect="0,0,46,46" RadiusX="8" RadiusY="8" />
-                                                    </Border.Clip>
-                                                    <Image Source="{Binding IconUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                                                    <Border Grid.Column="0" Width="46" Height="46" VerticalAlignment="Top" Background="{DynamicResource PhasmaS3Brush}">
+                                                        <Image Source="{Binding IconUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                                                    </Border>
+
+                                                    <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                                                        <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="White" Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Margin="0,2,0,0" FontSize="12.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextTrimming="CharacterEllipsis" Text="{Binding Subtitle}" ToolTip="{Binding Subtitle}" />
+                                                        <TextBlock Margin="0,2,0,0" FontSize="12" Foreground="{DynamicResource PhasmaGoodBrush}" Text="{Binding FriendsText}" Visibility="{Binding FriendsVisibility}" TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+
+                                                    <StackPanel Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Top" Visibility="{Binding SparkVisibility}">
+                                                        <Viewbox Width="150" Height="30" Stretch="Fill">
+                                                            <Canvas Width="260" Height="36" ClipToBounds="True">
+                                                                <Polyline Points="{Binding Spark}" Stroke="{DynamicResource PhasmaAccentBrush}" StrokeThickness="2" StrokeLineJoin="Round" />
+                                                            </Canvas>
+                                                        </Viewbox>
+                                                        <TextBlock Margin="0,4,0,0" HorizontalAlignment="Right" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="{Binding FpsText}" />
+                                                    </StackPanel>
+                                                </Grid>
+
+                                                <Border Padding="20,8" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0" Visibility="{Binding CapturesVisibility}">
+                                                    <ItemsControl ItemsSource="{Binding Captures}">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <WrapPanel />
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Border Margin="0,2,6,2" Height="30" MinWidth="54" ToolTip="{Binding FileName}" Cursor="Hand" Focusable="True"
+                                                                        Background="{DynamicResource PhasmaS3Brush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1" ClipToBounds="True">
+                                                                    <Border.InputBindings>
+                                                                        <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.OpenCaptureCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}" />
+                                                                        <KeyBinding Key="Enter" Command="{Binding DataContext.OpenCaptureCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}" />
+                                                                    </Border.InputBindings>
+                                                                    <Grid>
+                                                                        <Image Source="{Binding Thumbnail}" Height="28" Stretch="Uniform" Visibility="{Binding ThumbnailVisibility}" RenderOptions.BitmapScalingMode="HighQuality" />
+                                                                        <ui:SymbolIcon Symbol="{Binding Symbol}" FontSize="15" Margin="16,0" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Visibility="{Binding IconVisibility}" />
+                                                                    </Grid>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
                                                 </Border>
-
-                                                <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
-                                                    <TextBlock FontSize="13.5" FontWeight="SemiBold" Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
-                                                    <TextBlock Margin="0,1,0,0" Style="{DynamicResource PhasmaSubtle}" FontSize="11.5" Text="{Binding Subtitle}" ToolTip="{Binding Subtitle}" />
-                                                    <TextBlock Margin="0,2,0,0" FontSize="11.5" Foreground="{DynamicResource PhasmaGoodBrush}" Text="{Binding FriendsText}" Visibility="{Binding FriendsVisibility}" TextTrimming="CharacterEllipsis" />
-                                                </StackPanel>
-
-                                                <StackPanel Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding SparkVisibility}">
-                                                    <Viewbox Width="150" Height="30" Stretch="Fill">
-                                                        <Canvas Width="260" Height="36" ClipToBounds="True">
-                                                            <Polyline Points="{Binding Spark}" Stroke="{DynamicResource PhasmaAccentBrush}" StrokeThickness="2" StrokeLineJoin="Round" />
-                                                        </Canvas>
-                                                    </Viewbox>
-                                                    <TextBlock Margin="0,3,0,0" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="{Binding FpsText}" />
-                                                </StackPanel>
-
-                                                <ItemsControl Grid.Column="3" Margin="12,0,0,0" MaxWidth="160" VerticalAlignment="Center" ItemsSource="{Binding Captures}" Visibility="{Binding CapturesVisibility}">
-                                                    <ItemsControl.ItemsPanel>
-                                                        <ItemsPanelTemplate>
-                                                            <WrapPanel />
-                                                        </ItemsPanelTemplate>
-                                                    </ItemsControl.ItemsPanel>
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <Border Margin="0,2,4,2" Height="30" MinWidth="44" CornerRadius="6" ToolTip="{Binding FileName}" Cursor="Hand" Focusable="True"
-                                                                    Background="{DynamicResource PhasmaSelectedBrush}" ClipToBounds="True">
-                                                                <Border.InputBindings>
-                                                                    <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.OpenCaptureCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}" />
-                                                                    <KeyBinding Key="Enter" Command="{Binding DataContext.OpenCaptureCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}" CommandParameter="{Binding}" />
-                                                                </Border.InputBindings>
-                                                                <Grid>
-                                                                    <Image Source="{Binding Thumbnail}" Height="30" Stretch="Uniform" Visibility="{Binding ThumbnailVisibility}" RenderOptions.BitmapScalingMode="HighQuality" />
-                                                                    <ui:SymbolIcon Symbol="{Binding Symbol}" FontSize="16" Margin="13,0" VerticalAlignment="Center" Visibility="{Binding IconVisibility}" />
-                                                                </Grid>
-                                                            </Border>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                            </Grid>
+                                            </StackPanel>
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
@@ -138,125 +178,176 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <TextBlock Margin="2,4,0,0" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" TextWrapping="Wrap" TextTrimming="None" Text="{x:Static resources:Strings.Menu_Activity_FPSLineNeedsSomethingWatchesGame}" />
-        </StackPanel>
+            <TextBlock Grid.Row="3" Margin="2,8,0,0" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" TextWrapping="Wrap" TextTrimming="None" Text="{x:Static resources:Strings.Menu_Activity_FPSLineNeedsSomethingWatchesGame}" />
+        </Grid>
 
-        <!--  Side panel  -->
-        <StackPanel Grid.Row="1" Grid.Column="1" Margin="14,0,0,0">
-            <controls:SettingsCard Header="Playtime in detail">
-                <StackPanel Margin="0,0,0,10">
-                    <TextBlock Margin="0,0,0,6" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="{x:Static resources:Strings.Menu_Activity_Last14Days}" />
-                    <ItemsControl ItemsSource="{Binding Days, Mode=OneWay}" ItemTemplate="{StaticResource ActivityChartBar}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <UniformGrid Rows="1" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                    </ItemsControl>
+        <ScrollViewer Grid.Row="1" Grid.Column="1" Margin="16,0,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+                <Border Margin="0,0,0,12" Style="{DynamicResource PhasmaCard}" Padding="0">
+                    <StackPanel>
+                        <Grid Margin="16,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Margin="0,0,12,0" VerticalAlignment="Center" Style="{StaticResource ActGlyph}">
+                                <ui:SymbolIcon Symbol="Clock24" FontSize="16" />
+                            </Border>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource ActCardTitle}" Text="{Binding Source='Playtime in detail', Converter={StaticResource PhasmaUpper}}" />
+                        </Grid>
 
-                    <TextBlock Margin="0,14,0,6" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="{x:Static resources:Strings.Menu_Activity_Last12Weeks}" />
-                    <ItemsControl ItemsSource="{Binding Weeks, Mode=OneWay}" ItemTemplate="{StaticResource ActivityChartBar}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <UniformGrid Rows="1" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                    </ItemsControl>
+                        <Border Padding="16,14,16,6" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0">
+                            <StackPanel>
+                                <TextBlock Margin="0,0,0,8" Style="{StaticResource ActCap}" Text="{Binding Source={x:Static resources:Strings.Menu_Activity_Last14Days}, Converter={StaticResource PhasmaUpper}}" />
+                                <ItemsControl ItemsSource="{Binding Days, Mode=OneWay}" ItemTemplate="{StaticResource ActivityChartBar}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Rows="1" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
 
-                    <Border Margin="0,14,0,0" Style="{DynamicResource PhasmaDivider}" />
-                    <Grid Margin="0,12,0,8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="12.5" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_Activity_ByGame}" />
-                        <ComboBox Grid.Column="1" Width="130" Padding="10,5,10,5" ItemsSource="{Binding RangeOptions, Mode=OneTime}" SelectedItem="{Binding SelectedRange, Mode=TwoWay}" />
-                    </Grid>
+                                <TextBlock Margin="0,16,0,8" Style="{StaticResource ActCap}" Text="{Binding Source={x:Static resources:Strings.Menu_Activity_Last12Weeks}, Converter={StaticResource PhasmaUpper}}" />
+                                <ItemsControl ItemsSource="{Binding Weeks, Mode=OneWay}" ItemTemplate="{StaticResource ActivityChartBar}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Rows="1" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
 
-                    <TextBlock Margin="0,4,0,4" Style="{DynamicResource PhasmaSubtle}" Visibility="{Binding GamesEmptyVisibility, Mode=OneWay}" Text="{x:Static resources:Strings.Menu_Activity_NothingPlayedPeriod}" />
-
-                    <ItemsControl ItemsSource="{Binding Games, Mode=OneWay}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Margin="0,4,0,6" ToolTip="{Binding Detail}">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
+                        <Border Margin="0,10,0,0" Padding="16,12" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,8">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Width="26" Height="26" Margin="0,0,10,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaThumb}" CornerRadius="6">
-                                        <Border.Clip>
-                                            <RectangleGeometry Rect="0,0,26,26" RadiusX="6" RadiusY="6" />
-                                        </Border.Clip>
-                                        <Image Source="{Binding IconUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
-                                    </Border>
-                                    <TextBlock Grid.Row="0" Grid.Column="1" FontSize="12.5" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-                                    <TextBlock Grid.Row="0" Grid.Column="2" Margin="8,0,0,0" Style="{DynamicResource PhasmaSubtle}" Text="{Binding TimeText}" />
-                                    <Border Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,4,0,0" Height="3" HorizontalAlignment="Left" CornerRadius="2"
-                                            Width="{Binding Width}" Background="{DynamicResource PhasmaAccentBrush}" Opacity="0.7" />
+                                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Style="{StaticResource ActCap}" Text="{Binding Source={x:Static resources:Strings.Menu_Activity_ByGame}, Converter={StaticResource PhasmaUpper}}" />
+                                    <ComboBox Grid.Column="1" Width="130" Padding="10,5,10,5" ItemsSource="{Binding RangeOptions, Mode=OneTime}" SelectedItem="{Binding SelectedRange, Mode=TwoWay}" />
                                 </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </controls:SettingsCard>
 
-            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Activity_Played}" Description="Friends who turned up in the same servers as you.">
-                <StackPanel Margin="0,0,0,8">
-                    <TextBlock Margin="0,0,0,6" Style="{DynamicResource PhasmaSubtle}" FontSize="11.5" TextWrapping="Wrap" TextTrimming="None" Visibility="{Binding CompanionsEmptyVisibility, Mode=OneWay}" Text="{Binding CompanionsEmptyText, Mode=OneWay}" />
+                                <TextBlock Margin="0,4,0,4" Style="{DynamicResource PhasmaSubtle}" Visibility="{Binding GamesEmptyVisibility, Mode=OneWay}" Text="{x:Static resources:Strings.Menu_Activity_NothingPlayedPeriod}" />
 
-                    <ItemsControl ItemsSource="{Binding Companions, Mode=OneWay}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Margin="0,4,0,6">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <Grid Grid.Column="0" Width="30" Height="30" VerticalAlignment="Center">
-                                        <Ellipse Fill="{DynamicResource PhasmaSelectedBrush}" />
-                                        <Image Source="{Binding AvatarUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality">
-                                            <Image.Clip>
-                                                <EllipseGeometry Center="15,15" RadiusX="15" RadiusY="15" />
-                                            </Image.Clip>
-                                        </Image>
-                                    </Grid>
-                                    <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock FontSize="12.5" FontWeight="SemiBold" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="{Binding Detail}" ToolTip="{Binding Detail}" />
-                                        <TextBlock Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="{Binding Together}" />
-                                    </StackPanel>
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
+                                <ItemsControl ItemsSource="{Binding Games, Mode=OneWay}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,5,0,5" ToolTip="{Binding Detail}">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Width="26" Height="26" Margin="0,0,10,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaS3Brush}">
+                                                    <Image Source="{Binding IconUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                                                </Border>
+                                                <TextBlock Grid.Row="0" Grid.Column="1" FontSize="13" FontWeight="SemiBold" Foreground="White" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Grid.Row="0" Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="{Binding TimeText}" />
+                                                <Grid Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,5,0,0">
+                                                    <Border Height="3" Background="{DynamicResource PhasmaSelectedBrush}" />
+                                                    <Border Height="3" HorizontalAlignment="Left" Width="{Binding Width}" Background="{DynamicResource PhasmaAccentBrush}" />
+                                                </Grid>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Activity_NoteWhichFriendsShareMyServer}" Description="{x:Static resources:Strings.Menu_Activity_WhileYouAreGamePhasmaStrapAsks}">
-                    <ui:ToggleSwitch IsChecked="{Binding TrackFriends, Mode=TwoWay}" />
-                </controls:OptionControl>
-            </controls:SettingsCard>
+                <Border Margin="0,0,0,12" Style="{DynamicResource PhasmaCard}" Padding="0">
+                    <StackPanel>
+                        <Grid Margin="16,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Margin="0,0,12,0" Style="{StaticResource ActGlyph}">
+                                <ui:SymbolIcon Symbol="People24" FontSize="16" />
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource ActCardTitle}" Text="{Binding Source={x:Static resources:Strings.Menu_Activity_Played}, Converter={StaticResource PhasmaUpper}}" />
+                                <TextBlock Margin="0,2,0,0" FontSize="12.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" Text="Friends who turned up in the same servers as you." />
+                            </StackPanel>
+                        </Grid>
 
-            <controls:SettingsCard Header="Session history" Description="Kept on this PC only.">
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Activity_KeepSessionHistory}" Description="{x:Static resources:Strings.Menu_Activity_WritesDownEachServerYouJoin}">
-                    <ui:ToggleSwitch IsChecked="{Binding HistoryEnabled, Mode=TwoWay}" />
-                </controls:OptionControl>
+                        <Border Padding="16,10,16,6" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0">
+                            <StackPanel>
+                                <TextBlock Margin="0,0,0,6" FontSize="12.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" Visibility="{Binding CompanionsEmptyVisibility, Mode=OneWay}" Text="{Binding CompanionsEmptyText, Mode=OneWay}" />
 
-                <StackPanel Margin="0,0,0,10">
-                    <Border Style="{DynamicResource PhasmaDivider}" />
-                    <Button Margin="0,10,0,0" HorizontalAlignment="Left" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold"
-                            ToolTip="{x:Static resources:Strings.Menu_Activity_RemovesEveryRecordedSessionScreenshotsClips}" Command="{Binding ClearHistoryCommand, Mode=OneTime}">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Delete24" FontSize="14" VerticalAlignment="Center" />
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.Menu_Activity_DeleteHistory}" />
-                        </StackPanel>
-                    </Button>
-                </StackPanel>
-            </controls:SettingsCard>
-        </StackPanel>
+                                <ItemsControl ItemsSource="{Binding Companions, Mode=OneWay}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,4,0,6">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Grid Grid.Column="0" Width="30" Height="30" VerticalAlignment="Top">
+                                                    <Ellipse Fill="{DynamicResource PhasmaS4Brush}" />
+                                                    <Image Source="{Binding AvatarUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality">
+                                                        <Image.Clip>
+                                                            <EllipseGeometry Center="15,15" RadiusX="15" RadiusY="15" />
+                                                        </Image.Clip>
+                                                    </Image>
+                                                </Grid>
+                                                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                                    <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="White" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextTrimming="CharacterEllipsis" Text="{Binding Detail}" ToolTip="{Binding Detail}" />
+                                                    <TextBlock FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Together}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <controls:OptionControl Flat="True" IsEnabled="{Binding HistoryEnabled, Mode=OneWay}" Header="{x:Static resources:Strings.Menu_Activity_NoteWhichFriendsShareMyServer}" Description="{x:Static resources:Strings.Menu_Activity_WhileYouAreGamePhasmaStrapAsks}">
+                            <ui:ToggleSwitch IsChecked="{Binding TrackFriends, Mode=TwoWay}" />
+                        </controls:OptionControl>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{DynamicResource PhasmaCard}" Padding="0">
+                    <StackPanel>
+                        <Grid Margin="16,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Margin="0,0,12,0" Style="{StaticResource ActGlyph}">
+                                <ui:SymbolIcon Symbol="History24" FontSize="16" />
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource ActCardTitle}" Text="{Binding Source='Session history', Converter={StaticResource PhasmaUpper}}" />
+                                <TextBlock Margin="0,2,0,0" FontSize="12.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" Text="Kept on this PC only." />
+                            </StackPanel>
+                        </Grid>
+
+                        <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Activity_KeepSessionHistory}" Description="{x:Static resources:Strings.Menu_Activity_WritesDownEachServerYouJoin}">
+                            <ui:ToggleSwitch IsChecked="{Binding HistoryEnabled, Mode=TwoWay}" />
+                        </controls:OptionControl>
+
+                        <Border Padding="16,12,16,14" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0">
+                            <Button HorizontalAlignment="Left" Style="{DynamicResource PhasmaGhostButton}" Padding="12,6" FontSize="13"
+                                    ToolTip="{x:Static resources:Strings.Menu_Activity_RemovesEveryRecordedSessionScreenshotsClips}" Command="{Binding ClearHistoryCommand, Mode=OneTime}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Delete24" FontSize="14" VerticalAlignment="Center" />
+                                    <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.Menu_Activity_DeleteHistory}" />
+                                </StackPanel>
+                            </Button>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </ui:UiPage>

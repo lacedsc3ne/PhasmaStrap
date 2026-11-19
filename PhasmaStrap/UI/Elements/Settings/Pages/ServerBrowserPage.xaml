@@ -7,12 +7,12 @@
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       xmlns:dmodels="clr-namespace:PhasmaStrap.UI.ViewModels.Settings"
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       mc:Ignorable="d"
       d:DataContext="{d:DesignInstance dmodels:ServerBrowserViewModel, IsDesignTimeCreatable=True}"
       Title="ServerBrowserPage"
       Scrollable="False">
     <ui:UiPage.Resources>
-        <!--  Thin fill bar for how full a server is  -->
         <Style x:Key="FillBar" TargetType="{x:Type ProgressBar}">
             <Setter Property="Height" Value="6" />
             <Setter Property="Minimum" Value="0" />
@@ -28,7 +28,6 @@
             </Setter>
         </Style>
 
-        <!--  Ping coloured by how good it is  -->
         <Style x:Key="PingText" TargetType="{x:Type TextBlock}">
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
             <Style.Triggers>
@@ -43,123 +42,193 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
+        <Style x:Key="TableHead" TargetType="{x:Type TextBlock}">
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaMono}" />
+            <Setter Property="FontSize" Value="10.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
     </ui:UiPage.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="0,0,14,14">
-            <controls:PageHeader Eyebrow="Games" Title="Server browser" Subtitle="Join the server with the best ping instead of the one Roblox picks.">
-                <StackPanel Orientation="Horizontal">
-                    <Button Height="34" Padding="14,0" Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Menu_ServerBrowser_Search}"
-                            Command="{Binding SearchCommand, Mode=OneTime}" />
-                    <Button Margin="8,0,0,0" Height="34" Padding="14,0" Style="{DynamicResource PhasmaAccentButton}"
-                            IsEnabled="{Binding HasPingedServers, Mode=OneWay}"
-                            Command="{Binding JoinFastestCommand, Mode=OneTime}"
-                            ToolTip="{x:Static resources:Strings.Menu_ServerBrowser_JoinsWhicheverServerAboveReportedLowest}"
-                            Content="{x:Static resources:Strings.Menu_ServerBrowser_JoinFastest}" />
-                </StackPanel>
-            </controls:PageHeader>
+    <Grid Margin="0,0,14,14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" MinHeight="220" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+            <controls:PageHeader Grid.Row="0" Eyebrow="Games" Title="Server browser" Subtitle="Join the server with the best ping instead of the one Roblox picks." />
 
-            <!--  Which place to look at  -->
-            <Grid Margin="0,0,0,14">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+            <Border Grid.Row="1" Margin="0,0,0,20" Padding="20,18" Style="{DynamicResource PhasmaPanel}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-                <ui:TextBox Width="260" VerticalAlignment="Center" PlaceholderText="{x:Static resources:Strings.Menu_ServerBrowser_PlaceId_PlaceholderText}"
-                            Text="{Binding PlaceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            AutomationProperties.Name="{x:Static resources:Strings.Menu_ServerBrowser_PlaceId_Title}">
-                    <ui:TextBox.InputBindings>
-                        <KeyBinding Key="Enter" Command="{Binding SearchCommand, Mode=OneTime}" />
-                    </ui:TextBox.InputBindings>
-                </ui:TextBox>
-
-                <StackPanel Grid.Column="1" Margin="16,0,0,0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Width="28" Height="28" CornerRadius="6" Background="{DynamicResource PhasmaSelectedBrush}" Visibility="{Binding HasGameIcon, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <Border CornerRadius="6">
-                            <Border.Background>
-                                <ImageBrush ImageSource="{Binding GameIconUrl, Converter={StaticResource ImageUrlConverter}, ConverterParameter=96}" Stretch="UniformToFill" />
-                            </Border.Background>
-                        </Border>
+                    <Border Width="40" Height="40" Margin="0,0,14,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaThumb}">
+                        <Grid>
+                            <ui:SymbolIcon Symbol="Server24" FontSize="17" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                            <Border Visibility="{Binding HasGameIcon, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <Border.Background>
+                                    <ImageBrush ImageSource="{Binding GameIconUrl, Converter={StaticResource ImageUrlConverter}, ConverterParameter=96}" Stretch="UniformToFill" />
+                                </Border.Background>
+                            </Border>
+                        </Grid>
                     </Border>
-                    <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" FontWeight="Medium" Text="{Binding HeaderTitle, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
-                </StackPanel>
 
-                <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="12.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                           Text="{Binding HeaderDetail, Mode=OneWay}" ToolTip="{Binding StatusText, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
-            </Grid>
+                    <StackPanel Grid.Column="1" Margin="0,0,16,0" VerticalAlignment="Center">
+                        <TextBlock FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="15" FontWeight="Bold" Foreground="White"
+                                   Text="{Binding HeaderTitle, Mode=OneWay, Converter={StaticResource PhasmaUpper}}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                   Text="{Binding HeaderDetail, Mode=OneWay}" ToolTip="{Binding StatusText, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
 
-            <!--  Public servers  -->
-            <Border Style="{DynamicResource PhasmaPanel}">
-                <StackPanel>
-                    <Grid Margin="20,0" Height="34">
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:TextBox Width="180" VerticalAlignment="Center" Icon="NumberSymbol24" FontFamily="{DynamicResource PhasmaMono}"
+                                    PlaceholderText="{x:Static resources:Strings.Menu_ServerBrowser_PlaceId_PlaceholderText}"
+                                    Text="{Binding PlaceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    AutomationProperties.Name="{x:Static resources:Strings.Menu_ServerBrowser_PlaceId_Title}">
+                            <ui:TextBox.InputBindings>
+                                <KeyBinding Key="Enter" Command="{Binding SearchCommand, Mode=OneTime}" />
+                            </ui:TextBox.InputBindings>
+                        </ui:TextBox>
+                        <Button Margin="12,0,0,0" Height="40" Padding="16,0" Style="{DynamicResource PhasmaSoftButton}"
+                                Command="{Binding SearchCommand, Mode=OneTime}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Search24" FontSize="15" Margin="0,0,8,0" />
+                                <TextBlock Text="{x:Static resources:Strings.Menu_ServerBrowser_Search}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button Margin="12,0,0,0" Height="40" Padding="18,0" Style="{DynamicResource PhasmaAccentButton}"
+                                IsEnabled="{Binding HasPingedServers, Mode=OneWay}"
+                                Command="{Binding JoinFastestCommand, Mode=OneTime}"
+                                ToolTip="{x:Static resources:Strings.Menu_ServerBrowser_JoinsWhicheverServerAboveReportedLowest}"
+                                ToolTipService.ShowOnDisabled="True">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Flash24" FontSize="15" Margin="0,0,8,0" Foreground="{DynamicResource PhasmaAccentTextBrush}" />
+                                <TextBlock Text="{x:Static resources:Strings.Menu_ServerBrowser_JoinFastest}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="2" Style="{DynamicResource PhasmaPanel}">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Padding="20,16" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,0,0,1">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="34" Height="34" Margin="0,0,12,0" Background="{DynamicResource PhasmaHoverBrush}" phui:CutCorners.Size="6">
+                                <ui:SymbolIcon Symbol="Server24" FontSize="16" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="PUBLIC SERVERS" FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="15" FontWeight="Bold" Foreground="White" />
+                                <TextBlock Margin="0,2,0,0" FontSize="12.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding StatusText, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Grid DockPanel.Dock="Top" Margin="16,0" Height="36">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="1.2*" />
+                            <ColumnDefinition Width="2.4*" />
                             <ColumnDefinition Width="1*" />
                             <ColumnDefinition Width="1.4*" />
-                            <ColumnDefinition Width="110" />
+                            <ColumnDefinition Width="130" />
                             <ColumnDefinition Width="80" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="SERVER" Style="{DynamicResource PhasmaTableHead}" />
-                        <TextBlock Grid.Column="1" Text="REGION" Style="{DynamicResource PhasmaTableHead}" />
-                        <TextBlock Grid.Column="2" Text="PLAYERS" Style="{DynamicResource PhasmaTableHead}" />
-                        <TextBlock Grid.Column="3" Text="PING" Style="{DynamicResource PhasmaTableHead}" />
+                        <TextBlock Grid.Column="0" Text="SERVER" Style="{StaticResource TableHead}" />
+                        <TextBlock Grid.Column="1" Text="REGION" Style="{StaticResource TableHead}" />
+                        <TextBlock Grid.Column="2" Text="PLAYERS" Style="{StaticResource TableHead}" />
+                        <TextBlock Grid.Column="3" Text="PING" Style="{StaticResource TableHead}" />
                     </Grid>
 
-                    <ItemsControl x:Name="ServerList" ItemsSource="{Binding Servers, Mode=OneWay}" Focusable="False">
+                    <ItemsControl x:Name="ServerList" ItemsSource="{Binding Servers, Mode=OneWay}" Focusable="False"
+                                  VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.Template>
+                            <ControlTemplate TargetType="{x:Type ItemsControl}">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="True" Focusable="False">
+                                    <ItemsPresenter />
+                                </ScrollViewer>
+                            </ControlTemplate>
+                        </ItemsControl.Template>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Style="{DynamicResource PhasmaTableRow}">
+                                <Border Style="{DynamicResource PhasmaTableRow}" Padding="16,8" MinHeight="49">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="1.2*" />
+                                            <ColumnDefinition Width="2.4*" />
                                             <ColumnDefinition Width="1*" />
                                             <ColumnDefinition Width="1.4*" />
-                                            <ColumnDefinition Width="110" />
+                                            <ColumnDefinition Width="130" />
                                             <ColumnDefinition Width="80" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Margin="0,0,12,0" VerticalAlignment="Center" Text="{Binding ShortJobId}" FontFamily="{DynamicResource PhasmaMono}" FontSize="13" FontWeight="Medium"
-                                                   TextTrimming="CharacterEllipsis" ToolTip="{Binding JobId}" />
-                                        <TextBlock Grid.Column="1" Margin="0,0,10,0" VerticalAlignment="Center" Text="{Binding City}" FontSize="14" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Region}" />
+                                        <TextBlock Grid.Column="0" Margin="0,0,12,0" VerticalAlignment="Center" Text="{Binding ShortJobId}" FontFamily="{DynamicResource PhasmaMono}" FontSize="12.5"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" ToolTip="{Binding JobId}" />
+                                        <TextBlock Grid.Column="1" Margin="0,0,10,0" VerticalAlignment="Center" Text="{Binding City}" FontSize="13.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Region}" />
                                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <ProgressBar Width="110" Style="{DynamicResource PhasmaMiniBar}" Maximum="{Binding MaxPlayers}" Value="{Binding Playing, Mode=OneWay}" />
-                                            <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Text="{Binding PlayersText}" FontFamily="{DynamicResource PhasmaMono}" FontSize="12.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                            <ProgressBar Width="90" Height="6" Style="{DynamicResource PhasmaMiniBar}" Maximum="{Binding MaxPlayers}" Value="{Binding Playing, Mode=OneWay}" />
+                                            <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" Text="{Binding PlayersText}" FontFamily="{DynamicResource PhasmaMono}" FontSize="12.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                                         </StackPanel>
-                                        <Border Grid.Column="3" VerticalAlignment="Center">
-                                            <Border.Style>
-                                                <Style TargetType="Border" BasedOn="{StaticResource PhasmaTag}">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding PingTone}" Value="good">
-                                                            <Setter Property="Background" Value="#1F3DDC97" />
-                                                            <Setter Property="TextElement.Foreground" Value="{DynamicResource PhasmaGoodBrush}" />
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding PingTone}" Value="warn">
-                                                            <Setter Property="Background" Value="#1FF5B841" />
-                                                            <Setter Property="TextElement.Foreground" Value="{DynamicResource PhasmaWarnBrush}" />
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding PingTone}" Value="bad">
-                                                            <Setter Property="Background" Value="#1FFF6A64" />
-                                                            <Setter Property="TextElement.Foreground" Value="#FF6A64" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                            <TextBlock Text="{Binding PingText}" />
-                                        </Border>
-                                        <Button Grid.Column="4" Height="28" HorizontalAlignment="Right" Padding="12,0" Style="{DynamicResource PhasmaSoftButton}" FontSize="13"
-                                                Content="{x:Static resources:Strings.Menu_ServerBrowser_Join}"
-                                                Command="{Binding DataContext.JoinCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
+                                        <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Ellipse Width="7" Height="7" Margin="0,0,7,0" VerticalAlignment="Center">
+                                                <Ellipse.Style>
+                                                    <Style TargetType="{x:Type Ellipse}">
+                                                        <Setter Property="Fill" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding PingTone}" Value="good">
+                                                                <Setter Property="Fill" Value="{DynamicResource PhasmaGoodBrush}" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding PingTone}" Value="warn">
+                                                                <Setter Property="Fill" Value="{DynamicResource PhasmaWarnBrush}" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding PingTone}" Value="bad">
+                                                                <Setter Property="Fill" Value="{DynamicResource PhasmaAccentBrush}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Ellipse.Style>
+                                            </Ellipse>
+                                            <TextBlock Text="{Binding PingText}" FontFamily="{DynamicResource PhasmaMono}" FontSize="12.5" FontWeight="SemiBold" VerticalAlignment="Center">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource PingText}">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding PingTone}" Value="bad">
+                                                                <Setter Property="Foreground" Value="{DynamicResource PhasmaRedTextBrush}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <Button Grid.Column="4" Height="28" HorizontalAlignment="Right" Padding="10,0" Style="{DynamicResource PhasmaGhostButton}" phui:CutCorners.Size="6"
+                                                Command="{Binding DataContext.JoinCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="Play24" Filled="True" FontSize="11" Margin="0,0,6,0" />
+                                                <TextBlock Text="{x:Static resources:Strings.Menu_ServerBrowser_Join}" FontSize="12.5" FontWeight="Bold" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                </StackPanel>
+                </DockPanel>
             </Border>
 
-            <TextBlock Margin="4,12,0,0" TextWrapping="Wrap" FontSize="12.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                       Text="Uses the game's own public server list. It does not sign in, read your session, or measure real ping to any server. For a measured pick, turn on the Matchmaker in Deployment settings." />
-        </StackPanel>
-    </ScrollViewer>
+            <Border Grid.Row="3" Margin="0,20,0,0" Padding="16,12" CornerRadius="10" Background="#126AA8FF" BorderBrush="#406AA8FF" BorderThickness="1">
+                <DockPanel>
+                    <ui:SymbolIcon DockPanel.Dock="Left" Margin="0,1,12,0" VerticalAlignment="Top" Symbol="Info24" FontSize="16" Foreground="{DynamicResource PhasmaInfoBrush}" />
+                    <TextBlock TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               Text="Uses the game's own public server list. It does not sign in, read your session, or measure real ping to any server. For a measured pick, turn on the Matchmaker in Deployment settings." />
+                </DockPanel>
+            </Border>
+    </Grid>
 </ui:UiPage>

@@ -3,10 +3,6 @@ using System.Collections.Concurrent;
 
 namespace PhasmaStrap.Utility
 {
-    /// <summary>
-    /// Length of a saved clip, read locally and cached. MP4 clips are read from the 'mvhd' box in the file header
-    /// (a few small reads, no decoding); if that fails Media Foundation is asked instead (ClipProcessor.Probe).
-    /// </summary>
     public static class ClipDurations
     {
         private const string LOG_IDENT = "ClipDurations";
@@ -15,10 +11,8 @@ namespace PhasmaStrap.Utility
 
         private static readonly ConcurrentDictionary<string, Entry> _cache = new(StringComparer.OrdinalIgnoreCase);
 
-        // Media Foundation probes are slow and heavy, so only one runs at a time.
         private static readonly SemaphoreSlim _probeGate = new(1, 1);
 
-        /// <summary>Returns the cached length right away when it is known; otherwise reads it in the background and calls <paramref name="done"/> (on a worker thread).</summary>
         public static TimeSpan? Request(string path, Action<TimeSpan?> done)
         {
             if (TryCached(path, out TimeSpan? known))
@@ -83,7 +77,6 @@ namespace PhasmaStrap.Utility
             }
         }
 
-        /// <summary>Reads the length now (blocking). Null when the file is not a clip or can't be read.</summary>
         public static TimeSpan? Get(string path)
         {
             if (TryCached(path, out TimeSpan? cached))
@@ -121,7 +114,6 @@ namespace PhasmaStrap.Utility
             return duration;
         }
 
-        /// <summary>"0:30", "1:05", "1:02:03".</summary>
         public static string Format(TimeSpan duration)
         {
             long seconds = (long)Math.Round(Math.Max(0, duration.TotalSeconds));
@@ -152,7 +144,6 @@ namespace PhasmaStrap.Utility
             }
         }
 
-        // ISO BMFF: moov > mvhd holds the movie timescale and duration.
         private static TimeSpan? ReadMp4Header(string path)
         {
             using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, 4096, FileOptions.RandomAccess);
@@ -174,7 +165,6 @@ namespace PhasmaStrap.Utility
 
             if (version == 1)
             {
-                // flags(3) creation(8) modification(8) timescale(4) duration(8)
                 if (mvhdEnd - mvhdStart < 32 || stream.Read(buffer[..31]) != 31)
                     return null;
 
@@ -183,7 +173,6 @@ namespace PhasmaStrap.Utility
             }
             else
             {
-                // flags(3) creation(4) modification(4) timescale(4) duration(4)
                 if (mvhdEnd - mvhdStart < 20 || stream.Read(buffer[..19]) != 19)
                     return null;
 

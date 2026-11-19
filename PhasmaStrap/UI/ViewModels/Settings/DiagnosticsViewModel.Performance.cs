@@ -59,9 +59,15 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             RefreshTuner();
 
             _measureTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.5) };
-            _measureTimer.Tick += (_, _) => PollMeasurement();
+            _measureTimer.Tick += (_, _) => PollWhenShown();
             _measureTimer.Start();
             PollMeasurement();
+        }
+
+        private void PollWhenShown()
+        {
+            if (PhasmaStrap.UI.SettingsWindowState.IsShown)
+                PollMeasurement();
         }
 
         public void StopPolling()
@@ -76,7 +82,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 return;
 
             _measureTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.5) };
-            _measureTimer.Tick += (_, _) => PollMeasurement();
+            _measureTimer.Tick += (_, _) => PollWhenShown();
             _measureTimer.Start();
             PollMeasurement();
         }

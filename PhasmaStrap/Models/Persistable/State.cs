@@ -18,7 +18,6 @@ namespace PhasmaStrap.Models.Persistable
 
         public string LastAutoBackup { get; set; } = "";
 
-        /// <summary>What was typed into the top bar search before a result was opened, newest first, for "Recent searches".</summary>
         public List<string> RecentSearchQueries { get; set; } = new();
     }
 }

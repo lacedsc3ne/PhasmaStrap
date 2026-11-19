@@ -2,23 +2,17 @@ using PhasmaStrap.Integrations;
 
 namespace PhasmaStrap.Utility
 {
-    /// <summary>
-    /// Remembers, for this app session only, when each friend was first seen in the game they are playing now.
-    /// Fed by every presence poll (FriendActivityMonitor and the Friends page), read for "Playing for 42 minutes".
-    /// </summary>
     public static class FriendPlaySessions
     {
         private sealed class Seen
         {
             public string GameKey { get; init; } = "";
             public DateTime SinceUtc { get; init; }
-            /// <summary>False when they were already playing the first time this app looked, so the start is only a lower bound.</summary>
             public bool Exact { get; init; }
         }
 
         private static readonly Dictionary<long, Seen> _seen = new();
 
-        // Last time each friend was seen online or playing, kept on this PC for "Last seen 3h ago"
         private static Dictionary<long, DateTime>? _lastSeen;
         private static DateTime _lastSeenSaved = DateTime.MinValue;
         private static string LastSeenPath => Path.Combine(Paths.Base, "FriendLastSeen.json");
@@ -28,7 +22,6 @@ namespace PhasmaStrap.Utility
         private static string GameKey(FriendPresence p) =>
             p.UniverseId > 0 ? $"u{p.UniverseId}" : p.RootPlaceId > 0 ? $"r{p.RootPlaceId}" : p.PlaceId > 0 ? $"p{p.PlaceId}" : "?";
 
-        /// <summary>Notes a fresh presence answer. Friends missing from it are left alone.</summary>
         public static void Observe(IReadOnlyDictionary<long, FriendPresence> presence)
         {
             DateTime now = DateTime.UtcNow;
@@ -55,7 +48,6 @@ namespace PhasmaStrap.Utility
                     if (_seen.TryGetValue(userId, out Seen? was) && was.GameKey == key)
                         continue;
 
-                    // Moving from one game to another is a real start; already playing on the first look is not
                     _seen[userId] = new Seen { GameKey = key, SinceUtc = now, Exact = !firstLook };
                 }
 
@@ -89,7 +81,6 @@ namespace PhasmaStrap.Utility
         {
             try
             {
-                // Forget anyone not seen for a year so the file stays small
                 DateTime cutoff = DateTime.UtcNow.AddYears(-1);
                 var keep = lastSeen.Where(pair => pair.Value >= cutoff).ToDictionary(pair => pair.Key, pair => pair.Value);
 
@@ -104,7 +95,6 @@ namespace PhasmaStrap.Utility
             }
         }
 
-        /// <summary>"Last seen 3h ago" for an offline friend, from this PC's own polls. Empty when never seen online.</summary>
         public static string LastSeenText(long userId)
         {
             DateTime seen;
@@ -137,7 +127,6 @@ namespace PhasmaStrap.Utility
             };
         }
 
-        /// <summary>When the friend started the game they are in now, as far as this app knows. Null when not in a game or never seen.</summary>
         public static (DateTime SinceUtc, bool Exact)? Since(long userId, FriendPresence? current)
         {
             if (current is null || current.Type != FriendPresenceType.InGame)
@@ -152,7 +141,6 @@ namespace PhasmaStrap.Utility
             return null;
         }
 
-        /// <summary>"Playing for 42 minutes", or "Playing for at least 5 minutes" when the start was not seen. Empty when unknown.</summary>
         public static string PlayingForText(long userId, FriendPresence? current)
         {
             (DateTime SinceUtc, bool Exact)? found = Since(userId, current);

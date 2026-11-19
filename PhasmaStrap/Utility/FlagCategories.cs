@@ -2,10 +2,6 @@ using PhasmaStrap.Utility.Backend;
 
 namespace PhasmaStrap.Utility
 {
-    /// <summary>
-    /// Groups FastFlags for the flag editor's card view and gives each a readable title.
-    /// Order of sources: the server catalog (when it answered), the app's own preset map, then words in the flag name.
-    /// </summary>
     public static class FlagCategories
     {
         public const string FrameRate = "Frame rate";
@@ -95,7 +91,6 @@ namespace PhasmaStrap.Utility
             return Other;
         }
 
-        /// <summary>Position of a category in the card list; unknown categories go before Other, in name order.</summary>
         public static int OrderOf(string category)
         {
             List<string>? serverOrder = FlagsCaptureApi.Catalog?.Categories;
@@ -110,7 +105,6 @@ namespace PhasmaStrap.Utility
             return local >= 0 ? 100 + local : 100 + DefaultOrder.Length - 1;
         }
 
-        /// <summary>Server title when there is one, otherwise the flag name in words ("Task scheduler target fps").</summary>
         public static string TitleOf(string flagName)
         {
             FlagCatalogEntry? known = FlagsCaptureApi.Describe(flagName);
@@ -156,7 +150,6 @@ namespace PhasmaStrap.Utility
             return string.Join(" ", words);
         }
 
-        /// <summary>Server description, or "" when there is none.</summary>
         public static string DescriptionOf(string flagName) => FlagsCaptureApi.Describe(flagName)?.Description ?? "";
 
         private static string StripType(string flagName)
@@ -170,7 +163,6 @@ namespace PhasmaStrap.Utility
             return flagName;
         }
 
-        /// <summary>True for FFlag style switches whose value is True or False.</summary>
         public static bool IsSwitch(string flagName, string value) =>
             (flagName.StartsWith("FFlag", StringComparison.Ordinal) || flagName.StartsWith("DFFlag", StringComparison.Ordinal) || flagName.StartsWith("SFFlag", StringComparison.Ordinal))
             && (value.Equals("True", StringComparison.OrdinalIgnoreCase) || value.Equals("False", StringComparison.OrdinalIgnoreCase) || value.Length == 0);

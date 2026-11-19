@@ -26,7 +26,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             DataContext = _viewModel;
             InitializeComponent();
 
-            // Re-render at most a few times a second while a slider is being dragged.
             _previewTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(140) };
             _previewTimer.Tick += (_, _) =>
             {
@@ -80,7 +79,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
                 if (PreviewBefore.Source is null)
                     PreviewBefore.Source = RiShadePreview.ToBitmap(RiShadePreview.Original(sample), sample.Width, sample.Height);
 
-                // Work on a copy so dragging a slider can't change the settings halfway through a render.
                 RiShadeSettings snapshot =
                     JsonSerializer.Deserialize<RiShadeSettings>(JsonSerializer.Serialize(App.Settings.Prop.RiShade)) ?? new RiShadeSettings();
                 snapshot.Normalize();

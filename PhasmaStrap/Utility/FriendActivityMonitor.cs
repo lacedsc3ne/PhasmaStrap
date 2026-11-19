@@ -112,7 +112,6 @@ namespace PhasmaStrap.Utility
 
             foreach (FriendInfo friend in friends)
             {
-                // A friend's own alert choice wins over the "favourites only" setting
                 overrides.TryGetValue(friend.UserId, out string? mode);
                 mode ??= FriendNotesStore.AlertMode.Usual;
 
@@ -135,7 +134,6 @@ namespace PhasmaStrap.Utility
 
                 if (mode == FriendNotesStore.AlertMode.Game)
                 {
-                    // Only told when they start playing, never just for coming online
                     if (wasType != FriendPresenceType.InGame && now.Type == FriendPresenceType.InGame)
                     {
                         NotificationCenter.Notify(
@@ -150,7 +148,6 @@ namespace PhasmaStrap.Utility
 
                 if (wasType == FriendPresenceType.Offline && now.Type != FriendPresenceType.Offline)
                 {
-                    // Friends page > Friend alerts > "When anyone comes online"
                     if (!App.Settings.Prop.FriendAlertOnline && mode != FriendNotesStore.AlertMode.Online)
                     {
                         if (App.Settings.Prop.FriendAlertGame && now.Type == FriendPresenceType.InGame)

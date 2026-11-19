@@ -3,10 +3,6 @@ using System.Windows.Media;
 
 namespace PhasmaStrap.UI.ViewModels.Settings
 {
-    /// <summary>
-    /// A two letter tile for things that have no icon of their own (extensions, custom programs):
-    /// the initials of the name on a colour picked from the name, so the same name always gets the same tile.
-    /// </summary>
     public static class InitialsTile
     {
         private static readonly (string From, string To)[] Palette =
@@ -39,7 +35,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             string word = words[0];
             char first = char.ToUpperInvariant(word[0]);
 
-            // One word: its first letter and the next consonant, so "Rojo" becomes RJ.
             char second = word.Skip(1).FirstOrDefault(c => char.IsLetter(c) && "aeiouAEIOU".IndexOf(c) < 0);
             if (second == default)
                 second = word.Length > 1 ? word[1] : default;

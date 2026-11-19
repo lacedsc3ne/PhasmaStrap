@@ -72,7 +72,6 @@ namespace PhasmaStrap.UI.ViewModels.Dialogs
         public Visibility PlaceholderVisibility => _thumbnail is null ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    /// <summary>Limits the library to captures taken between two local times, e.g. one session from the Activity page.</summary>
     public sealed record CaptureTimeFilter(DateTime FromLocal, DateTime ToLocal, string Label);
 
     public sealed class CaptureRow
@@ -155,7 +154,6 @@ namespace PhasmaStrap.UI.ViewModels.Dialogs
 
         private CaptureTimeFilter? _range;
 
-        /// <summary>Shows only what was taken in this time range (null shows everything again). Other filters are reset so nothing hides it.</summary>
         public void SetRange(CaptureTimeFilter? range)
         {
             _range = range;

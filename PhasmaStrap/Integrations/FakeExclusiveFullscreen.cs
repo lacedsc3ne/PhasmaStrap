@@ -23,6 +23,8 @@ namespace PhasmaStrap.Integrations
 
         public static bool Enabled => App.Settings.Prop.FakeExclusiveFullscreen;
 
+        public static bool IsApplied => _applied;
+
         public static void OnGameJoin()
         {
             if (Enabled)

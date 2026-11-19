@@ -80,16 +80,13 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public System.Windows.Visibility PlaceholderVisibility => _thumbnail is null ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
 
-        /// <summary>The game being played when the clip was saved (from session history), if known.</summary>
         public string? Game { get; set; }
 
-        /// <summary>Game name for the thumbnail caption, or the file name when the game isn't known.</summary>
         public string Title => string.IsNullOrEmpty(Game) ? FileName : Game!;
 
         private string _durationText = "";
         private bool _durationRequested;
 
-        /// <summary>"0:30" once the clip's length has been read (in the background, then cached); "" for GIFs or until known.</summary>
         public string DurationText
         {
             get
@@ -116,7 +113,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public System.Windows.Visibility DurationVisibility => DurationText.Length > 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
 
-        /// <summary>The type icon badge is shown only while there is no length to show instead.</summary>
         public System.Windows.Visibility SymbolBadgeVisibility => DurationText.Length > 0 ? System.Windows.Visibility.Collapsed : System.Windows.Visibility.Visible;
     }
 
@@ -183,18 +179,17 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 App.Settings.Prop.InstantReplayEnabled = value;
                 App.Settings.SaveFields(nameof(App.Settings.Prop.InstantReplayEnabled));
                 OnPropertyChanged(nameof(InstantReplayEnabled));
+                SoundOptionsChanged();
                 ReplayStatusChanged();
             }
         }
 
-        /// <summary>Header pill on the Capture page.</summary>
         public string ReplayPillText => App.Settings.Prop.InstantReplayEnabled ? "Instant Replay on" : "Instant Replay off";
 
         public string ReplayPillDetail => App.Settings.Prop.InstantReplayEnabled ? $"last {ShortLength(App.Settings.Prop.InstantReplayClipSeconds)}" : "";
 
         public System.Windows.Visibility ReplayOnVisibility => App.Settings.Prop.InstantReplayEnabled ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
 
-        /// <summary>The save hotkey as shown on a key cap, or "" when none is set.</summary>
         public string ReplayHotkeyDisplay
         {
             get
@@ -206,7 +201,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public System.Windows.Visibility ReplayHotkeyVisibility => ReplayHotkeyDisplay.Length > 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
 
-        /// <summary>The short line on the Instant Replay page: what the rolling buffer holds and roughly how much memory it takes.</summary>
         public string ReplayBufferText
         {
             get
@@ -235,7 +229,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             OnPropertyChanged(nameof(ReplayHotkeyVisibility));
         }
 
-        // Same sums as ReplayEstimateText, for the short buffer line.
         private static (int Width, int Height) RecordSize()
         {
             var screen = System.Windows.Forms.Screen.PrimaryScreen?.Bounds ?? new System.Drawing.Rectangle(0, 0, 1920, 1080);
@@ -283,7 +276,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             set { App.Settings.Prop.CaptureShareStamp = value; App.Settings.SaveFieldsDeferred(nameof(App.Settings.Prop.CaptureShareStamp)); OnPropertyChanged(nameof(ShareStamp)); }
         }
 
-        /// <summary>Everything in the Library tab: screenshots, clips and GIFs.</summary>
         public int LibraryCount => Screenshots.Count + Replays.Count;
 
         public int InstantReplayClipSeconds
@@ -362,7 +354,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool GpuEncoding
         {
             get => App.Settings.Prop.InstantReplayGpuEncoding;
-            set { App.Settings.Prop.InstantReplayGpuEncoding = value; ReplaySettingChanged(nameof(GpuEncoding)); OnPropertyChanged(nameof(SoundAvailable)); OnPropertyChanged(nameof(MicrophonePickerEnabled)); }
+            set { App.Settings.Prop.InstantReplayGpuEncoding = value; ReplaySettingChanged(nameof(GpuEncoding)); OnPropertyChanged(nameof(SoundAvailable)); SoundOptionsChanged(); }
         }
 
         public string GpuEncodingText => App.Settings.Prop.InstantReplayGpuEncoding ? "On" : "Off";
@@ -428,7 +420,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 OnPropertyChanged(nameof(SelectedQuality));
                 OnPropertyChanged(nameof(GpuEncoding));
                 OnPropertyChanged(nameof(SoundAvailable));
-                OnPropertyChanged(nameof(MicrophonePickerEnabled));
+                SoundOptionsChanged();
                 OnPropertyChanged(nameof(ReplayEstimateText));
                 OnPropertyChanged(nameof(ReplayBufferText));
 
@@ -456,7 +448,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool RecordSound
         {
             get => App.Settings.Prop.InstantReplayAudio;
-            set { App.Settings.Prop.InstantReplayAudio = value; ReplaySettingChanged(nameof(RecordSound)); }
+            set { App.Settings.Prop.InstantReplayAudio = value; ReplaySettingChanged(nameof(RecordSound)); SoundOptionsChanged(); }
         }
 
         public bool RecordAllAudio
@@ -471,7 +463,15 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             set { App.Settings.Prop.InstantReplayMicrophone = value; ReplaySettingChanged(nameof(RecordMicrophone)); OnPropertyChanged(nameof(MicrophonePickerEnabled)); }
         }
 
-        public bool MicrophonePickerEnabled => SoundAvailable && RecordMicrophone;
+        public bool ExtraSoundEnabled => SoundAvailable && RecordSound && InstantReplayEnabled;
+
+        public bool MicrophonePickerEnabled => ExtraSoundEnabled && RecordMicrophone;
+
+        private void SoundOptionsChanged()
+        {
+            OnPropertyChanged(nameof(ExtraSoundEnabled));
+            OnPropertyChanged(nameof(MicrophonePickerEnabled));
+        }
 
         public sealed record MicrophoneOption(string Id, string Name)
         {
@@ -625,7 +625,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        /// <summary>Read only numbers for the storage meter: how much each kind takes, against the size limit.</summary>
         public sealed class StorageSummary
         {
             public string UsedText { get; init; } = "";
@@ -652,7 +651,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 long used = shotBytes + gifBytes + clipBytes;
                 long limit = App.Settings.Prop.CaptureStorageLimitMB * 1048576L;
 
-                // Star widths in MB keep the numbers small for the layout.
                 static System.Windows.GridLength Star(long bytes) => new(Math.Max(0, bytes) / 1048576.0, System.Windows.GridUnitType.Star);
 
                 return new StorageSummary
@@ -674,7 +672,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         {
             if (!File.Exists(path))
             {
-                Report(image, $"{Path.GetFileName(path)} is no longer there.");
+                Report(image, $"{Path.GetFileName(path)} is no longer there.", error: true);
                 return;
             }
 
@@ -684,27 +682,59 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             Report(image, ok
                 ? $"Copied {Path.GetFileName(path)} - paste it into a chat with Ctrl+V."
-                : "Could not reach the clipboard - another program is holding it. Try again.");
+                : "Could not reach the clipboard - another program is holding it. Try again.", error: !ok);
         }
 
         private void CopyPath(string path, bool image)
         {
-            Report(image, ClipboardShare.CopyText(path) ? "Copied the file path." : "Could not reach the clipboard - another program is holding it. Try again.");
+            bool ok = ClipboardShare.CopyText(path);
+            Report(image, ok ? "Copied the file path." : "Could not reach the clipboard - another program is holding it. Try again.", error: !ok);
         }
 
-        private void Report(bool screenshot, string message)
+        private void Report(bool screenshot, string message, bool error = false)
         {
             if (screenshot)
-                Status = message;
+                SetStatus(message, error);
             else
-                ReplayStatus = message;
+                SetReplayStatus(message, error);
         }
 
         private string _replayStatus = "";
-        public string ReplayStatus
+        public string ReplayStatus => _replayStatus;
+
+        private bool _replayStatusIsError;
+        public bool ReplayStatusIsError => _replayStatusIsError;
+
+        private System.Windows.Threading.DispatcherTimer? _replayStatusClear;
+
+        private void SetReplayStatus(string message, bool error = false)
         {
-            get => _replayStatus;
-            private set { _replayStatus = value; OnPropertyChanged(nameof(ReplayStatus)); }
+            _replayStatusIsError = error;
+            _replayStatus = message;
+            OnPropertyChanged(nameof(ReplayStatusIsError));
+            OnPropertyChanged(nameof(ReplayStatus));
+            _replayStatusClear = ClearLater(_replayStatusClear, message, () => SetReplayStatus(""));
+        }
+
+        internal static System.Windows.Threading.DispatcherTimer? ClearLater(System.Windows.Threading.DispatcherTimer? timer, string message, Action clear)
+        {
+            timer?.Stop();
+            if (message.Length == 0)
+                return timer;
+
+            if (timer is null)
+            {
+                var created = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(6) };
+                created.Tick += (_, _) =>
+                {
+                    created.Stop();
+                    clear();
+                };
+                timer = created;
+            }
+
+            timer.Start();
+            return timer;
         }
 
         public ICommand CopyScreenshotCommand => new RelayCommand<ScreenshotItem>(item => { if (item is not null) Copy(item.Path, image: true); });
@@ -829,7 +859,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             string? error = ShellOpen(item.Path);
 
             if (error is not null)
-                ReplayStatus = $"Couldn't open {item.FileName}: {error}";
+                SetReplayStatus($"Couldn't open {item.FileName}: {error}", error: true);
         });
         public ICommand EditReplayCommand => new RelayCommand<ReplayClipItem>(item =>
         {
@@ -848,7 +878,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             catch (Exception ex)
             {
                 App.Logger.WriteLine("CaptureViewModel::EditReplay", $"Could not open {item.Path} in the editor: {ex.Message}");
-                ReplayStatus = $"Couldn't open {item.FileName} in the editor: {ex.Message}";
+                SetReplayStatus($"Couldn't open {item.FileName} in the editor: {ex.Message}", error: true);
                 return;
             }
 
@@ -867,7 +897,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 return;
 
             if (!CaptureLibrary.Recycle(item.Path, out string? error))
-                ReplayStatus = $"Couldn't delete {item.FileName}: {error}";
+                SetReplayStatus($"Couldn't delete {item.FileName}: {error}", error: true);
 
             RefreshReplays();
         });
@@ -876,7 +906,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             string? error = ShellOpen(InstantReplayRecorder.ClipsDir, createFolder: true);
 
             if (error is not null)
-                ReplayStatus = $"Couldn't open the clips folder: {error}";
+                SetReplayStatus($"Couldn't open the clips folder: {error}", error: true);
         });
 
         private static string? ShellOpen(string path, bool createFolder = false)
@@ -942,10 +972,20 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool HasScreenshots => Screenshots.Count > 0;
 
         private string _status = "";
-        public string Status
+        public string Status => _status;
+
+        private bool _statusIsError;
+        public bool StatusIsError => _statusIsError;
+
+        private System.Windows.Threading.DispatcherTimer? _statusClear;
+
+        private void SetStatus(string message, bool error = false)
         {
-            get => _status;
-            private set { _status = value; OnPropertyChanged(nameof(Status)); }
+            _statusIsError = error;
+            _status = message;
+            OnPropertyChanged(nameof(StatusIsError));
+            OnPropertyChanged(nameof(Status));
+            _statusClear = ClearLater(_statusClear, message, () => SetStatus(""));
         }
 
         public ICommand TakeScreenshotCommand => new RelayCommand(TakeScreenshot);
@@ -958,7 +998,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             string? error = ShellOpen(item.Path);
 
             if (error is not null)
-                Status = $"Couldn't open {item.FileName}: {error}";
+                SetStatus($"Couldn't open {item.FileName}: {error}", error: true);
         });
         public ICommand EditScreenshotCommand => new RelayCommand<ScreenshotItem>(item =>
         {
@@ -978,7 +1018,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             catch (Exception ex)
             {
                 App.Logger.WriteLine("CaptureViewModel::EditScreenshot", $"Could not open {item.Path} in the editor: {ex.Message}");
-                Status = $"Couldn't open {item.FileName} in the editor: {ex.Message}";
+                SetStatus($"Couldn't open {item.FileName} in the editor: {ex.Message}", error: true);
                 return;
             }
 
@@ -994,7 +1034,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 return;
 
             if (!CaptureLibrary.Recycle(item.Path, out string? error))
-                Status = $"Couldn't delete {item.FileName}: {error}";
+                SetStatus($"Couldn't delete {item.FileName}: {error}", error: true);
 
             RefreshGallery();
         });
@@ -1003,7 +1043,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             string? error = ShellOpen(ScreenshotCapture.ScreenshotsDir, createFolder: true);
 
             if (error is not null)
-                Status = $"Couldn't open the screenshots folder: {error}";
+                SetStatus($"Couldn't open the screenshots folder: {error}", error: true);
         });
 
         public CaptureViewModel()
@@ -1045,7 +1085,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             timer.Tick += (_, _) =>
             {
                 timer.Stop();
-                refresh();
+                PhasmaStrap.UI.SettingsWindowState.RunWhenShown(refresh);
             };
             return timer;
         }
@@ -1083,13 +1123,15 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         private void TakeScreenshot()
         {
-            string? path = ScreenshotCapture.Capture();
+            ScreenshotTaker.Take((path, copied) =>
+            {
+                if (path is null)
+                    SetStatus("Could not find the Roblox window - this only works while Roblox is actually running.", error: true);
+                else
+                    SetStatus(copied ? $"Saved {Path.GetFileName(path)} and copied it." : $"Saved {Path.GetFileName(path)}");
 
-            Status = path is not null
-                ? $"Saved {Path.GetFileName(path)}"
-                : "Could not find the Roblox window - this only works while Roblox is actually running.";
-
-            RefreshGallery();
+                RefreshGallery();
+            });
         }
 
         private void RefreshGallery()

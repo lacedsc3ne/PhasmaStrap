@@ -12,7 +12,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             InitializeComponent();
 
             Title = "Flags for " + gameName;
-            TitleBarElement.Title = Title;
+            TitleBarElement.Title = Title.ToUpperInvariant();
             HeadingText.Text = gameName;
 
             List<FlagLayers.EffectiveFlag> flags = FlagLayers.Explain(App.FastFlags.Prop, profile);

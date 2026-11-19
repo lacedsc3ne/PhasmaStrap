@@ -34,7 +34,6 @@ namespace PhasmaStrap
             if (idx != -1)
                 version = version[..idx];
 
-            // Prerelease tags such as "3.5.0-beta.1" compare as their base version
             idx = version.IndexOf('-');
             if (idx != -1)
                 version = version[..idx];

@@ -2,11 +2,6 @@ using System.Windows.Media;
 
 namespace PhasmaStrap.UI.ViewModels.Settings
 {
-    /// <summary>
-    /// Splits PhasmaStrap and Roblox log lines into time, source and message, and guesses how serious each one is.
-    /// PhasmaStrap writes "2026-10-02T14:01:58Z [Ident::Method] message".
-    /// Roblox writes "2026-10-02T14:01:58.123Z,12.34,abcd,6 [FLog::Output] message".
-    /// </summary>
     internal static class LogLines
     {
         private static readonly Regex Line = new(
@@ -83,7 +78,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             };
         }
 
-        /// <summary>"Bootstrapper::Run" becomes "Bootstrapper", and Roblox's "FLog::Network" becomes "Network".</summary>
         private static string ShortSource(string source)
         {
             string[] parts = source.Split("::", StringSplitOptions.RemoveEmptyEntries);

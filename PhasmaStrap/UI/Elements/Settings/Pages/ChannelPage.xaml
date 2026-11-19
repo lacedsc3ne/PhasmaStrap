@@ -6,19 +6,13 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       mc:Ignorable="d"
       Title="ChannelPage"
       Scrollable="True">
     <StackPanel Margin="0,0,14,14">
-        <StackPanel Orientation="Horizontal">
-            <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="Channel and downloads" />
-            <Border Margin="10,2,0,0" Style="{DynamicResource PhasmaTagNeutral}">
-                <TextBlock Text="Launching" />
-            </Border>
-        </StackPanel>
-        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="Which Roblox channel you get, how it downloads, and when games tend to update." />
+        <controls:PageHeader Eyebrow="Settings · Launching" Title="Channel and downloads" Subtitle="Which Roblox channel you get, how it downloads, and when games tend to update." />
 
-        <!--  Tabs jump to a group of cards. Every card stays on the page so search can still find each setting.  -->
         <StackPanel Margin="0,0,0,14" Orientation="Horizontal">
             <RadioButton x:Name="RobloxTab" GroupName="ChannelTabs" Style="{DynamicResource PhasmaTab}" Content="{x:Static resources:Strings.Menu_Integrations_Tabs_Roblox}" IsChecked="True" Click="Tab_Click" Tag="{Binding ElementName=ChannelCard}" />
             <RadioButton GroupName="ChannelTabs" Style="{DynamicResource PhasmaTab}" Content="{x:Static resources:Strings.Menu_Channel_Installer}" Click="Tab_Click" Tag="{Binding ElementName=InstallerCard}" />
@@ -30,8 +24,11 @@
                                    Description="Which deployment channel PhasmaStrap installs and launches">
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Channel_CurrentlyActiveChannel}"
                                         Description="{Binding CurrentActiveChannel, Mode=OneWay, StringFormat='Roblox is currently running on the {0} channel.'}">
-                    <Border Style="{DynamicResource PhasmaTagNeutral}">
-                        <TextBlock FontFamily="{DynamicResource PhasmaMono}" Text="{Binding CurrentActiveChannel, Mode=OneWay}" />
+                    <Border Height="28" Padding="10,0,12,0" phui:CutCorners.Size="6" Background="{DynamicResource PhasmaS3Brush}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse Width="6" Height="6" Margin="0,0,8,0" Fill="{DynamicResource PhasmaGoodBrush}" />
+                            <TextBlock FontFamily="{DynamicResource PhasmaMono}" FontSize="12" Text="{Binding CurrentActiveChannel, Mode=OneWay}" />
+                        </StackPanel>
                     </Border>
                 </controls:OptionControl>
 
@@ -62,7 +59,7 @@
             <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Channel_ChannelBuildInfo}"
                                    Description="Which build is live on the channel above, without switching to it">
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Channel_LookUpBuild}">
-                    <Button Style="{DynamicResource PhasmaSoftButton}" Command="{Binding LookupChannelInfoCommand, Mode=OneTime}">
+                    <Button Style="{DynamicResource PhasmaGhostButton}" Command="{Binding LookupChannelInfoCommand, Mode=OneTime}">
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Symbol="Search24" FontSize="14" Margin="0,0,6,0" />
                             <TextBlock Text="{x:Static resources:Strings.Menu_Channel_LookUp}" />
@@ -70,14 +67,10 @@
                     </Button>
                 </controls:OptionControl>
 
-                <TextBlock Margin="2,0,2,10" TextWrapping="Wrap" FontSize="12" Text="{Binding ChannelInfoStatusText, Mode=OneWay}">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
-                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                <Grid Margin="0,0,0,16">
+                    <Grid.Style>
+                        <Style TargetType="Grid">
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding ShowChannelInfoError}" Value="True">
-                                    <Setter Property="Foreground" Value="{DynamicResource PhasmaBadBrush}" />
-                                </DataTrigger>
                                 <DataTrigger Binding="{Binding ChannelInfoStatusText}" Value="">
                                     <Setter Property="Visibility" Value="Collapsed" />
                                 </DataTrigger>
@@ -86,8 +79,44 @@
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
-                    </TextBlock.Style>
-                </TextBlock>
+                    </Grid.Style>
+                    <Border Opacity="0.08" phui:CutCorners.Size="6">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="{DynamicResource PhasmaGoodBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ShowChannelInfoError}" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource PhasmaBadBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                    </Border>
+                    <Border BorderThickness="1" Opacity="0.35" phui:CutCorners.Size="6">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="BorderBrush" Value="{DynamicResource PhasmaGoodBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ShowChannelInfoError}" Value="True">
+                                        <Setter Property="BorderBrush" Value="{DynamicResource PhasmaBadBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                    </Border>
+                    <TextBlock Margin="14,11,14,11" TextWrapping="Wrap" FontSize="12.5" Text="{Binding ChannelInfoStatusText, Mode=OneWay}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ShowChannelInfoError}" Value="True">
+                                        <Setter Property="Foreground" Value="{DynamicResource PhasmaRedTextBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
 
                 <StackPanel>
                     <StackPanel.Style>
@@ -100,26 +129,28 @@
                             </Style.Triggers>
                         </Style>
                     </StackPanel.Style>
-                    <Border Style="{DynamicResource PhasmaDivider}" />
-                    <Grid Margin="2,10,2,10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock VerticalAlignment="Center" FontSize="13.5" FontWeight="SemiBold" Text="{x:Static resources:Strings.Dialog_ChannelLists_ColumnVersion}" />
-                        <TextBlock Grid.Column="1" Margin="12,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaMono}" FontSize="12"
-                                   TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ChannelDeployInfo.Version, Mode=OneWay}" />
-                    </Grid>
-                    <Border Style="{DynamicResource PhasmaDivider}" />
-                    <Grid Margin="2,10,2,10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock VerticalAlignment="Center" FontSize="13.5" FontWeight="SemiBold" Text="{x:Static resources:Strings.Dialog_ChannelLists_ColumnVersionGuid}" />
-                        <TextBlock Grid.Column="1" Margin="12,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaMono}" FontSize="12"
-                                   TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ChannelDeployInfo.VersionGuid, Mode=OneWay}" />
-                    </Grid>
+                    <Border Margin="-20,0,-20,0" Padding="20,12,20,12" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock VerticalAlignment="Center" FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Dialog_ChannelLists_ColumnVersion}" />
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaMono}" FontSize="12.5"
+                                       TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding ChannelDeployInfo.Version, Mode=OneWay}" />
+                        </Grid>
+                    </Border>
+                    <Border Margin="-20,0,-20,0" Padding="20,12,20,12" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock VerticalAlignment="Center" FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Dialog_ChannelLists_ColumnVersionGuid}" />
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaMono}" FontSize="12.5"
+                                       TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding ChannelDeployInfo.VersionGuid, Mode=OneWay}" />
+                        </Grid>
+                    </Border>
                 </StackPanel>
             </controls:SettingsCard>
 
@@ -144,18 +175,18 @@
 
             <controls:SettingsCard x:Name="HeatmapCard" Header="{x:Static resources:Strings.Menu_Channel_UpdateHeatmap}"
                                    Description="Which days of the week a game usually ships updates">
-                <Border Style="{DynamicResource PhasmaDivider}" />
-                <StackPanel Margin="0,12,0,12">
-                    <StackPanel Orientation="Horizontal">
-                        <ui:TextBox Width="160" PlaceholderText="{x:Static resources:Strings.Menu_ServerBrowser_PlaceId_Title}" ToolTip="{x:Static resources:Strings.Menu_ServerBrowser_PlaceId_Title}"
-                                    Text="{Binding HeatmapPlaceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Menu_Channel_Load}" Command="{Binding LoadHeatmapCommand, Mode=OneTime}" />
-                    </StackPanel>
+                <StackPanel>
+                    <Border Margin="-20,0,-20,0" Padding="20,14,20,14" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:TextBox Width="200" PlaceholderText="{x:Static resources:Strings.Menu_ServerBrowser_PlaceId_Title}" ToolTip="{x:Static resources:Strings.Menu_ServerBrowser_PlaceId_Title}"
+                                        Text="{Binding HeatmapPlaceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <Button Margin="8,0,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaGhostButton}" Content="{x:Static resources:Strings.Menu_Channel_Load}" Command="{Binding LoadHeatmapCommand, Mode=OneTime}" />
+                        </StackPanel>
+                    </Border>
 
-                    <TextBlock Margin="0,8,0,0" FontSize="12" TextWrapping="Wrap" Text="{Binding HeatmapStatusText, Mode=OneWay}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Margin="0,0,0,6" FontSize="13" TextWrapping="Wrap" Text="{Binding HeatmapStatusText, Mode=OneWay}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
 
-                    <!--  One tile per weekday, coloured more strongly the more updates landed on that day  -->
-                    <ItemsControl Margin="0,10,0,0" ItemsSource="{Binding HeatmapDays, Mode=OneWay}" Focusable="False">
+                    <ItemsControl Margin="-3,10,-3,18" ItemsSource="{Binding HeatmapDays, Mode=OneWay}" Focusable="False">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <UniformGrid Rows="1" />
@@ -163,14 +194,14 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <StackPanel Margin="3,0,3,0" ToolTip="{Binding Tip}">
-                                    <Grid Height="40">
-                                        <Border CornerRadius="6" Background="{DynamicResource PhasmaHoverBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1" />
-                                        <Border CornerRadius="6" Background="{DynamicResource PhasmaAccentBrush}" Opacity="{Binding TileOpacity}" />
-                                    </Grid>
-                                    <TextBlock Margin="0,6,0,0" HorizontalAlignment="Center" FontSize="11.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Label}" />
-                                    <TextBlock HorizontalAlignment="Center" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Count}" />
-                                </StackPanel>
+                                <Grid Margin="3,0,3,0" ToolTip="{Binding Tip}">
+                                    <Border phui:CutCorners.Size="6" Background="{DynamicResource PhasmaS3Brush}" />
+                                    <Border phui:CutCorners.Size="6" Background="{DynamicResource PhasmaAccentBrush}" Opacity="{Binding TileOpacity}" />
+                                    <StackPanel Margin="4,12,4,12">
+                                        <TextBlock HorizontalAlignment="Center" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding Label, Converter={StaticResource PhasmaUpper}}" />
+                                        <TextBlock HorizontalAlignment="Center" FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding Count}" />
+                                    </StackPanel>
+                                </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>

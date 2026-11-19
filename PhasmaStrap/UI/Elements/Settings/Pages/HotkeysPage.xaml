@@ -6,13 +6,13 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       xmlns:dmodels="clr-namespace:PhasmaStrap.UI.ViewModels.Settings"
       mc:Ignorable="d"
       d:DataContext="{d:DesignInstance dmodels:HotkeysViewModel, IsDesignTimeCreatable=True}"
       Title="HotkeysPage"
       Scrollable="True">
     <ui:UiPage.Resources>
-        <!--  Local colours for keys held as a modifier (the mockup's blue)  -->
         <SolidColorBrush x:Key="HotkeyModifierFill" Color="#556366F1" />
         <SolidColorBrush x:Key="HotkeyModifierStroke" Color="#996366F1" />
 
@@ -37,7 +37,6 @@
             </Style.Triggers>
         </Style>
 
-        <!--  The key field: looks like an input, lights up while it is listening  -->
         <Style x:Key="HotkeyCaptureButton" TargetType="Button" BasedOn="{StaticResource PhasmaSoftButton}">
             <Setter Property="FontWeight" Value="Normal" />
             <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -50,106 +49,141 @@
                 <DataTrigger Binding="{Binding IsListening}" Value="True">
                     <Setter Property="Background" Value="{DynamicResource PhasmaAccentSoftBrush}" />
                     <Setter Property="BorderBrush" Value="{DynamicResource PhasmaAccentBrush}" />
-                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource PhasmaRedTextBrush}" />
                 </DataTrigger>
             </Style.Triggers>
+        </Style>
+
+        <Style x:Key="HotkeySegItem" TargetType="ListBoxItem">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Bd" Padding="12,6" Margin="1" Background="Transparent" phui:CutCorners.Size="4">
+                            <TextBlock x:Name="Tx" Text="{Binding}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Tx" Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource PhasmaS4Brush}" />
+                                <Setter TargetName="Tx" Property="Foreground" Value="White" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </ui:UiPage.Resources>
 
     <StackPanel Margin="0,0,14,14">
         <controls:PageHeader Title="{x:Static resources:Strings.Menu_Hotkeys_Hotkeys}" />
 
-        <controls:CardColumns>
-            <controls:SettingsCard controls:CardColumns.FullRow="True"
-                                   Header="{x:Static resources:Strings.Menu_Hotkeys_Hotkeys}"
-                                   Description="These work while Roblox is in front">
-                <ItemsControl Margin="0,0,0,8" ItemsSource="{Binding Groups, Mode=OneWay}">
+        <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Hotkeys_Hotkeys}"
+                               Description="These work while Roblox is in front">
+            <Grid Margin="18,0,18,0">
+                <ItemsControl Margin="-18,0,-18,0" ItemsSource="{Binding Groups, Mode=OneWay}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <StackPanel>
-                                <Border Style="{DynamicResource PhasmaDivider}" />
-                                <TextBlock Style="{DynamicResource PhasmaCaption}" Margin="0,10,0,0" Text="{Binding Name}" ToolTip="{Binding Description}" />
+                                <Border BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0" Padding="20,12,20,12">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                                   Text="{Binding Name, Converter={StaticResource PhasmaUpper}}" />
+                                        <TextBlock Margin="16,0,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                                   TextTrimming="CharacterEllipsis" Text="{Binding Description}" />
+                                    </StackPanel>
+                                </Border>
 
                                 <ItemsControl ItemsSource="{Binding Rows, Mode=OneWay}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Grid Margin="0,8,0,10">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="Auto" />
-                                                    <RowDefinition Height="Auto" />
-                                                </Grid.RowDefinitions>
+                                            <Border x:Name="RowBorder" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0" Padding="20,14,20,14" Background="Transparent">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                    </Grid.RowDefinitions>
 
-                                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
-                                                    <TextBlock FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding DisplayName}" />
-                                                    <TextBlock FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Description}" />
+                                                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,20,0">
+                                                        <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="White" TextWrapping="Wrap" Text="{Binding DisplayName}" />
+                                                        <TextBlock FontSize="12.5" Margin="0,3,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Description}" />
 
-                                                    <!--  Whether the feature behind this hotkey is on  -->
-                                                    <DockPanel Margin="0,5,0,0">
-                                                        <Ellipse Width="6" Height="6" VerticalAlignment="Center" Margin="0,0,6,0">
-                                                            <Ellipse.Style>
-                                                                <Style TargetType="Ellipse">
-                                                                    <Setter Property="Fill" Value="{DynamicResource TextFillColorTertiaryBrush}" />
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding FeatureIsOn}" Value="True">
-                                                                            <Setter Property="Fill" Value="{DynamicResource PhasmaGoodBrush}" />
-                                                                        </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding FeatureIsBlocking}" Value="True">
-                                                                            <Setter Property="Fill" Value="{DynamicResource PhasmaWarnBrush}" />
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </Ellipse.Style>
-                                                        </Ellipse>
-                                                        <TextBlock FontSize="11" VerticalAlignment="Center" TextWrapping="Wrap" Text="{Binding FeatureText}">
-                                                            <TextBlock.Style>
-                                                                <Style TargetType="TextBlock">
-                                                                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding FeatureIsBlocking}" Value="True">
-                                                                            <Setter Property="Foreground" Value="{DynamicResource PhasmaWarnBrush}" />
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
-                                                    </DockPanel>
-                                                </StackPanel>
+                                                        <DockPanel Margin="0,7,0,0">
+                                                            <Ellipse Width="6" Height="6" VerticalAlignment="Center" Margin="0,0,8,0">
+                                                                <Ellipse.Style>
+                                                                    <Style TargetType="Ellipse">
+                                                                        <Setter Property="Fill" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding FeatureIsOn}" Value="True">
+                                                                                <Setter Property="Fill" Value="{DynamicResource PhasmaGoodBrush}" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding FeatureIsBlocking}" Value="True">
+                                                                                <Setter Property="Fill" Value="{DynamicResource PhasmaWarnBrush}" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Ellipse.Style>
+                                                            </Ellipse>
+                                                            <TextBlock FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" VerticalAlignment="Center" TextWrapping="Wrap" Text="{Binding FeatureText}">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding FeatureIsBlocking}" Value="True">
+                                                                                <Setter Property="Foreground" Value="{DynamicResource PhasmaWarnBrush}" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </DockPanel>
+                                                    </StackPanel>
 
-                                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <!--  Uid="Capture" and Tag are used by the code behind to keep listening when this is clicked  -->
-                                                    <Button Uid="Capture" Width="160"
-                                                            Style="{StaticResource HotkeyCaptureButton}"
-                                                            Content="{Binding ButtonText}"
-                                                            Tag="{Binding}"
-                                                            Click="CaptureButton_Click" />
-                                                    <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold"
-                                                            Content="{x:Static resources:Strings.ContextMenu_OutputConsole_Clear}"
-                                                            IsEnabled="{Binding HasGesture}"
-                                                            Tag="{Binding}"
-                                                            Click="ClearButton_Click" />
-                                                </StackPanel>
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <Button Uid="Capture" MinWidth="120" MaxWidth="260"
+                                                                HorizontalContentAlignment="Center"
+                                                                FontFamily="{DynamicResource PhasmaMono}" FontSize="12"
+                                                                Style="{StaticResource HotkeyCaptureButton}"
+                                                                Content="{Binding ButtonText}"
+                                                                Tag="{Binding}"
+                                                                Click="CaptureButton_Click" />
+                                                        <Button Margin="10,0,0,0" Style="{DynamicResource PhasmaSoftButton}" FontWeight="SemiBold"
+                                                                Content="{x:Static resources:Strings.ContextMenu_OutputConsole_Clear}"
+                                                                IsEnabled="{Binding HasGesture}"
+                                                                Tag="{Binding}"
+                                                                Click="ClearButton_Click" />
+                                                    </StackPanel>
 
-                                                <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Margin="0,6,0,0" FontSize="11.5" TextWrapping="Wrap" Text="{Binding StatusText}">
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
-                                                            <Setter Property="Visibility" Value="Visible" />
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding HasStatus}" Value="False">
-                                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding StatusIsWarning}" Value="True">
-                                                                    <Setter Property="Foreground" Value="{DynamicResource PhasmaWarnBrush}" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
-                                            </Grid>
+                                                    <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Margin="0,8,0,0" FontSize="12.5" FontWeight="Medium" TextWrapping="Wrap" Text="{Binding StatusText}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding HasStatus}" Value="False">
+                                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding StatusIsWarning}" Value="True">
+                                                                        <Setter Property="Foreground" Value="{DynamicResource PhasmaWarnBrush}" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Grid>
+                                            </Border>
+                                            <DataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding IsListening}" Value="True">
+                                                    <Setter TargetName="RowBorder" Property="Background" Value="{DynamicResource PhasmaAccentSoftBrush}" />
+                                                </DataTrigger>
+                                            </DataTemplate.Triggers>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
@@ -157,59 +191,77 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-            </controls:SettingsCard>
+            </Grid>
+        </controls:SettingsCard>
 
-            <controls:SettingsCard controls:CardColumns.FullRow="True"
-                                   Header="Soft Key"
-                                   Description="When you hold two opposite movement keys, the one you pressed last wins instead of cancelling out. Only acts while Roblox is the window in front, and starts with your next launch.">
-                <controls:OptionControl Header="Resolve opposite keys" Description="Also known as SOCD or snap tap. Some games count this as an unfair advantage, so check their rules">
-                    <ui:ToggleSwitch IsChecked="{Binding SoftKeyEnabled, Mode=TwoWay}" />
-                </controls:OptionControl>
-                <controls:OptionControl Header="Movement keys" Description="The layout you move with">
-                    <ComboBox Padding="10,5,10,5" MinWidth="140" ItemsSource="{Binding SoftKeyProfiles, Mode=OneTime}" SelectedItem="{Binding SoftKeyProfile, Mode=TwoWay}" />
-                </controls:OptionControl>
-            </controls:SettingsCard>
-
-            <controls:SettingsCard controls:CardColumns.FullRow="True"
-                                   Header="Keyboard map"
-                                   Description="What your bindings take up. Hover a coloured key to see which hotkey uses it.">
-                <controls:SettingsCard.HeaderContent>
-                    <StackPanel Orientation="Horizontal">
-                        <Border Width="9" Height="9" CornerRadius="2" VerticalAlignment="Center" Background="{DynamicResource PhasmaAccentStrokeBrush}" />
-                        <TextBlock Margin="6,0,14,0" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Bound to a hotkey" />
-                        <Border Width="9" Height="9" CornerRadius="2" VerticalAlignment="Center" Background="{StaticResource HotkeyModifierFill}" />
-                        <TextBlock Margin="6,0,14,0" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Held as a modifier" />
-                        <Border Width="9" Height="9" CornerRadius="2" VerticalAlignment="Center" Background="{DynamicResource PhasmaSelectedBrush}" />
-                        <TextBlock Margin="6,0,0,0" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Free" />
-                    </StackPanel>
-                </controls:SettingsCard.HeaderContent>
-
-                <Border Margin="0,0,0,10">
-                    <ItemsControl ItemsSource="{Binding Keyboard, Mode=OneWay}" HorizontalAlignment="Left">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <ItemsControl ItemsSource="{Binding Keys, Mode=OneWay}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Height="26" Margin="2" Padding="2,0" CornerRadius="5" BorderThickness="1"
-                                                    Width="{Binding Width, Mode=OneTime}"
-                                                    ToolTip="{Binding Caption}"
-                                                    Style="{StaticResource HotkeyKeyCapStyle}">
-                                                <TextBlock FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text="{Binding Label, Mode=OneTime}" />
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+        <controls:SettingsCard Header="Soft Key"
+                               Description="When you hold two opposite movement keys, the one you pressed last wins instead of cancelling out. Only acts while Roblox is the window in front, and starts with your next launch.">
+            <controls:OptionControl Flat="True" Header="Resolve opposite keys" Description="Also known as SOCD or snap tap. Some games count this as an unfair advantage, so check their rules">
+                <ui:ToggleSwitch IsChecked="{Binding SoftKeyEnabled, Mode=TwoWay}" />
+            </controls:OptionControl>
+            <controls:OptionControl Flat="True" Padding="36,0,0,0" IsEnabled="{Binding SoftKeyEnabled, Mode=OneWay}" Header="Movement keys" Description="The layout you move with">
+                <Border Background="{DynamicResource PhasmaChromeBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1" Padding="2" phui:CutCorners.Size="6">
+                    <ListBox ItemsSource="{Binding SoftKeyProfiles, Mode=OneTime}" SelectedItem="{Binding SoftKeyProfile, Mode=TwoWay}"
+                             Background="Transparent" BorderThickness="0" Padding="0"
+                             ItemContainerStyle="{StaticResource HotkeySegItem}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                        <ListBox.Template>
+                            <ControlTemplate TargetType="ListBox">
+                                <ItemsPresenter />
+                            </ControlTemplate>
+                        </ListBox.Template>
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
                 </Border>
-            </controls:SettingsCard>
-        </controls:CardColumns>
+            </controls:OptionControl>
+        </controls:SettingsCard>
+
+        <controls:SettingsCard Header="Keyboard map"
+                               Description="What your bindings take up. Hover a coloured key to see which hotkey uses it.">
+            <controls:SettingsCard.HeaderContent>
+                <StackPanel Orientation="Horizontal">
+                    <Border Width="9" Height="9" VerticalAlignment="Center" Background="{DynamicResource PhasmaAccentStrokeBrush}" />
+                    <TextBlock Margin="7,0,16,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Bound to a hotkey" />
+                    <Border Width="9" Height="9" VerticalAlignment="Center" Background="{StaticResource HotkeyModifierFill}" />
+                    <TextBlock Margin="7,0,16,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Held as a modifier" />
+                    <Border Width="9" Height="9" VerticalAlignment="Center" Background="{DynamicResource PhasmaSelectedBrush}" />
+                    <TextBlock Margin="7,0,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Free" />
+                </StackPanel>
+            </controls:SettingsCard.HeaderContent>
+
+            <Grid Margin="18,0,18,0">
+                <Border Margin="-18,0,-18,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0" Padding="20,20,20,20">
+                    <Viewbox Stretch="Uniform" StretchDirection="Both" MaxHeight="300" HorizontalAlignment="Stretch">
+                        <ItemsControl ItemsSource="{Binding Keyboard, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <ItemsControl ItemsSource="{Binding Keys, Mode=OneWay}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Height="19" Margin="1.5" Padding="1,0" BorderThickness="0.6" phui:CutCorners.Size="2.5"
+                                                        Width="{Binding Width, Mode=OneTime}"
+                                                        ToolTip="{Binding Caption}"
+                                                        Style="{StaticResource HotkeyKeyCapStyle}">
+                                                    <TextBlock FontFamily="{DynamicResource PhasmaMono}" FontSize="6.2" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text="{Binding Label, Mode=OneTime}" />
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Viewbox>
+                </Border>
+            </Grid>
+        </controls:SettingsCard>
     </StackPanel>
 </ui:UiPage>

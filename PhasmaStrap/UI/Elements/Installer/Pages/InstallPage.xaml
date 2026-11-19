@@ -5,6 +5,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       xmlns:local="clr-namespace:PhasmaStrap.UI.Elements.Installer.Pages"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       mc:Ignorable="d"
@@ -14,28 +15,35 @@
       Loaded="UiPage_Loaded">
 
     <StackPanel Margin="0,0,14,14">
-        <TextBlock FontSize="20" FontWeight="SemiBold" Text="{x:Static resources:Strings.Installer_Install_Location_Title}" TextWrapping="Wrap" />
-        <TextBlock FontSize="14" Text="{x:Static resources:Strings.Installer_Install_Location_Text}" TextWrapping="Wrap" />
-
-        <ui:Card Margin="0,8,0,0" Padding="12">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBox Grid.Column="0" Margin="0,0,4,0" Text="{Binding InstallLocation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                <ui:Button Grid.Column="1" Margin="4,0,4,0" Height="35" Icon="Folder24" Content="{x:Static resources:Strings.Common_Browse}" Command="{Binding BrowseInstallLocationCommand}" />
-                <ui:Button Grid.Column="2" Margin="4,0,0,0" Height="35" Icon="ArrowCounterclockwise24" Content="{x:Static resources:Strings.Common_Reset}" Command="{Binding ResetInstallLocationCommand}" />
-            </Grid>
-        </ui:Card>
-
-        <TextBlock Margin="0,8,0,0" FontSize="14" Text="{x:Static resources:Strings.Installer_Install_Location_DataFound}" Visibility="{Binding DataFoundMessageVisibility, Mode=OneWay}" TextWrapping="Wrap" />
-        <TextBlock Margin="0,8,0,0" FontSize="14" Text="{Binding ErrorMessage, Mode=OneWay}" Foreground="{DynamicResource SystemFillColorCriticalBrush}" TextWrapping="Wrap">
+        <TextBlock Margin="0" FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding Source={x:Static resources:Strings.Installer_Install_Location_Title}, Converter={StaticResource PhasmaUpper}, Mode=OneTime}" TextWrapping="Wrap" />
+        <TextBlock Margin="0,6,0,0" FontSize="13" LineHeight="19" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="{x:Static resources:Strings.Installer_Install_Location_Text}" />
+        <Grid Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0" Margin="0,0,8,0" VerticalContentAlignment="Center" FontFamily="{DynamicResource PhasmaMono}" FontSize="12.5" Text="{Binding InstallLocation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <Button Grid.Column="1" Margin="0,0,8,0" Command="{Binding BrowseInstallLocationCommand}" Style="{StaticResource PhasmaSoftButton}">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon FontSize="15" Symbol="Folder24" />
+                    <TextBlock Margin="8,0,0,0" Text="{x:Static resources:Strings.Common_Browse}" />
+                </StackPanel>
+            </Button>
+            <Button Grid.Column="2" Command="{Binding ResetInstallLocationCommand}" Style="{StaticResource PhasmaSoftButton}" ToolTip="{x:Static resources:Strings.Common_Reset}">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon FontSize="15" Symbol="ArrowCounterclockwise24" />
+                    <TextBlock Margin="8,0,0,0" Text="{x:Static resources:Strings.Common_Reset}" />
+                </StackPanel>
+            </Button>
+        </Grid>
+        <Border Margin="0,10,0,0" Padding="14,10" phui:CutCorners.Size="9" Background="#143DDC97" BorderBrush="#593DDC97" BorderThickness="1" Visibility="{Binding DataFoundMessageVisibility, Mode=OneWay}">
+            <StackPanel Orientation="Horizontal">
+                <ui:SymbolIcon FontSize="15" Foreground="{DynamicResource PhasmaGoodBrush}" Symbol="Checkmark24" />
+                <TextBlock Margin="10,0,0,0" FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Installer_Install_Location_DataFound}" TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+        <TextBlock Margin="0,8,0,0" FontSize="13" Foreground="{DynamicResource PhasmaRedTextBrush}" Text="{Binding ErrorMessage, Mode=OneWay}" TextWrapping="Wrap">
             <TextBlock.Style>
                 <Style>
                     <Style.Triggers>
@@ -47,32 +55,28 @@
             </TextBlock.Style>
         </TextBlock>
 
-        <TextBlock FontSize="20" FontWeight="SemiBold" Text="{x:Static resources:Strings.Common_Shortcuts}" TextWrapping="Wrap" Margin="0,16,0,0" />
-        <TextBlock FontSize="14" Text="{x:Static resources:Strings.Installer_Install_Shortcuts_Description}" TextWrapping="Wrap" />
-
+        <TextBlock Margin="0,20,0,0" FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding Source={x:Static resources:Strings.Common_Shortcuts}, Converter={StaticResource PhasmaUpper}, Mode=OneTime}" TextWrapping="Wrap" />
+        <TextBlock Margin="0,4,0,0" FontSize="12.5" LineHeight="18" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Installer_Install_Shortcuts_Description}" TextWrapping="Wrap" />
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-
-            <controls:OptionControl Grid.Column="0" Margin="0,0,4,0"
+            <controls:OptionControl Grid.Column="0" Margin="0,0,5,0"
                 Header="{x:Static resources:Strings.Common_Shortcuts_Desktop}">
                 <ui:ToggleSwitch IsChecked="{Binding CreateDesktopShortcuts, Mode=TwoWay}" />
             </controls:OptionControl>
-
-            <controls:OptionControl Grid.Column="1" Margin="4,0,0,0"
-            Header="{x:Static resources:Strings.Common_Shortcuts_StartMenu}">
+            <controls:OptionControl Grid.Column="1" Margin="5,0,0,0"
+                Header="{x:Static resources:Strings.Common_Shortcuts_StartMenu}">
                 <ui:ToggleSwitch IsChecked="{Binding CreateStartMenuShortcuts, Mode=TwoWay}" />
             </controls:OptionControl>
         </Grid>
 
-        <TextBlock FontSize="20" FontWeight="SemiBold" Text="{x:Static resources:Strings.Common_Analytics}" TextWrapping="Wrap" Margin="0,16,0,0" />
-        <controls:MarkdownTextBlock FontSize="14" MarkdownText="{Binding Source={x:Static resources:Strings.Menu_PhasmaStrap_Analytics_Description}, Converter={StaticResource StringFormatConverter}, ConverterParameter='https://bloxstraplabs.com/wiki/info/privacy-policy/'}" TextWrapping="Wrap" />
-
+        <TextBlock Margin="0,20,0,0" FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding Source={x:Static resources:Strings.Common_Analytics}, Converter={StaticResource PhasmaUpper}, Mode=OneTime}" TextWrapping="Wrap" />
         <controls:OptionControl
             Header="{x:Static resources:Strings.Menu_PhasmaStrap_Analytics_Title}">
             <ui:ToggleSwitch IsChecked="{Binding AnalyticsEnabled, Mode=TwoWay}" />
         </controls:OptionControl>
+        <controls:MarkdownTextBlock Margin="2,8,0,0" FontSize="12" LineHeight="18" Foreground="{DynamicResource TextFillColorTertiaryBrush}" MarkdownText="{Binding Source={x:Static resources:Strings.Menu_PhasmaStrap_Analytics_Description}, Converter={StaticResource StringFormatConverter}, ConverterParameter='https://bloxstraplabs.com/wiki/info/privacy-policy/'}" TextWrapping="Wrap" />
     </StackPanel>
 </ui:UiPage>

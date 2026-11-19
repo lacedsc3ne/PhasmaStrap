@@ -28,6 +28,14 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             Loaded += (_, _) => viewModel.LoadModSummary();
         }
 
+        private void Tab_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not FrameworkElement { Tag: FrameworkElement section })
+                return;
+
+            section.BringIntoView(new Rect(0, 0, Math.Max(1, section.ActualWidth), 600));
+        }
+
         private void ToggleSwitch_Checked(object sender, RoutedEventArgs e)
         {
         }

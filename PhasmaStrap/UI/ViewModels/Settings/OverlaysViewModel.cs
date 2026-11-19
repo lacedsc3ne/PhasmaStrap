@@ -14,7 +14,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool HudEnabled
         {
             get => App.Settings.Prop.OverlayHudEnabled;
-            set { App.Settings.Prop.OverlayHudEnabled = value; OverlayHub.Refresh(); }
+            set { App.Settings.Prop.OverlayHudEnabled = value; OnPropertyChanged(nameof(HudEnabled)); OverlayHub.Refresh(); }
         }
 
         public bool DiagnosticsEnabled
@@ -67,12 +67,26 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         private static Models.Persistable.Settings S => App.Settings.Prop;
 
+        private System.Windows.Threading.DispatcherTimer? _hudPreviewTimer;
+
         private void HudChanged(string property)
         {
             OnPropertyChanged(property);
             OnPropertyChanged(nameof(ExtraRowsSummary));
-            OnPropertyChanged(nameof(HudPreview));
-            OnPropertyChanged(nameof(HudPreviewActual));
+
+            if (_hudPreviewTimer is null)
+            {
+                _hudPreviewTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(140) };
+                _hudPreviewTimer.Tick += (_, _) =>
+                {
+                    _hudPreviewTimer.Stop();
+                    OnPropertyChanged(nameof(HudPreview));
+                    OnPropertyChanged(nameof(HudPreviewActual));
+                };
+            }
+
+            _hudPreviewTimer.Stop();
+            _hudPreviewTimer.Start();
         }
 
         public string ExtraRowsSummary
@@ -121,9 +135,29 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         private static bool IsHex(string? value) => value is not null && System.Text.RegularExpressions.Regex.IsMatch(value.Trim(), "^#?[0-9a-fA-F]{6}$");
         private static string Hex(string value) => "#" + value.Trim().TrimStart('#').ToUpperInvariant();
 
-        public string HudBackgroundColor { get => S.OverlayHudBackgroundColor; set { if (!IsHex(value)) return; S.OverlayHudBackgroundColor = Hex(value); HudChanged(nameof(HudBackgroundColor)); OnPropertyChanged(nameof(HudBackgroundBrush)); } }
-        public string HudLabelColor { get => S.OverlayHudLabelColor; set { if (!IsHex(value)) return; S.OverlayHudLabelColor = Hex(value); HudChanged(nameof(HudLabelColor)); OnPropertyChanged(nameof(HudLabelBrush)); } }
-        public string HudValueColor { get => S.OverlayHudValueColor; set { if (!IsHex(value)) return; S.OverlayHudValueColor = Hex(value); HudChanged(nameof(HudValueColor)); OnPropertyChanged(nameof(HudValueBrush)); } }
+        public string HudBackgroundColor { get => S.OverlayHudBackgroundColor; set { if (!AcceptHex(value)) return; S.OverlayHudBackgroundColor = Hex(value); HudChanged(nameof(HudBackgroundColor)); OnPropertyChanged(nameof(HudBackgroundBrush)); } }
+        public string HudLabelColor { get => S.OverlayHudLabelColor; set { if (!AcceptHex(value)) return; S.OverlayHudLabelColor = Hex(value); HudChanged(nameof(HudLabelColor)); OnPropertyChanged(nameof(HudLabelBrush)); } }
+        public string HudValueColor { get => S.OverlayHudValueColor; set { if (!AcceptHex(value)) return; S.OverlayHudValueColor = Hex(value); HudChanged(nameof(HudValueColor)); OnPropertyChanged(nameof(HudValueBrush)); } }
+
+        private string _hudColourHint = "";
+
+        public string HudColourHint
+        {
+            get => _hudColourHint;
+            private set { _hudColourHint = value; OnPropertyChanged(nameof(HudColourHint)); }
+        }
+
+        private bool AcceptHex(string? value)
+        {
+            if (IsHex(value))
+            {
+                HudColourHint = "";
+                return true;
+            }
+
+            HudColourHint = $"\"{value?.Trim()}\" isn't a colour. Use #RRGGBB, like #FFFFFF.";
+            return false;
+        }
 
         private static System.Windows.Media.Brush BrushOf(string hex)
         {
@@ -150,6 +184,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             S.OverlayHudShowLabels = d.OverlayHudShowLabels;
             S.OverlayHudTextShadow = d.OverlayHudTextShadow;
             S.OverlayHudCornerRadius = d.OverlayHudCornerRadius;
+            _hudColourHint = "";
             App.Logger.WriteLine("OverlaysViewModel::ResetHudLook", "Reset the HUD look to defaults");
             OverlayHub.Refresh();
             OnPropertyChanged(string.Empty);
@@ -258,8 +293,11 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         {
             string id = AssignPlaceId.Trim();
 
-            if (!long.TryParse(id, out _))
+            if (!long.TryParse(id, out long placeId) || placeId <= 0)
+            {
+                PlaceProfileStatus = id.Length == 0 ? "Type a place ID first." : $"\"{id}\" isn't a place ID. Use the number from the game's link.";
                 return;
+            }
 
             var existing = PlaceProfiles.FirstOrDefault(a => a.PlaceId == id);
             if (existing is not null)
@@ -268,7 +306,16 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             PlaceProfiles.Add(new OverlayPlaceAssignment(id, AssignHudEnabled, AssignCrosshairEnabled));
             App.Settings.Prop.OverlayPlaceProfiles[id] = new OverlayPlaceProfile { HudEnabled = AssignHudEnabled, CrosshairEnabled = AssignCrosshairEnabled };
             AssignPlaceId = "";
+            PlaceProfileStatus = "";
         });
+
+        private string _placeProfileStatus = "";
+
+        public string PlaceProfileStatus
+        {
+            get => _placeProfileStatus;
+            private set { _placeProfileStatus = value; OnPropertyChanged(nameof(PlaceProfileStatus)); }
+        }
 
         public ICommand RemovePlaceProfileCommand => new RelayCommand<OverlayPlaceAssignment>(assignment =>
         {
@@ -389,47 +436,5 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 App.Logger.WriteLine("OverlaysViewModel", $"Could not copy the window name: {ex.Message}");
             }
         });
-
-        public int CrosshairShapeIndex
-        {
-            get => App.Settings.Prop.CrosshairShapeIndex;
-            set => App.Settings.Prop.CrosshairShapeIndex = value;
-        }
-
-        public int CrosshairSize
-        {
-            get => App.Settings.Prop.CrosshairSize;
-            set => App.Settings.Prop.CrosshairSize = value;
-        }
-
-        public int CrosshairLineThickness
-        {
-            get => App.Settings.Prop.CrosshairLineThickness;
-            set => App.Settings.Prop.CrosshairLineThickness = value;
-        }
-
-        public int CrosshairGap
-        {
-            get => App.Settings.Prop.CrosshairGap;
-            set => App.Settings.Prop.CrosshairGap = value;
-        }
-
-        public double CrosshairOpacity
-        {
-            get => App.Settings.Prop.CrosshairOpacity;
-            set { App.Settings.Prop.CrosshairOpacity = value; OnPropertyChanged(nameof(CrosshairOpacity)); }
-        }
-
-        public string CrosshairColorHex
-        {
-            get => App.Settings.Prop.CrosshairColorHex;
-            set => App.Settings.Prop.CrosshairColorHex = value;
-        }
-
-        public string CrosshairOutlineColorHex
-        {
-            get => App.Settings.Prop.CrosshairOutlineColorHex;
-            set => App.Settings.Prop.CrosshairOutlineColorHex = value;
-        }
     }
 }

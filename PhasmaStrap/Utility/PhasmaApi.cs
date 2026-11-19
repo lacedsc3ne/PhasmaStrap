@@ -2,10 +2,6 @@ using System.Net.Http;
 
 namespace PhasmaStrap.Utility
 {
-    /// <summary>
-    /// Small JSON client for api.phasmastrap.com. Every call fails soft: on any error it logs and returns null,
-    /// so pages can simply hide what the server didn't answer.
-    /// </summary>
     public static class PhasmaApi
     {
         private const string LOG_IDENT = "PhasmaApi";
@@ -21,7 +17,6 @@ namespace PhasmaStrap.Utility
         public static Task<T?> PostAsync<T>(string path, object? body = null, bool signedInOnly = true) where T : class
             => SendAsync<T>(HttpMethod.Post, path, body, null, signedInOnly);
 
-        /// <summary>For calls whose answer doesn't matter beyond success.</summary>
         public static async Task<bool> PostAsync(string path, object? body = null, bool signedInOnly = true)
             => await SendAsync<JsonElementBox>(HttpMethod.Post, path, body, null, signedInOnly, allowEmpty: true) is not null;
 

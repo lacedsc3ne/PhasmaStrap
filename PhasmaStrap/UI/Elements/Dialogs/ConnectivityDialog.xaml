@@ -8,6 +8,7 @@
         xmlns:local="clr-namespace:PhasmaStrap.UI.Elements.Dialogs"
         xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
         xmlns:resources="clr-namespace:PhasmaStrap.Resources"
+        xmlns:phui="clr-namespace:PhasmaStrap.UI"
         mc:Ignorable="d"
         Width="480"
         MinHeight="0"
@@ -23,25 +24,112 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Grid.ColumnSpan="2" Padding="8" x:Name="RootTitleBar" ShowMinimize="False" ShowMaximize="False" CanMaximize="False" KeyboardNavigation.TabNavigation="None" Title="{x:Static resources:Strings.Dialog_Connectivity_Title}" />
+        <ui:TitleBar
+            x:Name="RootTitleBar"
+            Grid.Row="0"
+            Grid.ColumnSpan="2"
+            Height="32"
+            Padding="12,0,0,0"
+            Background="{DynamicResource PhasmaChromeBrush}"
+            FontFamily="{DynamicResource PhasmaMono}"
+            FontSize="11"
+            FontWeight="Medium"
+            Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+            Title="{Binding Source={x:Static resources:Strings.Dialog_Connectivity_Title}, Converter={StaticResource PhasmaUpper}, Mode=OneTime}"
+            CanMaximize="False"
+            KeyboardNavigation.TabNavigation="None"
+            ShowMaximize="False"
+            ShowMinimize="False" />
+        <Border Grid.Row="0" Grid.ColumnSpan="2" Height="1" VerticalAlignment="Bottom" Background="{DynamicResource PhasmaStrokeBrush}" IsHitTestVisible="False" />
 
-        <Grid Grid.Row="1" Margin="16">
+        <Grid Grid.Row="1" Margin="22,20,22,20">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <Image x:Name="IconImage" Grid.Column="0" Width="32" Height="32" Margin="0,0,15,0" VerticalAlignment="Top" RenderOptions.BitmapScalingMode="HighQuality" Source="pack://application:,,,/Resources/MessageBox/Error.png" />
+            <Border
+                Grid.Column="0"
+                Width="32"
+                Height="32"
+                Margin="0,0,12,0"
+                VerticalAlignment="Top"
+                phui:CutCorners.Size="6"
+                Visibility="{Binding Visibility, ElementName=IconImage}">
+                <Grid>
+                    <Image x:Name="IconImage" Width="0" Height="0" Opacity="0" Source="pack://application:,,,/Resources/MessageBox/Error.png" />
+                    <ui:SymbolIcon HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="17">
+                        <ui:SymbolIcon.Style>
+                            <Style TargetType="{x:Type ui:SymbolIcon}" BasedOn="{StaticResource {x:Type ui:SymbolIcon}}">
+                                <Setter Property="Symbol" Value="Info24" />
+                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Source.UriSource.AbsolutePath, ElementName=IconImage}" Value="/Resources/MessageBox/Warning.png">
+                                        <Setter Property="Symbol" Value="Warning24" />
+                                        <Setter Property="Foreground" Value="{DynamicResource PhasmaWarnBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Source.UriSource.AbsolutePath, ElementName=IconImage}" Value="/Resources/MessageBox/Information.png">
+                                        <Setter Property="Symbol" Value="Info24" />
+                                        <Setter Property="Foreground" Value="{DynamicResource PhasmaInfoBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Source.UriSource.AbsolutePath, ElementName=IconImage}" Value="/Resources/MessageBox/Question.png">
+                                        <Setter Property="Symbol" Value="QuestionCircle24" />
+                                        <Setter Property="Foreground" Value="{DynamicResource PhasmaInfoBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Source.UriSource.AbsolutePath, ElementName=IconImage}" Value="/Resources/MessageBox/Error.png">
+                                        <Setter Property="Symbol" Value="DismissCircle24" />
+                                        <Setter Property="Foreground" Value="{DynamicResource PhasmaRedTextBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ui:SymbolIcon.Style>
+                    </ui:SymbolIcon>
+                </Grid>
+                <Border.Style>
+                    <Style TargetType="{x:Type Border}">
+                        <Setter Property="Background" Value="{DynamicResource PhasmaS3Brush}" />
+                        <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Source.UriSource.AbsolutePath, ElementName=IconImage}" Value="/Resources/MessageBox/Warning.png">
+                                        <Setter Property="Background" Value="#24FFB020" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Source.UriSource.AbsolutePath, ElementName=IconImage}" Value="/Resources/MessageBox/Information.png">
+                                        <Setter Property="Background" Value="#246AA8FF" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Source.UriSource.AbsolutePath, ElementName=IconImage}" Value="/Resources/MessageBox/Question.png">
+                                        <Setter Property="Background" Value="#246AA8FF" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Source.UriSource.AbsolutePath, ElementName=IconImage}" Value="/Resources/MessageBox/Error.png">
+                                        <Setter Property="Background" Value="{DynamicResource PhasmaAccentSoftBrush}" />
+                                    </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+            </Border>
             <StackPanel Grid.Column="1">
-                <TextBlock x:Name="TitleTextBlock" Text="? is unable to connect to ?" FontSize="18" Foreground="{DynamicResource TextFillColorPrimaryBrush}" TextWrapping="Wrap" />
-                <controls:MarkdownTextBlock x:Name="DescriptionTextBlock" MarkdownText="?" Margin="0,16,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                <TextBlock Text="{x:Static resources:Strings.Dialog_Connectivity_MoreInfo}" Margin="0,16,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                <RichTextBox x:Name="ErrorRichTextBox" Padding="8" Margin="0,8,0,0" Block.LineHeight="2" FontFamily="{DynamicResource PhasmaMono}" IsReadOnly="True" />
+                <TextBlock x:Name="TitleTextBlock" Margin="0,4,0,0" FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="? is unable to connect to ?" TextWrapping="Wrap" />
+                <controls:MarkdownTextBlock x:Name="DescriptionTextBlock" Margin="0,12,0,0" FontSize="13.5" LineHeight="20" Foreground="{DynamicResource TextFillColorSecondaryBrush}" MarkdownText="?" TextWrapping="Wrap" />
+                <TextBlock Margin="0,16,0,0" Style="{StaticResource PhasmaCaption}" Text="{Binding Source={x:Static resources:Strings.Dialog_Connectivity_MoreInfo}, Converter={StaticResource PhasmaUpper}, Mode=OneTime}" TextWrapping="Wrap" />
+                <RichTextBox
+                    x:Name="ErrorRichTextBox"
+                    Margin="0,8,0,0"
+                    Padding="8"
+                    Background="{DynamicResource PhasmaChromeBrush}"
+                    BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}"
+                    Block.LineHeight="2"
+                    FontFamily="{DynamicResource PhasmaMono}"
+                    FontSize="11.5"
+                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                    IsReadOnly="True" />
             </StackPanel>
         </Grid>
 
-        <Border Grid.Row="2" Padding="15" Background="{ui:ThemeResource SolidBackgroundFillColorSecondaryBrush}">
-            <StackPanel Orientation="Horizontal" FlowDirection="LeftToRight" HorizontalAlignment="Right">
-                <Button x:Name="CloseButton" MinWidth="100" Content="{x:Static resources:Strings.Common_Close}" Margin="12,0,0,0" />
+        <Border
+            Grid.Row="2"
+            Padding="18,12"
+            Background="{DynamicResource PhasmaPanelBrush}"
+            BorderBrush="{DynamicResource PhasmaStrokeBrush}"
+            BorderThickness="0,1,0,0">
+            <StackPanel HorizontalAlignment="Right" FlowDirection="LeftToRight" Orientation="Horizontal">
+                <Button x:Name="CloseButton" MinWidth="100" Margin="12,0,0,0" Content="{x:Static resources:Strings.Common_Close}" Style="{StaticResource PhasmaAccentButton}" />
             </StackPanel>
         </Border>
     </Grid>

@@ -7,7 +7,6 @@ using PhasmaStrap.Models;
 
 namespace PhasmaStrap.UI.ViewModels.Settings
 {
-    /// <summary>One bar in the "Most played" card.</summary>
     public sealed class MostPlayedRow
     {
         public string Name { get; init; } = "";

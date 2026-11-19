@@ -176,7 +176,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         private bool _lastPurged;
         private int _lastTrimmed;
 
-        /// <summary>"Freed 1.4 GB · 3 minutes ago" after a clean this session, empty before the first one.</summary>
         public string CleanRamStatus
         {
             get
@@ -194,7 +193,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        /// <summary>Longer detail for the status line's tooltip.</summary>
         public string CleanRamDetail => _lastCleanAt == default ? "" : $"Trimmed {_lastTrimmed} processes{(_lastPurged ? " and purged the standby list" : "")}.";
 
         private static string Ago(DateTime when)
@@ -209,7 +207,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             return when.ToString("d MMM, HH:mm", CultureInfo.CurrentCulture);
         }
 
-        /// <summary>Re-reads the "minutes ago" part; called when the Boost page is shown again.</summary>
         public void RefreshCleanRamStatus() => OnPropertyChanged(nameof(CleanRamStatus));
 
         public ICommand CleanRamCommand => new AsyncRelayCommand(async () =>
@@ -222,7 +219,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             try
             {
-                PhasmaStrap.Utility.SystemMemoryCleaner.TrimResult trim = await Task.Run(PhasmaStrap.Utility.SystemMemoryCleaner.TrimAllProcessWorkingSets);
+                PhasmaStrap.Utility.SystemMemoryCleaner.TrimResult trim = await Task.Run(() => PhasmaStrap.Utility.SystemMemoryCleaner.TrimAllProcessWorkingSets(true));
                 bool purged = await Task.Run(PhasmaStrap.Utility.SystemMemoryCleaner.PurgeStandbyListElevated);
 
                 _lastFreedMb = trim.BytesFreed / 1048576.0;
@@ -395,7 +392,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        /// <summary>A game row with its icon, or its initials on a coloured tile until (or unless) the icon is known.</summary>
         public class GameIconRow : NotifyPropertyChangedViewModel
         {
             private static readonly System.Windows.Media.Color[] TileColors =
@@ -422,7 +418,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             public string PlaceId { get; }
 
-            /// <summary>Game name without the place ID.</summary>
             public string Title { get; }
 
             public string Initials { get; }
@@ -502,10 +497,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         private bool _resolutionIconsRequested;
 
-        /// <summary>
-        /// Fills in game icons for the per game rows and the recent games list. Uses the icon saved in play time
-        /// history first, then the Roblox thumbnails API (the same lookup the Games page uses).
-        /// </summary>
         public async void LoadResolutionIcons()
         {
             if (_resolutionIconsRequested)
@@ -571,11 +562,19 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             private set { _resolutionAssignStatus = value; OnPropertyChanged(nameof(ResolutionAssignStatus)); }
         }
 
+        private bool _resolutionAssignIsError;
+        public bool ResolutionAssignIsError
+        {
+            get => _resolutionAssignIsError;
+            private set { _resolutionAssignIsError = value; OnPropertyChanged(nameof(ResolutionAssignIsError)); }
+        }
+
         public ICommand AddResolutionPlaceCommand => new RelayCommand(() =>
         {
             string id = ResolutionAssignPlaceId.Trim();
             if (!long.TryParse(id, out long place) || place <= 0)
             {
+                ResolutionAssignIsError = true;
                 ResolutionAssignStatus = "Pick a game from the list, or type its place ID (the number in its roblox.com/games/ link).";
                 return;
             }
@@ -583,6 +582,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             DisplayMode? mode = SelectedMode;
             if (mode is null)
             {
+                ResolutionAssignIsError = true;
                 ResolutionAssignStatus = "Pick a resolution above first. The game gets that monitor and resolution.";
                 return;
             }
@@ -605,6 +605,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             ResolutionPlaceAssignments.Add(added);
             App.Settings.Prop.InGameResolutionPlaceProfiles[id] = profile;
             ResolutionAssignPlaceId = "";
+            ResolutionAssignIsError = false;
             ResolutionAssignStatus = $"{GameNameFor(id)} will use {mode}. Press Save to keep it.";
         });
 
@@ -620,7 +621,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         #region Last session tiles
 
-        /// <summary>One stat tile above the frame rate settings: a number, a caption and a row of small bars.</summary>
         public sealed class SessionStatTile
         {
             public string Label { get; init; } = "";
@@ -634,10 +634,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public Visibility SessionTilesVisibility => SessionTiles.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
-        /// <summary>
-        /// Reads the summary the watcher writes when you leave a game (PerformanceSessionRecorder, stored locally).
-        /// Tiles without data are left out, and the row hides when there is no session yet.
-        /// </summary>
         public void LoadLastSession()
         {
             SessionTiles.Clear();
@@ -657,6 +653,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                     {
                         Label = "Average FPS",
                         Value = Math.Round(fps.Average()).ToString(CultureInfo.CurrentCulture),
+                        Unit = "fps",
                         Caption = game.Length > 0 ? $"Last session, {game}" : "Last session",
                         Bars = Bars(fps, average: true),
                     });
@@ -701,7 +698,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             OnPropertyChanged(nameof(SessionTilesVisibility));
         }
 
-        /// <summary>Squeezes the samples into 18 bars between 4 and 22 pixels high (bucket average, or bucket minimum for the lows).</summary>
         private static List<double> Bars(List<int> samples, bool average)
         {
             const int count = 18;

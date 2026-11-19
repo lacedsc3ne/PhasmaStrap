@@ -10,10 +10,6 @@ using PhasmaStrap.Utility;
 
 namespace PhasmaStrap.UI.Elements.Controls
 {
-    /// <summary>
-    /// Builds the right click menus used on lists across the app, so every list gets the same look:
-    /// an icon, the action, an optional key hint, and red text for anything that removes something.
-    /// </summary>
     internal sealed class ItemMenu
     {
         public System.Windows.Controls.ContextMenu Menu { get; }
@@ -104,7 +100,6 @@ namespace PhasmaStrap.UI.Elements.Controls
             return this;
         }
 
-        /// <summary>Opens the menu at the mouse, next to <paramref name="target"/>.</summary>
         public void Open(UIElement target)
         {
             while (Menu.Items.Count > 0 && Menu.Items[^1] is System.Windows.Controls.Separator)
@@ -118,7 +113,6 @@ namespace PhasmaStrap.UI.Elements.Controls
             Menu.IsOpen = true;
         }
 
-        /// <summary>The data item of type <typeparamref name="T"/> behind whatever was clicked, if any.</summary>
         public static T? ItemAt<T>(object? source) where T : class
         {
             DependencyObject? current = source as DependencyObject;
@@ -139,10 +133,6 @@ namespace PhasmaStrap.UI.Elements.Controls
             return null;
         }
 
-        /// <summary>
-        /// Hooks a list so a right click on one of its rows calls <paramref name="build"/> with that row's data
-        /// and opens the menu it fills.
-        /// </summary>
         public static void Attach<T>(UIElement list, Action<T, ItemMenu> build) where T : class
         {
             list.PreviewMouseRightButtonUp += (_, e) =>

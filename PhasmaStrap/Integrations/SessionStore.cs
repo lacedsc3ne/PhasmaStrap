@@ -173,7 +173,6 @@ namespace PhasmaStrap.Integrations
                 try { owned = mutex.WaitOne(3000); }
                 catch (AbandonedMutexException) { owned = true; }
 
-                // Never rewrite a file we could not read, or the rest of the history would be lost
                 if (!owned || !TryLoad(out SessionData data, out _))
                 {
                     Log?.Invoke("Could not open the session file to delete a session");
@@ -345,7 +344,6 @@ namespace PhasmaStrap.Integrations
             return result.Values.OrderByDescending(c => c.LastSeenUtc).ToList();
         }
 
-        /// <summary>Every recorded server where this friend was seen with you, newest first.</summary>
         public static List<ServerVisit> VisitsWith(SessionData data, long userId)
         {
             return Visits(data)
@@ -354,7 +352,6 @@ namespace PhasmaStrap.Integrations
                 .ToList();
         }
 
-        /// <summary>One entry per game you shared a server with this friend in, newest first.</summary>
         public static List<GameTotal> GamesWith(SessionData data, long userId, int take)
         {
             List<ServerVisit> visits = VisitsWith(data, userId);

@@ -23,7 +23,6 @@ namespace PhasmaStrap.Utility
             public string Signature { get; set; } = "";
             public DateTime RestartUtc { get; set; } = DateTime.MinValue;
 
-            /// <summary>Set when the running Roblox was started with a one time profile, for the game below.</summary>
             public bool OneTime { get; set; }
             public long OneTimeUniverseId { get; set; }
             public long OneTimePlaceId { get; set; }
@@ -187,7 +186,6 @@ namespace PhasmaStrap.Utility
 
         #region One time profile
 
-        /// <summary>A flag profile asked for one launch only, left on disk for the launch that follows.</summary>
         public sealed class OneTimeRequest
         {
             public string ProfileId { get; set; } = "";
@@ -198,13 +196,8 @@ namespace PhasmaStrap.Utility
 
         private static string OneTimePath => Path.Combine(Paths.Base, "OneTimeFlagProfile.json");
 
-        /// <summary>How long a request waits for its launch before it is ignored.</summary>
         private static readonly TimeSpan OneTimeLifetime = TimeSpan.FromMinutes(2);
 
-        /// <summary>
-        /// Makes the next launch use <paramref name="profileId"/> instead of the game's own profile, without changing
-        /// any saved rule. An empty id means "just your usual flags" for that launch.
-        /// </summary>
         public static void RequestOneTime(string profileId, long universeId, long placeId)
         {
             try
@@ -221,10 +214,6 @@ namespace PhasmaStrap.Utility
             }
         }
 
-        /// <summary>
-        /// Takes the waiting one time request, if there is a fresh one. The request is used up either way.
-        /// <paramref name="profile"/> is null for "your usual flags".
-        /// </summary>
         public static bool TakeOneTime(FlagProfileData profiles, out OneTimeRequest? request, out FlagProfile? profile)
         {
             request = null;
@@ -273,7 +262,6 @@ namespace PhasmaStrap.Utility
             if (!App.Settings.Prop.UseFastFlagManager)
                 return;
 
-            // Roblox was started with a profile picked for this game once: that is what the player asked for.
             Marker started = Read();
             if (started.OneTime && ((started.OneTimeUniverseId > 0 && started.OneTimeUniverseId == data.UniverseId) || started.OneTimePlaceId == data.PlaceId))
                 return;

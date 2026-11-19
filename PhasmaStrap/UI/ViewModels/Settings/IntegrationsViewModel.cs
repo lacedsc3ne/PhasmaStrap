@@ -232,13 +232,10 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        /// <summary>True when friends would see a Join button on your Discord profile right now.</summary>
         public bool JoinPreviewActive => DiscordActivityEnabled && DiscordActivityJoinEnabled;
 
-        /// <summary>Discord's own button says "Ask to Join"; the PhasmaStrap one says "Join".</summary>
         public string JoinPreviewText => DiscordNativeJoin ? "Ask to Join" : "Join";
 
-        /// <summary>Explains what friends see and what pressing the button does, since this preview cannot join anything itself.</summary>
         public string JoinPreviewTooltip
         {
             get

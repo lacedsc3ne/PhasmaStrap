@@ -34,7 +34,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public ObservableCollection<ServerListItem> Servers { get; } = new();
 
         private string _gameTitle = "";
-        /// <summary>"Game · Place" for the place last searched, empty until it is known.</summary>
         public string GameTitle
         {
             get => _gameTitle;
@@ -54,10 +53,8 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         private long _searchedPlaceId;
 
-        /// <summary>The place the list below belongs to, which may differ from what is typed in the box.</summary>
         public long SearchedPlaceId => _searchedPlaceId;
 
-        /// <summary>Place ID and how many servers, or the status while searching.</summary>
         public string HeaderDetail => _searchedPlaceId > 0 && !_isSearching && Servers.Count > 0
             ? $"Place ID {_searchedPlaceId}  ·  {GameCatalog.Compact(Servers.Count)} public servers"
             : _statusText;
@@ -81,7 +78,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        /// <summary>Adds region, uptime and FPS to the listed servers as they become known.</summary>
         private async Task FillFactsAsync(long placeId)
         {
             try

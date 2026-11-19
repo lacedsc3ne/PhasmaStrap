@@ -35,8 +35,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         private static void Go(Type page) =>
             Application.Current?.Windows.OfType<PhasmaStrap.UI.Elements.Settings.MainWindow>().FirstOrDefault()?.Navigate(page);
 
-        // ---- Roblox status: installed version, channel, and whether a newer one is out
-
         public System.Windows.Input.ICommand OpenChannelCommand { get; }
         public System.Windows.Input.ICommand OpenVersionsCommand { get; }
         public System.Windows.Input.ICommand CheckRobloxCommand { get; }
@@ -54,7 +52,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        /// <summary>production shows as LIVE, as Roblox calls it.</summary>
         private static string ChannelLabel => ChannelName.Equals(Deployment.DefaultChannel, StringComparison.OrdinalIgnoreCase) ? "LIVE" : ChannelName;
 
         public string ChannelButtonText => $"Channel: {ChannelLabel}";
@@ -69,7 +66,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         private string _robloxStatusDetail = "";
         public string RobloxStatusDetail { get => _robloxStatusDetail; private set { _robloxStatusDetail = value; OnPropertyChanged(nameof(RobloxStatusDetail)); } }
 
-        /// <summary>good when up to date, warn when a newer one is out or nothing is installed, none while unknown.</summary>
         private string _robloxStatusTone = "none";
         public string RobloxStatusTone { get => _robloxStatusTone; private set { _robloxStatusTone = value; OnPropertyChanged(nameof(RobloxStatusTone)); } }
 
@@ -131,7 +127,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        /// <summary>Asks Roblox's client settings service for the newest build on your channel (at most every 10 minutes unless forced).</summary>
         private async Task CheckRobloxAsync(bool force)
         {
             ShowRobloxStatus();
@@ -171,13 +166,10 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             ShowRobloxStatus();
         }
 
-        // ---- When you press Play
-
         public string[] SettingsWindowOnLaunchOptions { get; } = { "Close it", "Minimise to tray", "Keep it open" };
 
         private static readonly string[] SettingsWindowOnLaunchKeys = { "Close", "Tray", "KeepOpen" };
 
-        /// <summary>"Close PhasmaStrap": what this window does when you press Launch. Close it is how it always worked.</summary>
         public string SettingsWindowOnLaunch
         {
             get => SettingsWindowOnLaunchOptions[Math.Max(0, Array.IndexOf(SettingsWindowOnLaunchKeys, App.Settings.Prop.SettingsWindowOnLaunch))];
@@ -200,28 +192,23 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             _ => "Closes when Roblox starts",
         };
 
-        /// <summary>"Ask which account": the saved accounts picker before each launch from PhasmaStrap.</summary>
         public bool AskAccountOnLaunch
         {
             get => App.Settings.Prop.AskAccountOnLaunch;
             set { App.Settings.Prop.AskAccountOnLaunch = value; OnPropertyChanged(nameof(AskAccountOnLaunch)); }
         }
 
-        /// <summary>"Confirm before joining": asks before a link from the Roblox website starts a game.</summary>
         public bool ConfirmWebsiteJoins
         {
             get => App.Settings.Prop.ConfirmWebsiteJoins;
             set { App.Settings.Prop.ConfirmWebsiteJoins = value; OnPropertyChanged(nameof(ConfirmWebsiteJoins)); }
         }
 
-        /// <summary>"Fullscreen on launch": turns on Roblox's Fullscreen setting before it starts.</summary>
         public bool FullscreenOnLaunch
         {
             get => App.Settings.Prop.FullscreenOnLaunch;
             set { App.Settings.Prop.FullscreenOnLaunch = value; OnPropertyChanged(nameof(FullscreenOnLaunch)); }
         }
-
-        // ---- Mods summary: what is swapped in every time Roblox starts (read only, the Mods page changes them)
 
         public System.Windows.Input.ICommand OpenModsCommand { get; }
         public System.Windows.Input.ICommand OpenModsFolderCommand { get; }
@@ -484,12 +471,15 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public bool IsRobloxInstallationMissing => !App.IsPlayerInstalled && !App.IsStudioInstalled;
 
+        private static PhasmaStrap.Models.SettingTasks.ForceReinstallTask ForceReinstallTask =>
+            App.PendingSettingTasks.TryGetValue("ForceReinstall", out var pending) && pending is PhasmaStrap.Models.SettingTasks.ForceReinstallTask task ? task : new();
+
         public bool ForceRobloxReinstallation
         {
-            get => App.State.Prop.ForceReinstall || IsRobloxInstallationMissing;
+            get => ForceReinstallTask.NewState || IsRobloxInstallationMissing;
             set
             {
-                App.State.Prop.ForceReinstall = value;
+                ForceReinstallTask.NewState = value;
                 RefreshSummaries();
             }
         }

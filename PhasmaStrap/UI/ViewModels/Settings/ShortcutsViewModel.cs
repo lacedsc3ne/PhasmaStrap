@@ -69,6 +69,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                     StudioPluginInstaller.Uninstall();
                 }
 
+                OnPropertyChanged(nameof(StudioPluginEnabled));
                 OnPropertyChanged(nameof(StudioPluginStatus));
             }
         }
@@ -273,7 +274,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             try
             {
                 if (File.Exists(entry.Path))
-                    File.Delete(entry.Path);
+                    Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(entry.Path, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
             }
             catch (Exception ex)
             {
@@ -282,13 +283,12 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 return;
             }
 
-            GameShortcutStatus = $"Removed \"{entry.Name}\".";
+            GameShortcutStatus = $"Moved \"{entry.Name}\" to the Recycle Bin.";
 
             SyncTasks();
             RefreshShortcuts();
         }
 
-        /// <summary>Renames the .lnk file itself, so the new name shows on the desktop or in the Start menu.</summary>
         private void RenameShortcut(ShortcutEntry? entry)
         {
             if (entry is null || !File.Exists(entry.Path))
@@ -322,7 +322,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             {
                 if (caseOnly)
                 {
-                    // Windows ignores a rename that only changes letter case, so go through a temporary name.
                     string temporary = Path.Combine(folder, Guid.NewGuid().ToString("N") + ".lnk");
                     File.Move(entry.Path, temporary);
                     File.Move(temporary, destination);

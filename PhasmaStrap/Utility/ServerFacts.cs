@@ -2,10 +2,6 @@ using PhasmaStrap.Integrations;
 
 namespace PhasmaStrap.Utility
 {
-    /// <summary>
-    /// Small shared helpers for showing a public server: region text and badge, continent, ping tone, uptime,
-    /// and the regions already known from your own session history.
-    /// </summary>
     public static class ServerFacts
     {
         private static readonly Dictionary<string, string> _continents = new(StringComparer.OrdinalIgnoreCase)
@@ -32,7 +28,6 @@ namespace PhasmaStrap.Utility
             ["Mexico"] = "MX", ["Chile"] = "CL", ["Argentina"] = "AR", ["Spain"] = "ES", ["Italy"] = "IT", ["Sweden"] = "SE",
         };
 
-        /// <summary>Two letter country code for a code or a country name, as far as it is known.</summary>
         public static string CountryCode(string? country)
         {
             if (string.IsNullOrWhiteSpace(country))
@@ -56,7 +51,6 @@ namespace PhasmaStrap.Utility
             _ => "",
         };
 
-        /// <summary>Splits "Frankfurt, DE" into its city and two letter country.</summary>
         public static (string City, string Country) SplitRegion(string? region)
         {
             if (string.IsNullOrWhiteSpace(region))
@@ -78,7 +72,6 @@ namespace PhasmaStrap.Utility
             return code.Length > 0 && _continents.TryGetValue(code, out string? continent) ? continent : "";
         }
 
-        /// <summary>The short tag in front of a region: EU for anywhere in Europe, otherwise the country code.</summary>
         public static string Badge(string country, string continent)
         {
             if (continent.Equals("EU", StringComparison.OrdinalIgnoreCase))
@@ -88,7 +81,6 @@ namespace PhasmaStrap.Utility
             return code.Length == 2 ? code : continent.ToUpperInvariant();
         }
 
-        /// <summary>good, warn, bad or none, matched by the colour triggers on every ping cell.</summary>
         public static string PingTone(int ping) => ping <= 0 ? "none" : ping < 60 ? "good" : ping < 120 ? "warn" : "bad";
 
         public static string ShortJobId(string jobId) => jobId.Length > 12 ? $"{jobId[..4]}…{jobId[^4..]}" : jobId;
@@ -112,7 +104,6 @@ namespace PhasmaStrap.Utility
         private static DateTime _historyRead = DateTime.MinValue;
         private static readonly object _lock = new();
 
-        /// <summary>Job id to region for every server you have been in, read from the session history on Activity.</summary>
         public static Dictionary<string, string> HistoryRegions()
         {
             lock (_lock)

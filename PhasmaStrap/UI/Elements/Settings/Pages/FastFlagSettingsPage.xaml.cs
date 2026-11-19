@@ -16,7 +16,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             UpdateHeader();
         }
 
-        // The header button belongs to the Roblox FFlags tab, as in the mockups.
         private void UpdateHeader()
         {
             if (_editorHeaderButton is null)

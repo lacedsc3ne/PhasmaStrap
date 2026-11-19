@@ -1,12 +1,8 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 
 namespace PhasmaStrap.UI.Elements.Controls
 {
-    /// <summary>
-    /// A titled group of settings drawn as one card. Rows inside (OptionControl) turn flat and get a line between them.
-    /// The look lives in UI/Style/Phasma.xaml.
-    /// </summary>
     public class SettingsCard : ItemsControl
     {
         public static readonly DependencyProperty HeaderProperty =
@@ -15,9 +11,24 @@ namespace PhasmaStrap.UI.Elements.Controls
         public static readonly DependencyProperty DescriptionProperty =
             DependencyProperty.Register(nameof(Description), typeof(string), typeof(SettingsCard), new PropertyMetadata(""));
 
-        /// <summary>Optional element shown on the right of the card title, like a status tag or a button.</summary>
         public static readonly DependencyProperty HeaderContentProperty =
             DependencyProperty.Register(nameof(HeaderContent), typeof(object), typeof(SettingsCard));
+
+        public static readonly DependencyProperty IconProperty =
+            DependencyProperty.Register(nameof(Icon), typeof(Wpf.Ui.Common.SymbolRegular), typeof(SettingsCard), new PropertyMetadata(Wpf.Ui.Common.SymbolRegular.Empty));
+
+        public static readonly DependencyProperty BleedProperty =
+            DependencyProperty.RegisterAttached("Bleed", typeof(bool), typeof(SettingsCard), new PropertyMetadata(false));
+
+        public static bool GetBleed(DependencyObject d) => (bool)d.GetValue(BleedProperty);
+
+        public static void SetBleed(DependencyObject d, bool value) => d.SetValue(BleedProperty, value);
+
+        public Wpf.Ui.Common.SymbolRegular Icon
+        {
+            get => (Wpf.Ui.Common.SymbolRegular)GetValue(IconProperty);
+            set => SetValue(IconProperty, value);
+        }
 
         public string Header
         {
@@ -42,7 +53,6 @@ namespace PhasmaStrap.UI.Elements.Controls
             SetResourceReference(StyleProperty, "PhasmaSettingsCard");
         }
 
-        // Rows are real elements, not data, so they are their own containers.
         protected override bool IsItemItsOwnContainerOverride(object item) => item is UIElement;
 
         private readonly System.Runtime.CompilerServices.ConditionalWeakTable<FrameworkElement, object> _padded = new();
@@ -61,15 +71,11 @@ namespace PhasmaStrap.UI.Elements.Controls
             return false;
         }
 
-        /// <summary>
-        /// Rows (OptionControl) draw their own side padding and full width lines. Anything else put in a card (a chart, a note,
-        /// a custom list) gets the same side padding so it never touches the card edge.
-        /// </summary>
         protected override void PrepareContainerForItemOverride(DependencyObject element, object item)
         {
             base.PrepareContainerForItemOverride(element, item);
 
-            if (element is FrameworkElement fe && element is not OptionControl && !HoldsRow(fe) && fe.Margin.Left < 18 && fe.Margin.Right < 18 && !_padded.TryGetValue(fe, out _))
+            if (element is FrameworkElement fe && element is not OptionControl && !GetBleed(fe) && !HoldsRow(fe) && fe.Margin.Left < 18 && fe.Margin.Right < 18 && !_padded.TryGetValue(fe, out _))
             {
                 _padded.Add(fe, new object());
                 fe.Margin = new Thickness(Math.Max(fe.Margin.Left, 20), fe.Margin.Top, Math.Max(fe.Margin.Right, 20), fe.Margin.Bottom);
@@ -77,7 +83,6 @@ namespace PhasmaStrap.UI.Elements.Controls
         }
     }
 
-    /// <summary>Lays cards out two to a row when there is room, and one per row when the window is narrow.</summary>
     public class CardColumns : Panel
     {
         public static readonly DependencyProperty ColumnsProperty =
@@ -89,7 +94,6 @@ namespace PhasmaStrap.UI.Elements.Controls
         public static readonly DependencyProperty SpacingProperty =
             DependencyProperty.Register(nameof(Spacing), typeof(double), typeof(CardColumns), new FrameworkPropertyMetadata(12.0, FrameworkPropertyMetadataOptions.AffectsMeasure));
 
-        /// <summary>Set on a child to make it take the whole row.</summary>
         public static readonly DependencyProperty FullRowProperty =
             DependencyProperty.RegisterAttached("FullRow", typeof(bool), typeof(CardColumns), new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsParentMeasure));
 
@@ -198,7 +202,6 @@ namespace PhasmaStrap.UI.Elements.Controls
 
                 foreach (UIElement child in row)
                 {
-                    // Cards in the same row share a height so their edges line up.
                     child.Arrange(new Rect(x, y, cell, tallest));
                     x += cell + Spacing;
                 }

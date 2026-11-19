@@ -205,7 +205,6 @@ namespace PhasmaStrap.Models.Persistable
 
         public bool MinimizeToTrayOnClose { get; set; } = false;
 
-
         public bool AutoBackupEnabled { get; set; } = false;
 
         public TrayDoubleClickAction TrayDoubleClickAction { get; set; } = TrayDoubleClickAction.OpenSettings;
@@ -315,13 +314,12 @@ namespace PhasmaStrap.Models.Persistable
         public string ThemeAccent { get; set; } = "";
         public double ThemePanelOpacity { get; set; } = 1.0;
         public string ThemePanelColor { get; set; } = "";
-        public int ThemeCornerRadius { get; set; } = 12;
+        public int ThemeCornerRadius { get; set; } = 20;
         public double ThemeWindowTintOpacity { get; set; } = 0.91;
         public bool ThemeCompact { get; set; } = false;
-        public bool ThemeMistEnabled { get; set; } = true;
-        public bool ThemeSectionColors { get; set; } = true;
+        public bool ThemeMistEnabled { get; set; } = false;
+        public bool ThemeSectionColors { get; set; } = false;
 
-        /// <summary>Which look the saved theme values were last reset to. Lets a new default look replace old saved values once.</summary>
         public int ThemeLookVersion { get; set; } = 0;
 
         public bool OptimizeRoblox { get; set; } = false;
@@ -367,7 +365,6 @@ namespace PhasmaStrap.Models.Persistable
 
         public bool FastFlagPresetCloseRunningRoblox { get; set; } = false;
 
-
         public string PreferredExternalEditorPath { get; set; } = "";
 
         public ModApplyTarget ModApplyTarget { get; set; } = ModApplyTarget.Both;
@@ -378,26 +375,20 @@ namespace PhasmaStrap.Models.Persistable
         public string HomepageBackgroundGradientColor { get; set; } = "#16213E";
         public double HomepageBackgroundGradientAngle { get; set; } = 45.0;
 
-        // Capture library: applied to a screenshot before it is shared to the gallery.
         public bool CaptureShareHideNames { get; set; } = true;
         public bool CaptureShareStamp { get; set; } = false;
 
-        // PhasmaStrap updates: "Stable" or "Beta" (Beta also takes GitHub prereleases).
         public string AppUpdateChannel { get; set; } = "Stable";
 
-        // Uploads a short report (POST /v1/crash) when PhasmaStrap itself crashes. Off until the user turns it on.
         public bool SendCrashReports { get; set; } = false;
 
-        // Deployment page, "When you press Play".
         public string SettingsWindowOnLaunch { get; set; } = "Close";
         public bool AskAccountOnLaunch { get; set; } = false;
         public bool ConfirmWebsiteJoins { get; set; } = false;
         public bool FullscreenOnLaunch { get; set; } = false;
 
-        // Settings backup, "What to include": "Standard" (settings, flags and themes) or "Everything" (adds friend notes and the games library).
         public string BackupScope { get; set; } = "Standard";
 
-        // Friend alerts for friends on "Use my usual alerts": which changes pop up.
         public bool FriendAlertOnline { get; set; } = true;
         public bool FriendAlertGame { get; set; } = true;
     }

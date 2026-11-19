@@ -17,6 +17,45 @@
 
             <Style TargetType="{x:Type CheckBox}" BasedOn="{StaticResource DefaultCheckBoxStyle}">
                 <Setter Property="Cursor" Value="Arrow" />
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type CheckBox}">
+                            <Grid Background="Transparent">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border x:Name="Box" Width="18" Height="18" VerticalAlignment="Center" CornerRadius="5"
+                                        Background="{DynamicResource PhasmaS4Brush}" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" BorderThickness="1">
+                                    <Path x:Name="Mark" Data="M 3.5,9 L 7.5,12.5 L 14.5,5" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                          Margin="-1" Visibility="Collapsed" />
+                                </Border>
+                                <ContentPresenter x:Name="Text" Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True" />
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Box" Property="Background" Value="{DynamicResource PhasmaAccentBrush}" />
+                                    <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource PhasmaAccentBrush}" />
+                                    <Setter TargetName="Mark" Property="Visibility" Value="Visible" />
+                                </Trigger>
+                                <Trigger Property="IsChecked" Value="{x:Null}">
+                                    <Setter TargetName="Box" Property="Background" Value="{DynamicResource PhasmaAccentSoftBrush}" />
+                                    <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource PhasmaAccentBrush}" />
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource PhasmaAccentStrokeBrush}" />
+                                </Trigger>
+                                <Trigger Property="Content" Value="{x:Null}">
+                                    <Setter TargetName="Text" Property="Margin" Value="0" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.45" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
             </Style>
             <Style TargetType="{x:Type RadioButton}" BasedOn="{StaticResource DefaultRadioButtonStyle}">
                 <Setter Property="Cursor" Value="Arrow" />
@@ -25,7 +64,6 @@
                 <Setter Property="Cursor" Value="Arrow" />
             </Style>
 
-            <!--  Toggle: 36 x 20 pill, grey when off, section colour when on (the mockup toggle)  -->
             <Style x:Key="PhasmaToggleSwitch" TargetType="{x:Type ui:ToggleSwitch}" BasedOn="{StaticResource DefaultUiToggleSwitchStyle}">
                 <Setter Property="Cursor" Value="Arrow" />
                 <Setter Property="Template">
@@ -36,9 +74,9 @@
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <Grid Width="36" Height="20">
-                                    <Border x:Name="Track" CornerRadius="10" Background="{DynamicResource PhasmaToggleOffBrush}" />
-                                    <Ellipse x:Name="Knob" Width="14" Height="14" Margin="3,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" Fill="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <Grid Width="42" Height="24">
+                                    <Border x:Name="Track" CornerRadius="12" Background="{DynamicResource PhasmaToggleOffBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1" />
+                                    <Ellipse x:Name="Knob" Width="18" Height="18" Margin="3,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" Fill="{DynamicResource TextFillColorSecondaryBrush}" />
                                 </Grid>
                                 <ContentPresenter
                                     x:Name="ContentPresenter"
@@ -75,7 +113,6 @@
             </Style>
             <Style TargetType="{x:Type ui:ToggleSwitch}" BasedOn="{StaticResource PhasmaToggleSwitch}" />
 
-            <!--  Slider: 4px track filled in the section colour, round light knob (the mockup slider)  -->
             <Style x:Key="PhasmaSlider" TargetType="{x:Type Slider}">
                 <Setter Property="Cursor" Value="Arrow" />
                 <Setter Property="MinHeight" Value="20" />
@@ -129,10 +166,10 @@
 
             <FontFamily x:Key="Rubik">pack://application:,,,/Resources/Fonts/#Rubik Light</FontFamily>
 
-            <FontFamily x:Key="ContentControlThemeFontFamily">pack://application:,,,/Resources/Fonts/#IBM Plex Sans</FontFamily>
-            <FontFamily x:Key="PhasmaBody">pack://application:,,,/Resources/Fonts/#IBM Plex Sans</FontFamily>
+            <FontFamily x:Key="ContentControlThemeFontFamily">pack://application:,,,/Resources/Fonts/#Geist</FontFamily>
+            <FontFamily x:Key="PhasmaBody">pack://application:,,,/Resources/Fonts/#Geist</FontFamily>
             <FontFamily x:Key="PhasmaMono">pack://application:,,,/Resources/Fonts/#IBM Plex Mono</FontFamily>
-            <FontFamily x:Key="PhasmaDisplay">pack://application:,,,/Resources/Fonts/#Zilla Slab</FontFamily>
+            <FontFamily x:Key="PhasmaDisplay">pack://application:,,,/Resources/Fonts/#Chakra Petch</FontFamily>
 
             <Style x:Key="SlimScrollBarThumb" TargetType="{x:Type Thumb}">
                 <Setter Property="OverridesDefaultStyle" Value="True" />

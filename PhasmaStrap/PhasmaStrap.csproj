@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -41,6 +41,13 @@
     <Resource Include="Resources\Fonts\IBMPlexSans-Medium.ttf" />
     <Resource Include="Resources\Fonts\IBMPlexSans-SemiBold.ttf" />
     <Resource Include="Resources\Fonts\IBMPlexSans-Bold.ttf" />
+    <Resource Include="Resources\Fonts\chakra-petch-latin-500-normal.ttf" />
+    <Resource Include="Resources\Fonts\chakra-petch-latin-600-normal.ttf" />
+    <Resource Include="Resources\Fonts\chakra-petch-latin-700-normal.ttf" />
+    <Resource Include="Resources\Fonts\geist-sans-latin-400-normal.ttf" />
+    <Resource Include="Resources\Fonts\geist-sans-latin-500-normal.ttf" />
+    <Resource Include="Resources\Fonts\geist-sans-latin-600-normal.ttf" />
+    <Resource Include="Resources\Fonts\geist-sans-latin-700-normal.ttf" />
     <Resource Include="Resources\Fonts\IBMPlexMono-Regular.ttf" />
     <Resource Include="Resources\Fonts\IBMPlexMono-Medium.ttf" />
     <Resource Include="Resources\Fonts\IBMPlexMono-SemiBold.ttf" />

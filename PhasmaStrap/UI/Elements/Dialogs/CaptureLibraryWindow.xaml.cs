@@ -54,7 +54,6 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             _open.Show();
         }
 
-        /// <summary>Opens the library on <paramref name="tab"/> showing only what was taken in <paramref name="range"/>.</summary>
         public static void Open(int tab, Window? owner, CaptureTimeFilter? range)
         {
             Open(tab, owner);

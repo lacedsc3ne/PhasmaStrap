@@ -4,17 +4,10 @@ using System.Windows.Media.Imaging;
 
 namespace PhasmaStrap.Utility
 {
-    /// <summary>
-    /// CPU approximation of the RiShade pass chain (Integrations/RiShade/RiShadeShaders.cs), used for the
-    /// before and after preview on the RiShade page. It runs the same maths per pixel on a small bundled
-    /// sample picture: chromatic aberration, sharpen, clarity, colour grade, tonemap, ambient glow, grain,
-    /// vignette, bloom and render scale. Debanding is left out because it is invisible at this size.
-    /// </summary>
     public static class RiShadePreview
     {
         private const string LOG_IDENT = "RiShadePreview";
 
-        /// <summary>The source picture as 0..1 floats per channel.</summary>
         public sealed class Picture
         {
             public Picture(int width, int height)
@@ -35,7 +28,6 @@ namespace PhasmaStrap.Utility
 
         private static Picture? _sample;
 
-        /// <summary>Loads Resources/RiShadeSample.png, or draws a stand in scene if it is missing. Call on the UI thread.</summary>
         public static Picture GetSample()
         {
             if (_sample is not null)
@@ -80,7 +72,6 @@ namespace PhasmaStrap.Utility
             return pic;
         }
 
-        /// <summary>A simple sky, sun, hills and blocks scene, only used if the bundled picture can't be read.</summary>
         private static BitmapSource DrawFallbackScene()
         {
             const int w = 448, h = 252;
@@ -106,7 +97,6 @@ namespace PhasmaStrap.Utility
             return bitmap;
         }
 
-        /// <summary>Turns a rendered BGRA buffer into a frozen bitmap. Call on the UI thread.</summary>
         public static BitmapSource ToBitmap(byte[] bgra, int width, int height)
         {
             var bitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
@@ -115,7 +105,6 @@ namespace PhasmaStrap.Utility
             return bitmap;
         }
 
-        /// <summary>The untouched picture as BGRA.</summary>
         public static byte[] Original(Picture src)
         {
             byte[] outPx = new byte[src.Width * src.Height * 4];
@@ -124,16 +113,11 @@ namespace PhasmaStrap.Utility
             return outPx;
         }
 
-        /// <summary>
-        /// Runs the effect chain over the picture with the given settings and returns BGRA at the picture's size.
-        /// Safe to call off the UI thread.
-        /// </summary>
         public static byte[] Render(Picture full, RiShadeSettings s)
         {
             if (!s.HasVisibleEffects)
                 return Original(full);
 
-            // Render scale: the game draws the effects at a lower size, then upscales.
             float scale = s.ResolveRenderScale();
             Picture src = scale < 0.999f ? Resize(full, Math.Max(16, (int)(full.Width * scale)), Math.Max(9, (int)(full.Height * scale))) : full;
 
@@ -308,7 +292,6 @@ namespace PhasmaStrap.Utility
                 case 2:
                     return Math.Clamp(LinearToSrgb(Uncharted2(lin) / Uncharted2(wp)), 0f, 1f);
                 case 4:
-                    // AgX needs the full colour matrix; a per channel log curve gets close enough for a preview.
                     float ev = Math.Clamp(MathF.Log2(Math.Max(lin, 1e-10f)), -12.47393f, 4.026069f);
                     float t = (ev + 12.47393f) / 16.5f;
                     return Math.Clamp(LinearToSrgb(MathF.Pow(Math.Max(AgxContrast(t), 0f), 2.2f)), 0f, 1f);
@@ -457,7 +440,6 @@ namespace PhasmaStrap.Utility
 
         private static readonly float[] Gauss9 = { 0.028f, 0.067f, 0.124f, 0.179f, 0.204f, 0.179f, 0.124f, 0.067f, 0.028f };
 
-        /// <summary>The 9 tap separable blur from PSBlurH / PSBlurV, with the tap spacing scaled by <paramref name="spread"/>.</summary>
         private static Picture Blur9(Picture src, float spread)
         {
             int w = src.Width, h = src.Height;

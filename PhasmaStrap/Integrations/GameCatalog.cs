@@ -17,10 +17,6 @@ namespace PhasmaStrap.Integrations
 
     public sealed record CatalogSort(string Name, List<CatalogGame> Games);
 
-    /// <summary>
-    /// Read only lookups behind the Games catalog and game page: details, likes, banner art,
-    /// place icons and the front page sorts. Every call fails soft and logs instead of throwing.
-    /// </summary>
     public static class GameCatalog
     {
         private const string LOG_IDENT = "GameCatalog";
@@ -79,7 +75,6 @@ namespace PhasmaStrap.Integrations
         public static async Task<GameDetails?> GetDetailsAsync(long universeId, CancellationToken ct = default) =>
             (await GetDetailsAsync(new[] { universeId }, ct)).FirstOrDefault();
 
-        /// <summary>Share of votes that are likes, 0 to 100, or null when nobody has voted.</summary>
         public static async Task<int?> GetLikedPercentAsync(long universeId, CancellationToken ct = default)
         {
             try
@@ -164,7 +159,6 @@ namespace PhasmaStrap.Integrations
             return map;
         }
 
-        /// <summary>The front page rows Roblox shows on its Charts / Home page (Trending, Popular and so on).</summary>
         public static async Task<List<CatalogSort>> GetSortsAsync(CancellationToken ct = default)
         {
             var sorts = new List<CatalogSort>();

@@ -24,165 +24,47 @@
     mc:Ignorable="d">
 
     <Window.Resources>
-        <BlurEffect x:Key="MistBlur" Radius="45" />
-
         <Storyboard x:Key="WindowEntrance">
             <DoubleAnimation
                 Storyboard.TargetName="RootGrid"
                 Storyboard.TargetProperty="Opacity"
-                From="0" To="1" Duration="0:0:0.45">
+                From="0" To="1" Duration="0:0:0.22" />
+            <DoubleAnimation
+                Storyboard.TargetName="RootTranslate"
+                Storyboard.TargetProperty="Y"
+                From="14" To="0" Duration="0:0:0.3">
                 <DoubleAnimation.EasingFunction>
                     <QuadraticEase EasingMode="EaseOut" />
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
-            <DoubleAnimation
-                Storyboard.TargetName="RootScale"
-                Storyboard.TargetProperty="ScaleX"
-                From="0.7" To="1" Duration="0:0:0.9">
-                <DoubleAnimation.EasingFunction>
-                    <ElasticEase EasingMode="EaseOut" Oscillations="1" Springiness="6" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-            <DoubleAnimation
-                Storyboard.TargetName="RootScale"
-                Storyboard.TargetProperty="ScaleY"
-                From="0.7" To="1" Duration="0:0:0.9">
-                <DoubleAnimation.EasingFunction>
-                    <ElasticEase EasingMode="EaseOut" Oscillations="1" Springiness="6" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-            <DoubleAnimation
-                Storyboard.TargetName="RootTranslate"
-                Storyboard.TargetProperty="Y"
-                From="36" To="0" Duration="0:0:0.75">
-                <DoubleAnimation.EasingFunction>
-                    <BackEase EasingMode="EaseOut" Amplitude="0.5" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
         </Storyboard>
 
-        <Storyboard x:Key="LogoEntrance" BeginTime="0:0:0.1">
+        <Storyboard x:Key="LogoEntrance" BeginTime="0:0:0.08">
             <DoubleAnimation
                 Storyboard.TargetName="LogoImage"
                 Storyboard.TargetProperty="Opacity"
-                From="0" To="1" Duration="0:0:0.5" />
+                From="0" To="1" Duration="0:0:0.3" />
             <DoubleAnimation
                 Storyboard.TargetName="LogoScale"
                 Storyboard.TargetProperty="ScaleX"
-                From="0.3" To="1" Duration="0:0:0.85">
+                From="0.8" To="1" Duration="0:0:0.4">
                 <DoubleAnimation.EasingFunction>
-                    <ElasticEase EasingMode="EaseOut" Oscillations="1" Springiness="4" />
+                    <BackEase EasingMode="EaseOut" Amplitude="0.4" />
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
             <DoubleAnimation
                 Storyboard.TargetName="LogoScale"
                 Storyboard.TargetProperty="ScaleY"
-                From="0.3" To="1" Duration="0:0:0.85">
+                From="0.8" To="1" Duration="0:0:0.4">
                 <DoubleAnimation.EasingFunction>
-                    <ElasticEase EasingMode="EaseOut" Oscillations="1" Springiness="4" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-            <DoubleAnimation
-                Storyboard.TargetName="LogoRotate"
-                Storyboard.TargetProperty="Angle"
-                From="-25" To="0" Duration="0:0:0.85">
-                <DoubleAnimation.EasingFunction>
-                    <ElasticEase EasingMode="EaseOut" Oscillations="1" Springiness="4" />
+                    <BackEase EasingMode="EaseOut" Amplitude="0.4" />
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
         </Storyboard>
 
-        <Storyboard x:Key="LogoBreathe" Timeline.DesiredFrameRate="30" BeginTime="0:0:0.95" RepeatBehavior="Forever" AutoReverse="True">
-            <DoubleAnimation
-                Storyboard.TargetName="LogoBreathScale"
-                Storyboard.TargetProperty="ScaleX"
-                From="1" To="1.07" Duration="0:0:1.3">
-                <DoubleAnimation.EasingFunction>
-                    <SineEase EasingMode="EaseInOut" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-            <DoubleAnimation
-                Storyboard.TargetName="LogoBreathScale"
-                Storyboard.TargetProperty="ScaleY"
-                From="1" To="1.07" Duration="0:0:1.3">
-                <DoubleAnimation.EasingFunction>
-                    <SineEase EasingMode="EaseInOut" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-        </Storyboard>
-
-        <Storyboard x:Key="LogoGlowPulse" Timeline.DesiredFrameRate="30" RepeatBehavior="Forever" AutoReverse="True">
-            <DoubleAnimation
-                Storyboard.TargetName="LogoGlow"
-                Storyboard.TargetProperty="Opacity"
-                From="0.35" To="0.9" Duration="0:0:1.3">
-                <DoubleAnimation.EasingFunction>
-                    <SineEase EasingMode="EaseInOut" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-        </Storyboard>
-
-        <Storyboard x:Key="MistDrift" Timeline.DesiredFrameRate="30" RepeatBehavior="Forever">
-            <DoubleAnimation
-                Storyboard.TargetName="MistTranslate1"
-                Storyboard.TargetProperty="X"
-                From="-60" To="90" Duration="0:0:9" AutoReverse="True">
-                <DoubleAnimation.EasingFunction>
-                    <SineEase EasingMode="EaseInOut" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-            <DoubleAnimation
-                Storyboard.TargetName="MistTranslate1"
-                Storyboard.TargetProperty="Y"
-                From="20" To="-30" Duration="0:0:7" AutoReverse="True">
-                <DoubleAnimation.EasingFunction>
-                    <SineEase EasingMode="EaseInOut" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-
-            <DoubleAnimation
-                Storyboard.TargetName="MistTranslate2"
-                Storyboard.TargetProperty="X"
-                From="70" To="-90" Duration="0:0:11" AutoReverse="True">
-                <DoubleAnimation.EasingFunction>
-                    <SineEase EasingMode="EaseInOut" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-            <DoubleAnimation
-                Storyboard.TargetName="MistTranslate2"
-                Storyboard.TargetProperty="Y"
-                From="-25" To="25" Duration="0:0:8.5" AutoReverse="True">
-                <DoubleAnimation.EasingFunction>
-                    <SineEase EasingMode="EaseInOut" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-
-            <DoubleAnimation
-                Storyboard.TargetName="MistTranslate3"
-                Storyboard.TargetProperty="X"
-                From="-40" To="50" Duration="0:0:13" AutoReverse="True">
-                <DoubleAnimation.EasingFunction>
-                    <SineEase EasingMode="EaseInOut" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-
-            <DoubleAnimation
-                Storyboard.TargetName="Mist1"
-                Storyboard.TargetProperty="Opacity"
-                From="0.18" To="0.4" Duration="0:0:5.5" AutoReverse="True">
-                <DoubleAnimation.EasingFunction>
-                    <SineEase EasingMode="EaseInOut" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-            <DoubleAnimation
-                Storyboard.TargetName="Mist2"
-                Storyboard.TargetProperty="Opacity"
-                From="0.35" To="0.15" Duration="0:0:6.5" AutoReverse="True">
-                <DoubleAnimation.EasingFunction>
-                    <SineEase EasingMode="EaseInOut" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-        </Storyboard>
+        <Storyboard x:Key="LogoBreathe" />
+        <Storyboard x:Key="LogoGlowPulse" />
+        <Storyboard x:Key="MistDrift" />
     </Window.Resources>
 
     <Window.TaskbarItemInfo>
@@ -191,48 +73,28 @@
 
     <Grid x:Name="RootGrid" Background="{Binding Path=BackgroundColourBrush, Mode=OneTime}" Opacity="0">
         <Grid.RenderTransform>
-            <TransformGroup>
-                <ScaleTransform x:Name="RootScale" CenterX="250" CenterY="140" ScaleX="0.7" ScaleY="0.7" />
-                <TranslateTransform x:Name="RootTranslate" Y="36" />
-            </TransformGroup>
+            <TranslateTransform x:Name="RootTranslate" Y="14" />
         </Grid.RenderTransform>
 
-        <Canvas ClipToBounds="True">
-            <Ellipse x:Name="Mist1" Width="320" Height="320" Canvas.Left="-100" Canvas.Top="-120" Opacity="0.25" Effect="{StaticResource MistBlur}" Fill="{DynamicResource BackgroundGlowPrimaryBrush}">
-                <Ellipse.RenderTransform>
-                    <TranslateTransform x:Name="MistTranslate1" X="-60" Y="20" />
-                </Ellipse.RenderTransform>
-                <Ellipse.OpacityMask>
-                    <RadialGradientBrush>
-                        <GradientStop Color="#8F000000" Offset="0" />
-                        <GradientStop Color="#00000000" Offset="1" />
-                    </RadialGradientBrush>
-                </Ellipse.OpacityMask>
-            </Ellipse>
-            <Ellipse x:Name="Mist2" Width="280" Height="280" Canvas.Left="260" Canvas.Top="-60" Opacity="0.3" Effect="{StaticResource MistBlur}" Fill="{DynamicResource BackgroundGlowSecondaryBrush}">
-                <Ellipse.RenderTransform>
-                    <TranslateTransform x:Name="MistTranslate2" X="70" Y="-25" />
-                </Ellipse.RenderTransform>
-                <Ellipse.OpacityMask>
-                    <RadialGradientBrush>
-                        <GradientStop Color="#80000000" Offset="0" />
-                        <GradientStop Color="#00000000" Offset="1" />
-                    </RadialGradientBrush>
-                </Ellipse.OpacityMask>
-            </Ellipse>
-            <Ellipse x:Name="Mist3" Width="240" Height="240" Canvas.Left="90" Canvas.Top="60" Opacity="0.2" Effect="{StaticResource MistBlur}" Fill="{DynamicResource BackgroundGlowPrimaryBrush}">
-                <Ellipse.RenderTransform>
-                    <TranslateTransform x:Name="MistTranslate3" X="-40" Y="0" />
-                </Ellipse.RenderTransform>
-
-                <Ellipse.OpacityMask>
-                    <RadialGradientBrush>
-                        <GradientStop Color="#66000000" Offset="0" />
-                        <GradientStop Color="#00000000" Offset="1" />
-                    </RadialGradientBrush>
-                </Ellipse.OpacityMask>
-            </Ellipse>
-        </Canvas>
+        <Border x:Name="RedWash" IsHitTestVisible="False">
+            <Border.Background>
+                <RadialGradientBrush Center="0.12,0.2" GradientOrigin="0.12,0.2" RadiusX="0.85" RadiusY="1.2">
+                    <GradientStop Offset="0" Color="#47E0202F" />
+                    <GradientStop Offset="0.55" Color="#1AE0202F" />
+                    <GradientStop Offset="1" Color="#00E0202F" />
+                </RadialGradientBrush>
+            </Border.Background>
+            <Border.Style>
+                <Style TargetType="{x:Type Border}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding WindowBackdropType, Mode=OneTime}" Value="Aero">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+        </Border>
+        <Border IsHitTestVisible="False" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" BorderThickness="1" />
 
         <ui:TitleBar
             VerticalAlignment="Top"
@@ -250,13 +112,14 @@
             </Grid.RowDefinitions>
 
             <Grid Grid.Row="0" Margin="0,30,0,0" HorizontalAlignment="Center" VerticalAlignment="Top" Width="110" Height="110">
-                <Ellipse x:Name="LogoGlow" Width="110" Height="110" Opacity="0.35" Fill="{DynamicResource BackgroundGlowPrimaryBrush}">
-                    <Ellipse.OpacityMask>
+                <Ellipse x:Name="LogoGlow" Width="110" Height="110" IsHitTestVisible="False">
+                    <Ellipse.Fill>
                         <RadialGradientBrush>
-                            <GradientStop Color="#4D000000" Offset="0" />
-                            <GradientStop Color="#00000000" Offset="1" />
+                            <GradientStop Offset="0" Color="#40E0202F" />
+                            <GradientStop Offset="0.5" Color="#1AE0202F" />
+                            <GradientStop Offset="1" Color="#00E0202F" />
                         </RadialGradientBrush>
-                    </Ellipse.OpacityMask>
+                    </Ellipse.Fill>
                 </Ellipse>
 
                 <Image
@@ -270,26 +133,25 @@
                     Opacity="0"
                     RenderTransformOrigin="0.5,0.5">
                     <Image.RenderTransform>
-                        <TransformGroup>
-                            <ScaleTransform x:Name="LogoScale" ScaleX="0.3" ScaleY="0.3" />
-                            <ScaleTransform x:Name="LogoBreathScale" ScaleX="1" ScaleY="1" />
-                            <RotateTransform x:Name="LogoRotate" Angle="-25" />
-                        </TransformGroup>
+                        <ScaleTransform x:Name="LogoScale" ScaleX="0.8" ScaleY="0.8" />
                     </Image.RenderTransform>
                 </Image>
             </Grid>
 
             <TextBlock
                 Grid.Row="1"
-                Margin="0,0,0,8"
+                Margin="0,0,0,10"
                 HorizontalAlignment="Center"
                 FontSize="18"
                 Foreground="{DynamicResource TextFillColorPrimaryBrush}"
                 Text="{Binding Message, Mode=OneWay}"
+                TextAlignment="Center"
                 TextWrapping="Wrap" />
 
             <ProgressBar
                 Grid.Row="2"
+                Height="4"
+                MinHeight="4"
                 Margin="0,0,0,16"
                 IsIndeterminate="{Binding ProgressIndeterminate, Mode=OneWay}"
                 Maximum="{Binding ProgressMaximum, Mode=OneWay}"

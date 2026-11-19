@@ -22,7 +22,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             set => App.Settings.Prop.EnableAnalytics = value;
         }
 
-        /// <summary>Uploads a short report when PhasmaStrap crashes (POST /v1/crash). Off by default.</summary>
         public bool SendCrashReports
         {
             get => App.Settings.Prop.SendCrashReports;
@@ -31,7 +30,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public string[] UpdateChannels { get; } = { "Stable", "Beta" };
 
-        /// <summary>Stable or Beta. Beta also takes prereleases; the updater and the check below both follow it.</summary>
         public string UpdateChannel
         {
             get => string.Equals(App.Settings.Prop.AppUpdateChannel, "Beta", StringComparison.OrdinalIgnoreCase) ? "Beta" : "Stable";
@@ -47,7 +45,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        /// <summary>The installed version, for the tag on the Updates card.</summary>
         public string VersionTag => $"v{App.Version}";
 
         public bool LaunchAtStartupEnabled
@@ -109,7 +106,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         private string _updateHeadline = "Checking for a newer version";
 
-        /// <summary>"You are on the latest version", or which newer one is out. From the same release check the updater uses.</summary>
         public string UpdateHeadline
         {
             get => _updateHeadline;

@@ -7,181 +7,335 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       mc:Ignorable="d"
       d:DesignHeight="700" d:DesignWidth="800"
       Title="BootstrapperStylePage"
       Scrollable="True">
     <ui:UiPage.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+
+        <Style x:Key="PickTile" TargetType="{x:Type ListBoxItem}">
+            <Setter Property="Margin" Value="0,0,8,8" />
+            <Setter Property="Padding" Value="10" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource PhasmaFocusVisual}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                        <Grid>
+                            <Border x:Name="Fill" Background="{DynamicResource PhasmaS3Brush}" phui:CutCorners.Size="6" />
+                            <Border x:Name="Ring" BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeBrush}" phui:CutCorners.Size="6" />
+                            <ContentPresenter Margin="{TemplateBinding Padding}" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaS4Brush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaAccentSoftBrush}" />
+                                <Setter TargetName="Ring" Property="BorderBrush" Value="{DynamicResource PhasmaAccentBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="TileList" TargetType="{x:Type ListBox}">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled" />
+            <Setter Property="controls:ScrollBubbling.Enabled" Value="True" />
+            <Setter Property="ItemContainerStyle" Value="{StaticResource PickTile}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ListBox}">
+                        <ItemsPresenter />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </ui:UiPage.Resources>
 
-    <!--  The loading window's look. Split out of Appearance to match the settings rail; it shares Appearance's view model.  -->
     <StackPanel Margin="0,0,14,14">
-        <controls:PageHeader Title="{x:Static resources:Strings.Menu_Appearance_Bootstrapper_Title}" Subtitle="The window you see while Roblox loads." />
+        <controls:PageHeader Eyebrow="Settings · Look and feel" Title="{x:Static resources:Strings.Menu_Appearance_Bootstrapper_Title}" Subtitle="The window you see while Roblox loads." />
 
-        <!--  The loading window: a small mock of it, and a button that shows the real one  -->
-        <Border Margin="0,0,0,12" Padding="16" Style="{DynamicResource PhasmaCard}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Border Width="240" Height="120" Margin="0,0,18,0" CornerRadius="{DynamicResource PhasmaCornerRadius}" ClipToBounds="True" BorderThickness="1"
-                        BorderBrush="{DynamicResource PhasmaStrokeBrush}" Background="{DynamicResource PhasmaPopupBrush}">
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <Border Width="36" Height="36" HorizontalAlignment="Center" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="{DynamicResource PhasmaAccentBrush}">
-                            <ui:SymbolIcon Symbol="Rocket24" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource PhasmaAccentTextBrush}" />
-                        </Border>
-                        <Border Width="104" Height="6" Margin="0,14,0,0" HorizontalAlignment="Center" CornerRadius="3" Background="{DynamicResource TextFillColorSecondaryBrush}" />
-                        <Border Width="168" Height="5" Margin="0,12,0,0" HorizontalAlignment="Center" CornerRadius="3" Background="{DynamicResource PhasmaSelectedBrush}">
-                            <Border Width="104" Height="5" HorizontalAlignment="Left" CornerRadius="3" Background="{DynamicResource PhasmaAccentBrush}" />
-                        </Border>
-                    </StackPanel>
-                </Border>
-                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Text="The window you see while Roblox loads" />
-                    <TextBlock Margin="0,3,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Appearance_Bootstrapper_Description}" />
-                    <Button Margin="0,12,0,0" HorizontalAlignment="Left" Style="{DynamicResource PhasmaAccentButton}" Command="{Binding PreviewBootstrapperCommand}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="20" />
+                <ColumnDefinition Width="340" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0">
+                <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Appearance_Style_Title}"
+                                       Description="Dark theme does not apply to Legacy and Vista">
+                    <StackPanel><Border Margin="-20,0,-20,0" Padding="20,18,12,10" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                        <ListBox Style="{StaticResource TileList}" ItemsSource="{Binding Dialogs, Mode=OneTime}" SelectedItem="{Binding Dialog, Mode=TwoWay}"
+                                 AutomationProperties.Name="{x:Static resources:Strings.Menu_Appearance_Style_Title}">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="3" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <Border Height="96" Background="{DynamicResource PhasmaPanelBrush}" BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <ui:SymbolIcon HorizontalAlignment="Center" Symbol="WindowApps24" FontSize="20" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                                <Border Width="120" Height="4" Margin="0,12,0,0" Background="{DynamicResource PhasmaSelectedBrush}">
+                                                    <Border Width="70" HorizontalAlignment="Left" Background="{DynamicResource PhasmaAccentBrush}" />
+                                                </Border>
+                                            </StackPanel>
+                                        </Border>
+                                        <Grid Margin="0,10,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock VerticalAlignment="Center" FontSize="13.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                                       Text="{Binding Path=., Converter={StaticResource EnumNameConverter}}" />
+                                            <Border Grid.Column="1" Margin="6,0,0,0" Style="{DynamicResource PhasmaTagBad}"
+                                                    Visibility="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <TextBlock Text="IN USE" />
+                                            </Border>
+                                        </Grid>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Border></StackPanel>
+                </controls:SettingsCard>
+
+                <controls:SettingsCard x:Name="IconSelector" Header="Icon and title" Description="The icon and text at the top of the loading window">
+                    <StackPanel><Border Margin="-20,0,-20,0" Padding="20,18,12,10" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                        <StackPanel>
+                            <TextBlock Margin="0,0,0,12" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                       Text="{Binding Source={x:Static resources:Strings.Menu_Appearance_Icon_Title}, Converter={StaticResource PhasmaUpper}}" />
+                            <ListBox Style="{StaticResource TileList}" ItemsSource="{Binding Icons, Mode=OneWay}" SelectedValuePath="IconType" SelectedValue="{Binding Icon, Mode=TwoWay}"
+                                     AutomationProperties.Name="{x:Static resources:Strings.Menu_Appearance_Icon_Title}">
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="5" />
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="0,6,0,4">
+                                            <Image Width="26" Height="26" HorizontalAlignment="Center" Source="{Binding ImageSource, Mode=OneWay}" RenderOptions.BitmapScalingMode="HighQuality" />
+                                            <TextBlock Margin="0,10,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" FontSize="12.5" FontWeight="SemiBold"
+                                                       Text="{Binding Path=IconType, Converter={StaticResource EnumNameConverter}}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    </Border></StackPanel>
+
+                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_Appearance_CustomisationTitle_Title}" Description="Text at the top of the window">
+                        <ui:TextBox Width="240" Text="{Binding Title, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </controls:OptionControl>
+
+                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_Appearance_CustomisationIcon_Title}" Description="A multi size .ico, 16 to 128 px. Set Icon to Custom to use it.">
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Play24" FontSize="13" Margin="0,0,6,0" />
-                            <TextBlock Text="{x:Static resources:Strings.Menu_Appearance_Preview}" />
+                            <ui:TextBox Width="240" PlaceholderText="Path to an .ico file" Text="{Binding CustomIconLocation, Mode=TwoWay}" />
+                            <Button Margin="8,0,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaGhostButton}" Command="{Binding BrowseCustomIconLocationCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Folder24" FontSize="14" Margin="0,0,6,0" />
+                                    <TextBlock Text="{x:Static resources:Strings.Common_Browse}" />
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
-                    </Button>
-                </StackPanel>
-            </Grid>
-        </Border>
+                    </controls:OptionControl>
+                </controls:SettingsCard>
 
-        <controls:CardColumns>
-            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Appearance_Style_Title}"
-                                   Description="Dark theme does not apply to Legacy and Vista">
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Appearance_Style_Title}">
-                    <ComboBox MinWidth="140" Padding="10,5,10,5" ItemsSource="{Binding Dialogs, Mode=OneTime}" Text="{Binding Dialog, Mode=TwoWay}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Path=., Converter={StaticResource EnumNameConverter}}" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                </controls:OptionControl>
-
-                <!--  Custom themes only matter for the custom dialog style  -->
-                <StackPanel Visibility="{Binding CustomThemesExpanded, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <Border Style="{DynamicResource PhasmaDivider}" />
-                    <Grid Margin="2,10,2,8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock FontSize="13.5" FontWeight="SemiBold" Text="Custom themes" />
-                            <TextBlock Margin="0,2,0,0" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Your own layouts" />
-                        </StackPanel>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Button Style="{DynamicResource PhasmaSoftButton}" Command="{Binding AddCustomThemeCommand, Mode=OneTime}">
+                <controls:SettingsCard Header="Custom themes" Description="Your own layouts">
+                    <controls:SettingsCard.HeaderContent>
+                        <StackPanel Orientation="Horizontal" IsEnabled="{Binding CustomThemesExpanded, Mode=OneWay}">
+                            <Button Style="{DynamicResource PhasmaGhostButton}" Command="{Binding AddCustomThemeCommand, Mode=OneTime}">
                                 <StackPanel Orientation="Horizontal">
                                     <ui:SymbolIcon Symbol="Add24" FontSize="13" Margin="0,0,6,0" />
                                     <TextBlock Text="{x:Static resources:Strings.Common_New}" />
                                 </StackPanel>
                             </Button>
-                            <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaGhostButton}" Foreground="{DynamicResource PhasmaBadBrush}" IsEnabled="{Binding IsCustomThemeSelected, Mode=OneWay}" Command="{Binding DeleteCustomThemeCommand, Mode=OneTime}">
+                            <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaGhostButton}" Foreground="{DynamicResource PhasmaRedTextBrush}" IsEnabled="{Binding IsCustomThemeSelected, Mode=OneWay}" Command="{Binding DeleteCustomThemeCommand, Mode=OneTime}">
                                 <StackPanel Orientation="Horizontal">
                                     <ui:SymbolIcon Symbol="Delete24" FontSize="14" Margin="0,0,6,0" />
                                     <TextBlock Text="{x:Static resources:Strings.Common_Delete}" />
                                 </StackPanel>
                             </Button>
                         </StackPanel>
-                    </Grid>
+                    </controls:SettingsCard.HeaderContent>
 
-                    <ListBox x:Name="CustomThemesListBox" MaxHeight="200" MinHeight="60" Margin="0,0,0,10" ItemsSource="{Binding CustomThemes, Mode=OneWay}" SelectionChanged="CustomThemeSelection" SelectedIndex="{Binding SelectedCustomThemeIndex, Mode=TwoWay}" />
-
-                    <StackPanel Margin="0,0,0,12">
-                        <StackPanel.Style>
-                            <Style>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsCustomThemeSelected}" Value="False">
-                                        <Setter Property="StackPanel.Visibility" Value="Collapsed"></Setter>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </StackPanel.Style>
-                        <TextBlock FontSize="12" Text="{x:Static resources:Strings.Common_Name}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                        <ui:TextBox Margin="0,4,0,0" Text="{Binding SelectedCustomThemeName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        <WrapPanel Margin="0,8,0,0">
-                            <Button Margin="0,0,6,0" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding RenameCustomThemeCommand, Mode=OneTime}">
-                                <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="Rename24" FontSize="14" Margin="0,0,6,0" />
-                                    <TextBlock Text="{x:Static resources:Strings.Common_Rename}" />
-                                </StackPanel>
-                            </Button>
-                            <Button Margin="0,0,6,0" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding EditCustomThemeCommand, Mode=OneTime}">
-                                <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="DesktopEdit24" FontSize="14" Margin="0,0,6,0" />
-                                    <TextBlock Text="{x:Static resources:Strings.Common_Edit}" />
-                                </StackPanel>
-                            </Button>
-                            <Button Style="{DynamicResource PhasmaGhostButton}" Command="{Binding ExportCustomThemeCommand, Mode=OneTime}">
-                                <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="ArrowExportRtl24" FontSize="14" Margin="0,0,6,0" />
-                                    <TextBlock Text="{x:Static resources:Strings.Common_Export}" />
-                                </StackPanel>
-                            </Button>
-                        </WrapPanel>
-                    </StackPanel>
-
-                    <TextBlock Margin="2,0,2,12" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Appearance_CustomThemes_NoneSelected}" TextWrapping="Wrap">
-                        <TextBlock.Style>
-                            <Style>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsCustomThemeSelected}" Value="True">
-                                        <Setter Property="TextBlock.Visibility" Value="Collapsed"></Setter>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                </StackPanel>
-
-                <controls:OptionControl Header="Rotate through my custom themes" Description="Moves to the next custom theme in the list. Needs the Custom style and at least two themes">
-                    <StackPanel Orientation="Horizontal">
-                        <ComboBox Padding="10,5,10,5" MinWidth="130" Margin="0,0,10,0" VerticalAlignment="Center" ItemsSource="{Binding ThemeCycleChoices, Mode=OneTime}" SelectedItem="{Binding ThemeCycleEvery, Mode=TwoWay}" />
-                        <ui:ToggleSwitch VerticalAlignment="Center" IsChecked="{Binding ThemeCycleEnabled, Mode=TwoWay}" />
-                    </StackPanel>
-                </controls:OptionControl>
-            </controls:SettingsCard>
-
-            <controls:SettingsCard x:Name="IconSelector" Header="Icon and title">
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Appearance_Icon_Title}">
-                    <ComboBox MinWidth="150" Padding="10,5,10,5" ItemsSource="{Binding Icons, Mode=OneWay}" SelectedValuePath="IconType" SelectedValue="{Binding Icon, Mode=TwoWay}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="16" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <Image Height="16" Source="{Binding ImageSource, Mode=OneWay}" RenderOptions.BitmapScalingMode="HighQuality" />
-                                    <TextBlock Grid.Column="1" Margin="8,0,0,0" Text="{Binding Path=IconType, Converter={StaticResource EnumNameConverter}}" />
+                    <StackPanel>
+                        <Border Padding="20,16,20,16" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,16">
+                                    <Grid.Style>
+                                        <Style TargetType="Grid">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CustomThemesExpanded}" Value="False">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Grid.Style>
+                                    <Border Background="{DynamicResource PhasmaWarnBrush}" Opacity="0.07" phui:CutCorners.Size="6" />
+                                    <Border BorderBrush="{DynamicResource PhasmaWarnBrush}" BorderThickness="1" Opacity="0.35" phui:CutCorners.Size="6" />
+                                    <Grid Margin="14,11,14,11">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <ui:SymbolIcon Margin="0,0,12,0" VerticalAlignment="Center" Symbol="Info24" FontSize="16" Foreground="{DynamicResource PhasmaWarnBrush}" />
+                                        <TextBlock Grid.Column="1" FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                                            <Run Text="Only used with the" /> <Run FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="Custom" /> <Run Text="style. Pick Custom above to turn these on." />
+                                        </TextBlock>
+                                    </Grid>
                                 </Grid>
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                </controls:OptionControl>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Appearance_CustomisationTitle_Title}" Description="Text at the top of the window">
-                    <ui:TextBox Width="150" Text="{Binding Title, Mode=TwoWay}" />
-                </controls:OptionControl>
+                                <Border BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeBrush}" IsEnabled="{Binding CustomThemesExpanded, Mode=OneWay}">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter Property="Opacity" Value="0.5" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="260" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <ListBox x:Name="CustomThemesListBox" MaxHeight="200" MinHeight="60" Padding="4" Background="Transparent" BorderThickness="0,0,1,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}"
+                                                 ItemContainerStyle="{StaticResource PhasmaListItem}"
+                                                 ItemsSource="{Binding CustomThemes, Mode=OneWay}" SelectionChanged="CustomThemeSelection" SelectedIndex="{Binding SelectedCustomThemeIndex, Mode=TwoWay}" />
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Appearance_CustomisationIcon_Title}" Description="A multi size .ico, 16 to 128 px. Set Icon to Custom to use it.">
-                    <Button Style="{DynamicResource PhasmaSoftButton}" Command="{Binding BrowseCustomIconLocationCommand}">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Folder24" FontSize="14" Margin="0,0,6,0" />
-                            <TextBlock Text="{x:Static resources:Strings.Common_Browse}" />
-                        </StackPanel>
-                    </Button>
-                </controls:OptionControl>
+                                        <StackPanel Grid.Column="1" Margin="16,14,16,14">
+                                            <StackPanel>
+                                                <StackPanel.Style>
+                                                    <Style>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsCustomThemeSelected}" Value="False">
+                                                                <Setter Property="StackPanel.Visibility" Value="Collapsed"></Setter>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </StackPanel.Style>
+                                                <TextBlock FontFamily="{DynamicResource PhasmaMono}" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                                           Text="{Binding Source={x:Static resources:Strings.Common_Name}, Converter={StaticResource PhasmaUpper}}" />
+                                                <Grid Margin="0,6,0,0">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <ui:TextBox Text="{Binding SelectedCustomThemeName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                    <Button Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaGhostButton}" Command="{Binding RenameCustomThemeCommand, Mode=OneTime}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <ui:SymbolIcon Symbol="Rename24" FontSize="14" Margin="0,0,6,0" />
+                                                            <TextBlock Text="{x:Static resources:Strings.Common_Rename}" />
+                                                        </StackPanel>
+                                                    </Button>
+                                                </Grid>
+                                                <WrapPanel Margin="0,10,0,0">
+                                                    <Button Margin="0,0,8,0" Style="{DynamicResource PhasmaGhostButton}" Command="{Binding EditCustomThemeCommand, Mode=OneTime}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <ui:SymbolIcon Symbol="DesktopEdit24" FontSize="14" Margin="0,0,6,0" />
+                                                            <TextBlock Text="{x:Static resources:Strings.Common_Edit}" />
+                                                        </StackPanel>
+                                                    </Button>
+                                                    <Button Style="{DynamicResource PhasmaGhostButton}" Command="{Binding ExportCustomThemeCommand, Mode=OneTime}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <ui:SymbolIcon Symbol="ArrowExportRtl24" FontSize="14" Margin="0,0,6,0" />
+                                                            <TextBlock Text="{x:Static resources:Strings.Common_Export}" />
+                                                        </StackPanel>
+                                                    </Button>
+                                                </WrapPanel>
+                                            </StackPanel>
 
-                <ui:TextBox Margin="0,0,0,12" PlaceholderText="Path to an .ico file" Text="{Binding CustomIconLocation, Mode=TwoWay}" />
-            </controls:SettingsCard>
-        </controls:CardColumns>
+                                            <TextBlock FontSize="12.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Appearance_CustomThemes_NoneSelected}" TextWrapping="Wrap">
+                                                <TextBlock.Style>
+                                                    <Style>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsCustomThemeSelected}" Value="True">
+                                                                <Setter Property="TextBlock.Visibility" Value="Collapsed"></Setter>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <controls:OptionControl Header="Rotate through my custom themes" Description="Moves to the next custom theme in the list. Needs the Custom style and at least two themes">
+                            <StackPanel Orientation="Horizontal">
+                                <ComboBox Padding="10,5,10,5" MinWidth="140" Margin="0,0,10,0" VerticalAlignment="Center" ItemsSource="{Binding ThemeCycleChoices, Mode=OneTime}" SelectedItem="{Binding ThemeCycleEvery, Mode=TwoWay}" />
+                                <ui:ToggleSwitch VerticalAlignment="Center" IsChecked="{Binding ThemeCycleEnabled, Mode=TwoWay}" />
+                            </StackPanel>
+                        </controls:OptionControl>
+                    </StackPanel>
+                </controls:SettingsCard>
+            </StackPanel>
+
+            <Border Grid.Column="2" VerticalAlignment="Top" Padding="0" Style="{DynamicResource PhasmaCard}">
+                <StackPanel>
+                    <StackPanel Margin="20,16,20,16">
+                        <TextBlock FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="15" FontWeight="Bold"
+                                   Text="{Binding Source={x:Static resources:Strings.Menu_Appearance_Preview}, Converter={StaticResource PhasmaUpper}}" />
+                    </StackPanel>
+
+                    <Border Padding="20,20,20,20" BorderThickness="0,1,0,1" BorderBrush="{DynamicResource PhasmaStrokeBrush}" Background="{DynamicResource PhasmaSubnavBrush}">
+                        <Border BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" Background="{DynamicResource PhasmaPopupBrush}" phui:CutCorners.Size="6">
+                            <StackPanel>
+                                <Grid Margin="12,8,10,8">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="12" Height="12" Background="{DynamicResource PhasmaAccentBrush}" phui:CutCorners.Size="3" />
+                                        <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Title, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <ui:SymbolIcon HorizontalAlignment="Right" Symbol="Dismiss24" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                </Grid>
+                                <Border Padding="20,22,20,22" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                                    <StackPanel HorizontalAlignment="Stretch">
+                                        <Border Width="44" Height="44" HorizontalAlignment="Center" Background="{DynamicResource PhasmaAccentBrush}" phui:CutCorners.Size="6">
+                                            <ui:SymbolIcon Symbol="Rocket24" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource PhasmaAccentTextBrush}" />
+                                        </Border>
+                                        <Border Width="120" Height="6" Margin="0,16,0,0" HorizontalAlignment="Center" Background="{DynamicResource TextFillColorSecondaryBrush}" />
+                                        <Border Height="5" Margin="0,16,0,0" Background="{DynamicResource PhasmaSelectedBrush}">
+                                            <Border Width="140" HorizontalAlignment="Left" Background="{DynamicResource PhasmaAccentBrush}" />
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </Border>
+
+                    <StackPanel Margin="20,18,20,18">
+                        <TextBlock FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="14" FontWeight="Bold" TextWrapping="Wrap" Text="THE WINDOW YOU SEE WHILE ROBLOX LOADS" />
+                        <TextBlock Margin="0,6,0,0" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Appearance_Bootstrapper_Description}" />
+                    </StackPanel>
+
+                    <Border Padding="20,12,20,16" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                        <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Style="{DynamicResource PhasmaAccentButton}" Command="{Binding PreviewBootstrapperCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Play24" FontSize="13" Margin="0,0,6,0" />
+                                <TextBlock Text="{x:Static resources:Strings.Menu_Appearance_Preview}" />
+                            </StackPanel>
+                        </Button>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Grid>
     </StackPanel>
 </ui:UiPage>

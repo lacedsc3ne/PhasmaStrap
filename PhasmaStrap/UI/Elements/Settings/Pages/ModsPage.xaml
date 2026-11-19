@@ -9,6 +9,7 @@
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       xmlns:dmodels="clr-namespace:PhasmaStrap.UI.ViewModels.Settings"
       xmlns:pages="clr-namespace:PhasmaStrap.UI.Elements.Settings.Pages"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       mc:Ignorable="d"
       d:DataContext="{d:DesignInstance dmodels:ModsViewModel, IsDesignTimeCreatable=True}"
       d:DesignHeight="800" d:DesignWidth="900"
@@ -18,39 +19,31 @@
     <ui:UiPage.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 
-        <!--  The three quick links at the top of the page  -->
         <Style x:Key="ModsActionTile" TargetType="{x:Type Button}" BasedOn="{StaticResource PhasmaSoftButton}">
-            <Setter Property="Background" Value="{DynamicResource PhasmaPanelRaisedBrush}" />
-            <Setter Property="Padding" Value="14,12" />
+            <Setter Property="Background" Value="{DynamicResource PhasmaPanelBrush}" />
+            <Setter Property="Padding" Value="18,16" />
             <Setter Property="FontWeight" Value="Normal" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         </Style>
 
-        <!--  Small image slot used by the cursor set editor and the skybox editor  -->
         <Style x:Key="ModsSlot" TargetType="{x:Type Border}">
-            <Setter Property="Background" Value="{DynamicResource PhasmaHoverBrush}" />
+            <Setter Property="Background" Value="{DynamicResource PhasmaS3Brush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource PhasmaStrokeBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="{DynamicResource PhasmaCornerRadiusSmall}" />
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="phui:CutCorners.Size" Value="6" />
         </Style>
 
-        <!--  A managed mod row. BorderBrush comes from the style so the drag highlight can be cleared back to it.  -->
         <Style x:Key="ManagedModRow" TargetType="{x:Type Border}">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderBrush" Value="Transparent" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="{DynamicResource PhasmaCornerRadiusSmall}" />
+            <Setter Property="CornerRadius" Value="0" />
         </Style>
     </ui:UiPage.Resources>
 
     <StackPanel Margin="0,0,14,14">
-        <StackPanel Orientation="Horizontal">
-            <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="{x:Static resources:Strings.Menu_Mods_Title}" />
-            <Border Margin="10,2,0,0" Style="{DynamicResource PhasmaTagNeutral}">
-                <TextBlock Text="Launching" />
-            </Border>
-        </StackPanel>
-        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="File mods swapped into Roblox every time it starts." />
+        <controls:PageHeader Eyebrow="Settings · Launching" Title="{x:Static resources:Strings.Menu_Mods_Title}" Subtitle="File mods swapped into Roblox every time it starts." />
 
         <UniformGrid Margin="-6,0,-6,12" Columns="3">
             <Button x:Name="OpenModFolderCardAction" Margin="6,0,6,0" Style="{StaticResource ModsActionTile}" Command="{Binding OpenModsFolderCommand}">
@@ -59,10 +52,10 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Margin="0,0,12,0" VerticalAlignment="Center" Symbol="Folder24" FontSize="16" />
+                    <Border Width="36" Height="36" Margin="0,0,14,0" VerticalAlignment="Center" phui:CutCorners.Size="6" Background="{DynamicResource PhasmaS3Brush}"><ui:SymbolIcon HorizontalAlignment="Center" VerticalAlignment="Center" Symbol="Folder24" FontSize="16" /></Border>
                     <StackPanel Grid.Column="1">
-                        <TextBlock FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="Open mods folder" />
-                        <TextBlock Margin="0,1,0,0" FontSize="11.5" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Manage your own mods" />
+                        <TextBlock FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="Open mods folder" />
+                        <TextBlock Margin="0,2,0,0" FontSize="12.5" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Manage your own mods" />
                     </StackPanel>
                 </Grid>
             </Button>
@@ -73,10 +66,10 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Margin="0,0,12,0" VerticalAlignment="Center" Symbol="Info24" FontSize="16" />
+                    <Border Width="36" Height="36" Margin="0,0,14,0" VerticalAlignment="Center" phui:CutCorners.Size="6" Background="{DynamicResource PhasmaS3Brush}"><ui:SymbolIcon HorizontalAlignment="Center" VerticalAlignment="Center" Symbol="Info24" FontSize="16" /></Border>
                     <StackPanel Grid.Column="1">
-                        <TextBlock FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{x:Static resources:Strings.Common_Help}" />
-                        <TextBlock Margin="0,1,0,0" FontSize="11.5" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Managing and making mods" />
+                        <TextBlock FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{x:Static resources:Strings.Common_Help}" />
+                        <TextBlock Margin="0,2,0,0" FontSize="12.5" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Managing and making mods" />
                     </StackPanel>
                 </Grid>
             </Button>
@@ -87,9 +80,9 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Margin="0,0,12,0" VerticalAlignment="Center" Symbol="WindowWrench24" FontSize="16" />
+                    <Border Width="36" Height="36" Margin="0,0,14,0" VerticalAlignment="Center" phui:CutCorners.Size="6" Background="{DynamicResource PhasmaS3Brush}"><ui:SymbolIcon HorizontalAlignment="Center" VerticalAlignment="Center" Symbol="WindowWrench24" FontSize="16" /></Border>
                     <StackPanel Grid.Column="1">
-                        <TextBlock FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="Compatibility settings" />
+                        <TextBlock FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="Compatibility settings" />
                         <controls:MarkdownTextBlock Margin="0,1,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                                                     MarkdownText="{Binding Source={x:Static resources:Strings.Menu_Mods_Misc_CompatibilitySettings_Description}, Converter={StaticResource StringFormatConverter}, ConverterParameter='https://devblogs.microsoft.com/directx/demystifying-full-screen-optimizations/'}" />
                     </StackPanel>
@@ -98,7 +91,6 @@
         </UniformGrid>
 
         <controls:CardColumns>
-            <!--  Mod management  -->
             <controls:SettingsCard controls:CardColumns.FullRow="True"
                                    Header="{x:Static resources:Strings.Menu_Mods_ModManagement_Title}"
                                    Description="Drag a mod to change apply order, or drop files here to make a new one">
@@ -125,20 +117,20 @@
                     </StackPanel>
                 </controls:SettingsCard.HeaderContent>
 
-                <Border Style="{DynamicResource PhasmaDivider}" />
-                <Grid Margin="0,10,0,10">
+                <Grid Margin="0,0,0,14">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="280" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <ui:TextBox PlaceholderText="{x:Static resources:Strings.Menu_Mods_SearchModsIdentifiers}" Text="{Binding ManagedModSearchText, UpdateSourceTrigger=PropertyChanged}" />
-                    <StackPanel Grid.Column="1" Margin="12,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <TextBlock HorizontalAlignment="Right" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding ManagedModsSummary}" />
-                        <ProgressBar Width="120" Height="3" Margin="0,6,0,0" IsIndeterminate="True" Visibility="{Binding ManagedModsBusy, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    <Border Grid.ColumnSpan="2" Margin="-20,0,-20,0" VerticalAlignment="Top" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}" />
+                    <ui:TextBox Margin="0,14,0,0" Icon="Search24" PlaceholderText="{x:Static resources:Strings.Menu_Mods_SearchModsIdentifiers}" Text="{Binding ManagedModSearchText, UpdateSourceTrigger=PropertyChanged}" />
+                    <StackPanel Grid.Column="1" Margin="14,14,0,0" HorizontalAlignment="Left" VerticalAlignment="Center">
+                        <TextBlock HorizontalAlignment="Left" FontFamily="{DynamicResource PhasmaMono}" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding ManagedModsSummary}" />
+                        <ProgressBar Width="120" Height="3" Margin="0,6,0,0" HorizontalAlignment="Left" IsIndeterminate="True" Visibility="{Binding ManagedModsBusy, Converter={StaticResource BoolToVisibilityConverter}}" />
                     </StackPanel>
                 </Grid>
 
-                <Border Margin="0,0,0,14" Padding="24" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                <Border Margin="0,0,0,14" Padding="24" phui:CutCorners.Size="6" BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
                     <Border.Style>
                         <Style TargetType="Border">
                             <Setter Property="Visibility" Value="Collapsed" />
@@ -156,12 +148,12 @@
                     </StackPanel>
                 </Border>
 
-                <ItemsControl x:Name="ManagedModsList" Margin="0,0,0,8" AllowDrop="True" DragOver="ManagedModsList_DragOver" Drop="ManagedModsList_Drop" ItemsSource="{Binding ManagedMods}">
+                <ItemsControl x:Name="ManagedModsList" Margin="0,0,0,0" AllowDrop="True" DragOver="ManagedModsList_DragOver" Drop="ManagedModsList_Drop" ItemsSource="{Binding ManagedMods}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type dmodels:ManagedModItem}">
-                            <StackPanel>
+                            <StackPanel Margin="-20,0,-20,0">
                                 <Border Style="{DynamicResource PhasmaDivider}" />
-                                <Border Margin="0,2,0,2" Padding="0,6,2,6" AllowDrop="True" Style="{StaticResource ManagedModRow}" DragEnter="ManagedModCard_DragEnter" DragLeave="ManagedModCard_DragLeave" DragOver="ManagedModCard_DragOver" Drop="ManagedModCard_Drop">
+                                <Border Margin="0" Padding="12,8,20,8" AllowDrop="True" Style="{StaticResource ManagedModRow}" DragEnter="ManagedModCard_DragEnter" DragLeave="ManagedModCard_DragLeave" DragOver="ManagedModCard_DragOver" Drop="ManagedModCard_Drop">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
@@ -177,8 +169,8 @@
                                             <ui:SymbolIcon FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" Symbol="ReOrderDotsVertical24" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                                         </Border>
                                         <StackPanel Grid.Column="1" Margin="0,0,14,0" VerticalAlignment="Center">
-                                            <TextBlock FontSize="13.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding Name, Mode=OneWay}" />
-                                            <TextBlock Margin="0,2,0,0" FontSize="12" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}">
+                                            <TextBlock FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding Name, Mode=OneWay}" />
+                                            <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}">
                                                 <Run Text="{Binding FileSummary, Mode=OneWay}" /><Run Text="{x:Static resources:Strings.Menu_Mods_ID}" /><Run Text="{Binding ShortId, Mode=OneWay}" />
                                             </TextBlock>
                                             <StackPanel Margin="0,2,0,0" Orientation="Horizontal" Visibility="{Binding HasConflicts, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -220,9 +212,8 @@
                                         </StackPanel>
                                         <ui:ToggleSwitch Grid.Column="3" VerticalAlignment="Center" IsChecked="{Binding Enabled, Mode=OneWay}" Command="{Binding DataContext.ToggleManagedModCommand, RelativeSource={RelativeSource AncestorType={x:Type pages:ModsPage}}}" CommandParameter="{Binding}" AutomationProperties.Name="Enable or disable this mod" />
 
-                                        <!--  Every file this mod shares with another active mod or the mods folder  -->
-                                        <Border Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,8,2,2" Padding="10,8" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}"
-                                                Background="{DynamicResource PhasmaHoverBrush}" Visibility="{Binding ShowConflicts, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <Border Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,8,2,2" Padding="12,10"
+                                                Background="{DynamicResource PhasmaS3Brush}" Visibility="{Binding ShowConflicts, Converter={StaticResource BoolToVisibilityConverter}}">
                                             <ItemsControl ItemsSource="{Binding Conflicts, Mode=OneTime}" Focusable="False">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate DataType="{x:Type dmodels:ManagedModConflict}">
@@ -231,7 +222,7 @@
                                                                 <ColumnDefinition Width="*" />
                                                                 <ColumnDefinition Width="Auto" />
                                                             </Grid.ColumnDefinitions>
-                                                            <TextBlock Grid.Column="0" Margin="0,0,12,0" FontFamily="Consolas" FontSize="11.5" TextTrimming="CharacterEllipsis" Text="{Binding Path, Mode=OneTime}" ToolTip="{Binding Path, Mode=OneTime}" />
+                                                            <TextBlock Grid.Column="0" Margin="0,0,12,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" TextTrimming="CharacterEllipsis" Text="{Binding Path, Mode=OneTime}" ToolTip="{Binding Path, Mode=OneTime}" />
                                                             <TextBlock Grid.Column="1" FontSize="11.5" Foreground="{DynamicResource PhasmaWarnBrush}" Text="{Binding With, Mode=OneTime, StringFormat='also in {0}'}" />
                                                         </Grid>
                                                     </DataTemplate>
@@ -244,9 +235,18 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+
+                <StackPanel>
+                    <Border Margin="-20,0,-20,0" Padding="20,14,20,14" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Margin="0,0,10,0" VerticalAlignment="Center" Symbol="ArrowUpload24" FontSize="14" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                            <TextBlock VerticalAlignment="Center" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                       Text="Drop files or folders here to make a new mod. Drop them on a mod to add them to it." />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
             </controls:SettingsCard>
 
-            <!--  Cursor appearance  -->
             <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Mods_CursorAppearance}"
                                    Description="A bundled cursor, or your own images">
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Mods_Presets_MouseCursor_Title}">
@@ -286,7 +286,6 @@
                 </controls:OptionControl>
             </controls:SettingsCard>
 
-            <!--  Client presets  -->
             <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Mods_ClientPresets}"
                                    Description="More visual and sound tweaks">
                 <controls:OptionControl
@@ -335,7 +334,6 @@
                 </controls:OptionControl>
             </controls:SettingsCard>
 
-            <!--  Cursor set manager, opened from the Manage button above  -->
             <controls:SettingsCard controls:CardColumns.FullRow="True"
                                    Header="{x:Static resources:Strings.Menu_Mods_Misc_CursorSetManager_Title}"
                                    Description="Saved cursor sets you can switch between, import and export"
@@ -462,7 +460,6 @@
                 </StackPanel>
             </controls:SettingsCard>
 
-            <!--  Skybox and font  -->
             <controls:SettingsCard Header="Skybox and font">
                 <controls:OptionControl
                     x:Name="SkyboxEditorOption"
@@ -486,8 +483,8 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Border Width="84" Height="40" Style="{StaticResource ModsSlot}">
-                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15" Text="Aa Bb Cc" />
+                    <Border Width="96" Height="44" Style="{StaticResource ModsSlot}">
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaHeadingFont}" FontWeight="Bold" FontSize="16" Text="Aa Bb Cc" />
                     </Border>
                     <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                         <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Roblox is using its own font." Visibility="{Binding ChooseCustomFontVisibility, Mode=OneWay}" />
@@ -496,7 +493,6 @@
                 </Grid>
             </controls:SettingsCard>
 
-            <!--  Home page background  -->
             <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Mods_Overlays_Title}"
                                    Description="A colour or gradient behind PhasmaStrap's own Home page. Not the in game overlays.">
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Mods_Overlays_Enable_Title}">
@@ -557,7 +553,6 @@
                 </StackPanel>
             </controls:SettingsCard>
 
-            <!--  Skybox editor, opened from the Choose button above  -->
             <controls:SettingsCard controls:CardColumns.FullRow="True"
                                    Header="{x:Static resources:Strings.Menu_Mods_Misc_Skybox_Title}"
                                    Description="One image for every side, or a picture per face"
@@ -577,42 +572,42 @@
                         <Border Margin="4,0,4,8" Padding="10" Style="{StaticResource ModsSlot}">
                             <StackPanel>
                                 <TextBlock FontSize="12.5" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_FastFlagEditor_Back}" />
-                                <TextBlock Margin="0,3,0,0" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding CustomSkyboxBack}" ToolTip="{Binding CustomSkyboxBack}" />
+                                <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding CustomSkyboxBack}" ToolTip="{Binding CustomSkyboxBack}" />
                                 <Button Margin="0,8,0,0" HorizontalAlignment="Stretch" Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Common_Browse}" Command="{Binding ChooseSkyboxFaceCommand}" CommandParameter="Back" />
                             </StackPanel>
                         </Border>
                         <Border Margin="4,0,4,8" Padding="10" Style="{StaticResource ModsSlot}">
                             <StackPanel>
                                 <TextBlock FontSize="12.5" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_Mods_Down}" />
-                                <TextBlock Margin="0,3,0,0" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding CustomSkyboxDown}" ToolTip="{Binding CustomSkyboxDown}" />
+                                <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding CustomSkyboxDown}" ToolTip="{Binding CustomSkyboxDown}" />
                                 <Button Margin="0,8,0,0" HorizontalAlignment="Stretch" Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Common_Browse}" Command="{Binding ChooseSkyboxFaceCommand}" CommandParameter="Down" />
                             </StackPanel>
                         </Border>
                         <Border Margin="4,0,4,8" Padding="10" Style="{StaticResource ModsSlot}">
                             <StackPanel>
                                 <TextBlock FontSize="12.5" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_Mods_Front}" />
-                                <TextBlock Margin="0,3,0,0" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding CustomSkyboxFront}" ToolTip="{Binding CustomSkyboxFront}" />
+                                <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding CustomSkyboxFront}" ToolTip="{Binding CustomSkyboxFront}" />
                                 <Button Margin="0,8,0,0" HorizontalAlignment="Stretch" Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Common_Browse}" Command="{Binding ChooseSkyboxFaceCommand}" CommandParameter="Front" />
                             </StackPanel>
                         </Border>
                         <Border Margin="4,0,4,0" Padding="10" Style="{StaticResource ModsSlot}">
                             <StackPanel>
                                 <TextBlock FontSize="12.5" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_Mods_Left}" />
-                                <TextBlock Margin="0,3,0,0" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding CustomSkyboxLeft}" ToolTip="{Binding CustomSkyboxLeft}" />
+                                <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding CustomSkyboxLeft}" ToolTip="{Binding CustomSkyboxLeft}" />
                                 <Button Margin="0,8,0,0" HorizontalAlignment="Stretch" Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Common_Browse}" Command="{Binding ChooseSkyboxFaceCommand}" CommandParameter="Left" />
                             </StackPanel>
                         </Border>
                         <Border Margin="4,0,4,0" Padding="10" Style="{StaticResource ModsSlot}">
                             <StackPanel>
                                 <TextBlock FontSize="12.5" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_Mods_Right}" />
-                                <TextBlock Margin="0,3,0,0" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding CustomSkyboxRight}" ToolTip="{Binding CustomSkyboxRight}" />
+                                <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding CustomSkyboxRight}" ToolTip="{Binding CustomSkyboxRight}" />
                                 <Button Margin="0,8,0,0" HorizontalAlignment="Stretch" Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Common_Browse}" Command="{Binding ChooseSkyboxFaceCommand}" CommandParameter="Right" />
                             </StackPanel>
                         </Border>
                         <Border Margin="4,0,4,0" Padding="10" Style="{StaticResource ModsSlot}">
                             <StackPanel>
                                 <TextBlock FontSize="12.5" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_Mods_Up}" />
-                                <TextBlock Margin="0,3,0,0" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding CustomSkyboxUp}" ToolTip="{Binding CustomSkyboxUp}" />
+                                <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding CustomSkyboxUp}" ToolTip="{Binding CustomSkyboxUp}" />
                                 <Button Margin="0,8,0,0" HorizontalAlignment="Stretch" Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Common_Browse}" Command="{Binding ChooseSkyboxFaceCommand}" CommandParameter="Up" />
                             </StackPanel>
                         </Border>

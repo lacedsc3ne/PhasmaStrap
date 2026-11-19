@@ -10,18 +10,18 @@
       Title="PerformancePage"
       Scrollable="False">
     <controls:SectionHost x:Name="Host" Header="Performance" Layout="Rail">
-        <controls:SectionItem Label="Frame rate" PageType="{x:Type pages:RenderingFrameRatePage}" />
-        <controls:SectionItem Label="Resolution" PageType="{x:Type pages:RenderingResolutionPage}" />
-        <controls:SectionItem Label="Per game" PageType="{x:Type pages:RenderingPerGamePage}" />
-        <controls:SectionItem Label="Low-end mode" PageType="{x:Type pages:RenderingLowEndPage}" />
-        <controls:SectionItem Label="Boost options" PageType="{x:Type pages:RenderingBoostPage}" />
-        <controls:SectionItem Label="System" PageType="{x:Type pages:RenderingSystemPage}" />
-        <controls:SectionItem Label="Overlays" TabLabel="Stats overlay" PageType="{x:Type pages:OverlaysHudPage}" />
-        <controls:SectionItem Label="Crosshair" TabParent="{x:Type pages:OverlaysHudPage}" PageType="{x:Type pages:OverlaysCrosshairPage}" />
-        <controls:SectionItem Label="Stream-safe mode" TabParent="{x:Type pages:OverlaysHudPage}" PageType="{x:Type pages:OverlaysStreamPage}" />
-        <controls:SectionItem Label="RiShade" PageType="{x:Type pages:RiShadePage}" />
-        <controls:SectionItem Label="NVIDIA" PageType="{x:Type pages:NvidiaPage}" />
-        <controls:SectionItem Label="Network" PageType="{x:Type pages:NetworkingPage}" />
-        <controls:SectionItem Label="Settings file" PageType="{x:Type pages:GBSEditorPage}" />
+        <controls:SectionItem Group="Rendering" Label="Frame rate" PageType="{x:Type pages:RenderingFrameRatePage}" />
+        <controls:SectionItem Group="Rendering" Label="Resolution" PageType="{x:Type pages:RenderingResolutionPage}" />
+        <controls:SectionItem Group="Rendering" Label="Per game" PageType="{x:Type pages:RenderingPerGamePage}" />
+        <controls:SectionItem Group="Rendering" Label="Low-end mode" PageType="{x:Type pages:RenderingLowEndPage}" />
+        <controls:SectionItem Group="Rendering" Label="Boost options" PageType="{x:Type pages:RenderingBoostPage}" />
+        <controls:SectionItem Group="Rendering" Label="System" PageType="{x:Type pages:RenderingSystemPage}" />
+        <controls:SectionItem Group="Overlays" Label="Stats overlay" PageType="{x:Type pages:OverlaysHudPage}" />
+        <controls:SectionItem Group="Overlays" Label="Crosshair" PageType="{x:Type pages:OverlaysCrosshairPage}" />
+        <controls:SectionItem Group="Overlays" Label="Stream-safe mode" PageType="{x:Type pages:OverlaysStreamPage}" />
+        <controls:SectionItem Group="Tuning" Label="RiShade" PageType="{x:Type pages:RiShadePage}" />
+        <controls:SectionItem Group="Tuning" Label="NVIDIA" PageType="{x:Type pages:NvidiaPage}" />
+        <controls:SectionItem Group="Tuning" Label="Network" PageType="{x:Type pages:NetworkingPage}" />
+        <controls:SectionItem Group="Tuning" Label="Settings file" PageType="{x:Type pages:GBSEditorPage}" />
     </controls:SectionHost>
 </ui:UiPage>

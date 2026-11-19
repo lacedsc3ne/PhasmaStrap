@@ -20,7 +20,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             InitializeComponent();
 
             Title = title;
-            TitleBarElement.Title = title;
+            TitleBarElement.Title = title.ToUpperInvariant();
             PromptText.Text = prompt;
 
             _all = flags.Select(f => new Item(f.Name, f.Value)).ToList();

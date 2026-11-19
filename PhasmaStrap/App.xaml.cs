@@ -151,7 +151,6 @@ namespace PhasmaStrap
 
             SendLog();
 
-            // Opt in crash report (Settings > Account and backup > Send crash reports), sent off the UI thread
             if (Settings.Prop.SendCrashReports)
                 _ = Task.Run(() => Utility.Backend.ExtrasApi.SendCrashReportAsync(ex));
 
@@ -187,7 +186,6 @@ namespace PhasmaStrap
 
             try
             {
-                // Beta channel: the newest release including prereleases, falling back to the stable one below
                 if (String.Equals(Settings.Prop.AppUpdateChannel, "Beta", StringComparison.OrdinalIgnoreCase))
                 {
                     GithubRelease? beta = await GetLatestBetaRelease();
@@ -213,10 +211,6 @@ namespace PhasmaStrap
             return null;
         }
 
-        /// <summary>
-        /// Newest release on the Beta channel: PhasmaStrap's server first (GET /v1/releases/latest?channel=beta),
-        /// otherwise the newest of GitHub's recent releases with prereleases included. Null when neither answers.
-        /// </summary>
         private static async Task<GithubRelease?> GetLatestBetaRelease()
         {
             const string LOG_IDENT = "App::GetLatestBetaRelease";
@@ -255,7 +249,6 @@ namespace PhasmaStrap
                     }
                     catch (Exception)
                     {
-                        // A tag that isn't a version number is skipped
                     }
                 }
 
@@ -686,7 +679,6 @@ namespace PhasmaStrap
 
                 Settings.Load();
 
-                // The redesigned look: solid panels, no window tint and no drifting mist. Done once so older saved values don't hide it.
                 if (Settings.Prop.ThemeLookVersion < 1)
                 {
                     Settings.Prop.ThemePanelOpacity = 1.0;
@@ -697,7 +689,6 @@ namespace PhasmaStrap
                     Settings.Save();
                 }
 
-                // A custom colour theme saved before the redesign repaints everything in the old palette. Keep a copy, then switch it off.
                 if (Settings.Prop.ThemeLookVersion < 2)
                 {
                     try
@@ -712,6 +703,20 @@ namespace PhasmaStrap
 
                     Settings.Prop.CustomColorThemeEnabled = false;
                     Settings.Prop.ThemeLookVersion = 2;
+                    Settings.Save();
+                }
+
+                if (Settings.Prop.ThemeLookVersion < 3)
+                {
+                    Logger.WriteLine(LOG_IDENT, $"Theme look v3: replacing accent '{Settings.Prop.ThemeAccent}', panel '{Settings.Prop.ThemePanelColor}', radius {Settings.Prop.ThemeCornerRadius}, section colours {Settings.Prop.ThemeSectionColors}");
+                    Settings.Prop.ThemeAccent = "";
+                    Settings.Prop.ThemePanelColor = "";
+                    Settings.Prop.ThemePanelOpacity = 1.0;
+                    Settings.Prop.ThemeCornerRadius = 20;
+                    Settings.Prop.ThemeSectionColors = false;
+                    Settings.Prop.ThemeMistEnabled = false;
+                    Settings.Prop.ThemeWindowTintOpacity = 1.0;
+                    Settings.Prop.ThemeLookVersion = 3;
                     Settings.Save();
                 }
 
@@ -756,11 +761,14 @@ namespace PhasmaStrap
                 {
                     Integrations.SystemPerformanceBoost.ApplyGpuPreference();
                     Integrations.SystemPerformanceBoost.ApplyGameDvr();
+                    Integrations.SystemPerformanceBoost.RestoreLeftovers();
                 }
                 catch (Exception ex)
                 {
                     Logger.WriteLine(LOG_IDENT, $"System performance boost setup failed: {ex.Message}");
                 }
+
+                Utility.LauncherThrottle.NormalizeStartupPriority();
 
                 try
                 {
@@ -770,6 +778,9 @@ namespace PhasmaStrap
                 {
                     Logger.WriteLine(LOG_IDENT, $"CPU core limiter startup failed: {ex.Message}");
                 }
+
+                if (ProcessKeepsRunning() && !LaunchSettings.WatcherFlag.Active)
+                    Utility.LauncherThrottle.StartForegroundOnly();
 
                 if (ProcessKeepsRunning())
                     StartBackgroundServicesWhenFree();

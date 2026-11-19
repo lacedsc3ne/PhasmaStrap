@@ -2,20 +2,13 @@ using System.Windows;
 
 namespace PhasmaStrap.Utility
 {
-    /// <summary>
-    /// The questions the Deployment page can ask before Roblox starts: "Confirm before joining" for links from the website,
-    /// and "Ask which account". Both run on the UI thread in LaunchHandler.LaunchRoblox, before the bootstrapper.
-    /// Each returns false when the user called the launch off.
-    /// </summary>
     public static class LaunchChoices
     {
         private const string LOG_IDENT = "LaunchChoices";
 
-        /// <summary>The Roblox website starts games with a roblox-player: link that carries a sign in ticket for its own account.</summary>
         public static bool IsWebsiteLaunch(string? launchArgs) =>
             !string.IsNullOrEmpty(launchArgs) && launchArgs.TrimStart('"').StartsWith("roblox-player:", StringComparison.OrdinalIgnoreCase);
 
-        /// <summary>The place a launch link points at, or 0.</summary>
         public static long PlaceIdOf(string? launchArgs)
         {
             if (string.IsNullOrEmpty(launchArgs))
@@ -33,7 +26,6 @@ namespace PhasmaStrap.Utility
             }
         }
 
-        /// <summary>"Confirm before joining": asks before a link from the website starts a game.</summary>
         public static bool ConfirmWebsiteJoin(string? launchArgs)
         {
             if (!App.Settings.Prop.ConfirmWebsiteJoins || !IsWebsiteLaunch(launchArgs))
@@ -52,11 +44,6 @@ namespace PhasmaStrap.Utility
             return result == MessageBoxResult.Yes;
         }
 
-        /// <summary>
-        /// "Ask which account": shows the saved accounts first and switches the Roblox login to the one picked.
-        /// Skipped for website links (their ticket is for the account signed in on the site), with fewer than two saved
-        /// accounts, and while a Roblox is open.
-        /// </summary>
         public static bool AskWhichAccount(string? launchArgs)
         {
             if (!App.Settings.Prop.AskAccountOnLaunch || IsWebsiteLaunch(launchArgs))
@@ -90,7 +77,6 @@ namespace PhasmaStrap.Utility
             {
                 AccountQuickSwitch.Log ??= message => App.Logger.WriteLine("AccountQuickSwitch", message);
 
-                // Off the UI thread: the switch only copies files, so waiting here cannot deadlock
                 Task.Run(() => AccountQuickSwitch.SwitchAsync(Paths.AccountBackups, Integrations.RobloxCookie.LiveCookiesDatPath, userId)).GetAwaiter().GetResult();
                 return true;
             }

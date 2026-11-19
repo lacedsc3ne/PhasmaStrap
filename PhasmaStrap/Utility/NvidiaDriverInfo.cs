@@ -1,9 +1,5 @@
 namespace PhasmaStrap.Utility
 {
-    /// <summary>
-    /// Name and driver version of the NVIDIA card in this PC, read locally from WMI (Win32_VideoController).
-    /// The Windows driver version (for example 32.0.15.6094) is turned into NVIDIA's own form (560.94).
-    /// </summary>
     public static class NvidiaDriverInfo
     {
         private const string LOG_IDENT = "NvidiaDriverInfo";
@@ -44,10 +40,6 @@ namespace PhasmaStrap.Utility
             return null;
         }
 
-        /// <summary>
-        /// 32.0.15.6094 becomes 560.94: the last five digits of the third and fourth parts, split 3 and 2.
-        /// Returns "" when the text does not look like a Windows driver version.
-        /// </summary>
         public static string ToNvidiaVersion(string windowsVersion)
         {
             string[] parts = windowsVersion.Trim().Split('.');

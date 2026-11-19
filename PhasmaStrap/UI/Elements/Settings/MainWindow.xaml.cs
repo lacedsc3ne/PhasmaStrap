@@ -67,6 +67,23 @@ namespace PhasmaStrap.UI.Elements.Settings
 
         private int _seenNotifications;
 
+        private int _eagerUnsavedChecks = 3;
+        private int _ticksSinceFullCheck;
+
+        public void MarkUnsavedCheckDue() => _eagerUnsavedChecks = 3;
+
+        public static void MarkUnsavedCheckDueOnOpenWindows()
+        {
+            if (Application.Current is null)
+                return;
+
+            foreach (MainWindow window in Application.Current.Windows.OfType<MainWindow>())
+                window.MarkUnsavedCheckDue();
+        }
+
+        private void NotifyShownSoon() =>
+            Dispatcher.BeginInvoke(PhasmaStrap.UI.SettingsWindowState.NotifyShown, System.Windows.Threading.DispatcherPriority.Background);
+
         private void InitializeTopBar()
         {
             var viewModel = (MainWindowViewModel)DataContext;
@@ -78,12 +95,41 @@ namespace PhasmaStrap.UI.Elements.Settings
             _unsavedTimer.Tick += (_, _) => RefreshUnsavedBar();
             _unsavedTimer.Start();
 
+            PreviewMouseUp += (_, _) => MarkUnsavedCheckDue();
+            PreviewKeyUp += (_, _) => MarkUnsavedCheckDue();
+            PreviewMouseWheel += (_, _) => MarkUnsavedCheckDue();
+            PreviewTouchUp += (_, _) => MarkUnsavedCheckDue();
+            Activated += (_, _) => MarkUnsavedCheckDue();
+            IsVisibleChanged += (_, _) =>
+            {
+                if (_closed)
+                    return;
+
+                if (IsVisible)
+                {
+                    MarkUnsavedCheckDue();
+                    _unsavedTimer.Start();
+                    NotifyShownSoon();
+                }
+                else
+                {
+                    _unsavedTimer.Stop();
+                }
+            };
+            StateChanged += (_, _) =>
+            {
+                if (WindowState != System.Windows.WindowState.Minimized)
+                    NotifyShownSoon();
+            };
+
             RootFrame.Navigated += (_, _) =>
             {
                 RefreshSettingsButton();
                 ApplySectionAccent();
                 UpdateSubNav();
             };
+
+            StatusVersion.Text = "PHASMASTRAP " + App.Version;
 
             _seenNotifications = PhasmaStrap.UI.NotificationCenter.History.Count;
             PhasmaStrap.UI.NotificationCenter.HistoryChanged += NotificationCenter_HistoryChanged;
@@ -111,6 +157,8 @@ namespace PhasmaStrap.UI.Elements.Settings
                 _savedSettingsSnapshot = SerializeSettings();
                 _savedSettingsHash = App.Settings.LastFileHash;
             }
+
+            MarkUnsavedCheckDue();
         }
 
         private bool FileChangedElsewhere()
@@ -143,6 +191,7 @@ namespace PhasmaStrap.UI.Elements.Settings
                     _savedSettingsSnapshot = saved.ToJsonString();
                     _hashBeforeFieldSave = _savedSettingsHash;
                     _savedSettingsHash = newHash;
+                    MarkUnsavedCheckDue();
                 }
                 catch (Exception ex)
                 {
@@ -153,9 +202,6 @@ namespace PhasmaStrap.UI.Elements.Settings
 
         private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            // The side menu has a fixed width, so there is nothing to shrink as the window narrows.
-            // the brand lives in the side menu now
-            AccountTextPanel.Visibility = Visibility.Visible;
         }
 
         private bool HasUnsavedChanges()
@@ -190,9 +236,15 @@ namespace PhasmaStrap.UI.Elements.Settings
             if (!IsVisible || WindowState == System.Windows.WindowState.Minimized)
                 return;
 
-            // Pages that save on their own (deferred saves) move the file on; treat that as the new baseline.
             if (FileChangedElsewhere())
                 TakeSettingsSnapshot();
+
+            _ticksSinceFullCheck++;
+            if (_eagerUnsavedChecks > 0)
+                _eagerUnsavedChecks--;
+            else if (_ticksSinceFullCheck < (IsActive ? 5 : 15))
+                return;
+            _ticksSinceFullCheck = 0;
 
             bool dirty;
             try
@@ -227,10 +279,6 @@ namespace PhasmaStrap.UI.Elements.Settings
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e) => RootNavigation.Navigate("settings");
 
-        /// <summary>
-        /// Each section has its own accent colour (Games red, Social blue, Performance green and so on). Turning section
-        /// colours off in Appearance goes back to the single accent the user picked.
-        /// </summary>
         private PhasmaStrap.UI.ViewModels.Settings.HomeViewModel? _watchedHome;
         private UI.Elements.Controls.SectionHost? _watchedHost;
 
@@ -239,7 +287,6 @@ namespace PhasmaStrap.UI.Elements.Settings
             ("home", "Home"), ("library", "Library"), ("serverbrowser", "Server browser"), ("privateservers", "Private servers"), ("history", "History"),
         };
 
-        /// <summary>Lists the pages of the open section under its menu entry and keeps the highlighted one in step with the page.</summary>
         private void UpdateSubNav()
         {
             if (_watchedHome is not null)
@@ -266,57 +313,47 @@ namespace PhasmaStrap.UI.Elements.Settings
             }
             else if (RootFrame.Content is UI.Elements.Controls.ISectionHostPage page)
             {
-                foreach (UI.Elements.Controls.SectionItem section in page.SectionHost.NavSections)
+                foreach (UI.Elements.Controls.SectionItem section in page.SectionHost.Sections)
                     if (section.PageType is not null)
-                        entries.Add((section.PageType, section.Label, ""));
+                        entries.Add((section.PageType, section.Label, section.Group ?? ""));
 
                 _watchedHost = page.SectionHost;
                 _watchedHost.SectionChanged += WatchedHost_SectionChanged;
             }
 
-            // Every menu entry gives its space back, then the open one reserves room for its links.
-            FrameworkElement? open = null;
-            int openIndex = -1;
-            var all = new List<FrameworkElement>();
-            foreach (object item in RootNavigation.Items)
-                if (item is FrameworkElement fe) all.Add(fe);
-            int mainCount = all.Count;
-            foreach (object item in RootNavigation.Footer)
-                if (item is FrameworkElement fe) all.Add(fe);
+            NavigationItem? open = null;
+            foreach (object item in RootNavigation.Items.Cast<object>().Concat(RootNavigation.Footer.Cast<object>()))
+                if (item is NavigationItem nav && nav.PageType == RootFrame.Content?.GetType())
+                    open = nav;
 
-            for (int n = 0; n < all.Count; n++)
-            {
-                all[n].Margin = new Thickness(0);
-                if (all[n] is NavigationItem nav && nav.PageType == RootFrame.Content?.GetType())
-                {
-                    open = all[n];
-                    openIndex = n;
-                }
-            }
+            string sectionName = open?.Content as string ?? "";
+            SubNavTitle.Text = sectionName.ToUpperInvariant();
+            if (open is not null)
+                SubNavIcon.Symbol = open.Icon;
+            SubNavHeader.Visibility = sectionName.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
 
             SubNavItems.Children.Clear();
-            if (open is null || entries.Count == 0)
+            if (entries.Count == 0)
             {
                 SubNav.Visibility = Visibility.Collapsed;
+                UpdateCrumb();
                 return;
             }
 
             string lastGroup = "";
-            double height = 0;
             foreach ((object tag, string label, string group) in entries)
             {
                 if (group.Length > 0 && group != lastGroup)
                 {
                     SubNavItems.Children.Add(new TextBlock
                     {
-                        Text = group,
+                        Text = group.ToUpperInvariant(),
                         FontSize = 10.5,
                         FontWeight = FontWeights.SemiBold,
-                        Margin = new Thickness(10, 8, 0, 3),
+                        FontFamily = (System.Windows.Media.FontFamily)FindResource("PhasmaMono"),
+                        Margin = new Thickness(10, 14, 0, 6),
                         Foreground = (System.Windows.Media.Brush)FindResource("TextFillColorTertiaryBrush"),
-                        Opacity = 0.8,
                     });
-                    height += 24;
                     lastGroup = group;
                 }
 
@@ -329,15 +366,23 @@ namespace PhasmaStrap.UI.Elements.Settings
                 };
                 link.Click += SubLink_Click;
                 SubNavItems.Children.Add(link);
-                height += 28;
             }
 
-            open.Margin = new Thickness(0, 0, 0, height + 4);
-            double top = (openIndex + 1) * 40 + (openIndex >= mainCount ? 2 : 0);
-            SubNav.Margin = new Thickness(18, top, 0, 0);
             SubNav.Visibility = Visibility.Visible;
 
             SyncSubNav();
+        }
+
+        private void UpdateCrumb()
+        {
+            string section = SubNavTitle.Text;
+            string pageLabel = "";
+
+            foreach (UIElement child in SubNavItems.Children)
+                if (child is System.Windows.Controls.RadioButton { IsChecked: true } rb)
+                    pageLabel = rb.Content as string ?? "";
+
+            CrumbText.Text = section.Length == 0 ? "" : pageLabel.Length == 0 ? $"/  {section}" : $"/  {section}  /  {pageLabel.ToUpperInvariant()}";
         }
 
         private void WatchedHome_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -355,13 +400,15 @@ namespace PhasmaStrap.UI.Elements.Settings
             if (_watchedHome is not null)
                 current = _watchedHome.Tab;
             else if (_watchedHost is not null)
-                current = _watchedHost.NavKeyFor(_watchedHost.CurrentSection);
+                current = _watchedHost.CurrentSection;
 
             foreach (UIElement child in SubNavItems.Children)
             {
                 if (child is System.Windows.Controls.RadioButton rb)
                     rb.IsChecked = current is not null && (current is string s ? string.Equals(rb.Tag as string, s, StringComparison.OrdinalIgnoreCase) : Equals(rb.Tag, current));
             }
+
+            UpdateCrumb();
         }
 
         private void SubLink_Click(object sender, RoutedEventArgs e)
@@ -440,7 +487,6 @@ namespace PhasmaStrap.UI.Elements.Settings
                 FillNotifications(Math.Max(0, count - _seenNotifications));
         }
 
-        // One line in the notification history popup
         public sealed class NotificationRow
         {
             public NotificationRow(PhasmaStrap.UI.NotificationRecord record, bool isNew)
@@ -666,6 +712,73 @@ namespace PhasmaStrap.UI.Elements.Settings
 
             if (PhasmaStrap.Utility.PhasmaAccount.SignedIn)
                 _ = PhasmaStrap.Utility.PhasmaAccount.RefreshAsync();
+
+            _ = LoadRobloxAvatarAsync();
+            Activated += (_, _) =>
+            {
+                if (DateTime.UtcNow - _robloxAvatarChecked > TimeSpan.FromMinutes(2))
+                    _ = LoadRobloxAvatarAsync();
+            };
+        }
+
+        private System.Windows.Media.ImageSource? _robloxAvatar;
+        private long _robloxAvatarUserId;
+        private DateTime _robloxAvatarChecked;
+
+        private async Task LoadRobloxAvatarAsync()
+        {
+            const string LOG_IDENT = "MainWindow::LoadRobloxAvatarAsync";
+
+            _robloxAvatarChecked = DateTime.UtcNow;
+
+            try
+            {
+                var account = await PhasmaStrap.Integrations.RobloxCookie.GetAccountAsync();
+
+                if (account is null || account.UserId == 0)
+                {
+                    if (_robloxAvatar is not null)
+                    {
+                        _robloxAvatar = null;
+                        _robloxAvatarUserId = 0;
+                        _loadedAvatar = "";
+                        RefreshAccountButton();
+                    }
+                    return;
+                }
+
+                if (account.UserId == _robloxAvatarUserId && _robloxAvatar is not null)
+                    return;
+
+                string url = $"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={account.UserId}&size=150x150&format=Png&isCircular=false";
+                using var doc = System.Text.Json.JsonDocument.Parse(await App.HttpClient.GetStringAsync(url));
+                string? imageUrl = null;
+                foreach (var item in doc.RootElement.GetProperty("data").EnumerateArray())
+                    if (item.TryGetProperty("imageUrl", out var u))
+                        imageUrl = u.GetString();
+
+                if (string.IsNullOrEmpty(imageUrl))
+                    return;
+
+                byte[] data = await App.HttpClient.GetByteArrayAsync(imageUrl);
+
+                var image = new System.Windows.Media.Imaging.BitmapImage();
+                image.BeginInit();
+                image.StreamSource = new MemoryStream(data);
+                image.DecodePixelWidth = 96;
+                image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                image.EndInit();
+                image.Freeze();
+
+                _robloxAvatar = image;
+                _robloxAvatarUserId = account.UserId;
+                AccountAvatarBrush.ImageSource = image;
+                ShowAccountAvatar(true);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Could not load the Roblox picture: {ex.Message}");
+            }
         }
 
         private void RefreshAccountButton()
@@ -679,6 +792,13 @@ namespace PhasmaStrap.UI.Elements.Settings
             AccountChevron.Visibility = signedIn && !_accountBusy ? Visibility.Visible : Visibility.Collapsed;
             AccountButton.ToolTip = signedIn ? "Your PhasmaStrap account" : "Sign in to PhasmaStrap";
             AccountWhoItem.Header = signedIn ? $"Signed in as {PhasmaStrap.Utility.PhasmaAccount.DisplayName}" : "Not signed in";
+
+            if (_robloxAvatar is not null)
+            {
+                AccountAvatarBrush.ImageSource = _robloxAvatar;
+                ShowAccountAvatar(true);
+                return;
+            }
 
             string avatar = signedIn ? App.State.Prop.AccountAvatar : "";
 
@@ -696,10 +816,48 @@ namespace PhasmaStrap.UI.Elements.Settings
 
         private string _loadedAvatar = "";
 
+        private static readonly System.Windows.Media.Brush AccountGradient = CreateAccountGradient();
+
+        private static System.Windows.Media.Brush CreateAccountGradient()
+        {
+            var brush = new System.Windows.Media.LinearGradientBrush(
+                System.Windows.Media.Color.FromRgb(0xE0, 0x20, 0x2F),
+                System.Windows.Media.Color.FromRgb(0x6B, 0x0B, 0x14),
+                new Point(0, 0), new Point(1, 1));
+            brush.Freeze();
+            return brush;
+        }
+
+        private static string Initials(string name)
+        {
+            string[] parts = (name ?? "").Split(new[] { ' ', '_', '-', '.' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0)
+                return "";
+            if (parts.Length == 1)
+                return parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpperInvariant();
+            return (parts[0][0].ToString() + parts[1][0]).ToUpperInvariant();
+        }
+
         private void ShowAccountAvatar(bool show)
         {
+            bool signedIn = PhasmaStrap.Utility.PhasmaAccount.SignedIn && !_accountBusy;
+            string initials = signedIn ? Initials(PhasmaStrap.Utility.PhasmaAccount.DisplayName) : "";
+
             AccountAvatar.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
-            AccountIcon.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
+            AccountInitials.Text = initials;
+            AccountInitials.Visibility = !show && initials.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+            AccountIcon.Visibility = !show && initials.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+            if (initials.Length > 0 || show)
+            {
+                AccountCircle.Background = AccountGradient;
+                AccountCircle.BorderThickness = new Thickness(0);
+            }
+            else
+            {
+                AccountCircle.Background = System.Windows.Media.Brushes.Transparent;
+                AccountCircle.BorderThickness = new Thickness(1);
+            }
         }
 
         private async Task LoadAccountAvatarAsync(string url)
@@ -713,11 +871,12 @@ namespace PhasmaStrap.UI.Elements.Settings
                 var image = new System.Windows.Media.Imaging.BitmapImage();
                 image.BeginInit();
                 image.StreamSource = new MemoryStream(data);
+                image.DecodePixelWidth = 96;
                 image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
                 image.EndInit();
                 image.Freeze();
 
-                if (url != _loadedAvatar)
+                if (url != _loadedAvatar || _robloxAvatar is not null)
                     return;
 
                 AccountAvatarBrush.ImageSource = image;
@@ -1051,7 +1210,6 @@ namespace PhasmaStrap.UI.Elements.Settings
 
         private void SettingsSearchResults_MouseMove(object sender, MouseEventArgs e)
         {
-            // Only follow the mouse when it really moved, so scrolling with the keyboard doesn't fight it.
             Point position = e.GetPosition(SettingsSearchResults);
             if (position == _lastSearchMouse)
                 return;
@@ -1079,7 +1237,6 @@ namespace PhasmaStrap.UI.Elements.Settings
 
         private void ActivateSearchResult(Search.PaletteItem item)
         {
-            // "Recent searches": the words that led to this result
             if (item.Category != Search.PaletteCategory.Query)
                 RememberQuery(SettingsSearchBox.Text);
 
@@ -1133,10 +1290,6 @@ namespace PhasmaStrap.UI.Elements.Settings
             }
         }
 
-        /// <summary>
-        /// Brings the window forward and shows the setting a shared link points at (phasmastrap://settings/... or
-        /// https://phasmastrap.com/s/...). Safe to call before the window has loaded.
-        /// </summary>
         public void OpenSettingLink(string link)
         {
             if (_closed)
@@ -1189,7 +1342,6 @@ namespace PhasmaStrap.UI.Elements.Settings
             Loaded += onLoaded;
         }
 
-        /// <summary>Puts <paramref name="text"/> in the top bar search and opens the results.</summary>
         public void SearchFor(string text)
         {
             SettingsSearchBox.Text = text ?? "";
@@ -1197,7 +1349,6 @@ namespace PhasmaStrap.UI.Elements.Settings
         }
 
         #endregion Settings search
-
 
         private static string PlacementPath => Path.Combine(Paths.Base, "SettingsWindow.json");
 
@@ -1371,19 +1522,33 @@ namespace PhasmaStrap.UI.Elements.Settings
             _mist = (Storyboard)Resources["MistDrift"];
             _mist.Begin(this, true);
 
-            Activated += (_, _) => { try { _mist?.Resume(this); } catch (Exception) { } };
-            Deactivated += (_, _) => { try { _mist?.Pause(this); } catch (Exception) { } };
-            StateChanged += (_, _) =>
+            Activated += (_, _) => UpdateMist();
+            Deactivated += (_, _) => UpdateMist();
+            StateChanged += (_, _) => UpdateMist();
+            IsVisibleChanged += (_, _) => UpdateMist();
+
+            System.ComponentModel.DependencyPropertyDescriptor.FromProperty(OpacityProperty, typeof(System.Windows.Controls.Canvas))
+                ?.AddValueChanged(MistLayer, (_, _) => UpdateMist());
+
+            UpdateMist();
+        }
+
+        private void UpdateMist()
+        {
+            if (_mist is null)
+                return;
+
+            try
             {
-                try
-                {
-                    if (WindowState == System.Windows.WindowState.Minimized)
-                        _mist?.Pause(this);
-                    else if (IsActive)
-                        _mist?.Resume(this);
-                }
-                catch (Exception) { }
-            };
+                bool off = MistLayer.Opacity <= 0;
+                MistLayer.Visibility = off ? Visibility.Collapsed : Visibility.Visible;
+
+                if (off || !IsVisible || !IsActive || WindowState == System.Windows.WindowState.Minimized)
+                    _mist.Pause(this);
+                else
+                    _mist.Resume(this);
+            }
+            catch (Exception) { }
         }
 
         private void WpfUiWindow_Closing(object sender, CancelEventArgs e)
@@ -1418,17 +1583,42 @@ namespace PhasmaStrap.UI.Elements.Settings
             App.State.Save();
         }
 
-        /// <summary>Hides the window to the tray, as closing does with "Minimise to tray". Used by Deployment > "Close PhasmaStrap".</summary>
         public void HideToTray()
         {
             SavePlacement();
             MinimizeToTray();
         }
 
+        private System.Windows.Threading.DispatcherTimer? _trayTrimTimer;
+
+        private void ScheduleTrayTrim()
+        {
+            if (_trayTrimTimer is null)
+            {
+                _trayTrimTimer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Background) { Interval = TimeSpan.FromSeconds(60) };
+                _trayTrimTimer.Tick += (_, _) =>
+                {
+                    _trayTrimTimer.Stop();
+                    if (IsVisible || _closed)
+                        return;
+
+                    Task.Run(() =>
+                    {
+                        try { PhasmaStrap.Utility.MemoryReport.Trim(); }
+                        catch (Exception ex) { App.Logger.WriteLine("MainWindow::TrayTrim", ex.Message); }
+                    });
+                };
+            }
+
+            _trayTrimTimer.Stop();
+            _trayTrimTimer.Start();
+        }
+
         private void MinimizeToTray()
         {
             Hide();
             try { _mist?.Pause(this); } catch (Exception) { }
+            ScheduleTrayTrim();
 
             if (_trayIcon is not null)
                 return;
@@ -1450,6 +1640,7 @@ namespace PhasmaStrap.UI.Elements.Settings
 
         private void RestoreFromTray()
         {
+            _trayTrimTimer?.Stop();
             Show();
 
             if (WindowState == System.Windows.WindowState.Minimized)
@@ -1485,6 +1676,7 @@ namespace PhasmaStrap.UI.Elements.Settings
             try { _mist?.Stop(this); } catch (Exception) { }
             _searchDebounce.Stop();
             _unsavedTimer.Stop();
+            _trayTrimTimer?.Stop();
             PhasmaStrap.UI.NotificationCenter.HistoryChanged -= NotificationCenter_HistoryChanged;
             PhasmaStrap.Utility.PhasmaAccount.Changed -= PhasmaAccount_Changed;
             _trayIcon?.Dispose();

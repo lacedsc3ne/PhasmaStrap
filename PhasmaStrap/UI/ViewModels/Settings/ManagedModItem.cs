@@ -2,12 +2,10 @@ using PhasmaStrap.Utility;
 
 namespace PhasmaStrap.UI.ViewModels.Settings
 {
-    /// <summary>One file a mod shares with something else that is swapped in too.</summary>
     public sealed class ManagedModConflict
     {
         public string Path { get; init; } = "";
 
-        /// <summary>What else provides this file, like "Classic sounds" or "your mods folder".</summary>
         public string With { get; init; } = "";
     }
 
@@ -49,7 +47,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public string FileSummary => FileCount + (FileCount == 1 ? " file, " : " files, ") + FormatBytes(TotalBytes);
 
-        /// <summary>Every file this mod shares with another active mod or the mods folder, worked out when the list loads.</summary>
         public IReadOnlyList<ManagedModConflict> Conflicts { get; init; } = Array.Empty<ManagedModConflict>();
 
         public string ConflictText
@@ -69,7 +66,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         private bool _showConflicts;
 
-        /// <summary>Whether the full list of conflicting files is open under the row.</summary>
         public bool ShowConflicts
         {
             get => _showConflicts;

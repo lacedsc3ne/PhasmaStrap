@@ -12,7 +12,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
         {
             InitializeComponent();
 
-            // "Library 148": the count after the Library tab follows the capture folders.
             Loaded += (_, _) =>
             {
                 CaptureViewModel.Shared.PropertyChanged -= OnCaptureChanged;

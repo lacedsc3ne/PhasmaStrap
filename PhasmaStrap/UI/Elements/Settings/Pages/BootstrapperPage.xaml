@@ -8,6 +8,7 @@
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       xmlns:models="clr-namespace:PhasmaStrap.UI.ViewModels.Settings"
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       d:DataContext="{d:DesignInstance Type=models:BehaviourViewModel}"
       mc:Ignorable="d"
       d:DesignHeight="600" d:DesignWidth="800"
@@ -15,39 +16,55 @@
       Scrollable="True">
 
     <ui:UiPage.Resources>
-        <!--  One line of the "press Play" summary: icon plus text  -->
         <Style x:Key="DeploySummaryIcon" TargetType="ui:SymbolIcon" BasedOn="{StaticResource {x:Type ui:SymbolIcon}}">
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="Margin" Value="0,1,10,0" />
-            <Setter Property="VerticalAlignment" Value="Top" />
-            <Setter Property="Foreground" Value="{DynamicResource PhasmaAccentBrush}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
         </Style>
         <Style x:Key="DeploySummaryText" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
-            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="FontSize" Value="13.5" />
             <Setter Property="TextWrapping" Value="Wrap" />
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        </Style>
+        <Style x:Key="PhRow" TargetType="{x:Type Border}">
+            <Setter Property="Margin" Value="-20,0,-20,0" />
+            <Setter Property="Padding" Value="20,9,20,9" />
+            <Setter Property="MinHeight" Value="45" />
+            <Setter Property="BorderThickness" Value="0,1,0,0" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PhasmaStrokeBrush}" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+        </Style>
+        <Style x:Key="StatusRing" TargetType="{x:Type Border}">
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Opacity" Value="0.4" />
+            <Setter Property="phui:CutCorners.Size" Value="9" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PhasmaAccentBrush}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding RobloxStatusTone}" Value="good">
+                    <Setter Property="BorderBrush" Value="{DynamicResource PhasmaGoodBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding RobloxStatusTone}" Value="warn">
+                    <Setter Property="BorderBrush" Value="{DynamicResource PhasmaWarnBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
     </ui:UiPage.Resources>
 
     <StackPanel Margin="0,0,14,14">
-        <StackPanel Orientation="Horizontal">
-            <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="{x:Static resources:Strings.Menu_Behaviour_Title}" />
-            <Border Margin="10,2,0,0" Style="{DynamicResource PhasmaTagNeutral}">
-                <TextBlock Text="Launching" />
-            </Border>
-        </StackPanel>
-        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="What PhasmaStrap does every time you press Play." />
+        <controls:PageHeader Eyebrow="Settings · Launching" Title="{x:Static resources:Strings.Menu_Behaviour_Title}" Subtitle="What PhasmaStrap does every time you press Play." />
 
-        <!--  Roblox status: installed build, channel, newer build check  -->
-        <Border Margin="0,0,0,12" Padding="16,14,16,14" Style="{DynamicResource PhasmaCard}">
-            <Grid>
+        <Grid Margin="0,0,0,12">
+            <Border Background="{DynamicResource PhasmaPanelBrush}" phui:CutCorners.Size="9" />
+            <Border Style="{StaticResource StatusRing}" />
+            <Grid Margin="20,18,20,18">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <Border Grid.Column="0" Width="44" Height="44" Margin="0,0,14,0" VerticalAlignment="Center" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="{DynamicResource PhasmaAccentSoftBrush}">
+                <Border Grid.Column="0" Width="44" Height="44" Margin="0,0,16,0" VerticalAlignment="Center" phui:CutCorners.Size="6" Background="{DynamicResource PhasmaS3Brush}">
                     <ui:SymbolIcon HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20" Symbol="Play24">
                         <ui:SymbolIcon.Style>
                             <Style TargetType="ui:SymbolIcon" BasedOn="{StaticResource {x:Type ui:SymbolIcon}}">
@@ -66,74 +83,113 @@
                 </Border>
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock FontSize="14" FontWeight="SemiBold" Text="{Binding RobloxStatusTitle, Mode=OneWay}" />
-                    <TextBlock Margin="0,2,0,0" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" TextWrapping="Wrap" Text="{Binding RobloxStatusDetail, Mode=OneWay}" />
+                    <TextBlock FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="18" FontWeight="Bold" TextWrapping="Wrap" Text="{Binding RobloxStatusTitle, Mode=OneWay, Converter={StaticResource PhasmaUpper}}" />
+                    <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding RobloxStatusDetail, Mode=OneWay}" />
                 </StackPanel>
 
                 <WrapPanel Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Right">
-                    <Button Margin="0,0,8,0" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding OpenChannelCommand}" ToolTip="Change it on Channel and downloads">
+                    <Button Margin="0,0,8,0" Style="{DynamicResource PhasmaGhostButton}" Command="{Binding OpenChannelCommand}" ToolTip="Change it on Channel and downloads">
                         <TextBlock Text="{Binding ChannelButtonText, Mode=OneWay}" />
                     </Button>
-                    <Button Margin="0,0,8,0" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding CheckRobloxCommand}" IsEnabled="{Binding CanCheckRoblox, Mode=OneWay}">
+                    <Button Margin="0,0,8,0" Style="{DynamicResource PhasmaGhostButton}" Command="{Binding CheckRobloxCommand}" IsEnabled="{Binding CanCheckRoblox, Mode=OneWay}">
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14" Margin="0,0,6,0" />
                             <TextBlock Text="Check now" />
                         </StackPanel>
                     </Button>
                     <Button Style="{DynamicResource PhasmaGhostButton}" Command="{Binding OpenVersionsCommand}">
-                        <TextBlock Text="Older versions" />
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="History24" FontSize="14" Margin="0,0,6,0" />
+                            <TextBlock Text="Older versions" />
+                        </StackPanel>
                     </Button>
                 </WrapPanel>
             </Grid>
-        </Border>
+        </Grid>
 
-        <!--  Summary of what a launch will do right now  -->
-        <Border Margin="0,0,0,12" Padding="16,14,16,14" Style="{DynamicResource PhasmaCard}">
+        <controls:SettingsCard Header="What happens when you press Play" Description="Live summary of the settings on this page">
             <StackPanel>
-                <TextBlock FontSize="13" FontWeight="SemiBold" Text="What happens when you press Play" />
-                <Grid Margin="0,10,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Style="{StaticResource DeploySummaryIcon}" Symbol="Checkmark24" />
-                    <TextBlock Grid.Column="1" Style="{StaticResource DeploySummaryText}" Text="{Binding LaunchSummaryConfirm, Mode=OneWay}" />
-                </Grid>
-                <Grid Margin="0,7,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Style="{StaticResource DeploySummaryIcon}" Symbol="ArrowDownload24" />
-                    <TextBlock Grid.Column="1" Style="{StaticResource DeploySummaryText}" Text="{Binding LaunchSummaryUpdates, Mode=OneWay}" />
-                </Grid>
-                <Grid Margin="0,7,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Style="{StaticResource DeploySummaryIcon}" Symbol="Globe24" />
-                    <TextBlock Grid.Column="1" Style="{StaticResource DeploySummaryText}" Text="{Binding LaunchSummaryMatchmaker, Mode=OneWay}" />
-                </Grid>
-                <Grid Margin="0,7,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Style="{StaticResource DeploySummaryIcon}" Symbol="Gauge24" />
-                    <TextBlock Grid.Column="1" Style="{StaticResource DeploySummaryText}" Text="{Binding LaunchSummaryProcess, Mode=OneWay}" />
-                </Grid>
-                <Grid Margin="0,7,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Style="{StaticResource DeploySummaryIcon}" Symbol="ArrowClockwise24" />
-                    <TextBlock Grid.Column="1" Style="{StaticResource DeploySummaryText}" Text="{Binding LaunchSummaryRejoin, Mode=OneWay}" />
-                </Grid>
+                    <Border Style="{StaticResource PhRow}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Width="26" Height="26" Margin="0,0,14,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaS3Brush}">
+                                <ui:SymbolIcon Style="{StaticResource DeploySummaryIcon}" Symbol="Checkmark24" />
+                            </Border>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource DeploySummaryText}" Text="{Binding LaunchSummaryConfirm, Mode=OneWay}" />
+                        </Grid>
+                    </Border>
+                    <Border Style="{StaticResource PhRow}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Width="26" Height="26" Margin="0,0,14,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaS3Brush}">
+                                <ui:SymbolIcon Style="{StaticResource DeploySummaryIcon}" Symbol="ArrowDownload24" />
+                            </Border>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource DeploySummaryText}" Text="{Binding LaunchSummaryUpdates, Mode=OneWay}" />
+                        </Grid>
+                    </Border>
+                    <Border Style="{StaticResource PhRow}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Width="26" Height="26" Margin="0,0,14,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaS3Brush}">
+                                <ui:SymbolIcon Style="{StaticResource DeploySummaryIcon}" Symbol="Globe24" />
+                            </Border>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource DeploySummaryText}" Text="{Binding LaunchSummaryMatchmaker, Mode=OneWay}" />
+                        </Grid>
+                    </Border>
+                    <Border Style="{StaticResource PhRow}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Width="26" Height="26" Margin="0,0,14,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaS3Brush}">
+                                <ui:SymbolIcon Style="{StaticResource DeploySummaryIcon}" Symbol="Gauge24" />
+                            </Border>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource DeploySummaryText}" Text="{Binding LaunchSummaryProcess, Mode=OneWay}" />
+                        </Grid>
+                    </Border>
+                    <Border Style="{StaticResource PhRow}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Width="26" Height="26" Margin="0,0,14,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaS3Brush}">
+                                <ui:SymbolIcon Style="{StaticResource DeploySummaryIcon}" Symbol="ArrowClockwise24" />
+                            </Border>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource DeploySummaryText}" Text="{Binding LaunchSummaryRejoin, Mode=OneWay}" />
+                        </Grid>
+                    </Border>
             </StackPanel>
-        </Border>
+        </controls:SettingsCard>
 
+        <Grid Margin="0,14,0,0">
+            <Border VerticalAlignment="Bottom" Height="1" Background="{DynamicResource PhasmaStrokeBrush}" />
+            <StackPanel Orientation="Horizontal">
+                <RadioButton GroupName="DeployTabs" Style="{DynamicResource PhasmaTab}" Content="Launch" IsChecked="True" Click="Tab_Click" Tag="{Binding ElementName=LaunchSection}" />
+                <RadioButton GroupName="DeployTabs" Style="{DynamicResource PhasmaTab}" Content="Engine and process" Click="Tab_Click" Tag="{Binding ElementName=EngineSection}" />
+                <RadioButton GroupName="DeployTabs" Style="{DynamicResource PhasmaTab}" Content="Matchmaker and window" Click="Tab_Click" Tag="{Binding ElementName=MatchmakerSection}" />
+                <RadioButton GroupName="DeployTabs" Style="{DynamicResource PhasmaTab}" Content="Installation" Click="Tab_Click" Tag="{Binding ElementName=InstallSection}" />
+            </StackPanel>
+        </Grid>
+
+        <StackPanel x:Name="LaunchSection" Margin="0,30,0,14" Orientation="Horizontal">
+            <Border RenderTransformOrigin="0.5,0.5" Width="4" Height="20" Margin="3,0,12,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaAccentBrush}">
+                <Border.RenderTransform>
+                    <SkewTransform AngleX="-14" />
+                </Border.RenderTransform>
+            </Border>
+            <TextBlock VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="17" FontWeight="Bold" Foreground="White" Text="LAUNCH" />
+        </StackPanel>
         <controls:CardColumns>
             <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Behaviour_Section_Launching_Header}"
                                    Description="{Binding LaunchingGroupSummary, Mode=OneWay}">
@@ -159,6 +215,97 @@
                     Header="{x:Static resources:Strings.Menu_Behaviour_DisableRobloxCrashHandler_Title}"
                     Description="Closes it shortly after launch. Roblox does not need it.">
                     <ui:ToggleSwitch IsChecked="{Binding DisableRobloxCrashHandler, Mode=TwoWay}" />
+                </controls:OptionControl>
+            </controls:SettingsCard>
+
+            <controls:SettingsCard Header="Mods" Description="Swapped in every time Roblox starts">
+                <controls:SettingsCard.HeaderContent>
+                    <Button Style="{DynamicResource PhasmaGhostButton}" Command="{Binding OpenModsFolderCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Folder24" FontSize="14" Margin="0,0,6,0" />
+                            <TextBlock Text="Open mods folder" />
+                        </StackPanel>
+                    </Button>
+                </controls:SettingsCard.HeaderContent>
+
+                <UniformGrid Margin="-5,2,-5,14" Columns="2">
+                    <Border Margin="5" Padding="16,14" phui:CutCorners.Size="6" Background="{DynamicResource PhasmaS3Brush}">
+                        <StackPanel>
+                            <TextBlock FontSize="20" FontWeight="Bold" FontFamily="{DynamicResource PhasmaHeadingFont}" Text="Aa Bb" />
+                            <TextBlock Margin="0,10,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="INTERFACE FONT" />
+                            <TextBlock Margin="0,2,0,0" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding ModFontText, Mode=OneWay}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Margin="5" Padding="16,14" phui:CutCorners.Size="6" Background="{DynamicResource PhasmaS3Brush}">
+                        <StackPanel>
+                            <ui:SymbolIcon HorizontalAlignment="Left" FontSize="22" Symbol="Target24" />
+                            <TextBlock Margin="0,10,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="CURSOR" />
+                            <TextBlock Margin="0,2,0,0" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding ModCursorText, Mode=OneWay}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Margin="5" Padding="16,14" phui:CutCorners.Size="6" Background="{DynamicResource PhasmaS3Brush}">
+                        <StackPanel>
+                            <ui:SymbolIcon HorizontalAlignment="Left" FontSize="22" Symbol="Warning24" />
+                            <TextBlock Margin="0,10,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="DEATH SOUND" />
+                            <TextBlock Margin="0,2,0,0" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding ModDeathSoundText, Mode=OneWay}" />
+                        </StackPanel>
+                    </Border>
+                    <Button Margin="5" Padding="16,14" HorizontalContentAlignment="Left" VerticalContentAlignment="Top" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding OpenModsCommand}">
+                        <StackPanel>
+                            <ui:SymbolIcon HorizontalAlignment="Left" FontSize="22" Symbol="Add24" />
+                            <TextBlock Margin="0,10,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="Normal" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="ADD A MOD" />
+                            <TextBlock Margin="0,2,0,0" Foreground="{DynamicResource PhasmaRedTextBrush}" Text="Open the Mods page" />
+                        </StackPanel>
+                    </Button>
+                </UniformGrid>
+            </controls:SettingsCard>
+        </controls:CardColumns>
+
+        <StackPanel x:Name="EngineSection" Margin="0,26,0,14" Orientation="Horizontal">
+            <Border RenderTransformOrigin="0.5,0.5" Width="4" Height="20" Margin="3,0,12,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaAccentBrush}">
+                <Border.RenderTransform>
+                    <SkewTransform AngleX="-14" />
+                </Border.RenderTransform>
+            </Border>
+            <TextBlock VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="17" FontWeight="Bold" Foreground="White" Text="ENGINE AND PROCESS" />
+        </StackPanel>
+        <controls:CardColumns>
+            <controls:SettingsCard Header="Engine and process"
+                                   Description="{Binding ProcessGroupSummary, Mode=OneWay}">
+                <controls:OptionControl Header="Process preset" Description="Priority, cores and memory together. Not the FastFlag engine presets.">
+                    <ComboBox Padding="10,5,10,5" MinWidth="140" ItemsSource="{Binding EnginePresetNames, Mode=OneTime}" Text="{Binding SelectedEnginePreset, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="Fullscreen on launch" Description="Uses your resolution override">
+                    <ui:ToggleSwitch IsChecked="{Binding FullscreenOnLaunch, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_OptimizeRoblox_Title}" Description="{x:Static resources:Strings.Menu_Performance_OptimizeRoblox_Description}">
+                    <ui:ToggleSwitch IsChecked="{Binding OptimizeRoblox, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_RobloxEfficiencyMode_Title}" Description="Idle priority while tabbed away">
+                    <ui:ToggleSwitch IsChecked="{Binding RobloxEfficiencyMode, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_ReduceMemoryOutOfFocus_Title}" Description="Trims Roblox's memory while tabbed away">
+                    <ui:ToggleSwitch IsChecked="{Binding ReduceMemoryOutOfFocus, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_RobloxPriorityLimit_Title}" Description="{x:Static resources:Strings.Menu_Performance_RobloxPriorityLimit_Description}">
+                    <ComboBox Padding="10,5,10,5" MinWidth="140" ItemsSource="{Binding RobloxPriorityLimitOptions, Mode=OneTime}" SelectedItem="{Binding RobloxPriorityLimit, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_CpuPriority_Title}" Description="Automatic uses every processor">
+                    <ComboBox Padding="10,5,10,5" MinWidth="140" ItemsSource="{Binding CpuPriorityOptions, Mode=OneTime}" SelectedItem="{Binding SelectedCpuPriority, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_LauncherMemoryManager_Title}" Description="Only PhasmaStrap itself, not Roblox">
+                    <ui:ToggleSwitch IsChecked="{Binding LauncherMemoryManagerEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_SoftwareRendering_Title}" Description="For PhasmaStrap's own windows. Try it if your graphics driver causes glitches.">
+                    <ui:ToggleSwitch IsChecked="{Binding SoftwareRenderingEnabled, Mode=TwoWay}" />
                 </controls:OptionControl>
             </controls:SettingsCard>
 
@@ -208,91 +355,16 @@
                     <ui:ToggleSwitch IsChecked="{Binding CleanerRobloxCacheEnabled, Mode=TwoWay}" />
                 </controls:OptionControl>
             </controls:SettingsCard>
-
-            <controls:SettingsCard Header="Engine and process"
-                                   Description="{Binding ProcessGroupSummary, Mode=OneWay}">
-                <controls:OptionControl Header="Process preset" Description="Priority, cores and memory together. Not the FastFlag engine presets.">
-                    <ComboBox Padding="10,5,10,5" MinWidth="140" ItemsSource="{Binding EnginePresetNames, Mode=OneTime}" Text="{Binding SelectedEnginePreset, Mode=TwoWay}" />
-                </controls:OptionControl>
-
-                <controls:OptionControl Header="Fullscreen on launch" Description="Uses your resolution override">
-                    <ui:ToggleSwitch IsChecked="{Binding FullscreenOnLaunch, Mode=TwoWay}" />
-                </controls:OptionControl>
-
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_OptimizeRoblox_Title}" Description="{x:Static resources:Strings.Menu_Performance_OptimizeRoblox_Description}">
-                    <ui:ToggleSwitch IsChecked="{Binding OptimizeRoblox, Mode=TwoWay}" />
-                </controls:OptionControl>
-
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_RobloxEfficiencyMode_Title}" Description="Idle priority while tabbed away">
-                    <ui:ToggleSwitch IsChecked="{Binding RobloxEfficiencyMode, Mode=TwoWay}" />
-                </controls:OptionControl>
-
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_ReduceMemoryOutOfFocus_Title}" Description="Trims Roblox's memory while tabbed away">
-                    <ui:ToggleSwitch IsChecked="{Binding ReduceMemoryOutOfFocus, Mode=TwoWay}" />
-                </controls:OptionControl>
-
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_RobloxPriorityLimit_Title}" Description="{x:Static resources:Strings.Menu_Performance_RobloxPriorityLimit_Description}">
-                    <ComboBox Padding="10,5,10,5" MinWidth="140" ItemsSource="{Binding RobloxPriorityLimitOptions, Mode=OneTime}" SelectedItem="{Binding RobloxPriorityLimit, Mode=TwoWay}" />
-                </controls:OptionControl>
-
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_CpuPriority_Title}" Description="Automatic uses every processor">
-                    <ComboBox Padding="10,5,10,5" MinWidth="140" ItemsSource="{Binding CpuPriorityOptions, Mode=OneTime}" SelectedItem="{Binding SelectedCpuPriority, Mode=TwoWay}" />
-                </controls:OptionControl>
-
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_LauncherMemoryManager_Title}" Description="Only PhasmaStrap itself, not Roblox">
-                    <ui:ToggleSwitch IsChecked="{Binding LauncherMemoryManagerEnabled, Mode=TwoWay}" />
-                </controls:OptionControl>
-
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_SoftwareRendering_Title}" Description="For PhasmaStrap's own windows. Try it if your graphics driver causes glitches.">
-                    <ui:ToggleSwitch IsChecked="{Binding SoftwareRenderingEnabled, Mode=TwoWay}" />
-                </controls:OptionControl>
-            </controls:SettingsCard>
-
-            <!--  Mods summary: what is swapped in at every launch; the Mods page changes them  -->
-            <controls:SettingsCard controls:CardColumns.FullRow="True" Header="Mods" Description="Swapped in every time Roblox starts">
-                <controls:SettingsCard.HeaderContent>
-                    <Button Style="{DynamicResource PhasmaGhostButton}" Command="{Binding OpenModsFolderCommand}">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Folder24" FontSize="14" Margin="0,0,6,0" />
-                            <TextBlock Text="Open mods folder" />
-                        </StackPanel>
-                    </Button>
-                </controls:SettingsCard.HeaderContent>
-
-                <UniformGrid Margin="0,4,0,12" Columns="4">
-                    <Border Margin="0,0,10,0" Padding="14,12" Style="{DynamicResource PhasmaCard}">
-                        <StackPanel>
-                            <TextBlock FontSize="20" FontFamily="Georgia" Text="Aa Bb" />
-                            <TextBlock Margin="0,8,0,0" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="Interface font" />
-                            <TextBlock Margin="0,2,0,0" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding ModFontText, Mode=OneWay}" />
-                        </StackPanel>
-                    </Border>
-                    <Border Margin="0,0,10,0" Padding="14,12" Style="{DynamicResource PhasmaCard}">
-                        <StackPanel>
-                            <ui:SymbolIcon HorizontalAlignment="Left" FontSize="22" Symbol="Target24" Foreground="{DynamicResource PhasmaAccentBrush}" />
-                            <TextBlock Margin="0,8,0,0" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="Cursor" />
-                            <TextBlock Margin="0,2,0,0" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding ModCursorText, Mode=OneWay}" />
-                        </StackPanel>
-                    </Border>
-                    <Border Margin="0,0,10,0" Padding="14,12" Style="{DynamicResource PhasmaCard}">
-                        <StackPanel>
-                            <ui:SymbolIcon HorizontalAlignment="Left" FontSize="22" Symbol="Alert24" Foreground="{DynamicResource PhasmaAccentBrush}" />
-                            <TextBlock Margin="0,8,0,0" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="Death sound" />
-                            <TextBlock Margin="0,2,0,0" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding ModDeathSoundText, Mode=OneWay}" />
-                        </StackPanel>
-                    </Border>
-                    <Button Padding="14,12" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Style="{DynamicResource PhasmaGhostButton}"
-                            BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" BorderThickness="1" Command="{Binding OpenModsCommand}">
-                        <StackPanel HorizontalAlignment="Center">
-                            <ui:SymbolIcon HorizontalAlignment="Center" FontSize="20" Symbol="Add24" />
-                            <TextBlock Margin="0,6,0,0" HorizontalAlignment="Center" Text="Add a mod" />
-                        </StackPanel>
-                    </Button>
-                </UniformGrid>
-            </controls:SettingsCard>
         </controls:CardColumns>
 
-        <TextBlock Style="{DynamicResource PhasmaSectionLabel}" Text="MATCHMAKER AND WINDOW" />
+        <StackPanel x:Name="MatchmakerSection" Margin="0,26,0,14" Orientation="Horizontal">
+            <Border RenderTransformOrigin="0.5,0.5" Width="4" Height="20" Margin="3,0,12,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaAccentBrush}">
+                <Border.RenderTransform>
+                    <SkewTransform AngleX="-14" />
+                </Border.RenderTransform>
+            </Border>
+            <TextBlock VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="17" FontWeight="Bold" Foreground="White" Text="MATCHMAKER AND WINDOW" />
+        </StackPanel>
 
         <controls:CardColumns>
             <controls:SettingsCard DataContext="{Binding Matchmaker}"
@@ -471,8 +543,14 @@
             </controls:SettingsCard>
         </controls:CardColumns>
 
-        <!--  Roblox version and Channel and downloads have their own places in the settings rail now  -->
-        <TextBlock Style="{DynamicResource PhasmaSectionLabel}" Text="INSTALLATION" />
+        <StackPanel x:Name="InstallSection" Margin="0,26,0,14" Orientation="Horizontal">
+            <Border RenderTransformOrigin="0.5,0.5" Width="4" Height="20" Margin="3,0,12,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaAccentBrush}">
+                <Border.RenderTransform>
+                    <SkewTransform AngleX="-14" />
+                </Border.RenderTransform>
+            </Border>
+            <TextBlock VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="17" FontWeight="Bold" Foreground="White" Text="INSTALLATION" />
+        </StackPanel>
 
         <Frame Source="../../Installer/Pages/ManagerPage.xaml"
                NavigationUIVisibility="Hidden"

@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
 
@@ -31,20 +31,7 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             InitializeComponent();
 
             Loaded += (_, _) => ApplyHomeBackground();
-            Loaded += async (_, _) => // TEMP-UITEST
-            {
-                string? tabName = Environment.GetEnvironmentVariable("PHASMASTRAP_UITEST_GAMESTAB");
-                if (!string.IsNullOrEmpty(tabName)) _viewModel.ShowTab(tabName);
-                string? g = Environment.GetEnvironmentVariable("PHASMASTRAP_UITEST_GAME");
-                if (string.IsNullOrEmpty(g)) return;
-                string[] ids = g.Split(',');
-                _viewModel.OpenGame(long.Parse(ids[0]), long.Parse(ids[1]), "Test", "");
-                await System.Threading.Tasks.Task.Delay(2500);
-                string? tab = Environment.GetEnvironmentVariable("PHASMASTRAP_UITEST_GAMETAB");
-                if (!string.IsNullOrEmpty(tab)) _viewModel.Game?.ShowTabCommand.Execute(tab);
-            }; // TEMP-UITEST
 
-            // Every tile list on the page shares one menu.
             ItemMenu.Attach<GameCard>(GamesRoot, BuildGameMenu);
         }
 
@@ -93,14 +80,12 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             }
         }
 
-        /// <summary>One item per saved account, each signing in as that account and opening <paramref name="uri"/>.</summary>
         internal static void FillAccountMenu(ItemMenu sub, string uri)
         {
             foreach (AccountQuickSwitch.Account account in HomeViewModel.SavedAccounts())
                 sub.Add(account.Title, SymbolRegular.Person24, () => _ = HomeViewModel.LaunchAsAccountAsync(account, uri));
         }
 
-        /// <summary>Your usual flags plus every profile, with a check on the one the whole game uses now.</summary>
         internal static void FillProfileMenu(ItemMenu sub, long universeId, long rootPlaceId, string gameName, string iconUrl, Action? changed = null)
         {
             string current = HomeViewModel.ProfileIdFor(universeId);
@@ -121,10 +106,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
                 Option(profile.Name, profile.Id);
         }
 
-        /// <summary>
-        /// Your usual flags plus every profile, each launching once with that profile without changing what the game
-        /// normally starts with. Needs the FastFlag manager, since that is what writes the flags at launch.
-        /// </summary>
         internal static void FillOneTimeProfileMenu(ItemMenu sub, long universeId, long placeId, Action launch)
         {
             bool usable = App.Settings.Prop.UseFastFlagManager;
@@ -141,7 +122,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
                 Option(profile.ChangeCount == 0 ? $"{profile.Name} (empty)" : profile.Name, profile.Id);
         }
 
-        /// <summary>The button next to "Pick a server": launch one of the game's places, or launch with a flag profile once.</summary>
         private async void HeroPlaces_Click(object sender, RoutedEventArgs e)
         {
             GameCard? hero = _viewModel.Hero;
@@ -183,7 +163,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             OpenBelow(menu, HeroPlacesButton);
         }
 
-        /// <summary>Opens a menu as a dropdown under <paramref name="button"/>.</summary>
         internal static void OpenBelow(ItemMenu menu, UIElement button)
         {
             if (menu.Count == 0)
@@ -213,7 +192,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
         {
             if (e.PropertyName == nameof(HomeViewModel.Tab))
             {
-                // Keeps the tab strip in step when a tab is opened from elsewhere (a game's page, search).
                 System.Windows.Controls.RadioButton? tab = _viewModel.Tab switch
                 {
                     HomeViewModel.TabHome => HomeTab,

@@ -323,7 +323,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             ? $"Found at {ClassicClients.ServerPath}"
             : $"Not found. Place {ClassicClients.ServerExecutableName} (built from the PhasmaStrap.Server project) at {ClassicClients.ServerPath}.";
 
-        /// <summary>Server engine and its data pack are both on disk. Drives the Ready tag on the page.</summary>
         public bool EngineReady => ClassicClients.ServerEngineInstalled && ClassicClients.EngineDataInstalled;
 
         public string RedirectStatus => ClassicHostRedirect.IsApplied()

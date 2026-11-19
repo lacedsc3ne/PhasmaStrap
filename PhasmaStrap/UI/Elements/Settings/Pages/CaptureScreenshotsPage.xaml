@@ -12,12 +12,12 @@
       Title="CaptureScreenshotsPage"
       Scrollable="True">
     <ui:UiPage.Resources>
-        <!--  The key field (DataContext is the HotkeyRow): looks like a key cap, lights up while it is listening  -->
         <Style x:Key="HotkeyCaptureButton" TargetType="Button" BasedOn="{StaticResource PhasmaSoftButton}">
-            <Setter Property="MinWidth" Value="90" />
-            <Setter Property="Padding" Value="10,5" />
-            <Setter Property="FontWeight" Value="Normal" />
-            <Setter Property="FontSize" Value="12" />
+            <Setter Property="MinWidth" Value="44" />
+            <Setter Property="Padding" Value="9,4" />
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaMono}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="11.5" />
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
             <Setter Property="ToolTip" Value="Click, then press the key or combination. Esc cancels and keeps the current hotkey." />
             <Style.Triggers>
@@ -39,9 +39,8 @@
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
         </Style>
 
-        <!--  Small dark buttons that sit on top of a thumbnail  -->
         <Style x:Key="ThumbOverlayButton" TargetType="Button" BasedOn="{StaticResource PhasmaGhostButton}">
-            <Setter Property="Background" Value="#8C000000" />
+            <Setter Property="Background" Value="#D1060608" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="Height" Value="26" />
             <Setter Property="MinWidth" Value="26" />
@@ -52,33 +51,36 @@
     </ui:UiPage.Resources>
 
     <StackPanel Margin="0,0,14,14">
-        <!--  Actions  -->
-        <WrapPanel Margin="0,0,0,6">
-            <Button Margin="0,0,8,6" Style="{DynamicResource PhasmaAccentButton}" Command="{Binding TakeScreenshotCommand, Mode=OneTime}">
+        <WrapPanel Margin="0,0,0,10">
+            <Button Margin="0,0,10,6" Style="{DynamicResource PhasmaAccentButton}" Command="{Binding TakeScreenshotCommand, Mode=OneTime}">
                 <StackPanel Orientation="Horizontal">
                     <ui:SymbolIcon Symbol="Camera24" FontSize="14" Margin="0,0,6,0" />
                     <TextBlock Text="{x:Static resources:Strings.Menu_Capture_TakeScreenshotNow}" />
                 </StackPanel>
             </Button>
-            <Button Margin="0,0,8,6" Style="{DynamicResource PhasmaSoftButton}" ToolTip="{x:Static resources:Strings.Menu_Capture_EveryScreenshotSearchFiltersRename}" Command="{Binding OpenScreenshotLibraryCommand, Mode=OneTime}">
+            <Button Margin="0,0,10,6" Style="{DynamicResource PhasmaSoftButton}" ToolTip="{x:Static resources:Strings.Menu_Capture_EveryScreenshotSearchFiltersRename}" Command="{Binding OpenScreenshotLibraryCommand, Mode=OneTime}">
                 <StackPanel Orientation="Horizontal">
                     <ui:SymbolIcon Symbol="Grid24" FontSize="14" Margin="0,0,6,0" />
                     <TextBlock Text="{Binding AllScreenshotsText}" />
                 </StackPanel>
             </Button>
-            <Button Margin="0,0,8,6" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Command="{Binding OpenFolderCommand, Mode=OneTime}">
+            <Button Margin="0,0,10,6" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Command="{Binding OpenFolderCommand, Mode=OneTime}">
                 <StackPanel Orientation="Horizontal">
                     <ui:SymbolIcon Symbol="Folder24" FontSize="14" Margin="0,0,6,0" />
                     <TextBlock Text="{x:Static resources:Strings.Menu_Capture_OpenFolder}" />
                 </StackPanel>
             </Button>
-            <TextBlock Margin="4,0,0,6" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="The button only works while Roblox is open" />
+            <TextBlock Margin="4,0,0,6" VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="The button only works while Roblox is open" />
         </WrapPanel>
 
-        <TextBlock Margin="0,0,0,10" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Status, Mode=OneWay}">
+        <TextBlock Margin="0,0,0,18" FontFamily="{DynamicResource PhasmaMono}" FontSize="12" TextWrapping="Wrap" Text="{Binding Status, Mode=OneWay}">
             <TextBlock.Style>
                 <Style TargetType="TextBlock">
+                    <Setter Property="Foreground" Value="{DynamicResource PhasmaGoodBrush}" />
                     <Style.Triggers>
+                        <DataTrigger Binding="{Binding StatusIsError}" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource PhasmaRedTextBrush}" />
+                        </DataTrigger>
                         <Trigger Property="Text" Value="">
                             <Setter Property="Visibility" Value="Collapsed" />
                         </Trigger>
@@ -87,14 +89,17 @@
             </TextBlock.Style>
         </TextBlock>
 
-        <controls:CardColumns>
-            <controls:SettingsCard Header="Taking screenshots">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="5*" />
+                <ColumnDefinition Width="7*" />
+            </Grid.ColumnDefinitions>
+            <controls:SettingsCard Grid.Column="0" Margin="0,0,20,12" VerticalAlignment="Top" Header="Taking screenshots" Description="Hotkey and what happens after a shot">
                 <controls:OptionControl Header="Screenshot hotkey" Description="Press it in game to save the Roblox window">
                     <StackPanel Orientation="Horizontal">
-                        <!--  Uid="Capture" and Tag are used by the code behind to keep listening when this is clicked  -->
                         <Button Uid="Capture" DataContext="{Binding ScreenshotHotkey}" Style="{StaticResource HotkeyCaptureButton}"
                                 Content="{Binding ButtonText}" Tag="{Binding}" Click="CaptureButton_Click" />
-                        <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold"
+                        <Button Margin="8,0,0,0" Padding="10,4" Style="{DynamicResource PhasmaSoftButton}" FontSize="12" FontWeight="SemiBold"
                                 Content="{x:Static resources:Strings.ContextMenu_OutputConsole_Clear}"
                                 IsEnabled="{Binding ScreenshotHotkey.HasGesture}" Tag="{Binding ScreenshotHotkey}" Click="ClearButton_Click" />
                     </StackPanel>
@@ -124,13 +129,12 @@
                 </controls:OptionControl>
             </controls:SettingsCard>
 
-            <controls:SettingsCard Header="Latest screenshots">
+            <controls:SettingsCard Grid.Column="1" VerticalAlignment="Top" Header="Latest screenshots">
                 <controls:SettingsCard.HeaderContent>
                     <TextBlock FontSize="11.5" TextWrapping="Wrap" MaxWidth="240" TextAlignment="Right" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                                Text="Right click for copy, rename, share to the gallery" />
                 </controls:SettingsCard.HeaderContent>
 
-                <!--  Empty state  -->
                 <StackPanel HorizontalAlignment="Center" Margin="0,22,0,26">
                     <StackPanel.Style>
                         <Style TargetType="StackPanel">
@@ -147,7 +151,7 @@
                     <TextBlock Margin="0,2,0,0" HorizontalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Set a hotkey and press it in game" />
                 </StackPanel>
 
-                <ItemsControl Margin="0,0,0,4" ItemsSource="{Binding RecentScreenshots, Mode=OneWay}">
+                <ItemsControl Margin="20,16,6,6" ItemsSource="{Binding RecentScreenshots, Mode=OneWay}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <UniformGrid Columns="2" />
@@ -155,7 +159,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Margin="0,0,10,12" Background="Transparent" Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ItemsControl}}">
+                            <Border Margin="0,0,14,14" Style="{DynamicResource PhasmaPanel}" Background="{DynamicResource PhasmaS3Brush}" Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ItemsControl}}">
                                 <Border.ContextMenu>
                                     <ContextMenu DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}">
                                         <MenuItem Header="{x:Static resources:Strings.Common_Copy}" Command="{Binding Tag.CopyScreenshotCommand}" CommandParameter="{Binding DataContext}">
@@ -188,14 +192,14 @@
                                     </ContextMenu>
                                 </Border.ContextMenu>
                                 <StackPanel>
-                                    <Grid Height="110">
-                                        <Border Style="{DynamicResource PhasmaThumb}" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Cursor="Hand">
+                                    <Grid Height="150">
+                                        <Border Background="{DynamicResource PhasmaS4Brush}" ClipToBounds="True" Cursor="Hand">
                                             <Border.InputBindings>
                                                 <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.OpenScreenshotCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
                                             </Border.InputBindings>
-                                            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                                            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" />
                                         </Border>
-                                        <StackPanel Margin="0,0,6,6" HorizontalAlignment="Right" VerticalAlignment="Bottom" Orientation="Horizontal">
+                                        <StackPanel Margin="0,8,8,0" HorizontalAlignment="Right" VerticalAlignment="Top" Orientation="Horizontal">
                                             <Button Style="{StaticResource ThumbOverlayButton}" ToolTip="{x:Static resources:Strings.Menu_Capture_CopyClipboardReadyPasteIntoChat}" AutomationProperties.Name="Copy screenshot"
                                                     Command="{Binding DataContext.CopyScreenshotCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
                                                 <ui:SymbolIcon Symbol="Copy16" FontSize="12" />
@@ -208,14 +212,10 @@
                                             </Button>
                                         </StackPanel>
                                     </Grid>
-                                    <Grid Margin="0,6,0,0">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" FontSize="12" FontWeight="SemiBold" Text="{Binding FileName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FileName}" />
-                                        <TextBlock Grid.Column="1" Margin="8,0,0,0" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding TakenDisplay}" />
-                                    </Grid>
+                                    <StackPanel Margin="12,10,12,12">
+                                        <TextBlock FontFamily="{DynamicResource PhasmaMono}" FontSize="12" FontWeight="SemiBold" Foreground="White" Text="{Binding FileName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FileName}" />
+                                        <TextBlock Margin="0,4,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding TakenDisplay}" />
+                                    </StackPanel>
                                 </StackPanel>
                             </Border>
                         </DataTemplate>
@@ -225,6 +225,6 @@
                 <TextBlock Margin="0,0,0,10" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Visibility="{Binding RecentHintVisibility}"
                            Text="{x:Static resources:Strings.Menu_Capture_LatestScreenshotsOpenAllScreenshotsSearch}" />
             </controls:SettingsCard>
-        </controls:CardColumns>
+        </Grid>
     </StackPanel>
 </ui:UiPage>

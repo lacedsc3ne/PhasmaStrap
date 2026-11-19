@@ -35,7 +35,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
     {
         public const int DefaultMaxResults = 40;
 
-        // Plain words people type, and the words settings actually use for the same thing.
         private static readonly Dictionary<string, string[]> Synonyms = new(StringComparer.Ordinal)
         {
             ["fps"] = new[] { "frame rate", "framerate", "frames per second", "frame" },
@@ -86,7 +85,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
             ["fflag"] = new[] { "fastflag", "flag" },
         };
 
-        /// <summary>The other words a query was widened to, for the "also matching" hint.</summary>
         public static IReadOnlyList<string> AlsoMatching(string query)
         {
             var words = new List<string>();
@@ -178,7 +176,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
             {
                 int score = alternative.Contains(' ') ? ScorePhrase(entry, alternative) : ScoreToken(entry, alternative);
 
-                // A synonym hit ranks a little below the word the person actually typed.
                 best = Math.Max(best, score * 4 / 5);
             }
 

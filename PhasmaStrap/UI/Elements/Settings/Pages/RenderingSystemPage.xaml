@@ -11,30 +11,30 @@
       Scrollable="True">
 
     <StackPanel Margin="0,0,14,14">
-        <controls:PageHeader Title="{x:Static resources:Strings.Menu_Rendering_System}" Subtitle="Window, sound and launcher tweaks that do not touch the game's own settings." />
+        <controls:PageHeader Eyebrow="Performance · Rendering" Title="{x:Static resources:Strings.Menu_Rendering_System}" Subtitle="Window, sound and launcher tweaks that do not touch the game's own settings." />
 
-        <controls:CardColumns>
-            <controls:SettingsCard Header="Window">
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_FakeExclusiveFullscreen}" Description="Borderless and sized to the monitor, for lower input latency">
+        <controls:CardColumns Spacing="16">
+            <controls:SettingsCard VerticalAlignment="Top" Header="Window">
+                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Rendering_FakeExclusiveFullscreen}" Description="Borderless and sized to the monitor, for lower input latency">
                     <ui:ToggleSwitch IsChecked="{Binding FakeExclusiveFullscreen, Mode=TwoWay}" />
                 </controls:OptionControl>
             </controls:SettingsCard>
 
-            <controls:SettingsCard Header="Sound">
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_DuckRobloxAudioWhenUnfocused}" Description="Quieter while you are tabbed away">
+            <controls:SettingsCard VerticalAlignment="Top" Header="Sound">
+                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Rendering_DuckRobloxAudioWhenUnfocused}" Description="Quieter while you are tabbed away">
                     <ui:ToggleSwitch IsChecked="{Binding DuckRobloxAudioOnUnfocus, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_HeadsetLoudness}" Description="Boosts quiet sounds like footsteps without loud blowouts">
+                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Rendering_HeadsetLoudness}" Description="Boosts quiet sounds like footsteps without loud blowouts">
                     <ui:ToggleSwitch IsChecked="{Binding HeadsetAudioEnabled, Mode=TwoWay}" />
                 </controls:OptionControl>
             </controls:SettingsCard>
 
-            <controls:SettingsCard controls:CardColumns.FullRow="True" Header="PhasmaStrap itself">
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Rendering_CPUCoreLimit}" Description="How many logical processors the launcher may use. Not the game.">
+            <controls:SettingsCard Margin="0,6,0,12" controls:CardColumns.FullRow="True" Header="PhasmaStrap itself">
+                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Rendering_CPUCoreLimit}" Description="How many logical processors the launcher may use. Not the game.">
                     <StackPanel Orientation="Horizontal">
-                        <Slider Width="130" Minimum="0" Maximum="{Binding MaxCpuCores, Mode=OneTime}" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding CpuCoreLimit, Mode=TwoWay}" />
-                        <TextBlock VerticalAlignment="Center" Margin="8,0,0,0" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding CpuCoreLimitDisplay, Mode=OneWay}" />
+                        <Slider Width="176" VerticalAlignment="Center" Minimum="0" Maximum="{Binding MaxCpuCores, Mode=OneTime}" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding CpuCoreLimit, Mode=TwoWay}" />
+                        <TextBlock MinWidth="64" TextAlignment="Right" VerticalAlignment="Center" Margin="12,0,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="12.5" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding CpuCoreLimitDisplay, Mode=OneWay}" />
                     </StackPanel>
                 </controls:OptionControl>
             </controls:SettingsCard>

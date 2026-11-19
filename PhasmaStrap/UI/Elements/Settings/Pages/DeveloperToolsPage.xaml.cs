@@ -22,7 +22,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             ((DeveloperToolsViewModel)DataContext).Detach();
         }
 
-        // Diagnostics used to be one of the tools here. It has its own place in the settings rail now.
         void Search.ISearchToolHost.ShowToolFor(Search.SettingsSearchEntry entry)
         {
             var tools = ((DeveloperToolsViewModel)DataContext).Tools;

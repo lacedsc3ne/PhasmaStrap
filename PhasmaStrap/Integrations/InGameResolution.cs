@@ -11,8 +11,23 @@ namespace PhasmaStrap.Integrations
         private static string? _savedDevice;
         private static bool _applied;
 
+        private const int LeaveGraceMs = 20000;
+
+        private static CancellationTokenSource? _pendingLeave;
+
+        private static void CancelPendingLeave()
+        {
+            CancellationTokenSource? pending = Interlocked.Exchange(ref _pendingLeave, null);
+            if (pending is null)
+                return;
+            try { pending.Cancel(); } catch { }
+            pending.Dispose();
+        }
+
         public static void OnGameJoin(long placeId = 0)
         {
+            CancelPendingLeave();
+
             lock (_sync)
             {
                 string monitor;
@@ -75,12 +90,47 @@ namespace PhasmaStrap.Integrations
             }
         }
 
-        public static void OnGameLeave() => Restore();
+        public static void OnGameLeave()
+        {
+            var cts = new CancellationTokenSource();
+            CancellationTokenSource? previous = Interlocked.Exchange(ref _pendingLeave, cts);
+            if (previous is not null)
+            {
+                try { previous.Cancel(); } catch { }
+                previous.Dispose();
+            }
+
+            CancellationToken token = cts.Token;
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(LeaveGraceMs, token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+                catch (ObjectDisposedException)
+                {
+                    return;
+                }
+
+                if (Interlocked.CompareExchange(ref _pendingLeave, null, cts) == cts)
+                {
+                    cts.Dispose();
+                    lock (_sync)
+                        RestoreLocked();
+                }
+            });
+        }
 
         public static void Shutdown() => Restore();
 
         public static void Restore()
         {
+            CancelPendingLeave();
+
             lock (_sync)
                 RestoreLocked();
         }

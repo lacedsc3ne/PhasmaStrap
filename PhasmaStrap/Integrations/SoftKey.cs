@@ -154,6 +154,7 @@ namespace PhasmaStrap.Integrations
 
         private void Run()
         {
+            PhasmaStrap.Utility.LauncherThrottle.MarkCurrentThreadLatencyCritical();
             _threadId = GetCurrentThreadId();
             _hook = SetWindowsHookEx(WH_KEYBOARD_LL, _proc, GetModuleHandle(null), 0);
 

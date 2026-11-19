@@ -7,6 +7,7 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       mc:Ignorable="d"
       d:DesignHeight="1500" d:DesignWidth="800"
       Title="FastFlagsPage"
@@ -14,29 +15,32 @@
       Loaded="Page_Loaded"
       Unloaded="Page_Unloaded">
     <ui:UiPage.Resources>
-        <!--  Engine preset chips. RadioButtons so a click on the active one keeps it lit; the trigger follows ActiveEnginePreset.  -->
         <Style x:Key="PresetChip" TargetType="RadioButton" BasedOn="{StaticResource PhasmaChip}">
             <Setter Property="IsChecked" Value="False" />
-            <Setter Property="Margin" Value="0,0,4,0" />
+            <Setter Property="Margin" Value="0,0,8,0" />
             <Setter Property="Command" Value="{Binding ApplyEnginePresetCommand, Mode=OneTime}" />
             <Setter Property="CommandParameter" Value="{Binding Tag, RelativeSource={RelativeSource Self}}" />
         </Style>
 
-        <!--  Inner tabs drawn as pills. Kept as a real TabControl so settings search can still switch tabs.  -->
         <Style x:Key="FlagTabItem" TargetType="TabItem">
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="FontWeight" Value="Medium" />
-            <Setter Property="Margin" Value="0,0,2,0" />
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaHeadingFont}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,4,0" />
             <Setter Property="FocusVisualStyle" Value="{StaticResource PhasmaFocusVisual}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TabItem">
                         <Grid SnapsToDevicePixels="True" Background="Transparent">
-                            <Border x:Name="Fill" Padding="14,9" Background="Transparent">
-                                <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
+                            <Border x:Name="Fill" Height="44" Padding="14,0" Background="Transparent">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock VerticalAlignment="Center" Text="{Binding Header, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource PhasmaUpper}}" />
+                                    <TextBlock x:Name="Count" Margin="8,1,0,0" VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="Medium"
+                                               Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{TemplateBinding Tag}" />
+                                </StackPanel>
                             </Border>
-                            <Border x:Name="Underline" Height="2" VerticalAlignment="Bottom" Background="{DynamicResource PhasmaAccentBrush}" Opacity="0" />
+                            <Border x:Name="Underline" Height="2" Margin="10,0" VerticalAlignment="Bottom" Background="{DynamicResource PhasmaAccentBrush}" Opacity="0"></Border>
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -64,10 +68,9 @@
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
                             <DockPanel Grid.Row="0" LastChildFill="True">
-                                <!--  The "Fast Flag Editor" button now sits in the FastFlags header (FastFlagSettingsPage)  -->
                                 <WrapPanel IsItemsHost="True" VerticalAlignment="Center" KeyboardNavigation.TabIndex="1" />
                             </DockPanel>
-                            <Border Grid.Row="1" Margin="0,-1,0,18" Style="{DynamicResource PhasmaDivider}" />
+                            <Border Grid.Row="1" Margin="0,-1,0,20" Style="{DynamicResource PhasmaDivider}" />
                             <ContentPresenter Grid.Row="2" x:Name="PART_SelectedContentHost" ContentSource="SelectedContent" />
                         </Grid>
                     </ControlTemplate>
@@ -77,22 +80,32 @@
     </ui:UiPage.Resources>
 
     <StackPanel Margin="0,0,14,14">
-        <!--  Manager switch and engine presets, as one bar  -->
-        <Border Style="{DynamicResource PhasmaCard}" Padding="16,12" Margin="0,0,0,14">
+        <Border Style="{DynamicResource PhasmaCard}" Padding="0" Margin="0,0,0,20">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="1" />
+                    <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
-                    <TextBlock FontSize="13.5" FontWeight="SemiBold" TextWrapping="Wrap" Text="{x:Static resources:Strings.Menu_FastFlags_ManagerEnabled_Title}" />
-                    <TextBlock Margin="0,2,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Turning this off stops anything here from reaching Roblox" />
-                </StackPanel>
-                <ui:ToggleSwitch Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding UseFastFlagManager, Mode=TwoWay}" />
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" ToolTip="{x:Static resources:Strings.Menu_FastFlags_EnginePreset_Description}">
-                    <Border Width="1" Height="28" Margin="14,0,14,0" Background="{DynamicResource PhasmaStrokeStrongBrush}" />
-                    <TextBlock VerticalAlignment="Center" Margin="0,0,10,0" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_FastFlags_EnginePreset_Title}" />
+                <Grid Grid.Column="0" Margin="22,18" VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Width="32" Height="32" Margin="0,0,16,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaAccentBrush}" phui:CutCorners.Size="6">
+                        <ui:SymbolIcon Symbol="Shield24" FontSize="16" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,16,0">
+                        <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="White" TextWrapping="Wrap" Text="{x:Static resources:Strings.Menu_FastFlags_ManagerEnabled_Title}" />
+                        <TextBlock Margin="0,1,0,0" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Turning this off stops anything here from reaching Roblox" />
+                    </StackPanel>
+                    <ui:ToggleSwitch Grid.Column="2" VerticalAlignment="Center" IsChecked="{Binding UseFastFlagManager, Mode=TwoWay}" />
+                </Grid>
+                <Border Grid.Column="1" Background="{DynamicResource PhasmaStrokeBrush}" />
+                <StackPanel Grid.Column="2" Margin="22,16" VerticalAlignment="Center" ToolTip="{x:Static resources:Strings.Menu_FastFlags_EnginePreset_Description}">
+                    <TextBlock Style="{StaticResource PhasmaCaption}" Text="{Binding Source={x:Static resources:Strings.Menu_FastFlags_EnginePreset_Title}, Converter={StaticResource PhasmaUpper}}" />
+                    <WrapPanel Margin="0,10,0,0" Orientation="Horizontal">
                     <RadioButton Tag="Default" Content="{x:Static resources:Strings.Common_Default}">
                         <RadioButton.Style>
                             <Style TargetType="RadioButton" BasedOn="{StaticResource PresetChip}">
@@ -137,16 +150,29 @@
                             </Style>
                         </RadioButton.Style>
                     </RadioButton>
+                    </WrapPanel>
+                    <TextBlock Margin="0,10,0,0" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_FastFlags_EnginePreset_Description}" />
                 </StackPanel>
             </Grid>
         </Border>
 
         <TabControl Style="{StaticResource FlagTabs}">
-            <TabItem Header="Presets">
+            <TabItem Header="Presets" Tag="1">
                 <controls:CardColumns>
                     <controls:SettingsCard controls:CardColumns.FullRow="True" Header="Display quality" Description="Anti aliasing, display scaling and texture quality.">
-                        <controls:MarkdownTextBlock Margin="0,0,0,10" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                                    MarkdownText="{Binding Source={x:Static resources:Strings.Menu_FastFlags_Presets_D3DExclusiveFullscreenInfo}, Converter={StaticResource StringFormatConverter}, ConverterParameter='https://bloxstraplabs.com/wiki/features/engine-settings/#exclusive-fullscreen'}" />
+                        <Grid Margin="20,0,20,4">
+                            <Border Background="{DynamicResource PhasmaInfoBrush}" Opacity="0.07" CornerRadius="10" />
+                            <Border BorderBrush="{DynamicResource PhasmaInfoBrush}" BorderThickness="1" Opacity="0.3" CornerRadius="10" />
+                            <Grid Margin="16,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <ui:SymbolIcon Grid.Column="0" Symbol="Info24" FontSize="18" Margin="0,0,12,0" VerticalAlignment="Top" Foreground="{DynamicResource PhasmaInfoBrush}" />
+                                <controls:MarkdownTextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                            MarkdownText="{Binding Source={x:Static resources:Strings.Menu_FastFlags_Presets_D3DExclusiveFullscreenInfo}, Converter={StaticResource StringFormatConverter}, ConverterParameter='https://bloxstraplabs.com/wiki/features/engine-settings/#exclusive-fullscreen'}" />
+                            </Grid>
+                        </Grid>
 
                         <controls:OptionControl Header="{x:Static resources:Strings.Menu_FastFlags_Presets_MSAA_Title}">
                             <ComboBox Padding="10,5,10,5" Width="150" ItemsSource="{Binding MSAALevels.Keys, Mode=OneTime}" Text="{Binding SelectedMSAALevel, Mode=TwoWay}">
@@ -177,7 +203,7 @@
                 </controls:CardColumns>
             </TabItem>
 
-            <TabItem Header="Rendering">
+            <TabItem Header="Rendering" Tag="8">
                 <controls:CardColumns>
                     <controls:SettingsCard Header="Frame rate and refresh" Description="Frame rate limits and the frame rate manager">
                         <controls:OptionControl Header="{x:Static resources:Strings.Menu_FastFlags_NewFpsSystem_Title}" Description="Newer FPS and frame time tracking">
@@ -206,9 +232,19 @@
                             <ui:ToggleSwitch IsChecked="{Binding MatchMonitorFramerate, Mode=TwoWay}" />
                         </controls:OptionControl>
 
-                        <TextBlock Margin="16,0,16,8" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource SystemFillColorCautionBrush}"
-                                   Text="{Binding HighFramerateWarning, Mode=OneTime}"
-                                   Visibility="{Binding ShowHighFramerateWarning, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <Grid Margin="20,4,20,8" Visibility="{Binding ShowHighFramerateWarning, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <Border Background="{DynamicResource PhasmaWarnBrush}" Opacity="0.07" CornerRadius="10" />
+                            <Border BorderBrush="{DynamicResource PhasmaWarnBrush}" BorderThickness="1" Opacity="0.28" CornerRadius="10" />
+                            <Grid Margin="16,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <ui:SymbolIcon Grid.Column="0" Symbol="Warning24" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center" Foreground="{DynamicResource PhasmaWarnBrush}" />
+                                <TextBlock Grid.Column="1" TextWrapping="Wrap" FontSize="12.5" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                           Text="{Binding HighFramerateWarning, Mode=OneTime}" />
+                            </Grid>
+                        </Grid>
 
                         <controls:OptionControl Header="{x:Static resources:Strings.Menu_FastFlags_FRMQualityLevel_Title}" Description="{x:Static resources:Strings.Menu_FastFlags_FRMQualityLevel_Description}">
                             <ComboBox Padding="10,5,10,5" Width="130" ItemsSource="{Binding QualityLevels.Keys, Mode=OneTime}" Text="{Binding SelectedQualityLevel, Mode=TwoWay}">
@@ -403,7 +439,7 @@
                 </controls:CardColumns>
             </TabItem>
 
-            <TabItem Header="Interface">
+            <TabItem Header="Interface" Tag="8">
                 <StackPanel>
                     <controls:CardColumns>
                         <controls:SettingsCard Header="Accessibility and text" Description="Text size, language and readability">
@@ -585,7 +621,7 @@
                 </StackPanel>
             </TabItem>
 
-            <TabItem Header="Telemetry">
+            <TabItem Header="Telemetry" Tag="2">
                 <controls:CardColumns>
                     <controls:SettingsCard Header="Telemetry and privacy" Description="Block data Roblox and third parties collect about your sessions">
                         <controls:OptionControl Header="{x:Static resources:Strings.Menu_FastFlags_DisableTelemetry_Title}" Description="A large batch of client analytics endpoints">
@@ -621,7 +657,7 @@
                 </controls:CardColumns>
             </TabItem>
 
-            <TabItem Header="Networking">
+            <TabItem Header="Networking" Tag="2">
                 <controls:CardColumns>
                     <controls:SettingsCard Header="Loading and replication" Description="How quickly places load">
                         <controls:OptionControl Header="{x:Static resources:Strings.Menu_FastFlags_FasterLoading_Title}" Description="Raises preload limits">
@@ -661,7 +697,7 @@
                 </controls:CardColumns>
             </TabItem>
 
-            <TabItem Header="Voice and chat">
+            <TabItem Header="Voice and chat" Tag="1">
                 <controls:CardColumns>
                     <controls:SettingsCard Header="Chat" Description="Bubbles and translation in game chat">
                         <controls:OptionControl Header="{x:Static resources:Strings.Menu_FastFlags_ChatBubbles_Title}" Description="{x:Static resources:Strings.Menu_FastFlags_ChatBubbles_Description}">

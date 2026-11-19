@@ -255,8 +255,29 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 return;
 
             _flushPending = false;
-            _gbs.Save();
+            SaveOrReport("GBSEditorViewModel::FlushPending");
             RefreshEntriesFromDocument();
+        }
+
+        private string _saveError = "";
+        public string SaveError
+        {
+            get => _saveError;
+            private set { _saveError = value; OnPropertyChanged(nameof(SaveError)); OnPropertyChanged(nameof(SaveErrorVisibility)); }
+        }
+
+        public Visibility SaveErrorVisibility => _saveError.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        private void SaveOrReport(string source)
+        {
+            if (_gbs.Save())
+            {
+                SaveError = "";
+                return;
+            }
+
+            App.Logger.WriteLine(source, "Failed to save the Roblox settings file");
+            SaveError = "Couldn't save the Roblox settings file. If you locked it, unlock it, or close Roblox and try again.";
         }
 
         private void RefreshEntriesFromDocument()
@@ -289,9 +310,8 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             App.Logger.WriteLine("GBSEditorViewModel::ResetToDefaults", $"Resetting {Entries.Count} setting(s) to defaults");
             _gbs.ResetProperties();
-            _gbs.Save();
+            SaveOrReport("GBSEditorViewModel::ResetToDefaults");
             Load();
-            OnPropertyChanged(string.Empty);
         }
 
         public void Load()
@@ -302,20 +322,20 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             XElement? properties = GBSEditor.FindProperties(_gbs.Document);
 
-            if (properties is null)
-                return;
-
-            foreach (XElement element in properties.Elements().OrderBy(x => x.Attribute("name")?.Value, StringComparer.OrdinalIgnoreCase))
+            if (properties is not null)
             {
-                Entries.Add(new GBSEntry
+                foreach (XElement element in properties.Elements().OrderBy(x => x.Attribute("name")?.Value, StringComparer.OrdinalIgnoreCase))
                 {
-                    Name = element.Attribute("name")?.Value ?? "",
-                    Type = element.Name.LocalName,
-                    Value = element.Value
-                });
+                    Entries.Add(new GBSEntry
+                    {
+                        Name = element.Attribute("name")?.Value ?? "",
+                        Type = element.Name.LocalName,
+                        Value = element.Value
+                    });
+                }
             }
 
-            OnPropertyChanged(nameof(SettingsFileReadOnly));
+            OnPropertyChanged(string.Empty);
         }
 
         public bool NameExists(string name) =>

@@ -698,7 +698,6 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
         private string? _lastCopy;
 
-        /// <summary>Puts the clip on the clipboard as a file, ready to paste into a chat. With edits it saves them as a copy first.</summary>
         private async void CopyClip_Click(object sender, RoutedEventArgs e)
         {
             if (_busy)

@@ -5,22 +5,23 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
       mc:Ignorable="d"
       d:DesignHeight="900" d:DesignWidth="800"
       Title="AssetWarpPage"
       Scrollable="True">
     <ui:UiPage.Resources>
-        <!--  A check box row inside a card: box on the left, title and a short line under it  -->
         <Style x:Key="BlockRowCheck" TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
-            <Setter Property="FontSize" Value="13.5" />
+            <Setter Property="FontSize" Value="14" />
             <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="White" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
         <Style x:Key="BlockRowNote" TargetType="TextBlock">
             <Setter Property="Margin" Value="30,2,0,0" />
-            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontSize" Value="12.5" />
             <Setter Property="TextWrapping" Value="Wrap" />
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
         </Style>
@@ -31,15 +32,21 @@
         <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" MaxWidth="760" HorizontalAlignment="Left"
                    Text="Blocks whole categories of asset from loading in game, for a performance boost. Works by taking blocked asset types out of the request the game makes for them." />
 
-        <controls:OptionControl Margin="0,0,0,12" Header="{x:Static resources:Strings.Menu_AssetWarp_Enabled_Title}" Description="{Binding StatusText, Mode=OneWay}">
-            <ui:ToggleSwitch IsChecked="{Binding AssetWarpEnabled, Mode=TwoWay}" />
-        </controls:OptionControl>
+        <Grid Margin="0,0,0,20">
+            <controls:SettingsCard Header="" Margin="0">
+                <controls:OptionControl Margin="48,0,0,0" Flat="True" Header="{x:Static resources:Strings.Menu_AssetWarp_Enabled_Title}" Description="{Binding StatusText, Mode=OneWay}">
+                    <ui:ToggleSwitch IsChecked="{Binding AssetWarpEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
+            </controls:SettingsCard>
+            <Border Width="32" Height="32" Margin="20,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" IsHitTestVisible="False" Background="{DynamicResource PhasmaAccentBrush}" phui:CutCorners.Size="6">
+                <ui:SymbolIcon Symbol="Layer24" FontSize="16" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+        </Grid>
 
         <controls:CardColumns IsEnabled="{Binding AssetWarpEnabled, Mode=OneWay}">
             <controls:SettingsCard Header="{x:Static resources:Strings.Menu_FastFlagSettings_AssetBlocking}" Description="{x:Static resources:Strings.Menu_FastFlagSettings_StripSpecificAssetCategoriesFromDownloading}">
                 <StackPanel>
-                    <Border Style="{DynamicResource PhasmaDivider}" />
-                    <StackPanel Margin="2,10,2,10">
+                    <StackPanel Margin="0,4,0,14">
                         <CheckBox Style="{StaticResource BlockRowCheck}" Content="{x:Static resources:Strings.Menu_AssetWarp_DisableTextures_Title}"
                                   ToolTip="{x:Static resources:Strings.Menu_AssetWarp_DisableTextures_Description}" IsChecked="{Binding DisableAllTextures, Mode=TwoWay}" />
                         <TextBlock Style="{StaticResource BlockRowNote}" Text="Texture and texture pack entries" />
@@ -48,7 +55,7 @@
 
                 <StackPanel>
                     <Border Style="{DynamicResource PhasmaDivider}" />
-                    <StackPanel Margin="2,10,2,10">
+                    <StackPanel Margin="0,14,0,14">
                         <CheckBox Style="{StaticResource BlockRowCheck}" Content="{x:Static resources:Strings.Menu_AssetWarp_DisableDecals_Title}"
                                   ToolTip="{x:Static resources:Strings.Menu_AssetWarp_DisableDecals_Description}" IsChecked="{Binding DisableAllDecals, Mode=TwoWay}" />
                     </StackPanel>
@@ -56,7 +63,7 @@
 
                 <StackPanel>
                     <Border Style="{DynamicResource PhasmaDivider}" />
-                    <StackPanel Margin="2,10,2,10">
+                    <StackPanel Margin="0,14,0,14">
                         <CheckBox Style="{StaticResource BlockRowCheck}" Content="{x:Static resources:Strings.Menu_AssetWarp_DisableImages_Title}"
                                   ToolTip="{x:Static resources:Strings.Menu_AssetWarp_DisableImages_Description}" IsChecked="{Binding DisableAllImages, Mode=TwoWay}" />
                     </StackPanel>
@@ -64,7 +71,7 @@
 
                 <StackPanel>
                     <Border Style="{DynamicResource PhasmaDivider}" />
-                    <StackPanel Margin="2,10,2,10">
+                    <StackPanel Margin="0,14,0,14">
                         <CheckBox Style="{StaticResource BlockRowCheck}" Content="{x:Static resources:Strings.Menu_AssetWarp_DisableAnimations_Title}"
                                   ToolTip="{x:Static resources:Strings.Menu_AssetWarp_DisableAnimations_Description}" IsChecked="{Binding DisableAllAnimations, Mode=TwoWay}" />
                         <TextBlock Style="{StaticResource BlockRowNote}" Text="Breaks games with no fallback animation" />
@@ -73,7 +80,7 @@
 
                 <StackPanel>
                     <Border Style="{DynamicResource PhasmaDivider}" />
-                    <StackPanel Margin="2,10,2,10">
+                    <StackPanel Margin="0,14,0,14">
                         <CheckBox Style="{StaticResource BlockRowCheck}" Content="{x:Static resources:Strings.Menu_AssetWarp_DisableMeshes_Title}"
                                   ToolTip="{x:Static resources:Strings.Menu_AssetWarp_DisableMeshes_Description}" IsChecked="{Binding DisableAllMeshes, Mode=TwoWay}" />
                         <TextBlock Style="{StaticResource BlockRowNote}" Text="Makes all 3D geometry invisible" />

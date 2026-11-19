@@ -12,12 +12,12 @@
       Title="AboutPage"
       Scrollable="True">
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Text="{x:Static resources:Strings.Menu_About_Licenses}" FontWeight="Medium" FontSize="24" Margin="0,0,0,16" />
-        <Grid>
+        <TextBlock FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding Source={x:Static resources:Strings.Menu_About_Licenses}, Converter={StaticResource PhasmaUpper}, Mode=OneTime}" />
+        <Grid Margin="0,16,0,0">
             <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -25,62 +25,123 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <ui:CardAction Grid.Row="0" Grid.Column="0" Margin="0,8,8,0" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="https://github.com/bloxstraplabs/bloxstrap/blob/main/LICENSE">
-                <StackPanel>
-                    <TextBlock FontSize="14" Text="Bloxstrap" />
-                    <TextBlock Margin="0,2,0,0" FontSize="12" Text="{x:Static resources:Strings.Menu_About_Licenses_MIT}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                </StackPanel>
-            </ui:CardAction>
-            <ui:CardAction Grid.Row="0" Grid.Column="1" Margin="0,8,8,0" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="https://github.com/lepoco/wpfui/blob/main/LICENSE">
-                <StackPanel>
-                    <TextBlock FontSize="14" Text="WPF-UI" />
-                    <TextBlock Margin="0,2,0,0" FontSize="12" Text="{x:Static resources:Strings.Menu_About_Licenses_MIT}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                </StackPanel>
-            </ui:CardAction>
-            <ui:CardAction Grid.Row="0" Grid.Column="2" Margin="0,8,0,0" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="https://github.com/securifybv/ShellLink/blob/master/LICENSE.txt">
-                <StackPanel>
-                    <TextBlock FontSize="14" Text="ShellLink" />
-                    <TextBlock Margin="0,2,0,0" FontSize="12" Text="{x:Static resources:Strings.Menu_About_Licenses_MIT}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                </StackPanel>
-            </ui:CardAction>
-
-            <ui:CardAction Grid.Row="1" Grid.Column="0" Margin="0,8,8,0" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="https://github.com/Lachee/discord-rpc-csharp/blob/master/LICENSE">
-                <StackPanel>
-                    <TextBlock FontSize="14" Text="DiscordRPC" />
-                    <TextBlock Margin="0,2,0,0" FontSize="12" Text="{x:Static resources:Strings.Menu_About_Licenses_MIT}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                </StackPanel>
-            </ui:CardAction>
-            <ui:CardAction Grid.Row="1" Grid.Column="1" Margin="0,8,8,0" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="https://github.com/MaximumADHD/Roblox-Studio-Mod-Manager/blob/main/LICENSE">
-                <StackPanel>
-                    <TextBlock FontSize="13" Text="Roblox Studio Mod Manager" />
-                    <TextBlock Margin="0,2,0,0" FontSize="12" Text="{x:Static resources:Strings.Menu_About_Licenses_MIT}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                </StackPanel>
-            </ui:CardAction>
-            <ui:CardAction Grid.Row="1" Grid.Column="2" Margin="0,8,0,0" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="https://github.com/icsharpcode/SharpZipLib/blob/master/LICENSE.txt">
-                <StackPanel>
-                    <TextBlock FontSize="13" Text="SharpZipLib" />
-                    <TextBlock Margin="0,2,0,0" FontSize="12" Text="{x:Static resources:Strings.Menu_About_Licenses_MIT}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                </StackPanel>
-            </ui:CardAction>
-
-            <ui:CardAction Grid.Row="2" Grid.Column="0" Margin="0,8,8,0" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="https://github.com/xoofx/markdig/blob/master/license.txt">
-                <StackPanel>
-                    <TextBlock FontSize="14" Text="Markdig" />
-                    <TextBlock Margin="0,2,0,0" FontSize="12" Text="{x:Static resources:Strings.Menu_About_Licenses_BSD2}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                </StackPanel>
-            </ui:CardAction>
-            <ui:CardAction Grid.Row="2" Grid.Column="1" Margin="0,8,8,0" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="https://github.com/icsharpcode/AvalonEdit/blob/master/LICENSE">
-                <StackPanel>
-                    <TextBlock FontSize="14" Text="AvalonEdit" />
-                    <TextBlock Margin="0,2,0,0" FontSize="12" Text="{x:Static resources:Strings.Menu_About_Licenses_MIT}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                </StackPanel>
-            </ui:CardAction>
-            <ui:CardAction Grid.Row="2" Grid.Column="2" Margin="0,8,0,0" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="https://github.com/XamlAnimatedGif/XamlAnimatedGif/blob/master/LICENSE.txt">
-                <StackPanel>
-                    <TextBlock FontSize="14" Text="XamlAnimatedGif" />
-                    <TextBlock Margin="0,2,0,0" FontSize="12" Text="{x:Static resources:Strings.Menu_About_Licenses_Apache}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                </StackPanel>
-            </ui:CardAction>
+            <Button Grid.Row="0" Grid.Column="0" Margin="0,0,8,8" Padding="14,10" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Background="{DynamicResource PhasmaPanelBrush}" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" BorderThickness="1" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="https://github.com/bloxstraplabs/bloxstrap/blob/main/LICENSE" Style="{StaticResource PhasmaSoftButton}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="Bloxstrap" TextWrapping="Wrap" />
+                        <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="Normal" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_About_Licenses_MIT}" />
+                    </StackPanel>
+                    <ui:SymbolIcon Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="15" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Symbol="Open24" />
+                </Grid>
+            </Button>
+            <Button Grid.Row="0" Grid.Column="1" Margin="0,0,8,8" Padding="14,10" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Background="{DynamicResource PhasmaPanelBrush}" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" BorderThickness="1" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="https://github.com/lepoco/wpfui/blob/main/LICENSE" Style="{StaticResource PhasmaSoftButton}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="WPF-UI" TextWrapping="Wrap" />
+                        <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="Normal" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_About_Licenses_MIT}" />
+                    </StackPanel>
+                    <ui:SymbolIcon Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="15" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Symbol="Open24" />
+                </Grid>
+            </Button>
+            <Button Grid.Row="0" Grid.Column="2" Margin="0,0,0,8" Padding="14,10" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Background="{DynamicResource PhasmaPanelBrush}" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" BorderThickness="1" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="https://github.com/securifybv/ShellLink/blob/master/LICENSE.txt" Style="{StaticResource PhasmaSoftButton}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="ShellLink" TextWrapping="Wrap" />
+                        <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="Normal" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_About_Licenses_MIT}" />
+                    </StackPanel>
+                    <ui:SymbolIcon Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="15" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Symbol="Open24" />
+                </Grid>
+            </Button>
+            <Button Grid.Row="1" Grid.Column="0" Margin="0,0,8,8" Padding="14,10" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Background="{DynamicResource PhasmaPanelBrush}" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" BorderThickness="1" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="https://github.com/Lachee/discord-rpc-csharp/blob/master/LICENSE" Style="{StaticResource PhasmaSoftButton}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="DiscordRPC" TextWrapping="Wrap" />
+                        <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="Normal" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_About_Licenses_MIT}" />
+                    </StackPanel>
+                    <ui:SymbolIcon Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="15" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Symbol="Open24" />
+                </Grid>
+            </Button>
+            <Button Grid.Row="1" Grid.Column="1" Margin="0,0,8,8" Padding="14,10" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Background="{DynamicResource PhasmaPanelBrush}" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" BorderThickness="1" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="https://github.com/MaximumADHD/Roblox-Studio-Mod-Manager/blob/main/LICENSE" Style="{StaticResource PhasmaSoftButton}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="Roblox Studio Mod Manager" TextWrapping="Wrap" />
+                        <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="Normal" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_About_Licenses_MIT}" />
+                    </StackPanel>
+                    <ui:SymbolIcon Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="15" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Symbol="Open24" />
+                </Grid>
+            </Button>
+            <Button Grid.Row="1" Grid.Column="2" Margin="0,0,0,8" Padding="14,10" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Background="{DynamicResource PhasmaPanelBrush}" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" BorderThickness="1" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="https://github.com/icsharpcode/SharpZipLib/blob/master/LICENSE.txt" Style="{StaticResource PhasmaSoftButton}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="SharpZipLib" TextWrapping="Wrap" />
+                        <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="Normal" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_About_Licenses_MIT}" />
+                    </StackPanel>
+                    <ui:SymbolIcon Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="15" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Symbol="Open24" />
+                </Grid>
+            </Button>
+            <Button Grid.Row="2" Grid.Column="0" Margin="0,0,8,8" Padding="14,10" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Background="{DynamicResource PhasmaPanelBrush}" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" BorderThickness="1" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="https://github.com/xoofx/markdig/blob/master/license.txt" Style="{StaticResource PhasmaSoftButton}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="Markdig" TextWrapping="Wrap" />
+                        <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="Normal" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_About_Licenses_BSD2}" />
+                    </StackPanel>
+                    <ui:SymbolIcon Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="15" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Symbol="Open24" />
+                </Grid>
+            </Button>
+            <Button Grid.Row="2" Grid.Column="1" Margin="0,0,8,8" Padding="14,10" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Background="{DynamicResource PhasmaPanelBrush}" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" BorderThickness="1" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="https://github.com/icsharpcode/AvalonEdit/blob/master/LICENSE" Style="{StaticResource PhasmaSoftButton}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="AvalonEdit" TextWrapping="Wrap" />
+                        <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="Normal" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_About_Licenses_MIT}" />
+                    </StackPanel>
+                    <ui:SymbolIcon Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="15" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Symbol="Open24" />
+                </Grid>
+            </Button>
+            <Button Grid.Row="2" Grid.Column="2" Margin="0,0,0,8" Padding="14,10" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Background="{DynamicResource PhasmaPanelBrush}" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" BorderThickness="1" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="https://github.com/XamlAnimatedGif/XamlAnimatedGif/blob/master/LICENSE.txt" Style="{StaticResource PhasmaSoftButton}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="XamlAnimatedGif" TextWrapping="Wrap" />
+                        <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="Normal" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_About_Licenses_Apache}" />
+                    </StackPanel>
+                    <ui:SymbolIcon Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="15" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Symbol="Open24" />
+                </Grid>
+            </Button>
         </Grid>
     </StackPanel>
 </ui:UiPage>

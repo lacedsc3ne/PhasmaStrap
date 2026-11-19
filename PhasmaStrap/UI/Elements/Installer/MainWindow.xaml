@@ -20,40 +20,52 @@
     <Window.Resources>
         <BlurEffect x:Key="MistBlurLarge" Radius="70" />
 
-        <Storyboard x:Key="MistDrift" Timeline.DesiredFrameRate="30" RepeatBehavior="Forever">
-            <DoubleAnimation
-                Storyboard.TargetName="MistTranslate1"
-                Storyboard.TargetProperty="X"
-                From="-80" To="100" Duration="0:0:14" AutoReverse="True">
-                <DoubleAnimation.EasingFunction>
-                    <SineEase EasingMode="EaseInOut" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-            <DoubleAnimation
-                Storyboard.TargetName="MistTranslate1"
-                Storyboard.TargetProperty="Y"
-                From="30" To="-40" Duration="0:0:11" AutoReverse="True">
-                <DoubleAnimation.EasingFunction>
-                    <SineEase EasingMode="EaseInOut" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-            <DoubleAnimation
-                Storyboard.TargetName="MistTranslate2"
-                Storyboard.TargetProperty="X"
-                From="90" To="-110" Duration="0:0:16" AutoReverse="True">
-                <DoubleAnimation.EasingFunction>
-                    <SineEase EasingMode="EaseInOut" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-            <DoubleAnimation
-                Storyboard.TargetName="MistTranslate2"
-                Storyboard.TargetProperty="Y"
-                From="-40" To="35" Duration="0:0:12.5" AutoReverse="True">
-                <DoubleAnimation.EasingFunction>
-                    <SineEase EasingMode="EaseInOut" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-        </Storyboard>
+        <Storyboard x:Key="MistDrift" />
+        <Style x:Key="InstallerStep" TargetType="{x:Type ui:NavigationItem}">
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Width" Value="176" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+            <Setter Property="FontSize" Value="13.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ui:NavigationItem}">
+                        <Grid Background="Transparent">
+                            <Border x:Name="Fill" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" CornerRadius="6" />
+                            <StackPanel Margin="10,0" VerticalAlignment="Center" Orientation="Horizontal">
+                                <Grid Width="22" Height="22">
+                                    <Ellipse x:Name="Dot" Stroke="{DynamicResource PhasmaStrokeStrongBrush}" StrokeThickness="1" />
+                                    <TextBlock
+                                        x:Name="Num"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontFamily="{DynamicResource PhasmaMono}"
+                                        FontSize="11"
+                                        FontWeight="SemiBold"
+                                        Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                        Text="{TemplateBinding Tag}" />
+                                </Grid>
+                                <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}" Text="{TemplateBinding Content}" />
+                            </StackPanel>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsActive" Value="True">
+                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaAccentSoftBrush}" />
+                                <Setter TargetName="Fill" Property="BorderBrush" Value="#8CE0202F" />
+                                <Setter TargetName="Dot" Property="Fill" Value="{DynamicResource PhasmaAccentBrush}" />
+                                <Setter TargetName="Dot" Property="Stroke" Value="{DynamicResource PhasmaAccentBrush}" />
+                                <Setter TargetName="Num" Property="Foreground" Value="White" />
+                                <Setter Property="Foreground" Value="White" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -63,34 +75,34 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Canvas Grid.RowSpan="3" ClipToBounds="True" IsHitTestVisible="False">
-            <Ellipse x:Name="Mist1" Width="480" Height="480" Canvas.Left="-160" Canvas.Top="-200" Opacity="0.12" Effect="{StaticResource MistBlurLarge}">
-                <Ellipse.RenderTransform>
-                    <TranslateTransform x:Name="MistTranslate1" X="-80" Y="30" />
-                </Ellipse.RenderTransform>
-                <Ellipse.Fill>
-                    <RadialGradientBrush>
-                        <GradientStop Color="#8FF4554B" Offset="0" />
-                        <GradientStop Color="#00F4554B" Offset="1" />
-                    </RadialGradientBrush>
-                </Ellipse.Fill>
-            </Ellipse>
-            <Ellipse x:Name="Mist2" Width="420" Height="420" Canvas.Left="620" Canvas.Top="120" Opacity="0.15" Effect="{StaticResource MistBlurLarge}">
-                <Ellipse.RenderTransform>
-                    <TranslateTransform x:Name="MistTranslate2" X="90" Y="-40" />
-                </Ellipse.RenderTransform>
-                <Ellipse.Fill>
-                    <RadialGradientBrush>
-                        <GradientStop Color="#80CF3B32" Offset="0" />
-                        <GradientStop Color="#00CF3B32" Offset="1" />
-                    </RadialGradientBrush>
-                </Ellipse.Fill>
-            </Ellipse>
-        </Canvas>
+        <Border Grid.RowSpan="2" IsHitTestVisible="False">
+            <Border.Background>
+                <RadialGradientBrush Center="0.08,0.05" GradientOrigin="0.08,0.05" RadiusX="0.75" RadiusY="0.9">
+                    <GradientStop Offset="0" Color="#2EE0202F" />
+                    <GradientStop Offset="0.6" Color="#0DE0202F" />
+                    <GradientStop Offset="1" Color="#00E0202F" />
+                </RadialGradientBrush>
+            </Border.Background>
+        </Border>
 
-        <ui:TitleBar Padding="8" x:Name="RootTitleBar" Grid.Row="0" ForceShutdown="False" MinimizeToTray="False" UseSnapLayout="True" Title="{x:Static resources:Strings.Installer_Title}" Icon="pack://application:,,,/PhasmaStrap.ico" />
+        <ui:TitleBar
+            x:Name="RootTitleBar"
+            Grid.Row="0"
+            Height="32"
+            Padding="12,0,0,0"
+            Background="{DynamicResource PhasmaChromeBrush}"
+            FontFamily="{DynamicResource PhasmaMono}"
+            FontSize="11"
+            FontWeight="Medium"
+            Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+            Title="{Binding Source={x:Static resources:Strings.Installer_Title}, Converter={StaticResource PhasmaUpper}, Mode=OneTime}"
+            ForceShutdown="False"
+            Icon="pack://application:,,,/PhasmaStrap.ico"
+            MinimizeToTray="False"
+            UseSnapLayout="True" />
+        <Border Grid.Row="0" Height="1" VerticalAlignment="Bottom" Background="{DynamicResource PhasmaStrokeBrush}" IsHitTestVisible="False" />
 
-        <Grid x:Name="RootGrid" Grid.Row="1" Margin="12,12,0,0" Visibility="Visible">
+        <Grid x:Name="RootGrid" Grid.Row="1" Visibility="Visible">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -100,27 +112,41 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <ui:NavigationFluent x:Name="RootNavigation" Grid.Row="1" Grid.Column="0" Margin="0,0,12,0" Frame="{Binding ElementName=RootFrame}" SelectedPageIndex="0" IsEnabled="False">
+            <Border Grid.RowSpan="2" Grid.Column="0" Background="{DynamicResource PhasmaSubnavBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,0,1,0" />
+
+            <ui:NavigationFluent x:Name="RootNavigation" Grid.Row="1" Grid.Column="0" Width="176" Margin="12,20,12,0" HorizontalAlignment="Left" Frame="{Binding ElementName=RootFrame}" SelectedPageIndex="0" IsEnabled="False">
                 <ui:NavigationFluent.Items>
-                    <ui:NavigationItem Content="{x:Static resources:Strings.Installer_Welcome_Title}" PageType="{x:Type pages:WelcomePage}" Icon="ArrowCircleRight48" />
-                    <ui:NavigationItem Content="{x:Static resources:Strings.Installer_Install_Title}" PageType="{x:Type pages:InstallPage}" Icon="ArrowCircleRight48" />
-                    <ui:NavigationItem Content="{x:Static resources:Strings.Installer_Manager_Title}" PageType="{x:Type pages:ManagerPage}" Icon="ArrowCircleRight48" />
-                    <ui:NavigationItem Content="{x:Static resources:Strings.Installer_Extensions_Title}" PageType="{x:Type pages:ExtensionsPage}" Icon="ArrowCircleRight48" />
-                    <ui:NavigationItem Content="{x:Static resources:Strings.Installer_Completion_Title}" PageType="{x:Type pages:CompletionPage}" Icon="ArrowCircleRight48" />
+                    <ui:NavigationItem Content="{x:Static resources:Strings.Installer_Welcome_Title}" PageType="{x:Type pages:WelcomePage}" Icon="ArrowCircleRight48" Style="{StaticResource InstallerStep}" Tag="1" />
+                    <ui:NavigationItem Content="{x:Static resources:Strings.Installer_Install_Title}" PageType="{x:Type pages:InstallPage}" Icon="ArrowCircleRight48" Style="{StaticResource InstallerStep}" Tag="2" />
+                    <ui:NavigationItem Content="{x:Static resources:Strings.Installer_Manager_Title}" PageType="{x:Type pages:ManagerPage}" Icon="ArrowCircleRight48" Style="{StaticResource InstallerStep}" Tag="3" />
+                    <ui:NavigationItem Content="{x:Static resources:Strings.Installer_Extensions_Title}" PageType="{x:Type pages:ExtensionsPage}" Icon="ArrowCircleRight48" Style="{StaticResource InstallerStep}" Tag="4" />
+                    <ui:NavigationItem Content="{x:Static resources:Strings.Installer_Completion_Title}" PageType="{x:Type pages:CompletionPage}" Icon="ArrowCircleRight48" Style="{StaticResource InstallerStep}" Tag="5" />
                 </ui:NavigationFluent.Items>
             </ui:NavigationFluent>
 
-            <Grid Grid.Row="0" Grid.RowSpan="2" Grid.Column="1">
+            <Grid Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Margin="28,22,14,0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <ui:Breadcrumb Grid.Row="0" Margin="0,0,0,5" Navigation="{Binding ElementName=RootNavigation}" />
+                <ui:Breadcrumb
+                    Grid.Row="0"
+                    Margin="0,0,0,8"
+                    FontFamily="{DynamicResource PhasmaMono}"
+                    FontSize="11"
+                    Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                    Navigation="{Binding ElementName=RootNavigation}" />
                 <Frame x:Name="RootFrame" Grid.Row="1" />
             </Grid>
         </Grid>
 
-        <StatusBar x:Name="RootStatusBar" Grid.Row="2" Padding="14,10" Background="{ui:ThemeResource ApplicationBackgroundBrush}" BorderThickness="0,1,0,0">
+        <StatusBar
+            x:Name="RootStatusBar"
+            Grid.Row="2"
+            Padding="18,12"
+            Background="{DynamicResource PhasmaPanelBrush}"
+            BorderBrush="{DynamicResource PhasmaStrokeBrush}"
+            BorderThickness="0,1,0,0">
             <StatusBar.ItemsPanel>
                 <ItemsPanelTemplate>
                     <Grid>
@@ -133,14 +159,14 @@
                     </Grid>
                 </ItemsPanelTemplate>
             </StatusBar.ItemsPanel>
-            <StatusBarItem Grid.Column="1" Padding="0,0,4,0">
-                <ui:Button Content="{x:Static resources:Strings.Common_Navigation_Back}" Width="{Binding ButtonWidth, Mode=OneTime}" Command="{Binding BackPageCommand, Mode=OneWay}" IsEnabled="{Binding BackButtonEnabled, Mode=OneWay}" />
+            <StatusBarItem Grid.Column="1" Padding="0,0,5,0">
+                <ui:Button Width="{Binding ButtonWidth, Mode=OneTime}" Command="{Binding BackPageCommand, Mode=OneWay}" Content="{x:Static resources:Strings.Common_Navigation_Back}" IsEnabled="{Binding BackButtonEnabled, Mode=OneWay}" Style="{StaticResource PhasmaSoftButton}" />
             </StatusBarItem>
-            <StatusBarItem Grid.Column="2" Padding="4,0,4,0">
-                <ui:Button Name="NextButton" Content="{Binding NextButtonText, Mode=OneWay}" Width="{Binding ButtonWidth, Mode=OneTime}" Command="{Binding NextPageCommand, Mode=OneWay}" IsEnabled="{Binding NextButtonEnabled, Mode=OneWay}" />
+            <StatusBarItem Grid.Column="2" Padding="5,0,5,0">
+                <ui:Button Name="NextButton" Width="{Binding ButtonWidth, Mode=OneTime}" Command="{Binding NextPageCommand, Mode=OneWay}" Content="{Binding NextButtonText, Mode=OneWay}" IsEnabled="{Binding NextButtonEnabled, Mode=OneWay}" Style="{StaticResource PhasmaAccentButton}" />
             </StatusBarItem>
-            <StatusBarItem Grid.Column="3" Padding="12,0,0,0">
-                <ui:Button Content="{x:Static resources:Strings.Common_Close}" Width="{Binding ButtonWidth, Mode=OneTime}" Command="{Binding CloseWindowCommand, Mode=OneWay}" />
+            <StatusBarItem Grid.Column="3" Padding="5,0,0,0">
+                <ui:Button Width="{Binding ButtonWidth, Mode=OneTime}" Command="{Binding CloseWindowCommand, Mode=OneWay}" Content="{x:Static resources:Strings.Common_Close}" Style="{StaticResource PhasmaSoftButton}" />
             </StatusBarItem>
         </StatusBar>
     </Grid>

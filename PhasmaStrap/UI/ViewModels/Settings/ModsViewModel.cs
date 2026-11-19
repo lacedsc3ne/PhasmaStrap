@@ -752,7 +752,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                         foreach (string path in paths)
                             managedClaimCounts[path] = managedClaimCounts.GetValueOrDefault(path) + 1;
 
-                    // Which enabled mods claim each path, by name, so a row can say what it clashes with.
                     Dictionary<string, string> namesById = records.ToDictionary(r => r.Id, r => r.Name, StringComparer.OrdinalIgnoreCase);
                     Dictionary<string, List<string>> claimantsByPath = new(StringComparer.OrdinalIgnoreCase);
                     foreach (var (modId, paths) in pathsByMod)
@@ -1013,7 +1012,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 item.ShowConflicts = !item.ShowConflicts;
         });
 
-        /// <summary>Packs a mod's folder into a .zip the user picks, so it can be shared or kept.</summary>
         private async Task ExportManagedModAsync(ManagedModItem? item)
         {
             if (item is null)

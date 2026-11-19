@@ -1,18 +1,11 @@
 namespace PhasmaStrap.Utility
 {
-    /// <summary>
-    /// Remembers when each friend first showed up on your friends list, per Roblox account, so the Friends page can say
-    /// "friends since". Friends who were already there the first time we looked have no known date: Roblox doesn't
-    /// say when a friendship started, so for those the date can only come from PhasmaStrap's server.
-    /// </summary>
     public sealed class FriendHistoryStore
     {
         public sealed class AccountHistory
         {
-            /// <summary>When this account's friends list was first read. Friends seen then have no known start.</summary>
             public DateTime StartedUtc { get; set; }
 
-            /// <summary>Friend user ID to when they first appeared. DateTime.MinValue means "already there when we started".</summary>
             public Dictionary<long, DateTime> FirstSeen { get; set; } = new();
         }
 
@@ -50,10 +43,6 @@ namespace PhasmaStrap.Utility
             return _accounts;
         }
 
-        /// <summary>
-        /// Notes the current friends list of <paramref name="accountId"/>. Returns the friends that are new since the
-        /// last look (never the ones seen on the very first look), with the time they were first seen.
-        /// </summary>
         public List<(long UserId, DateTime FirstSeenUtc)> Observe(long accountId, IEnumerable<long> friendIds)
         {
             var added = new List<(long, DateTime)>();
@@ -63,7 +52,6 @@ namespace PhasmaStrap.Utility
 
             lock (_lock)
             {
-                // Read fresh, in case another PhasmaStrap process wrote since
                 _accounts = null;
                 Dictionary<long, AccountHistory> accounts = Accounts();
                 DateTime now = DateTime.UtcNow;
@@ -96,7 +84,6 @@ namespace PhasmaStrap.Utility
             return added;
         }
 
-        /// <summary>When this friend first appeared on the list, or null when they were already there when we started.</summary>
         public DateTime? KnownSince(long accountId, long friendId)
         {
             lock (_lock)

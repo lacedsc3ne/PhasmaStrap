@@ -11,10 +11,6 @@ namespace PhasmaStrap.Utility
 
         public static byte[]? Prepare(string path) => Prepare(path, false, null);
 
-        /// <summary>
-        /// Shrinks the screenshot to a JPEG for the gallery. <paramref name="hideNames"/> pixelates the areas set up for
-        /// Stream Safe (chat and player list by default), where usernames show; <paramref name="stamp"/> adds a small label in the corner.
-        /// </summary>
         public static byte[]? Prepare(string path, bool hideNames, string? stamp)
         {
             try
@@ -74,7 +70,6 @@ namespace PhasmaStrap.Utility
                         if (area.Width < 2 || area.Height < 2)
                             continue;
 
-                        // Shrink the area to a few blocks, then draw it back up without smoothing: a pixelated patch.
                         double block = Math.Max(8, Math.Min(width, height) / 60.0);
                         var cropped = new CroppedBitmap(source, area);
                         var tiny = new TransformedBitmap(cropped, new System.Windows.Media.ScaleTransform(

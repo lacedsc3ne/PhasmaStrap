@@ -6,87 +6,152 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       mc:Ignorable="d"
       d:DesignHeight="800" d:DesignWidth="800"
       Title="RobloxVersionsPage">
     <ui:UiPage.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+
+        <Style x:Key="PhRow" TargetType="{x:Type Border}">
+            <Setter Property="Margin" Value="-20,0,-20,0" />
+            <Setter Property="Padding" Value="20,14,20,14" />
+            <Setter Property="MinHeight" Value="60" />
+            <Setter Property="BorderThickness" Value="0,1,0,0" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PhasmaStrokeBrush}" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+        </Style>
+        <Style x:Key="PhRowTitle" TargetType="{x:Type TextBlock}">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style x:Key="PhRowDesc" TargetType="{x:Type TextBlock}">
+            <Setter Property="Margin" Value="0,2,0,0" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
     </ui:UiPage.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" controls:ScrollBubbling.Enabled="True">
         <StackPanel Margin="0,0,14,14">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="{x:Static resources:Strings.Menu_Behaviour_RobloxVersion}" />
-                <Border Margin="10,2,0,0" Style="{DynamicResource PhasmaTagNeutral}">
-                    <TextBlock Text="Launching" />
-                </Border>
-            </StackPanel>
-            <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="Stay on a version, or go back to one still on this PC." />
+            <controls:PageHeader Eyebrow="Settings · Launching" Title="{x:Static resources:Strings.Menu_Behaviour_RobloxVersion}" Subtitle="Stay on a version, or go back to one still on this PC." />
 
-            <!--  What is installed right now  -->
-            <Border Margin="0,0,0,12" Padding="16,14,16,14" Style="{DynamicResource PhasmaCard}">
+            <Border Margin="0,0,0,12" Padding="20,18,20,18" Style="{DynamicResource PhasmaCard}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <Border Width="44" Height="44" Margin="0,0,14,0" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="{DynamicResource PhasmaAccentSoftBrush}">
-                        <ui:SymbolIcon Symbol="BoxMultiple24" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource PhasmaAccentBrush}" />
+                    <Border Width="44" Height="44" Margin="0,0,16,0" phui:CutCorners.Size="6" Background="{DynamicResource PhasmaAccentSoftBrush}">
+                        <ui:SymbolIcon Symbol="Box24" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource PhasmaRedTextBrush}" />
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <TextBlock FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding InstalledText}" />
-                        <TextBlock Margin="0,2,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding LatestText}" />
+                        <TextBlock FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding InstalledText}" />
+                        <TextBlock Margin="0,3,0,0" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding LatestText}" />
                     </StackPanel>
+                    <Border Grid.Column="2" Margin="12,0,0,0" Style="{DynamicResource PhasmaTagWarn}" Visibility="{Binding ModePin, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="PINNED" />
+                    </Border>
                 </Grid>
             </Border>
 
             <controls:CardColumns>
-                <controls:SettingsCard Header="{x:Static resources:Strings.Menu_RobloxVersions_WhichVersionUse}">
-                    <StackPanel Margin="0,0,0,10">
-                        <RadioButton GroupName="RobloxVersionMode" Content="{x:Static resources:Strings.Menu_RobloxVersions_AlwaysNewestNormal}" IsChecked="{Binding ModeLatest, Mode=TwoWay}" />
-                        <RadioButton Margin="0,8,0,0" GroupName="RobloxVersionMode" Content="Stay on the version I have now" IsChecked="{Binding ModeHold, Mode=TwoWay}" />
-                        <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
-                            <RadioButton VerticalAlignment="Center" GroupName="RobloxVersionMode" Content="{x:Static resources:Strings.Menu_RobloxVersions_UseVersion}" IsChecked="{Binding ModePin, Mode=TwoWay}" />
-                            <ComboBox MinWidth="140" MaxWidth="240" Margin="8,0,0,0" Padding="10,5,10,5" IsEnabled="{Binding ModePin}" ItemsSource="{Binding PinChoices}" DisplayMemberPath="Title" SelectedValuePath="Record.Guid" SelectedValue="{Binding PinnedVersion, Mode=TwoWay}" />
-                        </StackPanel>
+                <controls:SettingsCard Header="{x:Static resources:Strings.Menu_RobloxVersions_WhichVersionUse}" Description="Normal is always the newest">
+                    <StackPanel>
+                        <Border Style="{StaticResource PhRow}">
+                            <RadioButton VerticalAlignment="Center" GroupName="RobloxVersionMode" IsChecked="{Binding ModeLatest, Mode=TwoWay}">
+                                <StackPanel Margin="4,0,0,0">
+                                    <TextBlock Style="{StaticResource PhRowTitle}" Text="{x:Static resources:Strings.Menu_RobloxVersions_AlwaysNewestNormal}" />
+                                    <TextBlock Style="{StaticResource PhRowDesc}" Text="Roblox updates as usual" />
+                                </StackPanel>
+                            </RadioButton>
+                        </Border>
+                        <Border Style="{StaticResource PhRow}">
+                            <RadioButton VerticalAlignment="Center" GroupName="RobloxVersionMode" IsChecked="{Binding ModeHold, Mode=TwoWay}">
+                                <StackPanel Margin="4,0,0,0">
+                                    <TextBlock Style="{StaticResource PhRowTitle}" Text="Stay on the version I have now" />
+                                    <TextBlock Style="{StaticResource PhRowDesc}" Text="No updates until you switch back" />
+                                </StackPanel>
+                            </RadioButton>
+                        </Border>
+                        <Border Style="{StaticResource PhRow}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <RadioButton VerticalAlignment="Center" GroupName="RobloxVersionMode" IsChecked="{Binding ModePin, Mode=TwoWay}">
+                                    <StackPanel Margin="4,0,0,0">
+                                        <TextBlock Style="{StaticResource PhRowTitle}" Text="{x:Static resources:Strings.Menu_RobloxVersions_UseVersion}" />
+                                        <TextBlock Style="{StaticResource PhRowDesc}" Text="Picks from the versions on this PC" />
+                                    </StackPanel>
+                                </RadioButton>
+                                <ComboBox Grid.Column="1" MinWidth="200" MaxWidth="240" Margin="16,0,0,0" VerticalAlignment="Center" Padding="10,5,10,5" IsEnabled="{Binding ModePin}" ItemsSource="{Binding PinChoices}" DisplayMemberPath="Title" SelectedValuePath="Record.Guid" SelectedValue="{Binding PinnedVersion, Mode=TwoWay}" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource PhRow}" Padding="56,14,20,14">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Style="{StaticResource PhRowTitle}" Text="or any version hash" />
+                                    <TextBlock Style="{StaticResource PhRowDesc}" Text="{Binding PinnedHashNote, Mode=OneWay}" />
+                                </StackPanel>
+                                <ui:TextBox Grid.Column="1" Width="240" Margin="16,0,0,0" VerticalAlignment="Center" Icon="Code24" PlaceholderText="version-0123456789abcdef" Text="{Binding PinnedHash, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                            </Grid>
+                        </Border>
 
-                        <StackPanel Margin="24,8,0,0" Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="or any version hash" />
-                            <ui:TextBox Width="220" Margin="8,0,0,0" PlaceholderText="version-0123456789abcdef" Text="{Binding PinnedHash, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
-                        </StackPanel>
-                        <TextBlock Margin="24,4,0,0" FontSize="11.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding PinnedHashNote, Mode=OneWay}" />
-
-                        <TextBlock Margin="0,12,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource PhasmaWarnBrush}" Visibility="{Binding WarningVisibility}"
-                                   Text="Roblox only lets recent versions into games. If an old one stops joining, switch back to Always the newest." />
+                        <Grid Margin="0,0,0,18" Visibility="{Binding WarningVisibility}">
+                            <Border Background="{DynamicResource PhasmaWarnBrush}" Opacity="0.07" phui:CutCorners.Size="6" />
+                            <Border BorderBrush="{DynamicResource PhasmaWarnBrush}" BorderThickness="1" Opacity="0.35" phui:CutCorners.Size="6" />
+                            <Grid Margin="14,12,14,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <ui:SymbolIcon Symbol="Warning24" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Top" Foreground="{DynamicResource PhasmaWarnBrush}" />
+                                <TextBlock Grid.Column="1" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                           Text="Roblox only lets recent versions into games. If an old one stops joining, switch back to Always the newest." />
+                            </Grid>
+                        </Grid>
                     </StackPanel>
                 </controls:SettingsCard>
 
                 <controls:SettingsCard Header="{x:Static resources:Strings.Menu_RobloxVersions_VersionsPC}">
-                    <TextBlock Margin="0,0,0,10" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Visibility="{Binding NothingKeptVisibility}"
+                    <TextBlock Margin="0,0,0,12" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Visibility="{Binding NothingKeptVisibility}"
                                Text="{x:Static resources:Strings.Menu_RobloxVersions_OnlyVersionUseHereKeepPrevious}" />
 
                     <ItemsControl ItemsSource="{Binding OnDisk}" Focusable="False">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <StackPanel>
-                                    <Border Style="{DynamicResource PhasmaDivider}" />
-                                    <Grid Margin="2,10,2,10">
+                                <Border Style="{StaticResource PhRow}" Padding="20,12,20,12">
+                                    <Grid>
                                         <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <StackPanel Grid.Column="0" Margin="0,0,10,0" VerticalAlignment="Center">
-                                            <TextBlock FontSize="13.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding Title}" />
-                                            <TextBlock Margin="0,2,0,0" FontSize="12" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Detail}" ToolTip="{Binding Detail}" />
-                                        </StackPanel>
-                                        <Border Grid.Column="1" Style="{DynamicResource PhasmaTag}" Visibility="{Binding IsInstalled, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                            <TextBlock Text="In use" />
+                                        <Border Width="32" Height="32" Margin="0,0,12,0" VerticalAlignment="Center" phui:CutCorners.Size="6" Background="{DynamicResource PhasmaS3Brush}">
+                                            <ui:SymbolIcon Symbol="Box24" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                                         </Border>
-                                        <Button Grid.Column="1" VerticalAlignment="Center" Style="{DynamicResource PhasmaSoftButton}" Visibility="{Binding UseVisibility}"
+                                        <StackPanel Grid.Column="1" Margin="0,0,10,0" VerticalAlignment="Center">
+                                            <TextBlock FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding Title}" />
+                                            <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Detail}" ToolTip="{Binding Detail}" />
+                                        </StackPanel>
+                                        <Border Grid.Column="2" Style="{DynamicResource PhasmaTagGood}" Visibility="{Binding IsInstalled, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <TextBlock Text="IN USE" />
+                                        </Border>
+                                        <Button Grid.Column="2" VerticalAlignment="Center" Style="{DynamicResource PhasmaGhostButton}" Visibility="{Binding UseVisibility}"
                                                 Content="{x:Static resources:Strings.Menu_RobloxVersions_UseVersion2}"
                                                 Command="{Binding DataContext.PinCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
                                     </Grid>
-                                </StackPanel>
+                                </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -97,22 +162,41 @@
                     </controls:OptionControl>
                 </controls:SettingsCard>
 
-                <controls:SettingsCard controls:CardColumns.FullRow="True" Header="{x:Static resources:Strings.Menu_RobloxVersions_FlagsUpdates}">
+                <controls:SettingsCard controls:CardColumns.FullRow="True" Header="{x:Static resources:Strings.Menu_RobloxVersions_FlagsUpdates}" Description="Catch flags that a Roblox update quietly removed">
                     <controls:OptionControl Header="{x:Static resources:Strings.Menu_RobloxVersions_TellMeWhenUpdateRemovesFlags}"
                                             Description="Compares each new version with the one it replaced">
                         <ui:ToggleSwitch IsChecked="{Binding CheckFlags, Mode=TwoWay}" />
                     </controls:OptionControl>
 
-                    <StackPanel Margin="0,2,0,12">
-                        <TextBlock Margin="0,0,0,10" TextWrapping="Wrap" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" Foreground="{DynamicResource PhasmaWarnBrush}"
-                                   Visibility="{Binding MissingFlagsVisibility}" Text="{Binding MissingFlagsText}" />
-                        <Button HorizontalAlignment="Left" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding CompareCommand, Mode=OneTime}">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="BranchCompare24" FontSize="14" Margin="0,0,8,0" />
-                                <TextBlock Text="{x:Static resources:Strings.Menu_RobloxVersions_CompareOtherVersionPC}" />
-                            </StackPanel>
-                        </Button>
-                        <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding CompareStatus}" />
+                    <Grid Margin="0,4,0,16" Visibility="{Binding MissingFlagsVisibility}">
+                        <Border Background="{DynamicResource PhasmaWarnBrush}" Opacity="0.07" phui:CutCorners.Size="6" />
+                        <Border BorderBrush="{DynamicResource PhasmaWarnBrush}" BorderThickness="1" Opacity="0.35" phui:CutCorners.Size="6" />
+                        <Grid Margin="14,12,14,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Symbol="Flag24" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Top" Foreground="{DynamicResource PhasmaWarnBrush}" />
+                            <TextBlock Grid.Column="1" TextWrapping="Wrap" FontFamily="{DynamicResource PhasmaMono}" FontSize="12.5" LineHeight="20" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding MissingFlagsText}" />
+                        </Grid>
+                    </Grid>
+
+                    <StackPanel>
+                        <Border Style="{StaticResource PhRow}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Button VerticalAlignment="Center" Style="{DynamicResource PhasmaGhostButton}" Command="{Binding CompareCommand, Mode=OneTime}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="BranchCompare24" FontSize="14" Margin="0,0,8,0" />
+                                        <TextBlock Text="{x:Static resources:Strings.Menu_RobloxVersions_CompareOtherVersionPC}" />
+                                    </StackPanel>
+                                </Button>
+                                <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding CompareStatus}" />
+                            </Grid>
+                        </Border>
                     </StackPanel>
                 </controls:SettingsCard>
             </controls:CardColumns>

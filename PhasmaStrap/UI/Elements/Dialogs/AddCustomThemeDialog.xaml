@@ -14,12 +14,35 @@
     MinHeight="0"
     d:DataContext="{d:DesignInstance viewmodels:AddCustomThemeViewModel,
                                      IsDesignTimeCreatable=True}"
-    Background="{ui:ThemeResource ApplicationBackgroundBrush}"
+    Background="{DynamicResource PhasmaPanelBrush}"
     ExtendsContentIntoTitleBar="True"
     ResizeMode="NoResize"
     SizeToContent="Height"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
+    <base:WpfUiWindow.Resources>
+        <Style x:Key="FieldLabel" TargetType="{x:Type TextBlock}">
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaMono}" />
+            <Setter Property="FontSize" Value="10.5" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+
+        <ControlTemplate x:Key="PhasmaTabsTemplate" TargetType="{x:Type TabControl}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Border BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,0,0,1">
+                    <TabPanel IsItemsHost="True" />
+                </Border>
+                <ContentPresenter x:Name="PART_SelectedContentHost" Grid.Row="1" ContentSource="SelectedContent" />
+            </Grid>
+        </ControlTemplate>
+    </base:WpfUiWindow.Resources>
+
     <Grid>
         <Grid>
             <Grid.RowDefinitions>
@@ -29,75 +52,43 @@
             </Grid.RowDefinitions>
 
             <ui:TitleBar
-                Title="{x:Static resources:Strings.CustomTheme_Add_Title}"
+                Title="{Binding Source={x:Static resources:Strings.CustomTheme_Add_Title}, Converter={StaticResource PhasmaUpper}}"
                 Grid.Row="0"
                 Grid.ColumnSpan="2"
-                Padding="8"
+                Padding="12,8"
+                Background="{DynamicResource PhasmaChromeBrush}"
                 CanMaximize="False"
+                FontFamily="{DynamicResource PhasmaMono}"
+                FontSize="11"
+                Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                Icon="pack://application:,,,/PhasmaStrap.ico"
                 KeyboardNavigation.TabNavigation="None"
                 ShowMaximize="False"
                 ShowMinimize="False" />
+            <Border Grid.Row="0" VerticalAlignment="Bottom" Style="{DynamicResource PhasmaDivider}" />
 
             <TabControl
                 x:Name="Tabs"
                 Grid.Row="1"
-                Margin="16"
-                SelectedIndex="{Binding Path=SelectedTab, Mode=TwoWay}">
-                <TabItem Header="{x:Static resources:Strings.Common_CreateNew}">
-                    <Grid Grid.Row="1" Margin="16">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <Grid
-                            Grid.Row="0"
-                            Grid.ColumnSpan="2"
-                            Margin="0,0,0,12">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <TextBlock
-                                Grid.Row="0"
-                                Grid.Column="0"
-                                MinWidth="100"
-                                VerticalAlignment="Center"
-                                Text="{x:Static resources:Strings.Common_Name}" />
-                            <TextBox
-                                Grid.Row="0"
-                                Grid.Column="1"
-                                Text="{Binding Path=Name, Mode=TwoWay}" />
-
-                            <TextBlock
-                                Grid.Row="1"
-                                Grid.Column="1"
-                                Foreground="{DynamicResource SystemFillColorCriticalBrush}"
-                                Text="{Binding Path=NameError, Mode=OneWay}"
-                                TextAlignment="Center"
-                                TextWrapping="Wrap"
-                                Visibility="{Binding Path=NameErrorVisibility, Mode=OneWay}" />
-                        </Grid>
-
+                Margin="20,14,20,20"
+                ItemContainerStyle="{StaticResource PhasmaTabItem}"
+                SelectedIndex="{Binding Path=SelectedTab, Mode=TwoWay}"
+                Template="{StaticResource PhasmaTabsTemplate}">
+                <TabItem Header="{Binding Source={x:Static resources:Strings.Common_CreateNew}, Converter={StaticResource PhasmaUpper}}">
+                    <StackPanel Margin="0,18,0,0">
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="{Binding Source={x:Static resources:Strings.Common_Name}, Converter={StaticResource PhasmaUpper}}" />
+                        <TextBox Text="{Binding Path=Name, Mode=TwoWay}" />
                         <TextBlock
-                            Grid.Row="1"
-                            Grid.Column="0"
-                            MinWidth="100"
-                            VerticalAlignment="Center"
-                            Text="{x:Static resources:Strings.Common_Template}" />
+                            Margin="0,6,0,0"
+                            FontSize="12.5"
+                            Foreground="{DynamicResource PhasmaRedTextBrush}"
+                            Text="{Binding Path=NameError, Mode=OneWay}"
+                            TextWrapping="Wrap"
+                            Visibility="{Binding Path=NameErrorVisibility, Mode=OneWay}" />
 
+                        <TextBlock Margin="0,14,0,6" Style="{StaticResource FieldLabel}" Text="{Binding Source={x:Static resources:Strings.Common_Template}, Converter={StaticResource PhasmaUpper}}" />
                         <ComboBox
-                            Grid.Row="1"
-                            Grid.Column="1"
+                            HorizontalAlignment="Stretch"
                             ItemsSource="{Binding Path=Templates, Mode=OneTime}"
                             Text="{Binding Path=Template, Mode=TwoWay}">
                             <ComboBox.ItemTemplate>
@@ -106,59 +97,65 @@
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
-                    </Grid>
+                    </StackPanel>
                 </TabItem>
-                <TabItem Header="{x:Static resources:Strings.Common_Import}">
-                    <Grid Margin="11">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <TextBlock
-                            Grid.Row="0"
-                            FontSize="14"
-                            Text="{Binding Path=FilePath}"
-                            TextAlignment="Center"
-                            TextWrapping="Wrap"
-                            Visibility="{Binding Path=FilePathVisibility}" />
-                        <ui:Button
-                            Grid.Row="1"
-                            Margin="4"
-                            HorizontalAlignment="Stretch"
+                <TabItem Header="{Binding Source={x:Static resources:Strings.Common_Import}, Converter={StaticResource PhasmaUpper}}">
+                    <StackPanel Margin="0,18,0,0">
+                        <Border
+                            Margin="0,0,0,12"
+                            Padding="12,9"
+                            Background="{DynamicResource PhasmaChromeBrush}"
+                            BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}"
+                            BorderThickness="1"
+                            Visibility="{Binding Path=FilePathVisibility}">
+                            <TextBlock
+                                FontFamily="{DynamicResource PhasmaMono}"
+                                FontSize="12"
+                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                Text="{Binding Path=FilePath}"
+                                TextWrapping="Wrap" />
+                        </Border>
+                        <Button
+                            HorizontalAlignment="Left"
                             Click="OnImportButtonClicked"
-                            Content="{x:Static resources:Strings.Common_ImportFromFile}"
-                            Icon="DocumentArrowUp16" />
+                            Style="{StaticResource PhasmaSoftButton}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="DocumentArrowUp16" FontSize="15" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                <TextBlock VerticalAlignment="Center" Text="{x:Static resources:Strings.Common_ImportFromFile}" />
+                            </StackPanel>
+                        </Button>
                         <TextBlock
-                            Grid.Row="2"
-                            Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                            Margin="0,10,0,0"
+                            FontSize="12.5"
+                            Foreground="{DynamicResource PhasmaRedTextBrush}"
                             Text="{Binding Path=FileError}"
-                            TextAlignment="Center"
                             TextWrapping="Wrap"
                             Visibility="{Binding Path=FileErrorVisibility}" />
-                    </Grid>
+                    </StackPanel>
                 </TabItem>
             </TabControl>
 
             <Border
                 Grid.Row="2"
-                Margin="0,10,0,0"
-                Padding="15"
-                Background="{ui:ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+                Padding="18,12"
+                BorderBrush="{DynamicResource PhasmaStrokeBrush}"
+                BorderThickness="0,1,0,0">
                 <StackPanel
                     HorizontalAlignment="Right"
                     FlowDirection="LeftToRight"
                     Orientation="Horizontal">
                     <Button
-                        MinWidth="100"
+                        MinWidth="90"
+                        Content="{x:Static resources:Strings.Common_Cancel}"
+                        IsCancel="True"
+                        Style="{StaticResource PhasmaSoftButton}" />
+                    <Button
+                        MinWidth="90"
+                        Margin="10,0,0,0"
                         Click="OnOkButtonClicked"
                         Content="{x:Static resources:Strings.Common_OK}"
-                        IsDefault="True" />
-                    <Button
-                        MinWidth="100"
-                        Margin="12,0,0,0"
-                        Content="{x:Static resources:Strings.Common_Cancel}"
-                        IsCancel="True" />
+                        IsDefault="True"
+                        Style="{StaticResource PhasmaAccentButton}" />
                 </StackPanel>
             </Border>
         </Grid>

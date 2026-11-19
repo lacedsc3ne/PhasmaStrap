@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
@@ -14,7 +14,6 @@ namespace PhasmaStrap.UI.Elements.Controls
 
         private string _badge = "";
 
-        /// <summary>Small count shown after the label (for example the number of captures). Empty hides it.</summary>
         public string Badge
         {
             get => _badge;
@@ -30,26 +29,19 @@ namespace PhasmaStrap.UI.Elements.Controls
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        /// <summary>Heading this section is listed under in the side rail layout.</summary>
         public string Group { get; set; } = "";
 
         public Type? PageType { get; set; }
 
-        /// <summary>
-        /// When set, this page is not listed in the side menu. It is a tab on the page of that type instead.
-        /// </summary>
         public Type? TabParent { get; set; }
 
-        /// <summary>Text for this page when it is drawn as a tab. Empty uses the label.</summary>
         public string TabLabel { get; set; } = "";
     }
 
     public enum SectionHostLayout
     {
-        /// <summary>A title and a row of tabs above the page.</summary>
         Tabs,
 
-        /// <summary>A side menu with optional group headings, used by Settings.</summary>
         Rail
     }
 
@@ -62,7 +54,6 @@ namespace PhasmaStrap.UI.Elements.Controls
 
         public ObservableCollection<SectionItem> Sections { get; } = new();
 
-        /// <summary>Name of the section a page is shown in (Performance, Settings). Pages read it to label their header.</summary>
         public static readonly DependencyProperty SectionNameProperty = DependencyProperty.RegisterAttached(
             "SectionName", typeof(string), typeof(SectionHost), new FrameworkPropertyMetadata("", FrameworkPropertyMetadataOptions.Inherits));
 
@@ -82,7 +73,6 @@ namespace PhasmaStrap.UI.Elements.Controls
         public static readonly DependencyProperty HeaderProperty = DependencyProperty.Register(
             nameof(Header), typeof(string), typeof(SectionHost), new PropertyMetadata(""));
 
-        /// <summary>Page title shown beside the tabs, or above the side menu.</summary>
         public string Header
         {
             get => (string)GetValue(HeaderProperty);
@@ -92,17 +82,14 @@ namespace PhasmaStrap.UI.Elements.Controls
         public static readonly DependencyProperty HeaderContentProperty = DependencyProperty.Register(
             nameof(HeaderContent), typeof(object), typeof(SectionHost), new PropertyMetadata(null, (d, e) => ((SectionHost)d).HeaderSlot.Content = e.NewValue));
 
-        /// <summary>Optional content on the right of the tab bar (a status pill or a button). Tabs layout only.</summary>
         public object? HeaderContent
         {
             get => GetValue(HeaderContentProperty);
             set => SetValue(HeaderContentProperty, value);
         }
 
-        /// <summary>The page type of the section being shown.</summary>
         public Type? CurrentSection { get; private set; }
 
-        /// <summary>Raised after another section is shown.</summary>
         public event EventHandler? SectionChanged;
 
         public SectionHost()
@@ -130,7 +117,6 @@ namespace PhasmaStrap.UI.Elements.Controls
 
             SetSectionName(SectionFrame, Header);
 
-            // The side menu lists the pages of a section, so neither layout draws its own tab bar or rail.
             Rail.Visibility = Visibility.Collapsed;
             TabBar.Visibility = Visibility.Collapsed;
             RailColumn.Width = new GridLength(0);
@@ -166,7 +152,6 @@ namespace PhasmaStrap.UI.Elements.Controls
                 return;
             }
 
-            // Tabs: move the list out of the rail and lay it out as a row of tabs.
             Rail.Visibility = Visibility.Collapsed;
             RailColumn.Width = new GridLength(0);
 
@@ -234,7 +219,6 @@ namespace PhasmaStrap.UI.Elements.Controls
 
         private bool _pageHasHeader;
 
-        /// <summary>A page's own header card tells the host not to draw a second one.</summary>
         internal void NotifyPageHeader(PageHeader who)
         {
             if (ReferenceEquals(who, HostHeader))
@@ -242,6 +226,27 @@ namespace PhasmaStrap.UI.Elements.Controls
 
             _pageHasHeader = true;
             HostHeader.Visibility = Visibility.Collapsed;
+            PlaceHeaderContent(who);
+        }
+
+        private PageHeader? _actionsHolder;
+
+        private void PlaceHeaderContent(PageHeader target)
+        {
+            if (HeaderContent is null || ReferenceEquals(_actionsHolder, target))
+                return;
+
+            if (_actionsHolder is not null && ReferenceEquals(_actionsHolder.Actions, HeaderContent))
+                _actionsHolder.Actions = null;
+
+            _actionsHolder = null;
+            HeaderSlot.Content = null;
+
+            if (target.Actions is null)
+            {
+                target.Actions = HeaderContent;
+                _actionsHolder = target;
+            }
         }
 
         private void UpdateHostHeader()
@@ -258,7 +263,6 @@ namespace PhasmaStrap.UI.Elements.Controls
                 return;
             }
 
-            // Older pages draw their own title and subtitle lines; the header card replaces them.
             string legacy = "";
             var titleStyle = TryFindResource("PhasmaPageTitle") as Style;
             var subtitleStyle = TryFindResource("PhasmaPageSubtitle") as Style;
@@ -268,6 +272,7 @@ namespace PhasmaStrap.UI.Elements.Controls
             HostHeader.Title = label;
             HostHeader.Subtitle = legacy.Length > 0 ? legacy : Subtitles.TryGetValue(label, out string? text) ? text : "";
             HostHeader.Visibility = Visibility.Visible;
+            PlaceHeaderContent(HostHeader);
         }
 
         private static void CollapseLegacy(DependencyObject parent, Style? title, Style? subtitle, ref string subtitleText)
@@ -282,7 +287,6 @@ namespace PhasmaStrap.UI.Elements.Controls
                     {
                         block.Visibility = Visibility.Collapsed;
 
-                        // The old title row also carried a small section chip ("Launching", "PhasmaStrap"). It goes with the title.
                         if (System.Windows.Media.VisualTreeHelper.GetParent(block) is StackPanel row && row.Orientation == Orientation.Horizontal
                             && row.Children.Cast<UIElement>().All(c => c is TextBlock || c is Border))
                             row.Visibility = Visibility.Collapsed;
@@ -312,13 +316,10 @@ namespace PhasmaStrap.UI.Elements.Controls
             return false;
         }
 
-        /// <summary>The pages listed in the side menu: the ones that are not a tab of another page.</summary>
         public IEnumerable<SectionItem> NavSections => Sections.Where(s => s.TabParent is null);
 
-        /// <summary>The page that owns the menu entry for the given page (the page itself unless it is a tab).</summary>
         public Type? NavKeyFor(Type? page) => Sections.FirstOrDefault(s => s.PageType == page)?.TabParent ?? page;
 
-        /// <summary>The tabs to draw for the open page: its group, parent first. Empty when the page stands alone.</summary>
         public IReadOnlyList<SectionItem> TabsForCurrent()
         {
             Type? key = NavKeyFor(CurrentSection);
@@ -359,7 +360,6 @@ namespace PhasmaStrap.UI.Elements.Controls
 
             _pageHasHeader = false;
 
-            // A Frame does not pass inherited values on to its page, so give the page the section name itself.
             SetSectionName(page, Header);
             SectionFrame.Navigate(page);
 

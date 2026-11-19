@@ -6,6 +6,7 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:local="clr-namespace:PhasmaStrap.UI.Elements.Settings.Pages"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
       mc:Ignorable="d"
       d:DesignHeight="450" d:DesignWidth="800"
@@ -14,15 +15,15 @@
       Unloaded="Page_Unloaded">
     <ui:UiPage.Resources>
         <Style x:Key="FlagMonoText" TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaMono}" />
             <Setter Property="FontSize" Value="12.5" />
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
-        <!--  Note under a flag, coloured by what kind of change it is  -->
         <Style x:Key="FlagNoteText" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaMono}" />
+            <Setter Property="FontSize" Value="12.5" />
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
             <Style.Triggers>
@@ -41,7 +42,6 @@
             </Style.Triggers>
         </Style>
 
-        <!--  Hidden when the bound text is empty  -->
         <Style x:Key="HideWhenEmpty" TargetType="TextBlock">
             <Style.Triggers>
                 <Trigger Property="Text" Value="">
@@ -50,71 +50,93 @@
             </Style.Triggers>
         </Style>
 
-        <!--  View switch (cards or table) drawn like section tabs  -->
-        <Style x:Key="ViewSwitch" TargetType="RadioButton" BasedOn="{StaticResource PhasmaTab}">
-            <Setter Property="Padding" Value="10,5" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Margin" Value="0,0,2,0" />
+        <Style x:Key="ViewSwitch" TargetType="RadioButton" BasedOn="{StaticResource PhasmaSegButton}">
+            <Setter Property="Padding" Value="12,5" />
+            <Setter Property="FontSize" Value="13" />
             <Setter Property="GroupName" Value="FlagEditorView" />
+        </Style>
+
+        <Style x:Key="ToolGhost" TargetType="Button" BasedOn="{StaticResource PhasmaGhostButton}">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="8,0,0,8" />
+            <Setter Property="MinHeight" Value="32" />
+        </Style>
+
+        <Style x:Key="NoteText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
         </Style>
     </ui:UiPage.Resources>
 
     <Grid Margin="0,0,14,14">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="226" />
+            <ColumnDefinition Width="290" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!--  Left: your flags and every profile  -->
-        <Border Grid.Column="0" Margin="0,0,0,0" Padding="0,0,12,0" BorderThickness="0,0,1,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
-            <DockPanel>
-                <Border DockPanel.Dock="Bottom" Margin="0,10,0,0" Padding="12,10" Style="{DynamicResource PhasmaCard}">
-                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                               Text="Roblox reads flags on start. Changes apply next launch." />
-                </Border>
-
-                <Grid DockPanel.Dock="Bottom" Margin="0,10,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <Button Grid.Column="0" HorizontalAlignment="Stretch" Style="{DynamicResource PhasmaSoftButton}" Click="NewProfile_Click"
-                            ToolTip="{x:Static resources:Strings.Menu_FastFlagEditor_ProfileHoldsFlagChangesChosenGames}">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Add24" FontSize="14" Margin="0,0,6,0" />
-                            <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_NewProfile}" />
-                        </StackPanel>
-                    </Button>
-                    <Button x:Name="ImportButton" Grid.Column="1" Margin="6,0,0,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="Import_Click"
-                            ToolTip="Add a profile from a share code or the gallery, or paste JSON">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="ArrowImport24" FontSize="14" Margin="0,0,6,0" />
-                            <TextBlock Text="Import" />
-                        </StackPanel>
-                    </Button>
-                </Grid>
-
-                <ListBox x:Name="ScopeList" Background="Transparent" BorderThickness="0" ItemContainerStyle="{DynamicResource PhasmaListItem}"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" SelectionChanged="ScopeList_SelectionChanged" PreviewKeyDown="ScopeList_PreviewKeyDown">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Margin="0,2,0,2" ToolTip="{Binding ToolTip}">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" MaxWidth="140" Text="{Binding Name}" />
-                                    <Border Margin="6,0,0,0" Style="{DynamicResource PhasmaTagNeutral}" Padding="5,0" Visibility="{Binding DefaultVisibility}">
-                                        <TextBlock FontSize="10" Text="Default" />
-                                    </Border>
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <DockPanel VerticalAlignment="Top">
+            <Border DockPanel.Dock="Top" Padding="8" Style="{DynamicResource PhasmaPanel}">
+                <StackPanel>
+                    <TextBlock Margin="10,8,10,6" Style="{StaticResource PhasmaCaption}" Text="SCOPES" />
+                    <ListBox x:Name="ScopeList" controls:ScrollBubbling.Enabled="True" Background="Transparent" BorderThickness="0" ItemContainerStyle="{DynamicResource PhasmaListItem}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" SelectionChanged="ScopeList_SelectionChanged" PreviewKeyDown="ScopeList_PreviewKeyDown">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="2,4,2,4" ToolTip="{Binding ToolTip}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="White" TextTrimming="CharacterEllipsis" MaxWidth="170" Text="{Binding Name}" />
+                                        <Border Margin="8,0,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaTagNeutral}" Padding="6,1" Visibility="{Binding DefaultVisibility}">
+                                            <TextBlock FontFamily="{DynamicResource PhasmaMono}" FontSize="10" Text="DEFAULT" />
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Margin="0,3,0,0" FontSize="12.5" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Summary}" />
                                 </StackPanel>
-                                <TextBlock Margin="0,2,0,0" FontSize="11.5" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Summary}" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </DockPanel>
-        </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
+            </Border>
 
-        <!--  Right: the chosen scope  -->
-        <ScrollViewer x:Name="PageScroller" Grid.Column="1" Margin="18,0,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" SizeChanged="PageScroller_SizeChanged">
+            <Grid DockPanel.Dock="Top" Margin="0,12,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" HorizontalAlignment="Stretch" Style="{DynamicResource PhasmaSoftButton}" Click="NewProfile_Click"
+                        ToolTip="{x:Static resources:Strings.Menu_FastFlagEditor_ProfileHoldsFlagChangesChosenGames}">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="Add24" FontSize="14" Margin="0,0,6,0" />
+                        <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_NewProfile}" />
+                    </StackPanel>
+                </Button>
+                <Button x:Name="ImportButton" Grid.Column="2" HorizontalAlignment="Stretch" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="Import_Click"
+                        ToolTip="Add a profile from a share code or the gallery, or paste JSON">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="ArrowImport24" FontSize="14" Margin="0,0,6,0" />
+                        <TextBlock Text="Import" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <Grid DockPanel.Dock="Top" Margin="0,12,0,0">
+                <Border Background="{DynamicResource PhasmaInfoBrush}" Opacity="0.07" CornerRadius="10" />
+                <Border BorderBrush="{DynamicResource PhasmaInfoBrush}" BorderThickness="1" Opacity="0.3" CornerRadius="10" />
+                <Grid Margin="16,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ui:SymbolIcon Grid.Column="0" Symbol="Info24" FontSize="18" Margin="0,0,12,0" VerticalAlignment="Top" Foreground="{DynamicResource PhasmaInfoBrush}" />
+                    <TextBlock Grid.Column="1" Style="{StaticResource NoteText}" Text="Roblox reads flags on start. Changes apply next launch." />
+                </Grid>
+            </Grid>
+        </DockPanel>
+        </ScrollViewer>
+
+        <ScrollViewer x:Name="PageScroller" Grid.Column="1" Margin="20,0,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" SizeChanged="PageScroller_SizeChanged">
         <Grid x:Name="RootLayout" Margin="0,0,4,0" VerticalAlignment="Top" Height="700" LayoutUpdated="RootLayout_LayoutUpdated">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -123,119 +145,104 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!--  Shown by code when the FastFlag manager is off  -->
-            <Border x:Name="ManagerDisabledBar" Grid.Row="0" Margin="0,0,0,12" Padding="14,10" Visibility="Collapsed"
-                    CornerRadius="{DynamicResource PhasmaCornerRadius}" BorderThickness="1"
-                    BorderBrush="{DynamicResource PhasmaWarnBrush}" Background="{DynamicResource PhasmaPanelRaisedBrush}">
+            <Border x:Name="ManagerDisabledBar" Grid.Row="0" Margin="0,0,0,16" Visibility="Collapsed">
                 <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Grid.Column="0" Symbol="Warning24" FontSize="16" Margin="0,1,10,0" VerticalAlignment="Top" Foreground="{DynamicResource PhasmaWarnBrush}" />
-                    <StackPanel Grid.Column="1">
-                        <TextBlock FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" Text="{x:Static resources:Strings.Menu_FastFlagEditor_PhasmaStrapIsnTManagingFastFlagsRight}" />
-                        <TextBlock Margin="0,2,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_FastFlagEditor_AllowPhasmaStrapManageFFlagsOffEngine}" />
-                    </StackPanel>
+                    <Border Background="{DynamicResource PhasmaWarnBrush}" Opacity="0.07" CornerRadius="10" />
+                    <Border BorderBrush="{DynamicResource PhasmaWarnBrush}" BorderThickness="1" Opacity="0.28" CornerRadius="10" />
+                    <Grid Margin="16,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Warning24" FontSize="18" Margin="0,0,12,0" VerticalAlignment="Top" Foreground="{DynamicResource PhasmaWarnBrush}" />
+                        <StackPanel Grid.Column="1">
+                            <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="White" TextWrapping="Wrap" Text="{x:Static resources:Strings.Menu_FastFlagEditor_PhasmaStrapIsnTManagingFastFlagsRight}" />
+                            <TextBlock Margin="0,2,0,0" Style="{StaticResource NoteText}" Text="{x:Static resources:Strings.Menu_FastFlagEditor_AllowPhasmaStrapManageFFlagsOffEngine}" />
+                        </StackPanel>
+                    </Grid>
                 </Grid>
             </Border>
 
-            <!--  What is being edited, where it applies, and profile actions  -->
-            <StackPanel Grid.Row="1" Margin="0,0,0,12">
+            <StackPanel Grid.Row="1" Margin="0,0,0,16">
                 <DockPanel LastChildFill="True">
                     <WrapPanel DockPanel.Dock="Right" Margin="12,0,0,0" VerticalAlignment="Top">
-                        <Button x:Name="CompareButton" Margin="0,0,6,6" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="Compare_Click"
+                        <Button x:Name="CompareButton" Margin="0,0,8,8" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="Compare_Click"
                                 ToolTip="See what this profile adds, changes and turns off compared with your flags">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="BranchCompare24" FontSize="14" Margin="0,0,6,0" />
                                 <TextBlock Text="Compare" />
                             </StackPanel>
                         </Button>
-                        <Button x:Name="DuplicateButton" Margin="0,0,6,6" Style="{DynamicResource PhasmaSoftButton}" Click="Duplicate_Click">
+                        <Button x:Name="DuplicateButton" Margin="0,0,8,8" Style="{DynamicResource PhasmaSoftButton}" Click="Duplicate_Click">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="Copy24" FontSize="14" Margin="0,0,6,0" />
                                 <TextBlock Text="Duplicate" />
                             </StackPanel>
                         </Button>
-                        <Button x:Name="ShareButton" Margin="0,0,6,6" Style="{DynamicResource PhasmaSoftButton}" Click="Share_Click"
+                        <Button x:Name="ShareButton" Margin="0,0,8,8" Style="{DynamicResource PhasmaSoftButton}" Click="Share_Click"
                                 ToolTip="Copy a share code or link for this profile">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="Share24" FontSize="14" Margin="0,0,6,0" />
                                 <TextBlock Text="Share" />
                             </StackPanel>
                         </Button>
-                        <Button x:Name="ProfileMenuButton" Margin="0,0,0,6" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="ProfileMenu_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Settings24" FontSize="14" Margin="0,0,6,0" />
-                                <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_ProfileOptions}" />
-                            </StackPanel>
+                        <Button x:Name="ProfileMenuButton" Margin="0,0,0,8" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="ProfileMenu_Click"
+                                ToolTip="{x:Static resources:Strings.Menu_FastFlagEditor_ProfileOptions}" AutomationProperties.Name="{x:Static resources:Strings.Menu_FastFlagEditor_ProfileOptions}">
+                            <ui:SymbolIcon Symbol="Settings24" FontSize="15" />
                         </Button>
                     </WrapPanel>
 
                     <StackPanel>
-                        <TextBlock x:Name="ScopeTitle" Style="{DynamicResource PhasmaPageTitle}" />
-                        <TextBlock x:Name="ScopeText" Margin="0,4,0,0" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <StackPanel Orientation="Horizontal">
+                            <Border RenderTransformOrigin="0.5,0.5" Width="4" Height="22" Margin="3,0,14,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaAccentBrush}">
+                                <Border.RenderTransform>
+                                    <SkewTransform AngleX="-14" />
+                                </Border.RenderTransform>
+                            </Border>
+                            <TextBlock x:Name="ScopeTitle" Visibility="Collapsed" />
+                            <TextBlock VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="22" FontWeight="Bold" Foreground="White" TextTrimming="CharacterEllipsis"
+                                       Text="{Binding Text, ElementName=ScopeTitle, Converter={StaticResource PhasmaUpper}}" />
+                        </StackPanel>
+                        <TextBlock x:Name="ScopeText" Margin="0,6,0,0" MaxWidth="620" HorizontalAlignment="Left" FontSize="13.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     </StackPanel>
                 </DockPanel>
 
-                <!--  Games and places this profile is given to  -->
-                <StackPanel x:Name="UsedByPanel" Margin="0,14,0,0" Visibility="Collapsed">
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                        <TextBlock FontSize="13" FontWeight="SemiBold" Text="Assigned to" />
-                        <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="11.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Starts with these games and places" />
-                    </StackPanel>
-
-                    <WrapPanel>
-                        <ItemsControl x:Name="AssignedList" Focusable="False">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Margin="0,0,8,8" Padding="8,6,4,6" MinWidth="170" Style="{DynamicResource PhasmaCard}" ToolTip="{Binding ToolTip}">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <Border Grid.Column="0" Width="32" Height="32" Style="{DynamicResource PhasmaThumb}" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}">
-                                                <Grid>
-                                                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Initials}" />
-                                                    <Image Source="{Binding IconUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
-                                                </Grid>
-                                            </Border>
-                                            <StackPanel Grid.Column="1" Margin="10,0,6,0" VerticalAlignment="Center">
-                                                <TextBlock FontSize="12.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" MaxWidth="160" Text="{Binding Title}" />
-                                                <TextBlock FontSize="11" TextTrimming="CharacterEllipsis" MaxWidth="160" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Subtitle}" />
-                                            </StackPanel>
-                                            <Button Grid.Column="2" Width="26" Height="26" VerticalAlignment="Center" Style="{DynamicResource PhasmaIconButton}" Tag="{Binding}" Click="Unassign_Click"
-                                                    ToolTip="Stop giving this game the profile" AutomationProperties.Name="Stop giving this game the profile">
-                                                <ui:SymbolIcon Symbol="Dismiss12" FontSize="11" />
-                                            </Button>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
-                        <Grid Margin="0,0,8,8">
-                            <Button x:Name="AssignButton" MinHeight="46" Padding="14,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold"
-                                    BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" Click="AssignButton_Click">
-                                <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="Add24" FontSize="14" Margin="0,0,6,0" />
-                                    <TextBlock Text="Assign to a game" />
-                                </StackPanel>
-                            </Button>
+                <StackPanel x:Name="UsedByPanel" Margin="0,16,0,0" Visibility="Collapsed">
+                <Border Padding="0" Style="{DynamicResource PhasmaPanel}">
+                    <StackPanel>
+                        <Grid Margin="20,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Width="34" Height="34" Margin="0,0,12,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaHoverBrush}" phui:CutCorners.Size="6">
+                                <ui:SymbolIcon Symbol="Grid24" FontSize="15" Foreground="{DynamicResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="15" FontWeight="Bold" Foreground="White" Text="ASSIGNED TO" />
+                                <TextBlock Margin="0,1,0,0" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Starts with these games and places" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Margin="0,0,8,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="GoToGames_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Grid24" FontSize="14" Margin="0,0,6,0" />
+                                        <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_ChooseGames}" />
+                                    </StackPanel>
+                                </Button>
+                                <Grid>
+                                    <Button x:Name="AssignButton" Style="{DynamicResource PhasmaSoftButton}" FontWeight="SemiBold" Click="AssignButton_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:SymbolIcon Symbol="Add24" FontSize="14" Margin="0,0,6,0" />
+                                            <TextBlock Text="Assign to a game" />
+                                        </StackPanel>
+                                    </Button>
 
                             <Popup x:Name="AssignPopup" PlacementTarget="{Binding ElementName=AssignButton}" Placement="Bottom" VerticalOffset="6" StaysOpen="False" AllowsTransparency="True">
                                 <Border Width="300" Margin="0,0,12,12" Padding="8" Style="{DynamicResource PhasmaPopupSurface}">
                                     <StackPanel>
                                         <ui:TextBox x:Name="AssignSearchBox" Icon="Search24" PlaceholderText="Game name, game link or place ID" TextChanged="AssignSearchBox_TextChanged" KeyDown="AssignSearchBox_KeyDown" />
 
-                                        <!--  Step 1: pick a game  -->
                                         <ListBox x:Name="AssignResults" Margin="0,8,0,0" MaxHeight="260" Background="Transparent" BorderThickness="0" ItemContainerStyle="{DynamicResource PhasmaListItem}"
                                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled" SelectionChanged="AssignResults_SelectionChanged">
                                             <ListBox.ItemTemplate>
@@ -262,7 +269,6 @@
                                             </ListBox.ItemTemplate>
                                         </ListBox>
 
-                                        <!--  Step 2: whole game or one place  -->
                                         <StackPanel x:Name="AssignWherePanel" Margin="0,8,0,0" Visibility="Collapsed">
                                             <TextBlock x:Name="AssignGameText" Margin="2,0,0,8" FontSize="12.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                                             <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Style="{DynamicResource PhasmaSoftButton}" Click="AssignWholeGame_Click">
@@ -293,51 +299,82 @@
                                     </StackPanel>
                                 </Border>
                             </Popup>
-                        </Grid>
-                    </WrapPanel>
-
-                    <WrapPanel Margin="0,0,0,0">
-                        <TextBlock x:Name="UsedByText" Margin="0,0,10,0" VerticalAlignment="Center" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Style="{StaticResource HideWhenEmpty}" />
-                        <Button Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="GoToGames_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Grid24" FontSize="14" Margin="0,0,6,0" />
-                                <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_ChooseGames}" />
+                                </Grid>
                             </StackPanel>
-                        </Button>
-                    </WrapPanel>
+                        </Grid>
+                        <Border Style="{DynamicResource PhasmaDivider}" />
+
+                        <StackPanel Margin="20,14,20,6">
+                            <ItemsControl x:Name="AssignedList" Focusable="False">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,10,8" Padding="8,6,6,6" MinWidth="170" Background="{DynamicResource PhasmaS3Brush}" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" BorderThickness="1"
+                                                phui:CutCorners.Size="6" ToolTip="{Binding ToolTip}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Grid.Column="0" Width="30" Height="30" Style="{DynamicResource PhasmaThumb}" CornerRadius="6">
+                                                    <Grid>
+                                                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Initials}" />
+                                                        <Image Source="{Binding IconUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                                                    </Grid>
+                                                </Border>
+                                                <StackPanel Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center">
+                                                    <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="White" TextTrimming="CharacterEllipsis" MaxWidth="160" Text="{Binding Title}" />
+                                                    <TextBlock FontSize="11.5" TextTrimming="CharacterEllipsis" MaxWidth="160" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Subtitle}" />
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Width="26" Height="26" VerticalAlignment="Center" Style="{DynamicResource PhasmaIconButton}" Tag="{Binding}" Click="Unassign_Click"
+                                                        ToolTip="Stop giving this game the profile" AutomationProperties.Name="Stop giving this game the profile">
+                                                    <ui:SymbolIcon Symbol="Dismiss12" FontSize="11" />
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <TextBlock x:Name="UsedByText" Margin="0,0,0,8" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Style="{StaticResource HideWhenEmpty}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
                 </StackPanel>
             </StackPanel>
 
-            <!--  Search, filters, view and list actions  -->
-            <DockPanel Grid.Row="2" Margin="0,0,0,12" LastChildFill="False">
+            <DockPanel Grid.Row="2" Margin="0,0,0,8" LastChildFill="False">
                 <WrapPanel DockPanel.Dock="Right" VerticalAlignment="Center">
-                    <Button Margin="6,0,0,6" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="SearchDatabaseButton_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Search24" FontSize="14" Margin="0,0,6,0" />
-                            <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_SearchDatabase}" />
-                        </StackPanel>
+                    <Button Margin="8,0,0,8" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="SearchDatabaseButton_Click"
+                            ToolTip="{x:Static resources:Strings.Menu_FastFlagEditor_SearchDatabase}" AutomationProperties.Name="{x:Static resources:Strings.Menu_FastFlagEditor_SearchDatabase}">
+                        <ui:SymbolIcon Symbol="Search24" FontSize="15" />
                     </Button>
-                    <Button Margin="6,0,0,6" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="ExportJSONButton_Click">
+                    <Button Margin="8,0,0,8" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="ExportJSONButton_Click">
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Symbol="ArrowExportRtl24" FontSize="14" Margin="0,0,6,0" />
                             <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_ExportJson}" />
                         </StackPanel>
                     </Button>
-                    <Button Margin="6,0,0,6" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="CleanList_Click"
+                    <Button Margin="8,0,0,8" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="CleanList_Click"
                             ToolTip="Remove the flags Roblox ignores, keeping only the ones on its allowlist">
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Symbol="Broom24" FontSize="14" Margin="0,0,6,0" />
                             <TextBlock Text="Clean list" />
                         </StackPanel>
                     </Button>
-                    <Button x:Name="TurnOffButton" Margin="6,0,0,6" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="TurnOffButton_Click" Visibility="Collapsed"
+                    <Button x:Name="TurnOffButton" Margin="8,0,0,8" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="TurnOffButton_Click" Visibility="Collapsed"
                             ToolTip="{x:Static resources:Strings.Menu_FastFlagEditor_PickFlagsFromOwnListProfile}">
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Symbol="SubtractCircle24" FontSize="14" Margin="0,0,6,0" />
                             <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_TurnOffOneFlags}" />
                         </StackPanel>
                     </Button>
-                    <Button x:Name="DeleteSelectedButton" Margin="6,0,0,6" FontWeight="SemiBold" Click="DeleteButton_Click" Visibility="Collapsed">
+                    <Button x:Name="DeleteSelectedButton" Margin="8,0,0,8" FontWeight="SemiBold" Click="DeleteButton_Click" Visibility="Collapsed">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource PhasmaGhostButton}">
                                 <Style.Triggers>
@@ -352,7 +389,7 @@
                             <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_DeleteSelected}" />
                         </StackPanel>
                     </Button>
-                    <Button x:Name="AddButton" Margin="6,0,0,6" Style="{DynamicResource PhasmaAccentButton}" Click="AddButton_Click">
+                    <Button x:Name="AddButton" Margin="8,0,0,8" Style="{DynamicResource PhasmaAccentButton}" Click="AddButton_Click">
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Symbol="Add24" FontSize="14" Margin="0,0,6,0" />
                             <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_AddNew}" />
@@ -361,23 +398,21 @@
                 </WrapPanel>
 
                 <WrapPanel DockPanel.Dock="Left" VerticalAlignment="Center">
-                    <ui:TextBox x:Name="SearchTextBox" Width="240" Margin="0,0,8,6" Icon="Search24" PlaceholderText="{x:Static resources:Strings.Menu_FastFlagEditor_Search}" TextChanged="SearchTextBox_TextChanged" />
-                    <ToggleButton x:Name="TogglePresetsButton" Margin="0,0,6,6" VerticalAlignment="Center" Style="{DynamicResource PhasmaChip}" Content="{x:Static resources:Strings.Menu_FastFlagEditor_HideToggleFlags}" Click="ToggleButton_Click"
+                    <ui:TextBox x:Name="SearchTextBox" Width="220" Margin="0,0,8,8" Icon="Search24" PlaceholderText="{x:Static resources:Strings.Menu_FastFlagEditor_Search}" TextChanged="SearchTextBox_TextChanged" />
+                    <ToggleButton x:Name="TogglePresetsButton" Margin="0,0,8,8" VerticalAlignment="Center" Style="{DynamicResource PhasmaChip}" Content="{x:Static resources:Strings.Menu_FastFlagEditor_HideToggleFlags}" Click="ToggleButton_Click"
                                   ToolTip="{x:Static resources:Strings.Menu_FastFlagEditor_LeaveOutFlagsSetByToggles}" />
-                    <ToggleButton x:Name="ShowYoursButton" Margin="0,0,6,6" VerticalAlignment="Center" Style="{DynamicResource PhasmaChip}" Content="{x:Static resources:Strings.Menu_FastFlagEditor_ShowFlagsToo}" IsChecked="True" Click="ShowYoursButton_Click" Visibility="Collapsed"
+                    <ToggleButton x:Name="ShowYoursButton" Margin="0,0,8,8" VerticalAlignment="Center" Style="{DynamicResource PhasmaChip}" Content="{x:Static resources:Strings.Menu_FastFlagEditor_ShowFlagsToo}" IsChecked="True" Click="ShowYoursButton_Click" Visibility="Collapsed"
                                   ToolTip="{x:Static resources:Strings.Menu_FastFlagEditor_ListOwnFlagsAsWellSo}" />
-                    <Border Margin="4,0,0,6" Padding="2" VerticalAlignment="Center" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="{DynamicResource PhasmaPanelBrush}"
+                    <Border Margin="0,0,0,8" Padding="3" VerticalAlignment="Center" CornerRadius="8" Background="{DynamicResource PhasmaPanelBrush}"
                             BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
                         <StackPanel Orientation="Horizontal">
                             <RadioButton x:Name="CardsViewButton" Style="{StaticResource ViewSwitch}" IsChecked="True" Checked="ViewSwitch_Checked" ToolTip="Flags grouped into cards">
                                 <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="Grid24" FontSize="13" Margin="0,0,5,0" />
                                     <TextBlock Text="Cards" />
                                 </StackPanel>
                             </RadioButton>
                             <RadioButton x:Name="TableViewButton" Style="{StaticResource ViewSwitch}" Checked="ViewSwitch_Checked" ToolTip="Every flag in one table, with multi select">
                                 <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="WindowBulletList20" FontSize="13" Margin="0,0,5,0" />
                                     <TextBlock Text="Table view" />
                                 </StackPanel>
                             </RadioButton>
@@ -386,36 +421,37 @@
                 </WrapPanel>
             </DockPanel>
 
-            <!--  The list stays in the last (stretching) row; in table view the code sizes the page around it  -->
             <Grid Grid.Row="3">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <!--  Cards: one card per category  -->
                 <ItemsControl x:Name="CardsView" Grid.Row="0" Focusable="False" PreviewKeyDown="CardsView_PreviewKeyDown">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <controls:CardColumns MinColumnWidth="360" />
+                            <controls:CardColumns MinColumnWidth="440" />
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Padding="16,12,16,4" Style="{DynamicResource PhasmaCard}">
+                            <Border Padding="0" Style="{DynamicResource PhasmaCard}">
                                 <StackPanel>
-                                    <DockPanel Margin="0,0,0,8">
-                                        <Border DockPanel.Dock="Right" Style="{DynamicResource PhasmaTagNeutral}">
+                                    <DockPanel Margin="20,16">
+                                        <Border DockPanel.Dock="Right" VerticalAlignment="Center" Style="{DynamicResource PhasmaTagNeutral}">
                                             <TextBlock Text="{Binding CountText}" />
                                         </Border>
-                                        <ui:SymbolIcon Symbol="{Binding Symbol}" FontSize="15" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                        <TextBlock VerticalAlignment="Center" FontSize="13.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding Name}" />
+                                        <Border Width="34" Height="34" Margin="0,0,12,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaHoverBrush}" phui:CutCorners.Size="6">
+                                            <ui:SymbolIcon Symbol="{Binding Symbol}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                        </Border>
+                                        <TextBlock VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="15" FontWeight="Bold" Foreground="White" TextTrimming="CharacterEllipsis"
+                                                   Text="{Binding Name, Converter={StaticResource PhasmaUpper}}" />
                                     </DockPanel>
 
                                     <ItemsControl ItemsSource="{Binding Rows}" Focusable="False">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Border Padding="0,9,0,9" Background="Transparent" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}"
+                                                <Border Padding="20,14" MinHeight="60" Background="Transparent" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}"
                                                         Focusable="True" FocusVisualStyle="{x:Null}" Tag="{Binding}"
                                                         PreviewMouseLeftButtonDown="CardRow_PreviewMouseDown" PreviewMouseRightButtonDown="CardRow_PreviewMouseDown"
                                                         ContextMenuOpening="CardRow_ContextMenuOpening">
@@ -429,10 +465,10 @@
                                                             <ColumnDefinition Width="Auto" />
                                                         </Grid.ColumnDefinitions>
 
-                                                        <StackPanel Grid.Column="0" Margin="0,0,10,0" VerticalAlignment="Center" ToolTip="{Binding Name}">
-                                                            <TextBlock FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding Title}" />
-                                                            <TextBlock FontSize="11.5" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Description}" Style="{StaticResource HideWhenEmpty}" />
-                                                            <TextBlock Margin="0,1,0,0" FontFamily="Consolas" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Name}" />
+                                                        <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center" ToolTip="{Binding Name}">
+                                                            <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="White" TextTrimming="CharacterEllipsis" Text="{Binding Title}" />
+                                                            <TextBlock Margin="0,1,0,0" FontSize="12.5" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Description}" Style="{StaticResource HideWhenEmpty}" />
+                                                            <TextBlock Margin="0,2,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="12.5" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Name}" />
                                                             <TextBlock Text="{Binding Note}">
                                                                 <TextBlock.Style>
                                                                     <Style TargetType="TextBlock" BasedOn="{StaticResource FlagNoteText}">
@@ -446,15 +482,14 @@
                                                             </TextBlock>
                                                         </StackPanel>
 
-                                                        <!--  On/off switch for FFlag style flags, a value box for the rest  -->
                                                         <Grid Grid.Column="1" VerticalAlignment="Center">
                                                             <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding IsOn, Mode=OneWay}" Tag="{Binding}" Click="CardSwitch_Click" Visibility="{Binding SwitchVisibility}" />
-                                                            <TextBox Width="130" Padding="8,4" FontFamily="Consolas" FontSize="12" Text="{Binding Value, Mode=OneWay}" Tag="{Binding}" Visibility="{Binding ValueBoxVisibility}"
+                                                            <TextBox Width="120" Padding="10,5" HorizontalContentAlignment="Right" FontFamily="{DynamicResource PhasmaMono}" FontSize="12.5" Text="{Binding Value, Mode=OneWay}" Tag="{Binding}" Visibility="{Binding ValueBoxVisibility}"
                                                                      KeyDown="CardValue_KeyDown" LostKeyboardFocus="CardValue_LostKeyboardFocus"
                                                                      ToolTip="Type a value, then press Enter" />
                                                         </Grid>
 
-                                                        <Button Grid.Column="2" Margin="6,0,0,0" Width="28" Height="28" VerticalAlignment="Center" Style="{DynamicResource PhasmaIconButton}" Tag="{Binding}" Click="CardDelete_Click"
+                                                        <Button Grid.Column="2" Margin="10,0,0,0" Width="28" Height="28" VerticalAlignment="Center" Style="{DynamicResource PhasmaIconButton}" Tag="{Binding}" Click="CardDelete_Click"
                                                                 ToolTip="{Binding DeleteHint}" AutomationProperties.Name="{Binding DeleteHint}">
                                                             <ui:SymbolIcon Symbol="Dismiss16" FontSize="12" />
                                                         </Button>
@@ -469,7 +504,6 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <!--  Table view: the full editor grid  -->
                 <Border x:Name="TableView" Grid.Row="0" Padding="8,4,8,4" Style="{DynamicResource PhasmaCard}" Visibility="Collapsed">
                     <DataGrid Name="DataGrid" MinHeight="260" controls:ScrollBubbling.Enabled="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                               CellEditEnding="DataGrid_CellEditEnding" BeginningEdit="DataGrid_BeginningEdit" CanUserReorderColumns="False" ContextMenuOpening="DataGrid_ContextMenuOpening"
@@ -539,26 +573,27 @@
                 <TextBlock x:Name="EmptyText" Grid.Row="0" Margin="12,52,12,0" VerticalAlignment="Top" HorizontalAlignment="Center" TextAlignment="Center" IsHitTestVisible="False" TextWrapping="Wrap" FontSize="13"
                            Foreground="{DynamicResource TextFillColorTertiaryBrush}" Visibility="Collapsed" />
 
-                <!--  How editing works, and the allowlist caveat  -->
-                <Border Grid.Row="1" Margin="0,12,0,0" Padding="14,10" Style="{DynamicResource PhasmaCard}">
-                    <Grid>
+                <Grid Grid.Row="1" Margin="0,16,0,0">
+                    <Border Background="{DynamicResource PhasmaWarnBrush}" Opacity="0.07" CornerRadius="10" />
+                    <Border BorderBrush="{DynamicResource PhasmaWarnBrush}" BorderThickness="1" Opacity="0.28" CornerRadius="10" />
+                    <Grid Margin="16,12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="Warning24" FontSize="15" Margin="0,1,10,0" VerticalAlignment="Top" Foreground="{DynamicResource PhasmaWarnBrush}" />
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Warning24" FontSize="18" Margin="0,0,12,0" VerticalAlignment="Top" Foreground="{DynamicResource PhasmaWarnBrush}" />
                         <StackPanel Grid.Column="1">
-                            <TextBlock x:Name="EditHintText" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                            <TextBlock x:Name="EditHintText" Style="{StaticResource NoteText}"
                                        Text="Type a value and press Enter to change a flag. A profile holds flag changes for chosen games only. Give it to games on Per game flags." />
-                            <TextBlock Margin="0,4,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
-                                <Run FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_FastFlagEditor_BannerTitle}" />
+                            <TextBlock Margin="0,4,0,0" Style="{StaticResource NoteText}">
+                                <Run FontWeight="SemiBold" Foreground="White" Text="{x:Static resources:Strings.Menu_FastFlagEditor_BannerTitle}" />
                                 <Run Text="{x:Static resources:Strings.Menu_FastFlagEditor_BannerText}" />
                             </TextBlock>
-                            <controls:MarkdownTextBlock Margin="0,4,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                            <controls:MarkdownTextBlock Margin="0,4,0,0" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                                         MarkdownText="{Binding Source={x:Static resources:Strings.Menu_FastFlagEditor_AllowlistInformation}, Converter={StaticResource StringFormatConverter}, ConverterParameter='https://devforum.roblox.com/t/allowlist-for-local-client-configuration-via-fast-flags/3966569'}" />
                         </StackPanel>
                     </Grid>
-                </Border>
+                </Grid>
             </Grid>
         </Grid>
         </ScrollViewer>

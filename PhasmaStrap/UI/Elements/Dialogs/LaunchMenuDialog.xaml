@@ -23,48 +23,17 @@
     <Window.Resources>
         <BlurEffect x:Key="MistBlurLarge" Radius="70" />
 
-        <!--  One of the three big choices: a card sized row with an icon, a label and a chevron  -->
         <Style x:Key="LaunchChoice" TargetType="{x:Type Button}" BasedOn="{StaticResource PhasmaSoftButton}">
             <Setter Property="Padding" Value="16,14" />
             <Setter Property="FontSize" Value="13.5" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="Background" Value="{DynamicResource PhasmaPanelRaisedBrush}" />
+            <Setter Property="Background" Value="{DynamicResource PhasmaPanelBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PhasmaStrokeStrongBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="MinHeight" Value="56" />
         </Style>
 
-        <Storyboard x:Key="MistDrift" Timeline.DesiredFrameRate="30" RepeatBehavior="Forever">
-            <DoubleAnimation
-                Storyboard.TargetName="MistTranslate1"
-                Storyboard.TargetProperty="X"
-                From="-80" To="100" Duration="0:0:14" AutoReverse="True">
-                <DoubleAnimation.EasingFunction>
-                    <SineEase EasingMode="EaseInOut" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-            <DoubleAnimation
-                Storyboard.TargetName="MistTranslate1"
-                Storyboard.TargetProperty="Y"
-                From="30" To="-40" Duration="0:0:11" AutoReverse="True">
-                <DoubleAnimation.EasingFunction>
-                    <SineEase EasingMode="EaseInOut" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-            <DoubleAnimation
-                Storyboard.TargetName="MistTranslate2"
-                Storyboard.TargetProperty="X"
-                From="90" To="-110" Duration="0:0:16" AutoReverse="True">
-                <DoubleAnimation.EasingFunction>
-                    <SineEase EasingMode="EaseInOut" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-            <DoubleAnimation
-                Storyboard.TargetName="MistTranslate2"
-                Storyboard.TargetProperty="Y"
-                From="-40" To="35" Duration="0:0:12.5" AutoReverse="True">
-                <DoubleAnimation.EasingFunction>
-                    <SineEase EasingMode="EaseInOut" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-        </Storyboard>
+        <Storyboard x:Key="MistDrift" />
     </Window.Resources>
 
     <Grid>
@@ -73,50 +42,33 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Canvas Grid.RowSpan="2" ClipToBounds="True" IsHitTestVisible="False">
-            <Ellipse x:Name="Mist1" Width="480" Height="480" Canvas.Left="-160" Canvas.Top="-200" Opacity="0.12" Effect="{StaticResource MistBlurLarge}" Fill="{DynamicResource BackgroundGlowPrimaryBrush}">
-                <Ellipse.RenderTransform>
-                    <TranslateTransform x:Name="MistTranslate1" X="-80" Y="30" />
-                </Ellipse.RenderTransform>
-                <Ellipse.OpacityMask>
-                    <RadialGradientBrush>
-                        <GradientStop Color="#8F000000" Offset="0" />
-                        <GradientStop Color="#00000000" Offset="1" />
-                    </RadialGradientBrush>
-                </Ellipse.OpacityMask>
-            </Ellipse>
-            <Ellipse x:Name="Mist2" Width="420" Height="420" Canvas.Left="240" Canvas.Top="160" Opacity="0.15" Effect="{StaticResource MistBlurLarge}" Fill="{DynamicResource BackgroundGlowSecondaryBrush}">
-                <Ellipse.RenderTransform>
-                    <TranslateTransform x:Name="MistTranslate2" X="90" Y="-40" />
-                </Ellipse.RenderTransform>
-                <Ellipse.OpacityMask>
-                    <RadialGradientBrush>
-                        <GradientStop Color="#80000000" Offset="0" />
-                        <GradientStop Color="#00000000" Offset="1" />
-                    </RadialGradientBrush>
-                </Ellipse.OpacityMask>
-            </Ellipse>
-        </Canvas>
+        <Border Grid.RowSpan="2" IsHitTestVisible="False">
+            <Border.Background>
+                <RadialGradientBrush Center="0.08,0.05" GradientOrigin="0.08,0.05" RadiusX="0.75" RadiusY="0.9">
+                    <GradientStop Offset="0" Color="#2EE0202F" />
+                    <GradientStop Offset="0.6" Color="#0DE0202F" />
+                    <GradientStop Offset="1" Color="#00E0202F" />
+                </RadialGradientBrush>
+            </Border.Background>
+        </Border>
 
         <ui:TitleBar Grid.Row="0" Padding="8" ShowMinimize="False" ShowMaximize="False" CanMaximize="False" KeyboardNavigation.TabNavigation="None" />
 
         <StackPanel Grid.Row="1" Margin="28,0,28,26">
-            <!--  App name and version  -->
             <Image Width="64" Height="64" HorizontalAlignment="Center" Source="pack://application:,,,/Resources/PhasmaStrapLogo.png" RenderOptions.BitmapScalingMode="HighQuality" />
-            <TextBlock Margin="0,14,0,0" HorizontalAlignment="Center" FontSize="22" Text="PhasmaStrap" Style="{DynamicResource PhasmaTitle}" />
+            <TextBlock Margin="0,12,0,0" HorizontalAlignment="Center" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="PhasmaStrap" />
             <TextBlock Margin="0,4,0,18" HorizontalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Version, Mode=OneTime}" />
 
-            <!--  What to do next  -->
-            <Button TabIndex="0" Command="{Binding LaunchRobloxCommand, Mode=OneTime}" BorderBrush="{DynamicResource PhasmaAccentStrokeBrush}" Style="{StaticResource LaunchChoice}">
+            <Button TabIndex="0" Command="{Binding LaunchRobloxCommand, Mode=OneTime}" Background="{DynamicResource PhasmaAccentSoftBrush}" BorderBrush="{DynamicResource PhasmaAccentStrokeBrush}" Style="{StaticResource LaunchChoice}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Grid.Column="0" Symbol="Play24" Filled="True" FontSize="16" Foreground="{DynamicResource PhasmaAccentBrush}" />
+                    <ui:SymbolIcon Grid.Column="0" Symbol="Play24" Filled="True" FontSize="16" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                     <TextBlock Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.LaunchMenu_LaunchRoblox}" />
-                    <ui:SymbolIcon Grid.Column="2" Symbol="ChevronRight24" FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <ui:SymbolIcon Grid.Column="2" Symbol="ChevronRight24" FontSize="13" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                 </Grid>
             </Button>
 
@@ -127,9 +79,9 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Grid.Column="0" Symbol="Code24" FontSize="16" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <ui:SymbolIcon Grid.Column="0" Symbol="Code24" FontSize="16" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                     <TextBlock Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.LaunchMenu_LaunchRobloxStudio}" />
-                    <ui:SymbolIcon Grid.Column="2" Symbol="ChevronRight24" FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <ui:SymbolIcon Grid.Column="2" Symbol="ChevronRight24" FontSize="13" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                 </Grid>
             </Button>
 
@@ -140,16 +92,15 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Grid.Column="0" Symbol="Settings24" FontSize="16" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <ui:SymbolIcon Grid.Column="0" Symbol="Settings24" FontSize="16" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                     <TextBlock Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.LaunchMenu_ConfigureSettings}" />
-                    <ui:SymbolIcon Grid.Column="2" Symbol="ChevronRight24" FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <ui:SymbolIcon Grid.Column="2" Symbol="ChevronRight24" FontSize="13" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                 </Grid>
             </Button>
 
-            <!--  Links  -->
             <StackPanel Margin="0,14,0,0" HorizontalAlignment="Center" Orientation="Horizontal">
-                <ui:Hyperlink Content="{x:Static resources:Strings.About_Title}" Command="{Binding LaunchAboutCommand, Mode=OneTime}" FontSize="12" />
-                <ui:Hyperlink Margin="8,0,0,0" Content="Support on Ko-fi" NavigateUri="https://ko-fi.com/lacedscene" FontSize="12" />
+                <ui:Hyperlink Content="{x:Static resources:Strings.About_Title}" Command="{Binding LaunchAboutCommand, Mode=OneTime}" FontSize="12" Foreground="{DynamicResource PhasmaRedTextBrush}" />
+                <ui:Hyperlink Margin="8,0,0,0" Content="Support on Ko-fi" NavigateUri="https://ko-fi.com/lacedscene" FontSize="12" Foreground="{DynamicResource PhasmaRedTextBrush}" />
             </StackPanel>
         </StackPanel>
     </Grid>

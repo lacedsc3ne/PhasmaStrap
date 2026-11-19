@@ -64,6 +64,11 @@ namespace PhasmaStrap.Utility
 
         public static TrimResult TrimAllProcessWorkingSets() => TrimAllProcessWorkingSets(false);
 
+        private static readonly HashSet<string> GameplayCriticalProcesses = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "dwm", "audiodg", "csrss", "System", "Idle", "Registry", "Memory Compression", "smss", "wininit", "winlogon", "lsass", "fontdrvhost",
+        };
+
         public static TrimResult TrimAllProcessWorkingSets(bool skipRoblox)
         {
             int trimmed = 0;
@@ -83,6 +88,9 @@ namespace PhasmaStrap.Utility
                             skipped++;
                             continue;
                         }
+
+                        if (skipRoblox && GameplayCriticalProcesses.Contains(process.ProcessName))
+                            continue;
 
                         long before = process.WorkingSet64;
 
@@ -122,6 +130,9 @@ namespace PhasmaStrap.Utility
             string? processPath = Environment.ProcessPath;
             if (string.IsNullOrEmpty(processPath))
                 return false;
+
+            if (Networking.ClassicHostsFile.IsCurrentProcessAdministrator())
+                return PurgeStandbyListNow();
 
             try
             {

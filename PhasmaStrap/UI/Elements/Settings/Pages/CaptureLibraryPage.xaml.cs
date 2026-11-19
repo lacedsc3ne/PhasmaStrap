@@ -8,7 +8,6 @@ using PhasmaStrap.UI.ViewModels.Settings;
 
 namespace PhasmaStrap.UI.Elements.Settings.Pages
 {
-    /// <summary>Capture > Library: every screenshot, clip and GIF in one grid with a detail panel.</summary>
     public partial class CaptureLibraryPage
     {
         private readonly CaptureLibraryPageViewModel _viewModel = new();

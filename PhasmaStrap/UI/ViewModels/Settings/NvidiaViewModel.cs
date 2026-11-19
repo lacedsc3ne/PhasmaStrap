@@ -79,7 +79,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         private string _gpuBannerTitle = "Roblox driver profile";
 
-        /// <summary>Banner title: the card name and NVIDIA driver version when Windows reports them.</summary>
         public string GpuBannerTitle
         {
             get => _gpuBannerTitle;

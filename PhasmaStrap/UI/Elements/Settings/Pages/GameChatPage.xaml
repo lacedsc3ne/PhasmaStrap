@@ -6,56 +6,90 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       mc:Ignorable="d"
       Title="GameChatPage"
       Scrollable="True">
-    <StackPanel Margin="0,0,14,14">
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-            <TextBlock Style="{DynamicResource PhasmaPageTitle}" VerticalAlignment="Center" Text="Game chat" />
-            <Border Style="{DynamicResource PhasmaTagNeutral}" Margin="12,0,0,0">
-                <TextBlock FontSize="11" Text="PhasmaStrap" />
-            </Border>
-        </StackPanel>
+    <ui:UiPage.Resources>
+        <Style x:Key="ChatSegItem" TargetType="ListBoxItem">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Bd" Padding="12,6" Margin="1" Background="Transparent" phui:CutCorners.Size="4"
+                                TextElement.FontSize="13" TextElement.FontWeight="SemiBold" TextElement.Foreground="{DynamicResource TextFillColorTertiaryBrush}">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="TextElement.Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource PhasmaS4Brush}" />
+                                <Setter TargetName="Bd" Property="TextElement.Foreground" Value="White" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </ui:UiPage.Resources>
 
-        <!--  What it is, and the keyboard hook notice  -->
-        <Border Style="{DynamicResource PhasmaCard}" Padding="14,10" Margin="0,0,0,12">
+    <StackPanel Margin="0,0,14,14">
+        <controls:PageHeader Title="Game chat" Subtitle="A chat overlay that sits on top of Roblox, with optional cross-player chat and auto-translate." />
+
+        <Border Margin="0,0,0,20" Padding="16,12" BorderThickness="1" phui:CutCorners.Size="6" Background="#14FFB020" BorderBrush="#59FFB020">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <ui:SymbolIcon Grid.Column="0" Symbol="Info24" FontSize="15" Margin="0,1,10,0" VerticalAlignment="Top" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <ui:SymbolIcon Grid.Column="0" Symbol="Info24" FontSize="16" Margin="0,1,12,0" VerticalAlignment="Top" Foreground="{DynamicResource PhasmaWarnBrush}" />
                 <StackPanel Grid.Column="1">
-                    <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_GameChat_Description}" />
-                    <TextBlock Margin="0,2,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_GameChat_KeyboardHookNotice}" />
+                    <TextBlock FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="White" Text="{x:Static resources:Strings.Menu_GameChat_Description}" />
+                    <TextBlock Margin="0,3,0,0" FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_GameChat_KeyboardHookNotice}" />
                 </StackPanel>
             </Grid>
         </Border>
 
-        <controls:CardColumns>
-            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_GameChat_General_Title}">
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_GameChat_Enabled_Title}" Description="{x:Static resources:Strings.Menu_GameChat_Enabled_Description}">
-                    <ui:ToggleSwitch IsChecked="{Binding GameChatEnabled, Mode=TwoWay}" />
-                </controls:OptionControl>
+        <controls:SettingsCard Header="{x:Static resources:Strings.Menu_GameChat_General_Title}" Description="The overlay and where its messages go">
+            <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_GameChat_Enabled_Title}" Description="{x:Static resources:Strings.Menu_GameChat_Enabled_Description}">
+                <ui:ToggleSwitch IsChecked="{Binding GameChatEnabled, Mode=TwoWay}" />
+            </controls:OptionControl>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_GameChat_ServerUrl_Title}" Description="{x:Static resources:Strings.Menu_GameChat_ServerUrl_Description}">
-                    <ui:TextBox Width="180" PlaceholderText="wss://" Text="{Binding GameChatServerUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                </controls:OptionControl>
+            <controls:OptionControl Flat="True" Padding="36,0,0,0" IsEnabled="{Binding GameChatEnabled, Mode=OneWay}" Header="{x:Static resources:Strings.Menu_GameChat_ServerUrl_Title}" Description="{x:Static resources:Strings.Menu_GameChat_ServerUrl_Description}">
+                <ui:TextBox Width="300" Icon="Globe24" PlaceholderText="https://" Text="{Binding GameChatServerUrl, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+            </controls:OptionControl>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_GameChat_MessageFilter_Title}" Description="{x:Static resources:Strings.Menu_GameChat_MessageFilter_Description}">
-                    <ComboBox MinWidth="120" Padding="10,5,10,5" ItemsSource="{Binding FilterPreferenceOptions, Mode=OneTime}" SelectedItem="{Binding GameChatFilterPreference, Mode=TwoWay}" />
-                </controls:OptionControl>
-            </controls:SettingsCard>
+            <controls:OptionControl Flat="True" Padding="36,0,0,0" IsEnabled="{Binding GameChatEnabled, Mode=OneWay}" Header="{x:Static resources:Strings.Menu_GameChat_MessageFilter_Title}" Description="{x:Static resources:Strings.Menu_GameChat_MessageFilter_Description}">
+                <Border Background="{DynamicResource PhasmaChromeBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1" Padding="2" phui:CutCorners.Size="6">
+                    <ListBox ItemsSource="{Binding FilterPreferenceOptions, Mode=OneTime}" SelectedItem="{Binding GameChatFilterPreference, Mode=TwoWay}"
+                             Background="Transparent" BorderThickness="0" Padding="0" ItemContainerStyle="{StaticResource ChatSegItem}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                        <ListBox.Template>
+                            <ControlTemplate TargetType="ListBox">
+                                <ItemsPresenter />
+                            </ControlTemplate>
+                        </ListBox.Template>
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
+                </Border>
+            </controls:OptionControl>
+        </controls:SettingsCard>
 
-            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_GameChat_Translation_Title}">
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_GameChat_Translation_Enable_Title}" Description="{x:Static resources:Strings.Menu_GameChat_Translation_Enable_Description}">
-                    <ui:ToggleSwitch IsChecked="{Binding AutoTranslate, Mode=TwoWay}" />
-                </controls:OptionControl>
+        <controls:SettingsCard Header="{x:Static resources:Strings.Menu_GameChat_Translation_Title}" Description="Machine translation for incoming messages">
+            <controls:OptionControl Flat="True" IsEnabled="{Binding GameChatEnabled, Mode=OneWay}" Header="{x:Static resources:Strings.Menu_GameChat_Translation_Enable_Title}" Description="{x:Static resources:Strings.Menu_GameChat_Translation_Enable_Description}">
+                <ui:ToggleSwitch IsChecked="{Binding AutoTranslate, Mode=TwoWay}" />
+            </controls:OptionControl>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_GameChat_Translation_Language_Title}" Description="{x:Static resources:Strings.Menu_GameChat_Translation_Language_Description}">
-                    <ComboBox MinWidth="140" Padding="10,5,10,5" ItemsSource="{Binding AutoTranslateLanguages, Mode=OneTime}" DisplayMemberPath="Value" SelectedValuePath="Key" SelectedValue="{Binding AutoTranslateLanguage, Mode=TwoWay}" />
-                </controls:OptionControl>
-            </controls:SettingsCard>
-        </controls:CardColumns>
+            <controls:OptionControl Flat="True" Padding="36,0,0,0" IsEnabled="{Binding LanguagePickerEnabled, Mode=OneWay}" Header="{x:Static resources:Strings.Menu_GameChat_Translation_Language_Title}" Description="{x:Static resources:Strings.Menu_GameChat_Translation_Language_Description}">
+                <ComboBox MinWidth="170" Padding="10,5,10,5" ItemsSource="{Binding AutoTranslateLanguages, Mode=OneTime}" DisplayMemberPath="Value" SelectedValuePath="Key" SelectedValue="{Binding AutoTranslateLanguage, Mode=TwoWay}" />
+            </controls:OptionControl>
+        </controls:SettingsCard>
     </StackPanel>
 </ui:UiPage>

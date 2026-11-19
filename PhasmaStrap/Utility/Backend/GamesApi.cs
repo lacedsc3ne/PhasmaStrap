@@ -2,33 +2,26 @@ using PhasmaStrap.Integrations;
 
 namespace PhasmaStrap.Utility.Backend
 {
-    /// <summary>What Liam's server knows about one public server (job id). Every field may be missing.</summary>
     public sealed class ServerStats
     {
         [JsonPropertyName("job_id")]
         public string JobId { get; set; } = "";
 
-        /// <summary>Datacenter city, for example "Frankfurt".</summary>
         [JsonPropertyName("city")]
         public string City { get; set; } = "";
 
-        /// <summary>Two letter country code, for example "DE".</summary>
         [JsonPropertyName("country")]
         public string Country { get; set; } = "";
 
-        /// <summary>Two letter continent code: EU, NA, SA, AS, OC or AF.</summary>
         [JsonPropertyName("continent")]
         public string Continent { get; set; } = "";
 
-        /// <summary>The server's own frame rate as Roblox last listed it.</summary>
         [JsonPropertyName("server_fps")]
         public double? ServerFps { get; set; }
 
-        /// <summary>Average frame rate PhasmaStrap players reported while in this server.</summary>
         [JsonPropertyName("client_fps")]
         public double? ClientFps { get; set; }
 
-        /// <summary>Unix seconds of the first time anyone saw this server. Used as its start time.</summary>
         [JsonPropertyName("first_seen")]
         public long? FirstSeen { get; set; }
 
@@ -48,7 +41,6 @@ namespace PhasmaStrap.Utility.Backend
         public List<ServerStats> Servers { get; set; } = new();
     }
 
-    /// <summary>Player and server totals for one place.</summary>
     public sealed class PlaceStats
     {
         [JsonPropertyName("place_id")]
@@ -70,7 +62,6 @@ namespace PhasmaStrap.Utility.Backend
         public List<PlaceStats> Places { get; set; } = new();
     }
 
-    /// <summary>One public server as the client saw it in Roblox's list, sent along with a lookup.</summary>
     public sealed class ServerSeen
     {
         [JsonPropertyName("job_id")]
@@ -95,10 +86,8 @@ namespace PhasmaStrap.Utility.Backend
         public List<ServerSeen> Servers { get; set; } = new();
     }
 
-    /// <summary>What the client reports about the server it is playing in.</summary>
     public sealed class ServerReport
     {
-        /// <summary>"join" once the region is known, "leave" when the player leaves.</summary>
         [JsonPropertyName("event")]
         public string Event { get; set; } = "";
 
@@ -130,10 +119,6 @@ namespace PhasmaStrap.Utility.Backend
         public int FpsSamples { get; set; }
     }
 
-    /// <summary>
-    /// Server side data for the Games pages: region, uptime and frame rate per job id, players per place.
-    /// Every call fails soft and returns an empty result, so the pages just leave those cells blank.
-    /// </summary>
     public static class GamesApi
     {
         private const int LookupBatch = 100;
@@ -143,7 +128,6 @@ namespace PhasmaStrap.Utility.Backend
         private static readonly Dictionary<string, (DateTime At, ServerStats? Stats)> _stats = new(StringComparer.OrdinalIgnoreCase);
         private static readonly object _lock = new();
 
-        /// <summary>Region, uptime and FPS for the given servers of one place, keyed by job id. Missing servers are simply absent.</summary>
         public static async Task<Dictionary<string, ServerStats>> LookupServersAsync(long placeId, IEnumerable<ServerListItem> servers, CancellationToken ct = default)
         {
             var result = new Dictionary<string, ServerStats>(StringComparer.OrdinalIgnoreCase);
@@ -210,10 +194,6 @@ namespace PhasmaStrap.Utility.Backend
             return result;
         }
 
-        /// <summary>
-        /// Everything known about these servers: regions you have seen yourself first (session history),
-        /// then whatever PhasmaStrap's server adds (region, uptime, FPS). Keyed by job id.
-        /// </summary>
         public static async Task<Dictionary<string, ServerStats>> FactsAsync(long placeId, IReadOnlyCollection<ServerListItem> servers, CancellationToken ct = default)
         {
             var facts = new Dictionary<string, ServerStats>(StringComparer.OrdinalIgnoreCase);
@@ -245,7 +225,6 @@ namespace PhasmaStrap.Utility.Backend
             return facts;
         }
 
-        /// <summary>Players and servers per place, keyed by place id. Empty when the server doesn't answer.</summary>
         public static async Task<Dictionary<long, PlaceStats>> GetPlaceStatsAsync(IEnumerable<long> placeIds)
         {
             List<long> ids = placeIds.Where(id => id > 0).Distinct().OrderBy(id => id).Take(50).ToList();
@@ -258,14 +237,9 @@ namespace PhasmaStrap.Utility.Backend
                 ?? new Dictionary<long, PlaceStats>();
         }
 
-        /// <summary>Sends what the client knows about the server it is in. Only for signed in users, never throws.</summary>
         public static Task<bool> ReportServerAsync(ServerReport report) => PhasmaApi.PostAsync("/v1/games/servers/report", report);
     }
 
-    /// <summary>
-    /// Runs in the watcher: reports the public server you are playing in (region once known, then FPS when you leave),
-    /// so the server browser can show region, uptime and FPS for servers nobody else has looked up.
-    /// </summary>
     public static class GameServerReporter
     {
         private const string LOG_IDENT = "GameServerReporter";
@@ -307,7 +281,6 @@ namespace PhasmaStrap.Utility.Backend
         {
             End();
 
-            // Only public servers show up in the server browser, so the rest are never reported.
             if (data.PlaceId <= 0 || string.IsNullOrEmpty(data.JobId) || data.ServerType != ServerType.Public)
                 return;
 
@@ -321,8 +294,6 @@ namespace PhasmaStrap.Utility.Backend
                     JoinedUtc = DateTime.UtcNow,
                 };
             }
-
-            // The region arrives a moment later through ServerRegion.Changed, which sends the join report.
         }
 
         private static void Sample()

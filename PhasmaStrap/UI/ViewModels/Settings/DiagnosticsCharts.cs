@@ -1,9 +1,5 @@
 namespace PhasmaStrap.UI.ViewModels.Settings
 {
-    /// <summary>
-    /// Turns the raw samples of the Connection and Stutter tools into a row of bars.
-    /// Long sample lists are binned so a chart never has more bars than fit comfortably.
-    /// </summary>
     internal static class DiagnosticsCharts
     {
         public const double Height = 48;
@@ -11,7 +7,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         private const int MaxPingBars = 60;
         private const int MaxFrameBars = 90;
 
-        /// <summary>Ping samples in milliseconds, with -1 for a ping that got no answer.</summary>
         public static List<DiagnosticsBar> PingBars(List<int> samples)
         {
             var bars = new List<DiagnosticsBar>();
@@ -61,7 +56,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             return bars;
         }
 
-        /// <summary>The worst frame time of each slice of a measurement, with stutters marked.</summary>
         public static List<DiagnosticsBar> FrameBars(PerformanceReport report)
         {
             var bars = new List<DiagnosticsBar>();

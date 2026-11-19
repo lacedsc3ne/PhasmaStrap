@@ -68,7 +68,6 @@ namespace PhasmaStrap.UI.Elements.Controls
 
         static OptionControl()
         {
-            // One right click menu for every setting row in the app.
             EventManager.RegisterClassHandler(typeof(OptionControl), MouseRightButtonUpEvent,
                 new MouseButtonEventHandler(global::PhasmaStrap.UI.Elements.Settings.SettingRowMenu.OnRowRightClick));
         }
@@ -97,7 +96,10 @@ namespace PhasmaStrap.UI.Elements.Controls
                 }
 
                 if (parent is Page)
+                {
+                    Loaded -= OnLoaded;
                     return;
+                }
 
                 parent = VisualTreeHelper.GetParent(parent);
             }

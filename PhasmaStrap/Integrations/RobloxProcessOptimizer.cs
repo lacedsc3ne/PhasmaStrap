@@ -13,8 +13,6 @@ namespace PhasmaStrap.Integrations
 
         private const int TrimDelayMs = 15000;
 
-        private const int TrimIntervalMs = 60000;
-
         private static readonly int ProcessorCount = Environment.ProcessorCount;
 
         private readonly int _processId;
@@ -29,11 +27,9 @@ namespace PhasmaStrap.Integrations
 
         private DateTime _unfocusedSinceUtc = DateTime.MinValue;
 
-        private long _lastTrimTicks;
+        private bool _trimmedThisTabOut;
 
         private ProcessPriorityClass? _lastPriority;
-
-        private ProcessPriorityClass? _selfPriority;
 
         private int? _lastCpuLimit;
 
@@ -48,6 +44,9 @@ namespace PhasmaStrap.Integrations
 
         [DllImport("user32.dll")]
         private static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll")]
+        private static extern bool IsIconic(IntPtr hWnd);
 
         [DllImport("user32.dll")]
         private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
@@ -126,7 +125,6 @@ namespace PhasmaStrap.Integrations
         {
             EnginePresetValues settings = EffectiveValues;
             bool focused = IsProcessFocused();
-            ApplySelfPriority(focused);
             ProcessPriorityClass desiredPriority = !focused && settings.RobloxEfficiencyMode ? ProcessPriorityClass.Idle : (!focused && settings.ReduceMemoryOutOfFocus ? ProcessPriorityClass.BelowNormal : ResolvePriority(settings));
             if (_lastPriority != desiredPriority)
             {
@@ -191,6 +189,7 @@ namespace PhasmaStrap.Integrations
             if (focused)
             {
                 _unfocusedSinceUtc = DateTime.MinValue;
+                _trimmedThisTabOut = false;
                 return;
             }
             if (_unfocusedSinceUtc == DateTime.MinValue)
@@ -198,42 +197,15 @@ namespace PhasmaStrap.Integrations
                 _unfocusedSinceUtc = DateTime.UtcNow;
                 return;
             }
-            if (settings.ReduceMemoryOutOfFocus && (DateTime.UtcNow - _unfocusedSinceUtc).TotalMilliseconds >= TrimDelayMs)
+            if (settings.ReduceMemoryOutOfFocus && !_trimmedThisTabOut && (DateTime.UtcNow - _unfocusedSinceUtc).TotalMilliseconds >= TrimDelayMs)
             {
+                _trimmedThisTabOut = true;
                 TrimWorkingSet(process);
             }
         }
 
-        private void ApplySelfPriority(bool robloxFocused)
+        private static void TrimWorkingSet(Process process)
         {
-            ProcessPriorityClass desired = robloxFocused ? ProcessPriorityClass.BelowNormal : ProcessPriorityClass.Normal;
-            if (_selfPriority == desired)
-            {
-                return;
-            }
-            try
-            {
-                using Process self = Process.GetCurrentProcess();
-                if (self.PriorityClass != desired)
-                {
-                    self.PriorityClass = desired;
-                }
-                _selfPriority = desired;
-            }
-            catch (Exception ex)
-            {
-                App.Logger.WriteLine("RobloxProcessOptimizer", "PhasmaStrap priority change failed: " + ex.Message);
-            }
-        }
-
-        private void TrimWorkingSet(Process process)
-        {
-            long now = Environment.TickCount64;
-            if (now - Interlocked.Read(ref _lastTrimTicks) < TrimIntervalMs)
-            {
-                return;
-            }
-            Interlocked.Exchange(ref _lastTrimTicks, now);
             try
             {
                 if (EmptyWorkingSet(process.Handle))
@@ -250,7 +222,6 @@ namespace PhasmaStrap.Integrations
 
         private void RestoreProcessState()
         {
-            ApplySelfPriority(robloxFocused: false);
             using Process? process = TryGetProcess();
             if (process == null || process.HasExited)
             {
@@ -278,10 +249,7 @@ namespace PhasmaStrap.Integrations
                     App.Logger.WriteLine("RobloxProcessOptimizer", "Priority boost could not be restored: " + ex.Message);
                 }
             }
-            if (!ShouldRun(App.Settings.Prop))
-            {
-                TryApplyPriority(process, ProcessPriorityClass.Normal);
-            }
+            TryApplyPriority(process, ShouldRun(App.Settings.Prop) ? ResolvePriority(EnginePresets.FromSettings(App.Settings.Prop)) : ProcessPriorityClass.Normal);
         }
 
         private Process? TryGetProcess()
@@ -301,7 +269,7 @@ namespace PhasmaStrap.Integrations
             try
             {
                 IntPtr foregroundWindow = GetForegroundWindow();
-                if (foregroundWindow == IntPtr.Zero)
+                if (foregroundWindow == IntPtr.Zero || IsIconic(foregroundWindow))
                 {
                     return false;
                 }
@@ -386,7 +354,7 @@ namespace PhasmaStrap.Integrations
             string priority = settings.RobloxPriorityLimit?.Trim() ?? "Normal";
             if (priority.Equals("Realtime", StringComparison.OrdinalIgnoreCase))
             {
-                return ProcessPriorityClass.RealTime;
+                return ProcessPriorityClass.High;
             }
             if (priority.Equals("High", StringComparison.OrdinalIgnoreCase))
             {

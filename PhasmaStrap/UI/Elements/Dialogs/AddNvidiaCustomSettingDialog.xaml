@@ -8,13 +8,18 @@
         xmlns:resources="clr-namespace:PhasmaStrap.Resources"
         mc:Ignorable="d"
         Title="{x:Static resources:Strings.Dialog_AddNvidiaCustomSetting_Title}"
-        Width="420"
+        Width="440"
         MinHeight="0"
         SizeToContent="Height"
         ResizeMode="NoResize"
-        Background="{ui:ThemeResource ApplicationBackgroundBrush}"
+        Background="{DynamicResource PhasmaPanelBrush}"
         ExtendsContentIntoTitleBar="True"
         WindowStartupLocation="CenterOwner">
+    <base:WpfUiWindow.Resources>
+        <Style x:Key="FieldLabel" TargetType="TextBlock" BasedOn="{StaticResource PhasmaCaption}">
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+    </base:WpfUiWindow.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -22,28 +27,32 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Padding="8" Title="{x:Static resources:Strings.Dialog_AddNvidiaCustomSetting_Title}" ShowMinimize="False" ShowMaximize="False" CanMaximize="False" KeyboardNavigation.TabNavigation="None" />
+        <Border Grid.Row="0" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,0,0,1" />
+        <TextBlock Grid.Row="0" Margin="20,0,60,0" VerticalAlignment="Center" IsHitTestVisible="False" Panel.ZIndex="1" TextTrimming="CharacterEllipsis"
+                   FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="15" FontWeight="Bold" Foreground="White"
+                   Text="{Binding Source={x:Static resources:Strings.Dialog_AddNvidiaCustomSetting_Title}, Converter={StaticResource PhasmaUpper}}" />
+        <ui:TitleBar Grid.Row="0" Height="52" MinHeight="52" Padding="0" Title="" ShowMinimize="False" ShowMaximize="False" CanMaximize="False" KeyboardNavigation.TabNavigation="None" />
 
-        <StackPanel Grid.Row="1" Margin="20,12">
-            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Dialog_AddNvidiaCustomSetting_Description}" Margin="0,0,0,12" />
+        <StackPanel Grid.Row="1" Margin="20,18,20,18">
+            <TextBlock TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Dialog_AddNvidiaCustomSetting_Description}" Margin="0,0,0,16" />
 
-            <TextBlock Text="{x:Static resources:Strings.Common_Name}" Margin="0,0,0,4" />
-            <TextBox x:Name="NameTextBox" Margin="0,0,0,12" />
+            <TextBlock Style="{StaticResource FieldLabel}" Text="{Binding Source={x:Static resources:Strings.Common_Name}, Converter={StaticResource PhasmaUpper}}" />
+            <TextBox x:Name="NameTextBox" Margin="0,0,0,14" />
 
-            <TextBlock Text="{x:Static resources:Strings.Dialog_AddNvidiaCustomSetting_SettingId}" Margin="0,0,0,4" />
-            <TextBox x:Name="SettingIdTextBox" Margin="0,0,0,12" />
+            <TextBlock Style="{StaticResource FieldLabel}" Text="{Binding Source={x:Static resources:Strings.Dialog_AddNvidiaCustomSetting_SettingId}, Converter={StaticResource PhasmaUpper}}" />
+            <TextBox x:Name="SettingIdTextBox" Margin="0,0,0,14" FontFamily="{DynamicResource PhasmaMono}" />
 
-            <TextBlock Text="{x:Static resources:Strings.Common_Value}" Margin="0,0,0,4" />
-            <TextBox x:Name="ValueTextBox" Margin="0,0,0,4" />
+            <TextBlock Style="{StaticResource FieldLabel}" Text="{Binding Source={x:Static resources:Strings.Common_Value}, Converter={StaticResource PhasmaUpper}}" />
+            <TextBox x:Name="ValueTextBox" Margin="0,0,0,6" FontFamily="{DynamicResource PhasmaMono}" />
             <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Dialog_AddNvidiaCustomSetting_ValueHint}" />
 
-            <TextBlock x:Name="StatusText" Margin="0,12,0,0" TextWrapping="Wrap" Foreground="{DynamicResource SystemFillColorCriticalBrush}" />
+            <TextBlock x:Name="StatusText" Margin="0,12,0,0" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource PhasmaRedTextBrush}" />
         </StackPanel>
 
-        <Border Grid.Row="2" Margin="0,10,0,0" Padding="15" Background="{ui:ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+        <Border Grid.Row="2" Padding="20,12" Background="{DynamicResource PhasmaSubnavBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0">
             <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-                <Button MinWidth="100" Content="{x:Static resources:Strings.Common_OK}" IsDefault="True" Click="OKButton_Click" />
-                <Button MinWidth="100" Margin="12,0,0,0" Content="{x:Static resources:Strings.Common_Cancel}" IsCancel="True" />
+                <Button MinWidth="80" Content="{x:Static resources:Strings.Common_Cancel}" IsCancel="True" Style="{DynamicResource PhasmaSoftButton}" />
+                <Button MinWidth="80" Margin="8,0,0,0" Content="{x:Static resources:Strings.Common_OK}" IsDefault="True" Click="OKButton_Click" Style="{DynamicResource PhasmaAccentButton}" />
             </StackPanel>
         </Border>
     </Grid>

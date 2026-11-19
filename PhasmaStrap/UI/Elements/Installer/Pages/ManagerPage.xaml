@@ -16,66 +16,64 @@
 
     <ui:UiPage.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-
         <DataTemplate x:Key="ProductCardTemplate">
-            <ui:Card Padding="14">
+            <Border Style="{StaticResource PhasmaCard}">
                 <StackPanel>
-                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding DisplayName}" TextWrapping="Wrap" />
-                    <TextBlock Margin="0,2,0,0" FontSize="12" Text="{Binding Description}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-
-                    <TextBlock Margin="0,10,0,0" FontSize="13" FontWeight="Medium" Text="{Binding StatusText, Mode=OneWay}" />
-                    <TextBlock Margin="0,2,0,0" FontSize="11" FontFamily="Consolas" Text="{Binding InstallLocation, Mode=OneWay}" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-
-                    <TextBlock Margin="0,6,0,0" FontSize="11" Text="{Binding ProgressText, Mode=OneWay}" TextWrapping="Wrap"
-                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                    <TextBlock FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding DisplayName, Converter={StaticResource PhasmaUpper}}" TextWrapping="Wrap" />
+                    <TextBlock Margin="0,4,0,0" FontSize="12.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Description}" TextWrapping="Wrap" />
+                    <TextBlock Margin="0,10,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" FontWeight="Medium" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding StatusText, Mode=OneWay}" TextWrapping="Wrap" />
+                    <TextBlock Margin="0,4,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding InstallLocation, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Margin="0,6,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" Foreground="{DynamicResource PhasmaWarnBrush}" Text="{Binding ProgressText, Mode=OneWay}" TextWrapping="Wrap"
                                Visibility="{Binding IsBusy, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}" />
-
                     <Grid Margin="0,12,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-
-                        <ui:Button Grid.Column="0" HorizontalAlignment="Stretch" Icon="ArrowDownload24"
-                                   Content="{x:Static resources:Strings.Common_Navigation_Install}"
-                                   IsEnabled="{Binding CanInstall, Mode=OneWay}"
-                                   Command="{Binding InstallCommand}" />
-
-                        <ui:Button Grid.Column="1" Margin="4,0,0,0" Icon="Folder24"
-                                   Content="{x:Static resources:Strings.Common_Open}"
-                                   Command="{Binding OpenCommand}" />
-
-                        <ui:Button Grid.Column="2" Margin="4,0,0,0" Icon="Delete24" Appearance="Secondary"
-                                   Content="{x:Static resources:Strings.Common_Delete}"
-                                   IsEnabled="{Binding CanDelete, Mode=OneWay}"
-                                   Command="{Binding DeleteCommand}" />
+                        <Button Grid.Column="0" HorizontalAlignment="Stretch" Command="{Binding InstallCommand}" IsEnabled="{Binding CanInstall, Mode=OneWay}" Style="{StaticResource PhasmaAccentButton}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon FontSize="15" Symbol="ArrowDownload24" />
+                                <TextBlock Margin="8,0,0,0" Text="{x:Static resources:Strings.Common_Navigation_Install}" />
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="1" Margin="6,0,0,0" Padding="10,9" AutomationProperties.Name="{x:Static resources:Strings.Common_Open}" Command="{Binding OpenCommand}" Style="{StaticResource PhasmaSoftButton}" ToolTip="{x:Static resources:Strings.Common_Open}">
+                            <ui:SymbolIcon FontSize="15" Symbol="Folder24" />
+                        </Button>
+                        <Button Grid.Column="2" Margin="6,0,0,0" Padding="10,9" AutomationProperties.Name="{x:Static resources:Strings.Common_Delete}" Command="{Binding DeleteCommand}" Foreground="{DynamicResource PhasmaRedTextBrush}" IsEnabled="{Binding CanDelete, Mode=OneWay}" Style="{StaticResource PhasmaSoftButton}" ToolTip="{x:Static resources:Strings.Common_Delete}">
+                            <ui:SymbolIcon FontSize="15" Symbol="Delete24" />
+                        </Button>
                     </Grid>
                 </StackPanel>
-            </ui:Card>
+            </Border>
         </DataTemplate>
     </ui:UiPage.Resources>
-
     <StackPanel Margin="0,0,14,14">
-        <TextBlock FontSize="20" FontWeight="SemiBold" Text="{x:Static resources:Strings.Installer_Manager_Title}" TextWrapping="Wrap" />
-        <TextBlock FontSize="14" Text="{x:Static resources:Strings.Installer_Manager_Text}" TextWrapping="Wrap" />
-
-        <Grid Margin="0,12,0,0">
+        <TextBlock Margin="0" FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding Source={x:Static resources:Strings.Installer_Manager_Title}, Converter={StaticResource PhasmaUpper}, Mode=OneTime}" TextWrapping="Wrap" />
+        <TextBlock Margin="0,6,0,0" FontSize="13" LineHeight="19" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="{x:Static resources:Strings.Installer_Manager_Text}" />
+        <Grid Margin="0,14,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-
-            <ContentControl Grid.Column="0" Margin="0,0,4,0" Content="{Binding Player}" ContentTemplate="{StaticResource ProductCardTemplate}" />
-            <ContentControl Grid.Column="1" Margin="4,0,0,0" Content="{Binding Studio}" ContentTemplate="{StaticResource ProductCardTemplate}" />
+            <ContentControl Grid.Column="0" Margin="0,0,5,0" Content="{Binding Player}" ContentTemplate="{StaticResource ProductCardTemplate}" />
+            <ContentControl Grid.Column="1" Margin="5,0,0,0" Content="{Binding Studio}" ContentTemplate="{StaticResource ProductCardTemplate}" />
         </Grid>
-
-        <TextBlock Margin="0,20,0,0" FontSize="14" FontWeight="SemiBold" Text="{x:Static resources:Strings.Installer_Manager_Map_Title}" />
-        <TextBlock Margin="0,2,0,0" FontSize="12" Text="{x:Static resources:Strings.Installer_Manager_Map_Description}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-
-        <ComboBox Margin="0,8,0,0" HorizontalAlignment="Left" MinWidth="160"
-                  ItemsSource="{Binding AvailableDrives}"
-                  SelectedItem="{Binding SelectedDrive, Mode=TwoWay}"
-                  IsEnabled="{Binding CanChangeMapLocation, Mode=OneWay}" />
+        <Border Margin="0,10,0,0" Style="{StaticResource PhasmaCard}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                    <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{x:Static resources:Strings.Installer_Manager_Map_Title}" />
+                    <TextBlock Margin="0,3,0,0" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Installer_Manager_Map_Description}" TextWrapping="Wrap" />
+                </StackPanel>
+                <ComboBox Grid.Column="1" MinWidth="160" VerticalAlignment="Center"
+                          ItemsSource="{Binding AvailableDrives}"
+                          SelectedItem="{Binding SelectedDrive, Mode=TwoWay}"
+                          IsEnabled="{Binding CanChangeMapLocation, Mode=OneWay}" />
+            </Grid>
+        </Border>
     </StackPanel>
 </ui:UiPage>

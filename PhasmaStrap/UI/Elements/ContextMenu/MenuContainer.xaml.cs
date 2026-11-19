@@ -83,7 +83,6 @@ namespace PhasmaStrap.UI.Elements.ContextMenu
 
         private void TrayMenu_Opened(object sender, RoutedEventArgs e) => RefreshHotkeyHints();
 
-        // Shows the hotkey bound on the Shortcuts page next to the matching tray item, or nothing if none is bound
         private void RefreshHotkeyHints()
         {
             ScreenshotHotkeyText.Text = HotkeyHint(PhasmaStrap.Utility.HotkeyActions.TakeScreenshot);

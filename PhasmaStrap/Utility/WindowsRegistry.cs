@@ -39,10 +39,6 @@ namespace PhasmaStrap.Utility
             Integrations.DiscordJoin.RegisterLaunchCommands();
         }
 
-        /// <summary>
-        /// PhasmaStrap's own link scheme (phasmastrap://settings/...). QA builds get "phasmastrap-qa" so they don't take
-        /// links away from the normal install.
-        /// </summary>
         public static string LinkScheme => App.ProjectName.ToLowerInvariant();
 
         public static void RegisterLinks() => RegisterProtocol(LinkScheme, App.ProjectName, Paths.Application, "-link \"%1\"");

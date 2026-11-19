@@ -6,37 +6,36 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       mc:Ignorable="d"
       Title="NetworkingPage"
       Scrollable="True">
     <ui:UiPage.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 
-        <!--  Sub pages listed down the left like a side menu; switching views keeps the TabItem headers that settings search uses  -->
         <Style x:Key="PillTabItem" TargetType="{x:Type TabItem}">
-            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaHeadingFont}" />
             <Setter Property="FontSize" Value="13" />
-            <Setter Property="Padding" Value="10,7" />
-            <Setter Property="Margin" Value="0,0,0,2" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="14,13" />
+            <Setter Property="Margin" Value="0,0,4,0" />
             <Setter Property="FocusVisualStyle" Value="{StaticResource PhasmaFocusVisual}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type TabItem}">
-                        <Grid SnapsToDevicePixels="True">
-                            <Border x:Name="Fill" Padding="{TemplateBinding Padding}" Background="Transparent" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}">
-                                <ContentPresenter ContentSource="Header" HorizontalAlignment="Left" VerticalAlignment="Center" RecognizesAccessKey="True" />
+                        <Grid SnapsToDevicePixels="True" Background="Transparent">
+                            <Border Padding="{TemplateBinding Padding}">
+                                <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
                             </Border>
-                            <Border x:Name="Bar" Width="2" Margin="0,6,0,6" HorizontalAlignment="Left" CornerRadius="1" Background="{DynamicResource PhasmaAccentBrush}" Visibility="Collapsed" />
+                            <Border x:Name="Underline" Height="2" Margin="10,0" VerticalAlignment="Bottom" Background="{DynamicResource PhasmaAccentBrush}" Opacity="0" />
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaHoverBrush}" />
-                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                                <Setter Property="Foreground" Value="White" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaSelectedBrush}" />
-                                <Setter TargetName="Bar" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="Underline" Property="Opacity" Value="1" />
                                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -45,7 +44,6 @@
             </Setter>
         </Style>
 
-        <!--  Tag holds the small caps heading shown above the list  -->
         <Style x:Key="PillTabControl" TargetType="{x:Type TabControl}">
             <Setter Property="ItemContainerStyle" Value="{StaticResource PillTabItem}" />
             <Setter Property="Background" Value="Transparent" />
@@ -55,28 +53,55 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type TabControl}">
                         <Grid KeyboardNavigation.TabNavigation="Local">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="176" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" Margin="0,0,18,0" Padding="0,0,10,0" BorderThickness="0,0,1,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
-                                <StackPanel>
-                                    <TextBlock Margin="10,2,0,8" FontSize="10.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
-                                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                                               Text="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" />
-                                    <StackPanel IsItemsHost="True" KeyboardNavigation.TabIndex="1" />
-                                </StackPanel>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <Border Grid.Row="0" Margin="0,0,0,20" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                                <StackPanel Orientation="Horizontal" IsItemsHost="True" KeyboardNavigation.TabIndex="1" />
                             </Border>
-                            <ContentPresenter x:Name="PART_SelectedContentHost" Grid.Column="1" ContentSource="SelectedContent" />
+                            <ContentPresenter x:Name="PART_SelectedContentHost" Grid.Row="1" ContentSource="SelectedContent" />
                         </Grid>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="SectionBar" TargetType="{x:Type Border}">
+            <Setter Property="Width" Value="4" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="Margin" Value="3,0,12,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Background" Value="{DynamicResource PhasmaAccentBrush}" />
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <SkewTransform AngleX="-14" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="AutoHideText" TargetType="{x:Type TextBlock}">
+            <Style.Triggers>
+                <Trigger Property="Text" Value="">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </Trigger>
+                <Trigger Property="Text" Value="{x:Null}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </ui:UiPage.Resources>
 
     <StackPanel Margin="0,0,14,14">
-        <controls:PageHeader Title="{x:Static resources:Strings.Menu_FastFlags_Section_Networking}" Subtitle="A local proxy that changes what your own client is told, plus the asset engine." />
+        <controls:PageHeader Title="{x:Static resources:Strings.Menu_FastFlags_Section_Networking}" Subtitle="A local proxy that changes what your own client is told, plus the asset engine.">
+            <Button Style="{DynamicResource PhasmaGhostButton}" Command="{Binding OpenAssetWarpCommand, Mode=OneTime}">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon Symbol="Open24" FontSize="14" Margin="0,0,7,0" />
+                    <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagSettings_Tab_AssetWarp}" />
+                </StackPanel>
+            </Button>
+        </controls:PageHeader>
 
         <TabControl Tag="NETWORKING" Style="{StaticResource PillTabControl}">
             <TabItem>
@@ -87,149 +112,168 @@
                 </TabItem.Header>
 
                 <StackPanel>
-                    <controls:CardColumns>
-                        <controls:SettingsCard Header="Local proxy">
-                            <controls:OptionControl Header="{x:Static resources:Strings.Menu_Networking_EnableLocalProxy}" Description="{Binding StatusText, Mode=OneWay}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="16" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <controls:SettingsCard Grid.Column="0" Header="Local proxy" Margin="0,0,0,16" VerticalAlignment="Top">
+                            <controls:SettingsCard.HeaderContent>
+                                <Border Style="{DynamicResource PhasmaTagGood}" Visibility="{Binding ProxyEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="6" Height="6" Margin="0,0,6,0" VerticalAlignment="Center" Fill="{DynamicResource PhasmaGoodBrush}" />
+                                        <TextBlock Text="ON" />
+                                    </StackPanel>
+                                </Border>
+                            </controls:SettingsCard.HeaderContent>
+
+                            <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Networking_EnableLocalProxy}" Description="{Binding StatusText, Mode=OneWay}">
                                 <ui:ToggleSwitch IsChecked="{Binding ProxyEnabled, Mode=TwoWay}" />
                             </controls:OptionControl>
 
-                            <controls:OptionControl Header="{x:Static resources:Strings.Menu_Networking_LocalProxyCertificate}" Description="{Binding CertificateStatusText, Mode=OneWay}">
+                            <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Networking_LocalProxyCertificate}" Description="{Binding CertificateStatusText, Mode=OneWay}">
                                 <StackPanel Orientation="Horizontal">
-                                    <Button Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Installer_Install_Title}" Command="{Binding InstallCertificateCommand, Mode=OneTime}" />
-                                    <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Content="{x:Static resources:Strings.Menu_Mods_Remove}" Command="{Binding RemoveCertificateCommand, Mode=OneTime}" />
+                                    <Button Style="{DynamicResource PhasmaGhostButton}" Command="{Binding InstallCertificateCommand, Mode=OneTime}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:SymbolIcon Symbol="ArrowDownload24" FontSize="14" Margin="0,0,7,0" />
+                                            <TextBlock Text="{x:Static resources:Strings.Installer_Install_Title}" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Command="{Binding RemoveCertificateCommand, Mode=OneTime}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:SymbolIcon Symbol="Delete24" FontSize="14" Margin="0,0,7,0" />
+                                            <TextBlock Text="{x:Static resources:Strings.Menu_Mods_Remove}" />
+                                        </StackPanel>
+                                    </Button>
                                 </StackPanel>
                             </controls:OptionControl>
 
-                            <controls:OptionControl Header="{x:Static resources:Strings.Menu_Networking_BlockRobloxTelemetry}" Description="{Binding TelemetryBlockerStatusText, Mode=OneWay}">
+                            <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Networking_BlockRobloxTelemetry}" Description="{Binding TelemetryBlockerStatusText, Mode=OneWay}">
                                 <ui:ToggleSwitch IsChecked="{Binding BlockRobloxTelemetry, Mode=TwoWay}" />
                             </controls:OptionControl>
                         </controls:SettingsCard>
 
-                        <controls:SettingsCard Header="What the proxy changes">
-                            <controls:OptionControl Header="{x:Static resources:Strings.Menu_Networking_PresenceMode}" Description="The session type Roblox's servers think you connect from">
-                                <ComboBox MinWidth="110" ItemsSource="{Binding PresenceSpoofModes, Mode=OneTime}" SelectedItem="{Binding SelectedPresenceSpoofMode, Mode=TwoWay}" />
-                            </controls:OptionControl>
+                        <StackPanel Grid.Column="2">
+                            <controls:SettingsCard Header="What the proxy changes" Margin="0,0,0,16">
+                                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Networking_PresenceMode}" Description="The session type Roblox's servers think you connect from">
+                                    <ComboBox MinWidth="120" ItemsSource="{Binding PresenceSpoofModes, Mode=OneTime}" SelectedItem="{Binding SelectedPresenceSpoofMode, Mode=TwoWay}" />
+                                </controls:OptionControl>
 
-                            <controls:OptionControl Header="{x:Static resources:Strings.Menu_Networking_DisplayedBalance}" Description="Your own screen only. Blank turns it off.">
-                                <ui:TextBox Width="120" PlaceholderText="{x:Static resources:Strings.Menu_Networking_RealBalance}" Text="{Binding RobuxSpoofAmount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                            </controls:OptionControl>
+                                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Networking_DisplayedBalance}" Description="Your own screen only. Blank turns it off.">
+                                    <ui:TextBox Width="180" FontFamily="{DynamicResource PhasmaMono}" PlaceholderText="{x:Static resources:Strings.Menu_Networking_RealBalance}" Text="{Binding RobuxSpoofAmount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </controls:OptionControl>
 
-                            <controls:OptionControl Header="{x:Static resources:Strings.Menu_Networking_DisplayNameOverride}" Description="Blank turns it off">
-                                <ui:TextBox Width="180" PlaceholderText="{x:Static resources:Strings.Menu_Networking_RealName}" Text="{Binding UsernameSpoofName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                            </controls:OptionControl>
-                        </controls:SettingsCard>
+                                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Networking_DisplayNameOverride}" Description="Blank turns it off">
+                                    <ui:TextBox Width="180" PlaceholderText="{x:Static resources:Strings.Menu_Networking_RealName}" Text="{Binding UsernameSpoofName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </controls:OptionControl>
+                            </controls:SettingsCard>
 
-                        <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Networking_PreloadCache}">
-                            <controls:OptionControl x:Name="PreloadEntriesOption" Header="Cached responses" Description="{Binding PreloadCacheSummary, Mode=OneWay}">
-                                <StackPanel Orientation="Horizontal">
-                                    <ToggleButton Style="{DynamicResource PhasmaIconButton}" ToolTip="Show the cached entries">
-                                        <ui:SymbolIcon Symbol="ChevronDown24" FontSize="14" />
-                                    </ToggleButton>
-                                    <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" Command="{Binding RefreshPreloadCacheCommand, Mode=OneTime}">
-                                        <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14" />
-                                    </Button>
-                                    <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Menu_Networking_ClearAll}" Command="{Binding ClearPreloadCacheCommand, Mode=OneTime}" />
-                                </StackPanel>
-                            </controls:OptionControl>
-
-                            <StackPanel Margin="0,0,0,10" Visibility="{Binding InnerContent.Children[0].IsChecked, ElementName=PreloadEntriesOption, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                <Border Style="{DynamicResource PhasmaDivider}" Margin="0,0,0,10" />
-                                <TextBlock Text="{x:Static resources:Strings.Menu_Networking_EachEntryCachedAssetResolutionResponse}" TextWrapping="Wrap" FontSize="11.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,8" />
-                                <ItemsControl ItemsSource="{Binding PreloadCacheEntries, Mode=OneWay}" MaxHeight="240">
-                                    <ItemsControl.Template>
-                                        <ControlTemplate TargetType="ItemsControl">
-                                            <ScrollViewer VerticalScrollBarVisibility="Auto" controls:ScrollBubbling.Enabled="True">
-                                                <ItemsPresenter />
-                                            </ScrollViewer>
-                                        </ControlTemplate>
-                                    </ItemsControl.Template>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Margin="0,0,0,4" Padding="8,4" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="{DynamicResource PhasmaHoverBrush}">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Grid.Column="0" FontSize="11" FontFamily="Consolas" Text="{Binding FileName}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                                    <TextBlock Grid.Column="1" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="8,0" VerticalAlignment="Center">
-                                                        <Run Text="{Binding SizeDisplay, Mode=OneWay}" /><Run Text=" • " /><Run Text="{Binding LastAccessedDisplay, Mode=OneWay}" />
-                                                    </TextBlock>
-                                                    <Button Grid.Column="2" Style="{DynamicResource PhasmaIconButton}" Padding="4" ToolTip="{x:Static resources:Strings.Common_Delete}"
-                                                            Command="{Binding DataContext.DeletePreloadCacheEntryCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                            CommandParameter="{Binding}">
-                                                        <ui:SymbolIcon Symbol="Delete24" FontSize="13" />
-                                                    </Button>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </controls:SettingsCard>
-
-                        <!--  Panic wipe: one compact row like the mockup  -->
-                        <Border Style="{DynamicResource PhasmaCard}" Margin="0,0,0,12" AutomationProperties.Name="{x:Static resources:Strings.Menu_Networking_PanicWipe}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <ui:SymbolIcon Grid.Column="0" Symbol="Warning24" FontSize="17" Margin="0,0,14,0" VerticalAlignment="Center" Foreground="{DynamicResource PhasmaBadBrush}" />
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                    <TextBlock FontSize="13.5" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_Networking_PanicWipe}" />
-                                    <TextBlock Margin="0,2,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                               Text="Signs you out of Roblox and clears every cache and log folder in one go" />
-                                </StackPanel>
-                                <Button Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaSoftButton}" Foreground="{DynamicResource PhasmaBadBrush}" Command="{Binding WipeAllCommand, Mode=OneTime}">
+                            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Networking_PreloadCache}" Margin="0,0,0,16">
+                                <controls:OptionControl Flat="True" x:Name="PreloadEntriesOption" Header="Cached responses" Description="{Binding PreloadCacheSummary, Mode=OneWay}">
                                     <StackPanel Orientation="Horizontal">
-                                        <ui:SymbolIcon Symbol="Delete24" FontSize="14" Margin="0,0,6,0" />
-                                        <TextBlock Text="{x:Static resources:Strings.Menu_Networking_Wipe}" />
+                                        <ToggleButton Style="{DynamicResource PhasmaIconButton}" ToolTip="Show the cached entries">
+                                            <ui:SymbolIcon Symbol="ChevronDown24" FontSize="14" />
+                                        </ToggleButton>
+                                        <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" Command="{Binding RefreshPreloadCacheCommand, Mode=OneTime}">
+                                            <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14" />
+                                        </Button>
+                                        <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaGhostButton}" Content="{x:Static resources:Strings.Menu_Networking_ClearAll}" Command="{Binding ClearPreloadCacheCommand, Mode=OneTime}" />
                                     </StackPanel>
-                                </Button>
+                                </controls:OptionControl>
 
-                                <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,8,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding WipeStatus, Mode=OneWay}">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Style.Triggers>
-                                            <Trigger Property="Text" Value="">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                            </Trigger>
-                                            <Trigger Property="Text" Value="{x:Null}">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                            </Trigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            </Grid>
-                        </Border>
-                    </controls:CardColumns>
+                                <StackPanel Margin="0,0,0,12" Visibility="{Binding InnerContent.Children[0].IsChecked, ElementName=PreloadEntriesOption, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <Border Style="{DynamicResource PhasmaDivider}" Margin="-20,0,-20,10" />
+                                    <TextBlock Text="{x:Static resources:Strings.Menu_Networking_EachEntryCachedAssetResolutionResponse}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,6" />
+                                    <ItemsControl ItemsSource="{Binding PreloadCacheEntries, Mode=OneWay}" MaxHeight="280" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <VirtualizingStackPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.Template>
+                                            <ControlTemplate TargetType="ItemsControl">
+                                                <ScrollViewer VerticalScrollBarVisibility="Auto" CanContentScroll="True" controls:ScrollBubbling.Enabled="True">
+                                                    <ItemsPresenter />
+                                                </ScrollViewer>
+                                            </ControlTemplate>
+                                        </ItemsControl.Template>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Padding="0,9,0,9" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                            <TextBlock FontSize="12.5" FontFamily="{DynamicResource PhasmaMono}" Foreground="White" Text="{Binding FileName}" TextTrimming="CharacterEllipsis" />
+                                                            <TextBlock Margin="0,2,0,0" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}">
+                                                                <Run Text="{Binding SizeDisplay, Mode=OneWay}" /><Run Text=" • " /><Run Text="{Binding LastAccessedDisplay, Mode=OneWay}" />
+                                                            </TextBlock>
+                                                        </StackPanel>
+                                                        <Button Grid.Column="1" VerticalAlignment="Center" Style="{DynamicResource PhasmaIconButton}" Padding="4" ToolTip="{x:Static resources:Strings.Common_Delete}"
+                                                                Command="{Binding DataContext.DeletePreloadCacheEntryCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                CommandParameter="{Binding}">
+                                                            <ui:SymbolIcon Symbol="Delete24" FontSize="15" />
+                                                        </Button>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </controls:SettingsCard>
+                        </StackPanel>
+                    </Grid>
 
-                    <TextBlock Style="{DynamicResource PhasmaSectionLabel}" Text="SPOOFING" />
+                    <Border Style="{DynamicResource PhasmaCard}" Padding="20,18,20,18" Margin="0,0,0,8" BorderBrush="{DynamicResource PhasmaAccentStrokeBrush}" AutomationProperties.Name="{x:Static resources:Strings.Menu_Networking_PanicWipe}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Width="40" Height="40" Margin="0,0,16,0" VerticalAlignment="Center" CornerRadius="0" phui:CutCorners.Size="6" Background="{DynamicResource PhasmaAccentSoftBrush}">
+                                <ui:SymbolIcon Symbol="Warning24" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource PhasmaRedTextBrush}" />
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="15" FontWeight="Bold" Foreground="White" Text="{Binding Source={x:Static resources:Strings.Menu_Networking_PanicWipe}, Converter={StaticResource PhasmaUpper}}" />
+                                <TextBlock Margin="0,3,0,0" FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                           Text="Signs you out of Roblox and clears every cache and log folder in one go" />
+                                <TextBlock Margin="0,6,0,0" FontSize="12" FontFamily="{DynamicResource PhasmaMono}" TextWrapping="Wrap" Foreground="{DynamicResource PhasmaGoodBrush}" Text="{Binding WipeStatus, Mode=OneWay}" Style="{StaticResource AutoHideText}" />
+                            </StackPanel>
+                            <Button Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaGhostButton}" Foreground="{DynamicResource PhasmaRedTextBrush}" Command="{Binding WipeAllCommand, Mode=OneTime}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Delete24" FontSize="14" Margin="0,0,7,0" />
+                                    <TextBlock Text="{x:Static resources:Strings.Menu_Networking_Wipe}" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </Border>
 
-                    <controls:CardColumns DataContext="{Binding Spoofer, Mode=OneTime}">
+                    <StackPanel Orientation="Horizontal" Margin="2,20,0,16">
+                        <Border Style="{StaticResource SectionBar}" />
+                        <TextBlock FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="17" FontWeight="Bold" Foreground="White" VerticalAlignment="Center" Text="SPOOFING" />
+                    </StackPanel>
+
+                    <controls:CardColumns DataContext="{Binding Spoofer, Mode=OneTime}" Spacing="16">
                         <controls:SettingsCard Header="{x:Static resources:Strings.Menu_FastFlagSettings_SpoofOtherPlayers}"
                                                Description="{x:Static resources:Strings.Menu_FastFlagSettings_OverridesWhatYouSeeOtherPlayers}">
-                            <controls:OptionControl
+                            <controls:OptionControl Flat="True"
                                 Header="{x:Static resources:Strings.Menu_AssetWarp_SpoofOthersName_Title}"
                                 Description="{x:Static resources:Strings.Menu_AssetWarp_SpoofOthersName_Description}">
                                 <ui:TextBox Width="140" Text="{Binding SpoofOthersName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             </controls:OptionControl>
 
-                            <controls:OptionControl
+                            <controls:OptionControl Flat="True"
                                 Header="{x:Static resources:Strings.Menu_AssetWarp_SpoofOthersApplyIngame_Title}"
                                 Description="{x:Static resources:Strings.Menu_AssetWarp_SpoofOthersApplyIngame_Description}">
                                 <ui:ToggleSwitch IsChecked="{Binding SpoofOthersApplyIngame, Mode=TwoWay}" />
                             </controls:OptionControl>
 
-                            <controls:OptionControl
+                            <controls:OptionControl Flat="True"
                                 Header="{x:Static resources:Strings.Menu_AssetWarp_SpoofOthersVerified_Title}"
                                 Description="{x:Static resources:Strings.Menu_AssetWarp_SpoofOthersVerified_Description}">
                                 <ui:ToggleSwitch IsChecked="{Binding SpoofOthersVerified, Mode=TwoWay}" />
@@ -238,25 +282,25 @@
 
                         <controls:SettingsCard Header="{x:Static resources:Strings.Menu_FastFlagSettings_SpoofYourself}"
                                                Description="{x:Static resources:Strings.Menu_FastFlagSettings_OverridesOwnDisplayedNameVerificationRobux}">
-                            <controls:OptionControl
+                            <controls:OptionControl Flat="True"
                                 Header="{x:Static resources:Strings.Menu_AssetWarp_SpoofSelfName_Title}"
                                 Description="{x:Static resources:Strings.Menu_AssetWarp_SpoofSelfName_Description}">
                                 <ui:TextBox Width="140" Text="{Binding SpoofSelfName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             </controls:OptionControl>
 
-                            <controls:OptionControl
+                            <controls:OptionControl Flat="True"
                                 Header="{x:Static resources:Strings.Menu_AssetWarp_SpoofSelfApplyIngame_Title}"
                                 Description="{x:Static resources:Strings.Menu_AssetWarp_SpoofSelfApplyIngame_Description}">
                                 <ui:ToggleSwitch IsChecked="{Binding SpoofSelfApplyIngame, Mode=TwoWay}" />
                             </controls:OptionControl>
 
-                            <controls:OptionControl
+                            <controls:OptionControl Flat="True"
                                 Header="{x:Static resources:Strings.Menu_AssetWarp_SpoofSelfVerified_Title}"
                                 Description="{x:Static resources:Strings.Menu_AssetWarp_SpoofSelfVerified_Description}">
                                 <ui:ToggleSwitch IsChecked="{Binding SpoofSelfVerified, Mode=TwoWay}" />
                             </controls:OptionControl>
 
-                            <controls:OptionControl
+                            <controls:OptionControl Flat="True"
                                 Header="{x:Static resources:Strings.Menu_AssetWarp_SpoofSelfGameCreator_Title}"
                                 Description="{x:Static resources:Strings.Menu_AssetWarp_SpoofSelfGameCreator_Description}">
                                 <ui:ToggleSwitch IsChecked="{Binding SpoofSelfGameCreator, Mode=TwoWay}" />

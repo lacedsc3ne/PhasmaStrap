@@ -8,27 +8,75 @@
         mc:Ignorable="d"
         Title="Edit screenshot"
         Width="1180"
-        Height="780"
-        MinWidth="820"
+        Height="820"
+        MinWidth="900"
         MinHeight="560"
-        Background="{ui:ThemeResource ApplicationBackgroundBrush}"
+        Background="{DynamicResource PhasmaPanelBrush}"
         ExtendsContentIntoTitleBar="True"
         WindowStartupLocation="CenterOwner"
         PreviewKeyDown="Window_PreviewKeyDown">
     <base:WpfUiWindow.Resources>
-        <Style x:Key="ToolButton" TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+        <Style x:Key="ToolButton" TargetType="ui:Button">
             <Setter Property="Margin" Value="0,0,4,0" />
-            <Setter Property="Padding" Value="9,5" />
+            <Setter Property="Padding" Value="8,6" />
             <Setter Property="Appearance" Value="Secondary" />
             <Setter Property="Focusable" Value="False" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ui:Button">
+                        <Border x:Name="Fill" Padding="{TemplateBinding Padding}" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" SnapsToDevicePixels="True">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <ui:SymbolIcon Symbol="{TemplateBinding Icon}" FontSize="16" VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}" />
+                                <ContentPresenter x:Name="Label" Margin="6,0,0,0" VerticalAlignment="Center" TextElement.FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Content" Value="{x:Null}">
+                                <Setter TargetName="Label" Property="Visibility" Value="Collapsed" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaHoverBrush}" />
+                                <Setter Property="Foreground" Value="White" />
+                            </Trigger>
+                            <Trigger Property="Appearance" Value="Primary">
+                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaAccentSoftBrush}" />
+                                <Setter TargetName="Fill" Property="BorderBrush" Value="{DynamicResource PhasmaAccentStrokeBrush}" />
+                                <Setter Property="Foreground" Value="White" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.4" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
         <Style x:Key="Swatch" TargetType="Border">
             <Setter Property="Width" Value="22" />
             <Setter Property="Height" Value="22" />
-            <Setter Property="CornerRadius" Value="11" />
-            <Setter Property="Margin" Value="0,0,5,0" />
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="Margin" Value="0,0,6,0" />
             <Setter Property="BorderThickness" Value="2" />
             <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style x:Key="BarLabel" TargetType="TextBlock" BasedOn="{StaticResource PhasmaCaption}">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+        </Style>
+        <Style x:Key="BarDivider" TargetType="Rectangle">
+            <Setter Property="Width" Value="1" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="Margin" Value="8,0,14,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Fill" Value="{DynamicResource PhasmaStrokeStrongBrush}" />
+        </Style>
+        <Style x:Key="FooterIcon" TargetType="ui:SymbolIcon">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
     </base:WpfUiWindow.Resources>
 
@@ -40,21 +88,24 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Padding="12,0,0,0" MinHeight="40" x:Name="RootTitleBar" Title="Edit screenshot" Icon="pack://application:,,,/PhasmaStrap.ico" />
+        <Border Grid.Row="0" Background="{DynamicResource PhasmaChromeBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,0,0,1" />
+        <ui:TitleBar Grid.Row="0" x:Name="RootTitleBar" Height="32" MinHeight="32" Padding="14,0,0,0" Title="Edit screenshot" Icon="pack://application:,,,/Resources/PhasmaStrapLogo.png"
+                     FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
 
-        <Border Grid.Row="1" Margin="22,12,22,10" Padding="12,8" CornerRadius="{DynamicResource PhasmaCornerRadius}" Background="{DynamicResource PhasmaPanelBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1">
+        <Border Grid.Row="1" Padding="14,10" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,0,0,1">
             <WrapPanel VerticalAlignment="Center">
-                <StackPanel Orientation="Horizontal" Margin="0,0,14,0">
-                    <ui:Button x:Name="ToolCrop" Style="{StaticResource ToolButton}" Icon="Crop24" Content="Crop" Tag="Crop" Click="Tool_Click" ToolTip="Drag a rectangle, then press Apply crop (C)" />
-                    <ui:Button x:Name="ToolPen" Style="{StaticResource ToolButton}" Icon="Pen24" Content="Pen" Tag="Pen" Click="Tool_Click" ToolTip="Freehand drawing (P)" />
-                    <ui:Button x:Name="ToolArrow" Style="{StaticResource ToolButton}" Icon="ArrowRight24" Content="Arrow" Tag="Arrow" Click="Tool_Click" ToolTip="Drag from tail to head (A)" />
-                    <ui:Button x:Name="ToolRect" Style="{StaticResource ToolButton}" Icon="RectangleLandscape24" Content="Box" Tag="Rect" Click="Tool_Click" ToolTip="Rectangle outline (R)" />
-                    <ui:Button x:Name="ToolEllipse" Style="{StaticResource ToolButton}" Icon="Circle24" Content="Ellipse" Tag="Ellipse" Click="Tool_Click" ToolTip="Ellipse outline (E)" />
-                    <ui:Button x:Name="ToolText" Style="{StaticResource ToolButton}" Icon="TextT24" Content="Text" Tag="Text" Click="Tool_Click" ToolTip="Click where the text should start, type, press Enter (T)" />
-                    <ui:Button x:Name="ToolPixelate" Style="{StaticResource ToolButton}" Icon="Blur24" Content="Pixelate" Tag="Pixelate" Click="Tool_Click" ToolTip="Drag over something to hide it - names, chat, etc. (X)" />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <ui:Button x:Name="ToolCrop" Style="{StaticResource ToolButton}" Icon="Crop24" AutomationProperties.Name="Crop" Tag="Crop" Click="Tool_Click" ToolTip="Drag a rectangle, then press Apply crop (C)" />
+                    <ui:Button x:Name="ToolPen" Style="{StaticResource ToolButton}" Icon="Pen24" AutomationProperties.Name="Pen" Tag="Pen" Click="Tool_Click" ToolTip="Freehand drawing (P)" />
+                    <ui:Button x:Name="ToolArrow" Style="{StaticResource ToolButton}" Icon="ArrowRight24" AutomationProperties.Name="Arrow" Tag="Arrow" Click="Tool_Click" ToolTip="Drag from tail to head (A)" />
+                    <ui:Button x:Name="ToolRect" Style="{StaticResource ToolButton}" Icon="RectangleLandscape24" AutomationProperties.Name="Box" Tag="Rect" Click="Tool_Click" ToolTip="Rectangle outline (R)" />
+                    <ui:Button x:Name="ToolEllipse" Style="{StaticResource ToolButton}" Icon="Circle24" AutomationProperties.Name="Ellipse" Tag="Ellipse" Click="Tool_Click" ToolTip="Ellipse outline (E)" />
+                    <ui:Button x:Name="ToolText" Style="{StaticResource ToolButton}" Icon="TextT24" AutomationProperties.Name="Text" Tag="Text" Click="Tool_Click" ToolTip="Click where the text should start, type, press Enter (T)" />
+                    <ui:Button x:Name="ToolPixelate" Style="{StaticResource ToolButton}" Icon="Blur24" AutomationProperties.Name="Pixelate" Tag="Pixelate" Click="Tool_Click" ToolTip="Drag over something to hide it - names, chat, etc. (X)" />
                 </StackPanel>
+                <Rectangle Style="{StaticResource BarDivider}" />
 
-                <StackPanel x:Name="SwatchPanel" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
+                <StackPanel x:Name="SwatchPanel" Orientation="Horizontal" VerticalAlignment="Center">
                     <Border Style="{StaticResource Swatch}" Background="#FF3B30" Tag="#FF3B30" MouseLeftButtonDown="Swatch_Click" />
                     <Border Style="{StaticResource Swatch}" Background="#FF9500" Tag="#FF9500" MouseLeftButtonDown="Swatch_Click" />
                     <Border Style="{StaticResource Swatch}" Background="#FFD60A" Tag="#FFD60A" MouseLeftButtonDown="Swatch_Click" />
@@ -64,28 +115,37 @@
                     <Border Style="{StaticResource Swatch}" Background="#FFFFFF" Tag="#FFFFFF" MouseLeftButtonDown="Swatch_Click" />
                     <Border Style="{StaticResource Swatch}" Background="#000000" Tag="#000000" MouseLeftButtonDown="Swatch_Click" />
                 </StackPanel>
-
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
-                    <TextBlock Text="Size" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <Slider x:Name="SizeSlider" Width="110" Minimum="1" Maximum="24" Value="4" VerticalAlignment="Center" />
-                    <TextBlock Text="{Binding ElementName=SizeSlider, Path=Value, StringFormat={}{0:0}}" VerticalAlignment="Center" Margin="6,0,0,0" Width="22" />
-                </StackPanel>
-
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
-                    <ui:Button x:Name="UndoButton" Style="{StaticResource ToolButton}" Icon="ArrowUndo24" ToolTip="Undo (Ctrl+Z)" Click="Undo_Click" />
-                    <ui:Button x:Name="RedoButton" Style="{StaticResource ToolButton}" Icon="ArrowRedo24" ToolTip="Redo (Ctrl+Y)" Click="Redo_Click" />
-                    <ui:Button x:Name="ApplyCropButton" Style="{StaticResource ToolButton}" Icon="Crop24" Content="Apply crop" Appearance="Primary" Click="ApplyCrop_Click" Visibility="Collapsed" />
-                </StackPanel>
+                <Rectangle Style="{StaticResource BarDivider}" />
 
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="Zoom" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <Slider x:Name="ZoomSlider" Width="110" Minimum="0.1" Maximum="4" Value="1" VerticalAlignment="Center" ValueChanged="ZoomSlider_ValueChanged" />
-                    <ui:Button Style="{StaticResource ToolButton}" Content="Fit" Margin="8,0,0,0" Click="ZoomFit_Click" />
+                    <TextBlock Text="SIZE" Style="{StaticResource BarLabel}" />
+                    <Slider x:Name="SizeSlider" Width="96" Minimum="1" Maximum="24" Value="4" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding ElementName=SizeSlider, Path=Value, StringFormat={}{0:0}}" VerticalAlignment="Center" Margin="8,0,0,0" Width="22" FontFamily="{DynamicResource PhasmaMono}" FontSize="12" />
+                </StackPanel>
+                <Rectangle Style="{StaticResource BarDivider}" />
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <ui:Button x:Name="UndoButton" Style="{StaticResource ToolButton}" Icon="ArrowUndo24" AutomationProperties.Name="Undo" ToolTip="Undo (Ctrl+Z)" Click="Undo_Click" />
+                    <ui:Button x:Name="RedoButton" Style="{StaticResource ToolButton}" Icon="ArrowRedo24" AutomationProperties.Name="Redo" ToolTip="Redo (Ctrl+Y)" Click="Redo_Click" />
+                    <ui:Button x:Name="ApplyCropButton" Margin="6,0,0,0" Padding="12,6" Focusable="False" Style="{DynamicResource PhasmaAccentButton}" Click="ApplyCrop_Click" Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Checkmark24" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center" Foreground="White" />
+                            <TextBlock Text="Apply crop" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </ui:Button>
+                </StackPanel>
+                <Rectangle Style="{StaticResource BarDivider}" />
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="ZOOM" Style="{StaticResource BarLabel}" />
+                    <Slider x:Name="ZoomSlider" Width="96" Minimum="0.1" Maximum="4" Value="1" VerticalAlignment="Center" ValueChanged="ZoomSlider_ValueChanged" />
+                    <TextBlock Text="{Binding ElementName=ZoomSlider, Path=Value, StringFormat={}{0:0.0}×}" VerticalAlignment="Center" Margin="8,0,6,0" Width="34" FontFamily="{DynamicResource PhasmaMono}" FontSize="12" />
+                    <Button Content="Fit" Padding="10,5" Focusable="False" Click="ZoomFit_Click" Style="{DynamicResource PhasmaSoftButton}" />
                 </StackPanel>
             </WrapPanel>
         </Border>
 
-        <Border Grid.Row="2" Margin="22,0,22,0" CornerRadius="8" Background="#0A000000" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1" ClipToBounds="True">
+        <Border Grid.Row="2" Margin="18" Background="{DynamicResource PhasmaChromeBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1" ClipToBounds="True">
             <ScrollViewer x:Name="Scroller" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="Scroller_PreviewMouseWheel">
                 <Grid x:Name="Surface" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="16">
                     <Image x:Name="BaseImage" Stretch="None" RenderOptions.BitmapScalingMode="HighQuality" />
@@ -100,19 +160,29 @@
             </ScrollViewer>
         </Border>
 
-        <Grid Grid.Row="3" Margin="22,14,22,14">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock x:Name="StatusText" Grid.Column="0" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
-            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <Button Margin="0,0,8,0" Content="Make GIF" ToolTip="Turn this screenshot (with your edits) into a GIF - zoom, pan, or a slideshow with other screenshots" Click="MakeGif_Click" Padding="14,7" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" />
-                <Button Margin="0,0,8,0" Content="Copy" ToolTip="Copy the edited image to the clipboard (Ctrl+C)" Click="Copy_Click" Padding="14,7" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" />
-                <Button Margin="0,0,8,0" Content="Save as copy" ToolTip="Keep the original and write a new file next to it" Click="SaveCopy_Click" Padding="14,7" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" />
-                <Button Margin="0,0,8,0" Content="Save" ToolTip="Overwrite the original screenshot (Ctrl+S)" Click="Save_Click" Padding="16,7" Focusable="False" Style="{DynamicResource PhasmaAccentButton}" />
-                <Button Content="Close" Click="Close_Click" Padding="14,7" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" />
-            </StackPanel>
-        </Grid>
+        <Border Grid.Row="3" Padding="18,12" Background="{DynamicResource PhasmaSubnavBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="StatusText" Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextTrimming="CharacterEllipsis" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Margin="0,0,8,0" ToolTip="Turn this screenshot (with your edits) into a GIF - zoom, pan, or a slideshow with other screenshots" Click="MakeGif_Click" Focusable="False" Style="{DynamicResource PhasmaSoftButton}">
+                        <StackPanel Orientation="Horizontal"><ui:SymbolIcon Symbol="Gif24" Style="{StaticResource FooterIcon}" /><TextBlock Text="Make GIF" VerticalAlignment="Center" /></StackPanel>
+                    </Button>
+                    <Button Margin="0,0,8,0" ToolTip="Copy the edited image to the clipboard (Ctrl+C)" Click="Copy_Click" Focusable="False" Style="{DynamicResource PhasmaSoftButton}">
+                        <StackPanel Orientation="Horizontal"><ui:SymbolIcon Symbol="Copy24" Style="{StaticResource FooterIcon}" /><TextBlock Text="Copy" VerticalAlignment="Center" /></StackPanel>
+                    </Button>
+                    <Button Margin="0,0,8,0" ToolTip="Keep the original and write a new file next to it" Click="SaveCopy_Click" Focusable="False" Style="{DynamicResource PhasmaSoftButton}">
+                        <StackPanel Orientation="Horizontal"><ui:SymbolIcon Symbol="DocumentCopy24" Style="{StaticResource FooterIcon}" /><TextBlock Text="Save as copy" VerticalAlignment="Center" /></StackPanel>
+                    </Button>
+                    <Button Margin="0,0,8,0" ToolTip="Overwrite the original screenshot (Ctrl+S)" Click="Save_Click" Focusable="False" Style="{DynamicResource PhasmaAccentButton}">
+                        <StackPanel Orientation="Horizontal"><ui:SymbolIcon Symbol="Save24" Style="{StaticResource FooterIcon}" Foreground="White" /><TextBlock Text="Save" VerticalAlignment="Center" /></StackPanel>
+                    </Button>
+                    <Button Content="Close" Click="Close_Click" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" />
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </base:WpfUiWindow>

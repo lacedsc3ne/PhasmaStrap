@@ -138,7 +138,11 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string Title
         {
             get => App.Settings.Prop.BootstrapperTitle;
-            set => App.Settings.Prop.BootstrapperTitle = value;
+            set
+            {
+                App.Settings.Prop.BootstrapperTitle = value;
+                OnPropertyChanged(nameof(Title));
+            }
         }
 
         public string CustomIconLocation
@@ -680,14 +684,16 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             public double WindowTint { get; init; }
             public bool Compact { get; init; }
             public bool Mist { get; init; }
+            public bool SectionColors { get; init; }
             public System.Windows.Media.Brush Brush => new System.Windows.Media.SolidColorBrush(
                 PhasmaStrap.Utility.AppColorTheme.TryParseColor(Accent, out System.Windows.Media.Color c) ? c : PhasmaStrap.UI.ThemeTokens.DefaultAccent);
         }
 
         public IReadOnlyList<LookPreset> LookPresets { get; } = new List<LookPreset>
         {
+            new() { Name = "Default", Accent = "", PanelOpacity = 1.0, CornerRadius = 20, WindowTint = 1.0, Compact = false, Mist = false, SectionColors = false },
             new() { Name = "Phantom", Accent = "", PanelOpacity = 0.6, CornerRadius = 12, WindowTint = 0.91, Compact = false, Mist = true },
-            new() { Name = "Glass", Accent = "#38BDF8", PanelOpacity = 0.25, CornerRadius = 16, WindowTint = 0.72, Compact = false, Mist = true },
+            new() { Name = "Glass", Accent = "#38BDF8", PanelOpacity = 0.3, CornerRadius = 16, WindowTint = 0.72, Compact = false, Mist = true },
             new() { Name = "Solid", Accent = "#7C8CFF", PanelOpacity = 0.95, CornerRadius = 8, WindowTint = 1.0, Compact = false, Mist = false },
             new() { Name = "Compact", Accent = "#3DDC97", PanelOpacity = 0.7, CornerRadius = 6, WindowTint = 0.94, Compact = true, Mist = false },
         };
@@ -705,6 +711,9 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             prop.ThemeMistEnabled = preset.Mist;
             prop.ThemePanelColor = "";
 
+            if (prop.ThemeSectionColors != preset.SectionColors)
+                SectionColors = preset.SectionColors;
+
             ApplyAccent(preset.Accent);
             NotifyLookChanged();
         });
@@ -713,7 +722,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         {
             get
             {
-                System.Windows.Media.Color current = PhasmaStrap.UI.ThemeTokens.EffectiveAccent;
+                System.Windows.Media.Color current = UserAccentOrDefault;
                 var swatches = new List<AccentSwatch>();
 
                 foreach (string hex in PhasmaStrap.UI.ThemeTokens.AccentPresets)
@@ -732,9 +741,11 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public ICommand SelectAccentCommand => new RelayCommand<string>(hex => ApplyAccent(hex ?? ""));
 
+        private static System.Windows.Media.Color UserAccentOrDefault => PhasmaStrap.UI.ThemeTokens.UserAccent ?? PhasmaStrap.UI.ThemeTokens.DefaultAccent;
+
         public string AccentHex
         {
-            get => PhasmaStrap.UI.ThemeTokens.Hex(PhasmaStrap.UI.ThemeTokens.EffectiveAccent);
+            get => PhasmaStrap.UI.ThemeTokens.Hex(UserAccentOrDefault);
             set
             {
                 string text = (value ?? "").Trim();
@@ -743,15 +754,18 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
                 if (text.Length == 0 || PhasmaStrap.Utility.AppColorTheme.TryParseColor(text, out _))
                     ApplyAccent(text);
+                else
+                    RevertLater(nameof(AccentHex));
             }
         }
+
+        private void RevertLater(string property) =>
+            System.Windows.Application.Current?.Dispatcher.BeginInvoke(() => OnPropertyChanged(property));
 
         private void ApplyAccent(string hex)
         {
             App.Settings.Prop.ThemeAccent = hex;
 
-            // Section colours would hide a picked accent, so picking one switches them off; clearing it brings them back
-            SectionColors = hex.Length == 0;
             WpfUiWindow.ApplyThemeToAllOpenWindows();
 
             OnPropertyChanged(nameof(AccentSwatches));
@@ -763,7 +777,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             get => App.Settings.Prop.ThemePanelOpacity * 100;
             set
             {
-                App.Settings.Prop.ThemePanelOpacity = Math.Clamp(value, 0, 100) / 100.0;
+                App.Settings.Prop.ThemePanelOpacity = Math.Clamp(value, PhasmaStrap.UI.ThemeTokens.MinPanelOpacity * 100, 100) / 100.0;
                 WpfUiWindow.RefreshLookOnAllWindows();
                 OnPropertyChanged(nameof(PanelOpacityPercent));
             }
@@ -804,6 +818,8 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
                 if (text.Length == 0 || PhasmaStrap.Utility.AppColorTheme.TryParseColor(text, out _))
                     ApplyPanelColor(text);
+                else
+                    RevertLater(nameof(PanelColorHex));
             }
         }
 
@@ -823,6 +839,8 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 ApplyPanelColor($"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}");
+
+            PhasmaStrap.UI.Elements.Settings.MainWindow.MarkUnsavedCheckDueOnOpenWindows();
         });
 
         private void ApplyPanelColor(string hex)
@@ -853,8 +871,11 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 App.Settings.Prop.ThemeCornerRadius = (int)Math.Round(Math.Clamp(value, 0, 24));
                 WpfUiWindow.RefreshLookOnAllWindows();
                 OnPropertyChanged(nameof(CornerRadiusValue));
+                OnPropertyChanged(nameof(CornerCutPixels));
             }
         }
+
+        public double CornerCutPixels => PhasmaStrap.UI.ThemeTokens.CutSize(App.Settings.Prop.ThemeCornerRadius);
 
         public bool CompactDensity
         {
@@ -894,9 +915,8 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        public ICommand ResetLookCommand => new RelayCommand(() => ApplyLookPresetCommand.Execute(LookPresets[0]));
+        public ICommand ResetLookCommand => new RelayCommand(() => ApplyLookPresetCommand.Execute(LookPresets.First(x => x.Name == "Default")));
 
-        /// <summary>A .phtheme file: every theme token in one small JSON file that can be shared.</summary>
         private sealed class PhthemeFile
         {
             [JsonPropertyName("format")] public string Format { get; set; } = "phtheme";
@@ -908,6 +928,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             [JsonPropertyName("corner_radius")] public int CornerRadius { get; set; }
             [JsonPropertyName("compact")] public bool Compact { get; set; }
             [JsonPropertyName("mist")] public bool Mist { get; set; }
+            [JsonPropertyName("section_colors")] public bool SectionColors { get; set; }
         }
 
         public ICommand ExportLookCommand => new RelayCommand(() =>
@@ -926,6 +947,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 CornerRadius = prop.ThemeCornerRadius,
                 Compact = prop.ThemeCompact,
                 Mist = prop.ThemeMistEnabled,
+                SectionColors = prop.ThemeSectionColors,
             };
 
             try
@@ -965,12 +987,15 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             static string Colour(string hex) => hex.Length > 0 && PhasmaStrap.Utility.AppColorTheme.TryParseColor(hex, out _) ? hex : "";
 
             var prop = App.Settings.Prop;
-            prop.ThemePanelOpacity = Math.Clamp(file.PanelOpacity, 0, 1);
+            prop.ThemePanelOpacity = Math.Clamp(file.PanelOpacity, PhasmaStrap.UI.ThemeTokens.MinPanelOpacity, 1);
             prop.ThemeWindowTintOpacity = Math.Clamp(file.WindowTint, PhasmaStrap.UI.ThemeTokens.MinWindowTint, 1);
             prop.ThemeCornerRadius = Math.Clamp(file.CornerRadius, 0, 24);
             prop.ThemeCompact = file.Compact;
             prop.ThemeMistEnabled = file.Mist;
             prop.ThemePanelColor = Colour(file.PanelColor);
+
+            if (prop.ThemeSectionColors != file.SectionColors)
+                SectionColors = file.SectionColors;
 
             ApplyAccent(Colour(file.Accent));
             NotifyLookChanged();
@@ -984,6 +1009,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             OnPropertyChanged(nameof(PanelColorHex));
             OnPropertyChanged(nameof(WindowTintPercent));
             OnPropertyChanged(nameof(CornerRadiusValue));
+            OnPropertyChanged(nameof(CornerCutPixels));
             OnPropertyChanged(nameof(CompactDensity));
             OnPropertyChanged(nameof(MistEnabled));
         }
@@ -996,6 +1022,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             editor.ShowDialog();
 
             OnPropertyChanged(nameof(CustomColorThemeEnabled));
+            PhasmaStrap.UI.Elements.Settings.MainWindow.MarkUnsavedCheckDueOnOpenWindows();
         }
     }
 }

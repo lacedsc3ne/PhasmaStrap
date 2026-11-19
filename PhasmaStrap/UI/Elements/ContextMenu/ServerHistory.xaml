@@ -27,11 +27,12 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Grid.ColumnSpan="2" Padding="8" x:Name="RootTitleBar" Title="{x:Static resources:Strings.ContextMenu_GameHistory_Title}" ShowMinimize="False" ShowMaximize="False" CanMaximize="False" KeyboardNavigation.TabNavigation="None" Icon="pack://application:,,,/PhasmaStrap.ico" />
+        <ui:TitleBar Grid.Row="0" Grid.ColumnSpan="2" x:Name="RootTitleBar" Title="{Binding Source={x:Static resources:Strings.ContextMenu_GameHistory_Title}, Converter={StaticResource PhasmaUpper}, Mode=OneTime}" ShowMinimize="False" ShowMaximize="False" CanMaximize="False" KeyboardNavigation.TabNavigation="None" Icon="pack://application:,,,/PhasmaStrap.ico" Height="32" Padding="12,0,0,0" Background="{DynamicResource PhasmaChromeBrush}" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+        <Border Grid.Row="0" Grid.ColumnSpan="2" Height="1" VerticalAlignment="Bottom" Background="{DynamicResource PhasmaStrokeBrush}" IsHitTestVisible="False" />
 
-        <TextBlock Grid.Row="1" Margin="16,8,16,0" Text="{x:Static resources:Strings.ContextMenu_GameHistory_Description}" TextWrapping="Wrap" />
+        <TextBlock Grid.Row="1" Margin="22,16,22,4" FontSize="13" LineHeight="19" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.ContextMenu_GameHistory_Description}" TextWrapping="Wrap" />
 
-        <TextBlock Grid.Row="2" Margin="16,8,16,0" Text="{Binding Error, Mode=OneWay}" TextWrapping="Wrap">
+        <TextBlock Grid.Row="2" Margin="22,8,22,0" Foreground="{DynamicResource PhasmaRedTextBrush}" Text="{Binding Error, Mode=OneWay}" TextWrapping="Wrap">
             <TextBlock.Style>
                 <Style TargetType="TextBlock">
                     <Style.Triggers>
@@ -59,7 +60,7 @@
             <ui:ProgressRing Grid.Row="1" IsIndeterminate="True" />
         </Border>
 
-        <ListView Grid.Row="2" ItemsSource="{Binding GameHistory, Mode=OneWay}" Margin="8">
+        <ListView Grid.Row="2" Margin="14,8,14,14" ItemsSource="{Binding GameHistory, Mode=OneWay}" ScrollViewer.CanContentScroll="True" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
             <ListView.Style>
                 <Style TargetType="ListView" BasedOn="{StaticResource {x:Type ListView}}">
                     <Style.Triggers>
@@ -77,27 +78,35 @@
             </ListView.ItemContainerStyle>
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <ui:Card Padding="0">
+                    <Border Padding="10" Background="{DynamicResource PhasmaPanelBrush}" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" BorderThickness="1" CornerRadius="6">
                         <Grid VerticalAlignment="Center">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <Border Grid.Column="0" Width="107" Height="107" CornerRadius="4">
+                            <Border Grid.Column="0" Width="107" Height="107" CornerRadius="4" Background="{DynamicResource PhasmaS3Brush}">
+                                <Border CornerRadius="4">
                                 <Border.Background>
                                     <ImageBrush ImageSource="{Binding UniverseDetails.Thumbnail.ImageUrl, IsAsync=True}" />
                                 </Border.Background>
+                                </Border>
                             </Border>
 
                             <StackPanel Grid.Column="1" Margin="16,12,12,12" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding UniverseDetails.Data.Name}" FontSize="18" FontWeight="Medium" />
-                                <TextBlock Text="{Binding GameHistoryDescription}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <ui:Button Margin="0,8,0,0" Content="{x:Static resources:Strings.ContextMenu_GameHistory_Rejoin}" Command="{Binding RejoinServerCommand}"
-                                           Appearance="Success" Foreground="White" IconForeground="White" Icon="Play28" IconFilled="True" />
+                                <TextBlock FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding UniverseDetails.Data.Name}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Margin="0,2,0,0" FontSize="12.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding GameHistoryDescription}" TextWrapping="Wrap" />
                             </StackPanel>
+
+                            <Button Grid.Column="2" Margin="0,0,4,0" Padding="14,8" VerticalAlignment="Center" Background="{DynamicResource PhasmaGoodBrush}" Command="{Binding RejoinServerCommand}" Foreground="{DynamicResource PhasmaChromeBrush}" Style="{StaticResource PhasmaAccentButton}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon FontSize="14" Filled="True" Foreground="{DynamicResource PhasmaChromeBrush}" Symbol="Play24" />
+                                    <TextBlock Margin="8,0,0,0" FontSize="13" Text="{x:Static resources:Strings.ContextMenu_GameHistory_Rejoin}" />
+                                </StackPanel>
+                            </Button>
                         </Grid>
-                    </ui:Card>
+                    </Border>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>

@@ -41,7 +41,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Games
                     }));
             });
 
-            // The private server list and the places rail share the Private servers page's menu.
             ItemMenu.Attach<GamePrivateServerRow>(PrivateList, BuildPrivateMenu);
             ItemMenu.Attach<GamePrivateServerRow>(PrivateRail, BuildPrivateMenu);
         }
@@ -64,7 +63,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Games
                 });
         }
 
-        /// <summary>The arrow next to Play: every way to launch this game.</summary>
         private void PlayMenuButton_Click(object sender, RoutedEventArgs e)
         {
             if (DataContext is not GameViewModel game)
@@ -92,7 +90,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Games
             HomePage.OpenBelow(menu, PlayMenuButton);
         }
 
-        /// <summary>The "..." button in the banner.</summary>
         private void MoreButton_Click(object sender, RoutedEventArgs e)
         {
             if (DataContext is not GameViewModel game)

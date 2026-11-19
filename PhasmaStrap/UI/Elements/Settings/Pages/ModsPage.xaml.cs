@@ -44,7 +44,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
                     .Add("Delete", SymbolRegular.Delete24, () => ViewModel.RemoveManagedModCommand.Execute(mod), "Del", danger: true);
             });
 
-            // Del on a focused row removes that mod, like the menu says. Removing still asks first.
             ManagedModsList.PreviewKeyDown += (_, e) =>
             {
                 if (e.Key != Key.Delete || e.OriginalSource is TextBox)

@@ -17,7 +17,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             DataContext = _viewModel;
             InitializeComponent();
 
-            // Covers both lists, yours and the ones shared with you.
             ItemMenu.Attach<PrivateServerRow>(ServersRoot, (row, menu) => FillPrivateServerMenu(menu, row.Server, row.Title, row.IconUrl ?? "",
                 join: () => _viewModel.JoinCommand.Execute(row),
                 copyLink: () => _viewModel.CopyLinkCommand.Execute(row),
@@ -27,10 +26,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
                 setHidden: hide => _viewModel.SetHidden(row, hide)));
         }
 
-        /// <summary>
-        /// The menu for one private server, shared with the private servers on a game's page.
-        /// Actions left null are left out of the menu.
-        /// </summary>
         internal static void FillPrivateServerMenu(ItemMenu menu, PrivateServerInfo server, string title, string iconUrl,
             Action join, Action? copyLink, Action? replaceLink, Action? openOnWebsite, bool hidden, Action<bool>? setHidden)
         {
@@ -44,7 +39,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
                 }, enabled: canJoin)
                 .Separator();
 
-            // Roblox only hands out the invite link to the owner.
             if (server.Owned)
             {
                 if (copyLink is not null)
@@ -71,7 +65,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             }
         }
 
-        /// <summary>Gets the server's access code with the account signed in now, then joins as another saved account.</summary>
         private static async Task JoinAsAccountAsync(PrivateServerInfo server, AccountQuickSwitch.Account account)
         {
             try

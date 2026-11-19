@@ -222,7 +222,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             OnPropertyChanged(nameof(NoRulesVisibility));
             App.FlagProfiles.NotifyEdited();
 
-            Status = $"{row.Title} goes back to just your flags. Press Save to keep this.";
+            SetStatus($"{row.Title} goes back to just your flags. Press Save to keep this.");
         });
 
         private string _searchText = "";
@@ -232,7 +232,19 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string ResultsHeader { get => _resultsHeader; private set { _resultsHeader = value; OnPropertyChanged(nameof(ResultsHeader)); } }
 
         private string _status = "";
-        public string Status { get => _status; private set { _status = value; OnPropertyChanged(nameof(Status)); OnPropertyChanged(nameof(StatusVisibility)); } }
+        public string Status => _status;
+
+        private bool _statusIsWarning;
+        public bool StatusIsWarning => _statusIsWarning;
+
+        private void SetStatus(string message, bool warning = false)
+        {
+            _statusIsWarning = warning;
+            _status = message;
+            OnPropertyChanged(nameof(StatusIsWarning));
+            OnPropertyChanged(nameof(Status));
+            OnPropertyChanged(nameof(StatusVisibility));
+        }
 
         public Visibility StatusVisibility => _status.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
 
@@ -489,7 +501,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             {
                 if (SelectedPlace is null)
                 {
-                    Status = "Pick the place first, or choose the whole game.";
+                    SetStatus("Pick the place first, or choose the whole game.", warning: true);
                     return;
                 }
 
@@ -542,12 +554,12 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             if (created)
             {
-                Status = $"{game.Name} now has its own profile. Add the flags it should get, then press Save.";
+                SetStatus($"{game.Name} now has its own profile. Add the flags it should get, then press Save.");
                 OpenEditorRequested?.Invoke(profile.Id);
             }
             else
             {
-                Status = $"{game.Name} now uses \"{profile.Name}\". Press Save to keep this.";
+                SetStatus($"{game.Name} now uses \"{profile.Name}\". Press Save to keep this.");
             }
         }
 

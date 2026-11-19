@@ -24,35 +24,33 @@
     <ui:UiWindow.ContextMenu>
         <ContextMenu MinWidth="268" Opened="TrayMenu_Opened">
             <ContextMenu.Resources>
-                <!--  Icon column of a row  -->
                 <Style x:Key="TrayIcon" TargetType="{x:Type ui:SymbolIcon}">
                     <Setter Property="FontSize" Value="15" />
                     <Setter Property="VerticalAlignment" Value="Center" />
                     <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
                 </Style>
-                <!--  Row text  -->
                 <Style x:Key="TrayText" TargetType="{x:Type TextBlock}">
                     <Setter Property="Margin" Value="6,0,0,0" />
                     <Setter Property="VerticalAlignment" Value="Center" />
                     <Setter Property="TextTrimming" Value="CharacterEllipsis" />
                 </Style>
-                <!--  Small muted text on the right of a row (state or shortcut)  -->
                 <Style x:Key="TrayHint" TargetType="{x:Type TextBlock}">
                     <Setter Property="Margin" Value="16,0,0,0" />
                     <Setter Property="VerticalAlignment" Value="Center" />
                     <Setter Property="FontSize" Value="11" />
+                    <Setter Property="FontFamily" Value="{DynamicResource PhasmaMono}" />
                     <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
                 </Style>
-                <!--  On or Off, read from the menu item it sits in  -->
                 <Style x:Key="TrayState" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource TrayHint}">
                     <Setter Property="Text" Value="Off" />
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type MenuItem}}}" Value="True">
                             <Setter Property="Text" Value="On" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                            <Setter Property="Foreground" Value="{DynamicResource PhasmaGoodBrush}" />
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
-                <!--  Label and value line inside the session info flyout  -->
                 <Style x:Key="TrayStatLabel" TargetType="{x:Type TextBlock}">
                     <Setter Property="VerticalAlignment" Value="Center" />
                     <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
@@ -61,11 +59,12 @@
                     <Setter Property="Margin" Value="24,0,0,0" />
                     <Setter Property="VerticalAlignment" Value="Center" />
                     <Setter Property="HorizontalAlignment" Value="Right" />
+                    <Setter Property="FontFamily" Value="{DynamicResource PhasmaMono}" />
+                    <Setter Property="FontSize" Value="11.5" />
                     <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                 </Style>
             </ContextMenu.Resources>
 
-            <!--  Version line  -->
             <MenuItem IsEnabled="False">
                 <MenuItem.Header>
                     <TextBlock x:Name="VersionTextBlock" Margin="0,2,0,2" FontSize="11.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="PhasmaStrap 2.4.1" />
@@ -81,12 +80,11 @@
                         <Border Grid.Column="0" Width="20" Height="20" CornerRadius="5" ClipToBounds="True" Background="{DynamicResource PhasmaSelectedBrush}">
                             <Image x:Name="CurrentGameIcon" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
                         </Border>
-                        <TextBlock x:Name="CurrentGameNameTextBlock" Grid.Column="1" VerticalAlignment="Center" Margin="8,0,0,0" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" MaxWidth="220" />
+                        <TextBlock x:Name="CurrentGameNameTextBlock" Grid.Column="1" VerticalAlignment="Center" Margin="8,0,0,0" FontWeight="Bold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" TextTrimming="CharacterEllipsis" MaxWidth="220" />
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
 
-            <!--  Session  -->
             <MenuItem x:Name="SessionInfoMenuItem" Visibility="Collapsed">
                 <MenuItem.Header>
                     <Grid>
@@ -163,7 +161,6 @@
             </MenuItem>
             <Separator />
 
-            <!--  Server  -->
             <MenuItem x:Name="JoinClosestServerMenuItem" Visibility="Collapsed" Click="JoinClosestServerMenuItem_Click">
                 <MenuItem.Header>
                     <Grid>
@@ -229,7 +226,6 @@
             </MenuItem>
             <Separator />
 
-            <!--  Capture and performance  -->
             <MenuItem x:Name="TakeScreenshotMenuItem" Visibility="Collapsed" Click="TakeScreenshotMenuItem_Click">
                 <MenuItem.Header>
                     <Grid>
@@ -324,7 +320,6 @@
             </MenuItem>
             <Separator />
 
-            <!--  App  -->
             <MenuItem Click="OpenSettingsMenuItem_Click">
                 <MenuItem.Header>
                     <Grid>
@@ -356,14 +351,13 @@
                             <ColumnDefinition Width="22" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="Dismiss24" Style="{StaticResource TrayIcon}" />
-                        <TextBlock Grid.Column="1" Text="{x:Static resources:Strings.ContextMenu_CloseRoblox}" Style="{StaticResource TrayText}" />
+                        <ui:SymbolIcon Grid.Column="0" Foreground="{DynamicResource PhasmaRedTextBrush}" Symbol="Dismiss24" Style="{StaticResource TrayIcon}" />
+                        <TextBlock Grid.Column="1" Foreground="{DynamicResource PhasmaRedTextBrush}" Text="{x:Static resources:Strings.ContextMenu_CloseRoblox}" Style="{StaticResource TrayText}" />
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
             <Separator />
 
-            <!--  Logs and support  -->
             <MenuItem x:Name="LogTracerMenuItem" Visibility="Collapsed" Click="LogTracerMenuItem_Click">
                 <MenuItem.Header>
                     <Grid>

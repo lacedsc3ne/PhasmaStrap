@@ -7,6 +7,7 @@
              xmlns:models="clr-namespace:PhasmaStrap.UI.ViewModels"
              xmlns:resources="clr-namespace:PhasmaStrap.Resources"
              xmlns:local="clr-namespace:PhasmaStrap.UI.Elements.Controls"
+             xmlns:phui="clr-namespace:PhasmaStrap.UI"
              mc:Ignorable="d"
              x:Name="Control"
              d:DesignHeight="450" d:DesignWidth="800">
@@ -15,6 +16,11 @@
 
             <Style TargetType="ui:Card" BasedOn="{StaticResource {x:Type ui:Card}}">
                 <Setter Property="Padding" Value="{DynamicResource PhasmaOptionPadding}" />
+                <Setter Property="Background" Value="{DynamicResource PhasmaPanelBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource PhasmaStrokeBrush}" />
+                <Setter Property="Border.CornerRadius" Value="0" />
+                <Setter Property="phui:CutCorners.Size" Value="{DynamicResource PhasmaCutSize}" />
+                <Setter Property="MinHeight" Value="{DynamicResource PhasmaRowHeight}" />
                 <Style.Triggers>
                     <DataTrigger Binding="{Binding Flat, ElementName=Control}" Value="True">
                         <Setter Property="Background" Value="Transparent" />
@@ -22,8 +28,9 @@
                         <Setter Property="BorderBrush" Value="{DynamicResource PhasmaStrokeBrush}" />
                         <Setter Property="Border.CornerRadius" Value="0" />
                         <Setter Property="Margin" Value="0" />
-                        <Setter Property="Padding" Value="22,12,22,12" />
-                        <Setter Property="MinHeight" Value="52" />
+                        <Setter Property="Padding" Value="{DynamicResource PhasmaOptionPadding}" />
+                        <Setter Property="MinHeight" Value="{DynamicResource PhasmaRowHeight}" />
+                        <Setter Property="phui:CutCorners.Size" Value="0" />
                     </DataTrigger>
                     <MultiDataTrigger>
                         <MultiDataTrigger.Conditions>
@@ -51,11 +58,12 @@
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="FontSize" Value="14" />
-                                <Setter Property="FontWeight" Value="Medium" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                                <Setter Property="Foreground" Value="White" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding Flat, ElementName=Control}" Value="True">
                                         <Setter Property="FontSize" Value="14" />
-                                        <Setter Property="FontWeight" Value="Medium" />
+                                        <Setter Property="FontWeight" Value="SemiBold" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>

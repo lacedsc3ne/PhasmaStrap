@@ -12,48 +12,81 @@
     Height="560"
     MinWidth="420"
     MinHeight="360"
-    Background="{ui:ThemeResource ApplicationBackgroundBrush}"
+    Background="{DynamicResource PhasmaPanelBrush}"
     ExtendsContentIntoTitleBar="True"
     WindowStartupLocation="CenterOwner"
     mc:Ignorable="d">
+    <base:WpfUiWindow.Resources>
+        <Style x:Key="FlagRow" TargetType="{x:Type ListBoxItem}">
+            <Setter Property="Padding" Value="12,9" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                        <Border x:Name="Bd" Padding="{TemplateBinding Padding}" Background="Transparent" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,0,0,1" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource PhasmaHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource PhasmaAccentSoftBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </base:WpfUiWindow.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar x:Name="TitleBarElement" Grid.Row="0" Padding="8" CanMaximize="False" KeyboardNavigation.TabNavigation="None" ShowMaximize="False" ShowMinimize="False" />
+        <ui:TitleBar x:Name="TitleBarElement" Grid.Row="0" Padding="12,8" Background="{DynamicResource PhasmaChromeBrush}" FontFamily="{DynamicResource PhasmaMono}" FontSize="11"
+                     Foreground="{DynamicResource TextFillColorTertiaryBrush}" Icon="pack://application:,,,/PhasmaStrap.ico"
+                     CanMaximize="False" KeyboardNavigation.TabNavigation="None" ShowMaximize="False" ShowMinimize="False" />
+        <Border Grid.Row="0" VerticalAlignment="Bottom" Style="{DynamicResource PhasmaDivider}" />
 
-        <StackPanel Grid.Row="1" Margin="16,8,16,8">
-            <TextBlock x:Name="PromptText" Margin="0,0,0,10" TextWrapping="Wrap" />
+        <StackPanel Grid.Row="1" Margin="20,18,20,12">
+            <TextBlock x:Name="PromptText" Margin="0,0,0,12" FontSize="13.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
             <ui:TextBox x:Name="SearchBox" Icon="Search24" PlaceholderText="Search" TextChanged="SearchBox_TextChanged" />
         </StackPanel>
 
-        <ListBox x:Name="FlagList" Grid.Row="2" Margin="16,0,16,0" SelectionMode="Extended" SelectionChanged="FlagList_SelectionChanged">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-                        <TextBlock Grid.Column="1" Margin="12,0,0,0" MaxWidth="160" Text="{Binding Value}" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                    </Grid>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+        <Border Grid.Row="2" Margin="20,0,20,0" Background="{DynamicResource PhasmaPanelBrush}" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" BorderThickness="1">
+            <ListBox x:Name="FlagList" SelectionMode="Extended" SelectionChanged="FlagList_SelectionChanged" Background="Transparent" BorderThickness="0" Padding="0"
+                     ItemContainerStyle="{StaticResource FlagRow}" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" FontFamily="{DynamicResource PhasmaMono}" FontSize="12.5" FontWeight="SemiBold" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Grid.Column="1" Margin="12,0,0,0" MaxWidth="160" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" Text="{Binding Value}" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
 
-        <Border Grid.Row="3" Margin="0,10,0,0" Padding="15" Background="{ui:ThemeResource SolidBackgroundFillColorSecondaryBrush}">
-            <DockPanel>
-                <TextBlock x:Name="CountText" DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-                    <Button x:Name="OkButton" MinWidth="100" IsEnabled="False" IsDefault="True" Click="OkButton_Click" Content="{x:Static resources:Strings.Common_OK}" />
-                    <Button MinWidth="100" Margin="12,0,0,0" Content="{x:Static resources:Strings.Common_Cancel}" IsCancel="True" />
-                </StackPanel>
-            </DockPanel>
+        <TextBlock x:Name="CountText" Grid.Row="3" Margin="20,10,20,16" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+
+        <Border Grid.Row="4" Padding="18,12" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0">
+            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                <Button MinWidth="90" Content="{x:Static resources:Strings.Common_Cancel}" IsCancel="True" Style="{StaticResource PhasmaSoftButton}" />
+                <Button x:Name="OkButton" MinWidth="90" Margin="10,0,0,0" IsEnabled="False" IsDefault="True" Click="OkButton_Click" Content="{x:Static resources:Strings.Common_OK}" Style="{StaticResource PhasmaAccentButton}" />
+            </StackPanel>
         </Border>
     </Grid>
 </base:WpfUiWindow>

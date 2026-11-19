@@ -10,22 +10,22 @@
       Title="SettingsPage"
       Scrollable="False">
     <controls:SectionHost x:Name="Host" Header="Settings" Layout="Rail">
-        <controls:SectionItem Label="Roblox version" TabLabel="Version" PageType="{x:Type pages:RobloxVersionsPage}" />
-        <controls:SectionItem Label="Channel and downloads" TabParent="{x:Type pages:RobloxVersionsPage}" PageType="{x:Type pages:ChannelPage}" />
-        <controls:SectionItem Label="Classic client" TabParent="{x:Type pages:RobloxVersionsPage}" PageType="{x:Type pages:ClassicClientPage}" />
-        <controls:SectionItem Label="Deployment" PageType="{x:Type pages:BehaviourPage}" />
-        <controls:SectionItem Label="Mods" PageType="{x:Type pages:ModsPage}" />
-        <controls:SectionItem Label="Extensions" TabParent="{x:Type pages:ModsPage}" PageType="{x:Type pages:ExtensionsPage}" />
-        <controls:SectionItem Label="Appearance" PageType="{x:Type pages:AppearancePage}" />
-        <controls:SectionItem Label="Launcher window" TabParent="{x:Type pages:AppearancePage}" PageType="{x:Type pages:BootstrapperStylePage}" />
-        <controls:SectionItem Label="Notifications" PageType="{x:Type pages:NotificationsPage}" />
-        <controls:SectionItem Label="Hotkeys" PageType="{x:Type pages:HotkeysPage}" />
-        <controls:SectionItem Label="Shortcuts" TabParent="{x:Type pages:HotkeysPage}" PageType="{x:Type pages:ShortcutsPage}" />
-        <controls:SectionItem Label="Account and backup" PageType="{x:Type pages:PhasmaStrapPage}" />
-        <controls:SectionItem Label="Integrations" PageType="{x:Type pages:IntegrationsPage}" />
-        <controls:SectionItem Label="Game chat" TabParent="{x:Type pages:IntegrationsPage}" PageType="{x:Type pages:GameChatPage}" />
-        <controls:SectionItem Label="Developer" TabLabel="Developer tools" PageType="{x:Type pages:DeveloperToolsPage}" />
-        <controls:SectionItem Label="Diagnostics" TabParent="{x:Type pages:DeveloperToolsPage}" PageType="{x:Type pages:DiagnosticsPage}" />
-        <controls:SectionItem Label="News" TabParent="{x:Type pages:DeveloperToolsPage}" PageType="{x:Type pages:ReleasesPage}" />
+        <controls:SectionItem Group="Launching" Label="Deployment" PageType="{x:Type pages:BehaviourPage}" />
+        <controls:SectionItem Group="Launching" Label="Roblox version" TabLabel="Version" PageType="{x:Type pages:RobloxVersionsPage}" />
+        <controls:SectionItem Group="Launching" Label="Channel and downloads" PageType="{x:Type pages:ChannelPage}" />
+        <controls:SectionItem Group="Launching" Label="Classic client" PageType="{x:Type pages:ClassicClientPage}" />
+        <controls:SectionItem Group="Launching" Label="Mods" PageType="{x:Type pages:ModsPage}" />
+        <controls:SectionItem Group="Launching" Label="Extensions" PageType="{x:Type pages:ExtensionsPage}" />
+        <controls:SectionItem Group="Look and feel" Label="Appearance" PageType="{x:Type pages:AppearancePage}" />
+        <controls:SectionItem Group="Look and feel" Label="Launcher window" PageType="{x:Type pages:BootstrapperStylePage}" />
+        <controls:SectionItem Group="Look and feel" Label="Notifications" PageType="{x:Type pages:NotificationsPage}" />
+        <controls:SectionItem Group="Look and feel" Label="Hotkeys" PageType="{x:Type pages:HotkeysPage}" />
+        <controls:SectionItem Group="Look and feel" Label="Shortcuts" PageType="{x:Type pages:ShortcutsPage}" />
+        <controls:SectionItem Group="PhasmaStrap" Label="Account and backup" PageType="{x:Type pages:PhasmaStrapPage}" />
+        <controls:SectionItem Group="PhasmaStrap" Label="Integrations" PageType="{x:Type pages:IntegrationsPage}" />
+        <controls:SectionItem Group="PhasmaStrap" Label="Game chat" PageType="{x:Type pages:GameChatPage}" />
+        <controls:SectionItem Group="PhasmaStrap" Label="News" PageType="{x:Type pages:ReleasesPage}" />
+        <controls:SectionItem Group="Developer" Label="Developer tools" TabLabel="Developer tools" PageType="{x:Type pages:DeveloperToolsPage}" />
+        <controls:SectionItem Group="Developer" Label="Diagnostics" PageType="{x:Type pages:DiagnosticsPage}" />
     </controls:SectionHost>
 </ui:UiPage>

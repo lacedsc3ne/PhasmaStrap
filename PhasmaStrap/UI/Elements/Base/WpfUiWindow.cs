@@ -16,7 +16,6 @@ namespace PhasmaStrap.UI.Elements.Base
 
         private static string? _appliedThemeKey;
 
-
         private Border? _tintLayer;
         private FrameworkElement? _backgroundImageLayer;
         private FrameworkElement? _backgroundOverlayLayer;
@@ -105,7 +104,6 @@ namespace PhasmaStrap.UI.Elements.Base
 
         public static void ApplyAccentFrom(ResourceDictionary? theme)
         {
-            // An accent picked in the theme studio wins over the colour theme file's accent.
             Color? fromFile = null;
             if (PhasmaStrap.UI.ThemeTokens.UserAccent is null
                 && theme is not null && theme.Contains(PhasmaStrap.Utility.AppColorTheme.AccentColorKey)
@@ -113,7 +111,6 @@ namespace PhasmaStrap.UI.Elements.Base
             {
                 Color opaque = Color.FromRgb(custom.R, custom.G, custom.B);
 
-                // The file always lists an accent; only one that was changed from the built in red counts
                 if (opaque != PhasmaStrap.UI.ThemeTokens.DefaultAccent)
                     fromFile = opaque;
             }
@@ -182,10 +179,6 @@ namespace PhasmaStrap.UI.Elements.Base
             }
         }
 
-        /// <summary>
-        /// Cheap refresh for the theme studio sliders: republishes the look tokens and window tints
-        /// without reloading the whole theme.
-        /// </summary>
         public static void RefreshLookOnAllWindows()
         {
             PhasmaStrap.UI.ThemeTokens.Apply();

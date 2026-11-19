@@ -14,70 +14,77 @@
         UseLayoutRounding="True"
         PreviewKeyDown="Window_PreviewKeyDown">
 
-    <!--  Dims the app behind it, like the in-app dialogs in the mockups; a click outside the card cancels  -->
     <Grid x:Name="Scrim" Background="#8C000000" MouseLeftButtonDown="Scrim_MouseLeftButtonDown">
-        <Border x:Name="Card" Width="500" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="22,22,22,20"
-                Style="{DynamicResource PhasmaPopupSurface}" MouseLeftButtonDown="Card_MouseLeftButtonDown">
+        <Border x:Name="Card" Width="420" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="0"
+                Style="{DynamicResource PhasmaPopupSurface}" Background="{DynamicResource PhasmaPanelBrush}" MouseLeftButtonDown="Card_MouseLeftButtonDown">
             <StackPanel>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-
-                    <Grid Grid.Column="0" Width="52" Height="52" VerticalAlignment="Center">
+                <StackPanel Margin="22,22,22,6" HorizontalAlignment="Center">
+                    <Grid Width="52" Height="52" HorizontalAlignment="Center">
                         <Ellipse Fill="{DynamicResource PhasmaSelectedBrush}" />
-                        <TextBlock x:Name="InitialText" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20" FontWeight="SemiBold" Text="?" />
+                        <TextBlock x:Name="InitialText" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" FontWeight="Bold" Text="?" />
                         <Ellipse x:Name="AvatarEllipse" Visibility="Collapsed" />
                     </Grid>
-
-                    <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
-                        <TextBlock x:Name="TitleText" FontSize="17" FontWeight="Bold" TextWrapping="Wrap" />
-                        <TextBlock x:Name="SubtitleText" Margin="0,3,0,0" Style="{DynamicResource PhasmaSubtle}" FontSize="12" />
-                    </StackPanel>
-                </Grid>
-
-                <Grid Margin="0,18,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <ui:SymbolIcon Grid.Row="0" Grid.Column="0" Symbol="Play24" Filled="True" FontSize="13" Margin="0,1,12,0" VerticalAlignment="Top" Foreground="{DynamicResource PhasmaAccentBrush}" />
-                    <TextBlock x:Name="LinePicks" Grid.Row="0" Grid.Column="1" FontSize="13" TextWrapping="Wrap" />
-
-                    <ui:SymbolIcon Grid.Row="1" Grid.Column="0" Symbol="People24" FontSize="14" Margin="0,11,12,0" VerticalAlignment="Top" Foreground="{DynamicResource PhasmaAccentBrush}" />
-                    <TextBlock x:Name="LineStay" Grid.Row="1" Grid.Column="1" Margin="0,10,0,0" FontSize="13" TextWrapping="Wrap" />
-
-                    <ui:SymbolIcon Grid.Row="2" Grid.Column="0" Symbol="ArrowSwap24" FontSize="14" Margin="0,11,12,0" VerticalAlignment="Top" Foreground="{DynamicResource PhasmaAccentBrush}" />
-                    <TextBlock x:Name="LineBack" Grid.Row="2" Grid.Column="1" Margin="0,10,0,0" FontSize="13" TextWrapping="Wrap" />
-                </Grid>
-
-                <Border Margin="0,18,0,0" Padding="14,10" Style="{DynamicResource PhasmaCard}" Background="{DynamicResource PhasmaHoverBrush}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="Info24" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                        <TextBlock x:Name="NoteText" Grid.Column="1" VerticalAlignment="Center" Style="{DynamicResource PhasmaSubtle}" FontSize="12" TextWrapping="Wrap" TextTrimming="None" />
-                    </Grid>
-                </Border>
-
-                <StackPanel Margin="0,20,0,0" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Padding="16,8" Content="Cancel" Click="Cancel_Click" />
-                    <Button x:Name="ConfirmButton" Margin="8,0,0,0" Style="{DynamicResource PhasmaAccentButton}" Padding="16,8" Click="Confirm_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="PersonSwap24" FontSize="14" VerticalAlignment="Center" />
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="Make leader" />
-                        </StackPanel>
-                    </Button>
+                    <TextBlock x:Name="TitleText" Margin="0,14,0,0" HorizontalAlignment="Center" TextAlignment="Center" FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="17" FontWeight="Bold" TextWrapping="Wrap" />
+                    <TextBlock x:Name="SubtitleText" Margin="0,6,0,0" HorizontalAlignment="Center" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                 </StackPanel>
+
+                <StackPanel Margin="22,10,22,0">
+                    <Border Padding="0,11" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,0,0,1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="28" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="Play24" FontSize="14" Margin="0,1,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                            <TextBlock x:Name="LinePicks" Grid.Column="1" FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </Grid>
+                    </Border>
+                    <Border Padding="0,11" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,0,0,1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="28" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="Person24" FontSize="14" Margin="0,1,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                            <TextBlock x:Name="LineStay" Grid.Column="1" FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </Grid>
+                    </Border>
+                    <Border Padding="0,11">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="28" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="ArrowSwap24" FontSize="14" Margin="0,1,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                            <TextBlock x:Name="LineBack" Grid.Column="1" FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </Grid>
+                    </Border>
+
+                    <Grid Margin="0,4,0,18">
+                        <Border Background="{DynamicResource PhasmaInfoBrush}" Opacity="0.08" />
+                        <Border BorderBrush="{DynamicResource PhasmaInfoBrush}" BorderThickness="1" Opacity="0.35" />
+                        <Grid Margin="14,11">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="Info24" FontSize="15" Margin="0,1,10,0" VerticalAlignment="Top" Foreground="{DynamicResource PhasmaInfoBrush}" />
+                            <TextBlock x:Name="NoteText" Grid.Column="1" VerticalAlignment="Center" FontSize="12.5" Foreground="{DynamicResource TextFillColorPrimaryBrush}" TextWrapping="Wrap" />
+                        </Grid>
+                    </Grid>
+                </StackPanel>
+
+                <Border Padding="18,12" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Style="{StaticResource PhasmaSoftButton}" MinWidth="90" Content="Cancel" Click="Cancel_Click" />
+                        <Button x:Name="ConfirmButton" Margin="10,0,0,0" Style="{StaticResource PhasmaAccentButton}" Click="Confirm_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="ArrowSwap24" FontSize="14" VerticalAlignment="Center" Foreground="{DynamicResource PhasmaAccentTextBrush}" />
+                                <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Text="Make leader" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </Border>
     </Grid>

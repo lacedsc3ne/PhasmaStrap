@@ -14,6 +14,8 @@ namespace PhasmaStrap.Utility
 
         public static int LatestMs => _latestMs;
 
+        public static bool IsRunning => _cts is not null;
+
         public static void Start(string? address)
         {
             Stop();

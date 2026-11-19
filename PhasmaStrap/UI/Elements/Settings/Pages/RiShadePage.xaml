@@ -6,202 +6,309 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       mc:Ignorable="d"
       Title="RiShadePage"
       Scrollable="True">
     <ui:UiPage.Resources>
-        <!--  Number shown next to a slider  -->
         <Style x:Key="SliderValue" TargetType="{x:Type TextBlock}">
             <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Margin" Value="8,0,0,0" />
-            <Setter Property="MinWidth" Value="34" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Setter Property="Margin" Value="14,0,0,0" />
+            <Setter Property="MinWidth" Value="46" />
+            <Setter Property="TextAlignment" Value="Right" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaMono}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        </Style>
+
+        <Style x:Key="SliderRow" TargetType="{x:Type HeaderedContentControl}">
+            <Setter Property="Margin" Value="20,0,20,0" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type HeaderedContentControl}">
+                        <Border x:Name="Row" Margin="-20,0,-20,0" Padding="20,13,20,15" Background="Transparent"
+                                BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                            <StackPanel>
+                                <TextBlock Text="{TemplateBinding Header}" FontSize="14" FontWeight="SemiBold" Foreground="White" TextWrapping="Wrap" />
+                                <ContentPresenter Margin="0,8,0,0" />
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Row" Property="Background" Value="{DynamicResource PhasmaHoverBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SectionBar" TargetType="{x:Type Border}">
+            <Setter Property="Width" Value="4" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="Margin" Value="3,0,12,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Background" Value="{DynamicResource PhasmaAccentBrush}" />
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <SkewTransform AngleX="-14" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SectionText" TargetType="{x:Type TextBlock}">
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaHeadingFont}" />
+            <Setter Property="FontSize" Value="17" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="MonoLabel" TargetType="{x:Type TextBlock}">
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaMono}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
         </Style>
     </ui:UiPage.Resources>
 
     <Grid Margin="0,0,14,14">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" MinWidth="320" />
-            <ColumnDefinition Width="320" />
+            <ColumnDefinition Width="340" />
         </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Column="0" Margin="0,0,16,0">
+        <StackPanel Grid.Column="0" Margin="0,0,20,0">
             <controls:PageHeader Title="{x:Static resources:Strings.Menu_RiShade_Title}" Subtitle="Shader effects over the Roblox window. Made for screenshots, since it costs GPU time every frame." />
 
-            <controls:CardColumns MinColumnWidth="290">
+            <controls:CardColumns MinColumnWidth="290" Spacing="16">
                 <controls:SettingsCard controls:CardColumns.FullRow="True" Header="{x:Static resources:Strings.Menu_Shortcuts_General_Title}">
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_Enable_Title}" Description="Takes effect the next time you join a game">
+                    <controls:SettingsCard.HeaderContent>
+                        <Border Style="{DynamicResource PhasmaTagGood}" Visibility="{Binding RiShadeEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="6" Height="6" Margin="0,0,6,0" VerticalAlignment="Center" Fill="{DynamicResource PhasmaGoodBrush}" />
+                                <TextBlock Text="ON" />
+                            </StackPanel>
+                        </Border>
+                    </controls:SettingsCard.HeaderContent>
+                    <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_RiShade_Enable_Title}" Description="Takes effect the next time you join a game">
                         <ui:ToggleSwitch IsChecked="{Binding RiShadeEnabled, Mode=TwoWay}" />
                     </controls:OptionControl>
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_Preset_Title}" Description="Vanilla resets everything off">
-                        <ComboBox MinWidth="130" ItemsSource="{Binding PresetNames, Mode=OneTime}" Text="{Binding SelectedPreset, Mode=TwoWay}" />
+                    <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_RiShade_Preset_Title}" Description="Vanilla resets everything off">
+                        <ComboBox MinWidth="150" ItemsSource="{Binding PresetNames, Mode=OneTime}" Text="{Binding SelectedPreset, Mode=TwoWay}" />
                     </controls:OptionControl>
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_SaveOrLoadPreset_Title}" Description="As a JSON file">
+                    <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_RiShade_SaveOrLoadPreset_Title}" Description="As a JSON file">
                         <StackPanel Orientation="Horizontal">
-                            <Button Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Menu_RiShade_ExportPreset}" Command="{Binding ExportPresetCommand}" />
-                            <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Menu_RiShade_ImportPreset}" Command="{Binding ImportPresetCommand}" />
+                            <Button Style="{DynamicResource PhasmaGhostButton}" Command="{Binding ExportPresetCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="ArrowUpload24" FontSize="14" Margin="0,0,7,0" />
+                                    <TextBlock Text="{x:Static resources:Strings.Menu_RiShade_ExportPreset}" />
+                                </StackPanel>
+                            </Button>
+                            <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaGhostButton}" Command="{Binding ImportPresetCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="ArrowDownload24" FontSize="14" Margin="0,0,7,0" />
+                                    <TextBlock Text="{x:Static resources:Strings.Menu_RiShade_ImportPreset}" />
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </controls:OptionControl>
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_RenderScale_Title}" Description="Lower renders faster and upscales">
-                        <ComboBox MinWidth="100" ItemsSource="{Binding RenderScaleNames, Mode=OneTime}" SelectedIndex="{Binding RenderScaleIndex, Mode=TwoWay}" />
+                    <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_RiShade_RenderScale_Title}" Description="Lower renders faster and upscales">
+                        <ComboBox MinWidth="130" ItemsSource="{Binding RenderScaleNames, Mode=OneTime}" SelectedIndex="{Binding RenderScaleIndex, Mode=TwoWay}" />
                     </controls:OptionControl>
                 </controls:SettingsCard>
             </controls:CardColumns>
 
-            <TextBlock Style="{DynamicResource PhasmaSectionLabel}" Text="COLOUR AND TONE" />
-            <controls:CardColumns MinColumnWidth="290">
+            <StackPanel Orientation="Horizontal" Margin="2,10,0,14">
+                <Border Style="{StaticResource SectionBar}" />
+                <TextBlock Style="{StaticResource SectionText}" Text="COLOR AND TONE" />
+            </StackPanel>
+            <controls:CardColumns MinColumnWidth="290" Spacing="16">
                 <controls:SettingsCard Header="{x:Static resources:Strings.Menu_RiShade_ColorGrade}">
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_Common_Enabled}">
+                    <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_RiShade_Common_Enabled}">
                         <ui:ToggleSwitch IsChecked="{Binding GradeEnabled, Mode=TwoWay}" />
                     </controls:OptionControl>
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_Brightness}">
-                        <StackPanel Orientation="Horizontal">
-                            <Slider Width="120" Minimum="-0.3" Maximum="0.3" Value="{Binding Brightness, Mode=TwoWay}" />
-                            <TextBlock Style="{StaticResource SliderValue}" Text="{Binding Brightness, Mode=OneWay, StringFormat={}{0:0.00}}" />
-                        </StackPanel>
-                    </controls:OptionControl>
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_Gamma}">
-                        <StackPanel Orientation="Horizontal">
-                            <Slider Width="120" Minimum="0.5" Maximum="2.0" Value="{Binding Gamma, Mode=TwoWay}" />
-                            <TextBlock Style="{StaticResource SliderValue}" Text="{Binding Gamma, Mode=OneWay, StringFormat={}{0:0.00}}" />
-                        </StackPanel>
-                    </controls:OptionControl>
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_HueShift}">
-                        <StackPanel Orientation="Horizontal">
-                            <Slider Width="120" Minimum="-180" Maximum="180" Value="{Binding HueShift, Mode=TwoWay}" />
-                            <TextBlock Style="{StaticResource SliderValue}" Text="{Binding HueShift, Mode=OneWay, StringFormat={}{0:0}}" />
-                        </StackPanel>
-                    </controls:OptionControl>
+                    <HeaderedContentControl Style="{StaticResource SliderRow}" IsEnabled="{Binding GradeEnabled, Mode=OneWay}" Header="{x:Static resources:Strings.Menu_RiShade_Brightness}">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource SliderValue}" Text="{Binding Brightness, Mode=OneWay, StringFormat={}{0:0.00}}" />
+                            <Slider Minimum="-0.3" Maximum="0.3" Value="{Binding Brightness, Mode=TwoWay}" />
+                        </DockPanel>
+                    </HeaderedContentControl>
+                    <HeaderedContentControl Style="{StaticResource SliderRow}" IsEnabled="{Binding GradeEnabled, Mode=OneWay}" Header="{x:Static resources:Strings.Menu_RiShade_Gamma}">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource SliderValue}" Text="{Binding Gamma, Mode=OneWay, StringFormat={}{0:0.00}}" />
+                            <Slider Minimum="0.5" Maximum="2.0" Value="{Binding Gamma, Mode=TwoWay}" />
+                        </DockPanel>
+                    </HeaderedContentControl>
+                    <HeaderedContentControl Style="{StaticResource SliderRow}" IsEnabled="{Binding GradeEnabled, Mode=OneWay}" Header="{x:Static resources:Strings.Menu_RiShade_HueShift}">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource SliderValue}" Text="{Binding HueShift, Mode=OneWay, StringFormat={}{0:0}}" />
+                            <Slider Minimum="-180" Maximum="180" Value="{Binding HueShift, Mode=TwoWay}" />
+                        </DockPanel>
+                    </HeaderedContentControl>
                 </controls:SettingsCard>
                 <controls:SettingsCard Header="Tonemap and vignette">
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_Tonemap}" Description="{x:Static resources:Strings.Menu_Rendering_TurnTonemappingOff}">
+                    <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_RiShade_Tonemap}" Description="{x:Static resources:Strings.Menu_Rendering_TurnTonemappingOff}">
                         <ui:ToggleSwitch IsChecked="{Binding TonemapEnabled, Mode=TwoWay}" />
                     </controls:OptionControl>
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_TonemapOperator}">
+                    <controls:OptionControl Flat="True" IsEnabled="{Binding TonemapEnabled, Mode=OneWay}" Header="{x:Static resources:Strings.Menu_RiShade_TonemapOperator}">
                         <ComboBox MinWidth="120" ItemsSource="{Binding TonemapNames, Mode=OneTime}" SelectedIndex="{Binding TonemapMode, Mode=TwoWay}" />
                     </controls:OptionControl>
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_TonemapExposure}">
-                        <StackPanel Orientation="Horizontal">
-                            <Slider Width="120" Minimum="0.2" Maximum="3.0" Value="{Binding TonemapExposure, Mode=TwoWay}" />
-                            <TextBlock Style="{StaticResource SliderValue}" Text="{Binding TonemapExposure, Mode=OneWay, StringFormat={}{0:0.00}}" />
-                        </StackPanel>
-                    </controls:OptionControl>
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_Vignette}" Description="{x:Static resources:Strings.Menu_Rendering_TurnVignetteOff}">
+                    <HeaderedContentControl Style="{StaticResource SliderRow}" IsEnabled="{Binding TonemapEnabled, Mode=OneWay}" Header="{x:Static resources:Strings.Menu_RiShade_TonemapExposure}">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource SliderValue}" Text="{Binding TonemapExposure, Mode=OneWay, StringFormat={}{0:0.00}}" />
+                            <Slider Minimum="0.2" Maximum="3.0" Value="{Binding TonemapExposure, Mode=TwoWay}" />
+                        </DockPanel>
+                    </HeaderedContentControl>
+                    <HeaderedContentControl Style="{StaticResource SliderRow}" IsEnabled="{Binding TonemapEnabled, Mode=OneWay}" Header="White point" ToolTip="How bright a pixel has to be to turn pure white. Used by Reinhard and Uncharted 2">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource SliderValue}" Text="{Binding TonemapWhitepoint, Mode=OneWay, StringFormat={}{0:0.0}}" />
+                            <Slider Minimum="1.0" Maximum="12.0" Value="{Binding TonemapWhitepoint, Mode=TwoWay}" />
+                        </DockPanel>
+                    </HeaderedContentControl>
+                    <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_RiShade_Vignette}" Description="{x:Static resources:Strings.Menu_Rendering_TurnVignetteOff}">
                         <ui:ToggleSwitch IsChecked="{Binding VignetteEnabled, Mode=TwoWay}" />
                     </controls:OptionControl>
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_Common_Strength}">
-                        <StackPanel Orientation="Horizontal">
-                            <Slider Width="120" Minimum="0" Maximum="1" Value="{Binding VignetteStrength, Mode=TwoWay}" />
-                            <TextBlock Style="{StaticResource SliderValue}" Text="{Binding VignetteStrength, Mode=OneWay, StringFormat={}{0:0.00}}" />
-                        </StackPanel>
-                    </controls:OptionControl>
+                    <HeaderedContentControl Style="{StaticResource SliderRow}" IsEnabled="{Binding VignetteEnabled, Mode=OneWay}" Header="{x:Static resources:Strings.Menu_RiShade_Common_Strength}">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource SliderValue}" Text="{Binding VignetteStrength, Mode=OneWay, StringFormat={}{0:0.00}}" />
+                            <Slider Minimum="0" Maximum="1" Value="{Binding VignetteStrength, Mode=TwoWay}" />
+                        </DockPanel>
+                    </HeaderedContentControl>
                 </controls:SettingsCard>
             </controls:CardColumns>
 
-            <TextBlock Style="{DynamicResource PhasmaSectionLabel}" Text="EFFECTS" />
-            <controls:CardColumns MinColumnWidth="290">
+            <StackPanel Orientation="Horizontal" Margin="2,10,0,14">
+                <Border Style="{StaticResource SectionBar}" />
+                <TextBlock Style="{StaticResource SectionText}" Text="EFFECTS" />
+            </StackPanel>
+            <controls:CardColumns MinColumnWidth="290" Spacing="16">
                 <controls:SettingsCard Header="Sharpen and bloom">
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_Sharpen}" Description="{x:Static resources:Strings.Menu_Rendering_TurnSharpeningOff}">
+                    <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_RiShade_Sharpen}" Description="{x:Static resources:Strings.Menu_Rendering_TurnSharpeningOff}">
                         <ui:ToggleSwitch IsChecked="{Binding SharpenEnabled, Mode=TwoWay}" />
                     </controls:OptionControl>
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_Common_Strength}">
-                        <StackPanel Orientation="Horizontal">
-                            <Slider Width="120" Minimum="0" Maximum="1.5" Value="{Binding SharpenStrength, Mode=TwoWay}" />
-                            <TextBlock Style="{StaticResource SliderValue}" Text="{Binding SharpenStrength, Mode=OneWay, StringFormat={}{0:0.00}}" />
-                        </StackPanel>
-                    </controls:OptionControl>
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_Bloom}" Description="{x:Static resources:Strings.Menu_Rendering_TurnBloomOff}">
+                    <HeaderedContentControl Style="{StaticResource SliderRow}" IsEnabled="{Binding SharpenEnabled, Mode=OneWay}" Header="{x:Static resources:Strings.Menu_RiShade_Common_Strength}">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource SliderValue}" Text="{Binding SharpenStrength, Mode=OneWay, StringFormat={}{0:0.00}}" />
+                            <Slider Minimum="0" Maximum="1.5" Value="{Binding SharpenStrength, Mode=TwoWay}" />
+                        </DockPanel>
+                    </HeaderedContentControl>
+                    <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_RiShade_Bloom}" Description="{x:Static resources:Strings.Menu_Rendering_TurnBloomOff}">
                         <ui:ToggleSwitch IsChecked="{Binding BloomEnabled, Mode=TwoWay}" />
                     </controls:OptionControl>
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_Common_Strength}">
-                        <StackPanel Orientation="Horizontal">
-                            <Slider Width="120" Minimum="0" Maximum="1" Value="{Binding BloomStrength, Mode=TwoWay}" />
-                            <TextBlock Style="{StaticResource SliderValue}" Text="{Binding BloomStrength, Mode=OneWay, StringFormat={}{0:0.00}}" />
-                        </StackPanel>
-                    </controls:OptionControl>
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_BloomThreshold}">
-                        <StackPanel Orientation="Horizontal">
-                            <Slider Width="120" Minimum="0" Maximum="1.5" Value="{Binding BloomThreshold, Mode=TwoWay}" />
-                            <TextBlock Style="{StaticResource SliderValue}" Text="{Binding BloomThreshold, Mode=OneWay, StringFormat={}{0:0.00}}" />
-                        </StackPanel>
-                    </controls:OptionControl>
+                    <HeaderedContentControl Style="{StaticResource SliderRow}" IsEnabled="{Binding BloomEnabled, Mode=OneWay}" Header="{x:Static resources:Strings.Menu_RiShade_Common_Strength}">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource SliderValue}" Text="{Binding BloomStrength, Mode=OneWay, StringFormat={}{0:0.00}}" />
+                            <Slider Minimum="0" Maximum="1" Value="{Binding BloomStrength, Mode=TwoWay}" />
+                        </DockPanel>
+                    </HeaderedContentControl>
+                    <HeaderedContentControl Style="{StaticResource SliderRow}" IsEnabled="{Binding BloomEnabled, Mode=OneWay}" Header="{x:Static resources:Strings.Menu_RiShade_BloomThreshold}">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource SliderValue}" Text="{Binding BloomThreshold, Mode=OneWay, StringFormat={}{0:0.00}}" />
+                            <Slider Minimum="0" Maximum="1.5" Value="{Binding BloomThreshold, Mode=TwoWay}" />
+                        </DockPanel>
+                    </HeaderedContentControl>
                 </controls:SettingsCard>
                 <controls:SettingsCard Header="Chromatic aberration and grain">
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_ChromaticAberration}" Description="{x:Static resources:Strings.Menu_Rendering_TurnChromaticAberrationOff}">
+                    <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_RiShade_ChromaticAberration}" Description="{x:Static resources:Strings.Menu_Rendering_TurnChromaticAberrationOff}">
                         <ui:ToggleSwitch IsChecked="{Binding ChromaEnabled, Mode=TwoWay}" />
                     </controls:OptionControl>
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_Common_Strength}">
-                        <StackPanel Orientation="Horizontal">
-                            <Slider Width="120" Minimum="0" Maximum="0.02" Value="{Binding ChromaStrength, Mode=TwoWay}" />
-                            <TextBlock Style="{StaticResource SliderValue}" Text="{Binding ChromaStrength, Mode=OneWay, StringFormat={}{0:0.000}}" />
-                        </StackPanel>
-                    </controls:OptionControl>
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_FilmGrain}" Description="{x:Static resources:Strings.Menu_Rendering_TurnFilmGrainOff}">
+                    <HeaderedContentControl Style="{StaticResource SliderRow}" IsEnabled="{Binding ChromaEnabled, Mode=OneWay}" Header="{x:Static resources:Strings.Menu_RiShade_Common_Strength}">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource SliderValue}" Text="{Binding ChromaStrength, Mode=OneWay, StringFormat={}{0:0.000}}" />
+                            <Slider Minimum="0" Maximum="0.02" Value="{Binding ChromaStrength, Mode=TwoWay}" />
+                        </DockPanel>
+                    </HeaderedContentControl>
+                    <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_RiShade_FilmGrain}" Description="{x:Static resources:Strings.Menu_Rendering_TurnFilmGrainOff}">
                         <ui:ToggleSwitch IsChecked="{Binding GrainEnabled, Mode=TwoWay}" />
                     </controls:OptionControl>
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_Common_Strength}">
-                        <StackPanel Orientation="Horizontal">
-                            <Slider Width="120" Minimum="0" Maximum="0.3" Value="{Binding GrainStrength, Mode=TwoWay}" />
-                            <TextBlock Style="{StaticResource SliderValue}" Text="{Binding GrainStrength, Mode=OneWay, StringFormat={}{0:0.00}}" />
-                        </StackPanel>
-                    </controls:OptionControl>
-                </controls:SettingsCard>
-                <controls:SettingsCard Header="{x:Static resources:Strings.Menu_RiShade_DetailAndGlow}">
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_Clarity}">
-                        <StackPanel Orientation="Horizontal">
-                            <Slider Width="120" Minimum="0" Maximum="1" Value="{Binding ClarityStrength, Mode=TwoWay}" />
-                            <TextBlock Style="{StaticResource SliderValue}" Text="{Binding ClarityStrength, Mode=OneWay, StringFormat={}{0:0.00}}" />
-                        </StackPanel>
-                    </controls:OptionControl>
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_Debanding}">
-                        <ui:ToggleSwitch IsChecked="{Binding DebandEnabled, Mode=TwoWay}" />
-                    </controls:OptionControl>
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_RiShade_AmbientGlow}">
-                        <StackPanel Orientation="Horizontal">
-                            <Slider Width="120" Minimum="0" Maximum="1" Value="{Binding AmbientStrength, Mode=TwoWay}" />
-                            <TextBlock Style="{StaticResource SliderValue}" Text="{Binding AmbientStrength, Mode=OneWay, StringFormat={}{0:0.00}}" />
-                        </StackPanel>
-                    </controls:OptionControl>
+                    <HeaderedContentControl Style="{StaticResource SliderRow}" IsEnabled="{Binding GrainEnabled, Mode=OneWay}" Header="{x:Static resources:Strings.Menu_RiShade_Common_Strength}">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource SliderValue}" Text="{Binding GrainStrength, Mode=OneWay, StringFormat={}{0:0.00}}" />
+                            <Slider Minimum="0" Maximum="0.3" Value="{Binding GrainStrength, Mode=TwoWay}" />
+                        </DockPanel>
+                    </HeaderedContentControl>
                 </controls:SettingsCard>
 
+                <controls:SettingsCard controls:CardColumns.FullRow="True" Header="{x:Static resources:Strings.Menu_RiShade_DetailAndGlow}">
+                    <Border Margin="20,0,20,0" Focusable="False">
+                        <Grid Margin="-20,0,-20,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.ColumnSpan="3" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}" />
+                            <StackPanel Grid.Column="0" Margin="20,14,20,16">
+                                <TextBlock Text="{x:Static resources:Strings.Menu_RiShade_Clarity}" FontSize="14" FontWeight="SemiBold" Foreground="White" TextWrapping="Wrap" />
+                                <DockPanel Margin="0,8,0,0">
+                                    <TextBlock DockPanel.Dock="Right" Style="{StaticResource SliderValue}" Text="{Binding ClarityStrength, Mode=OneWay, StringFormat={}{0:0.00}}" />
+                                    <Slider Minimum="0" Maximum="1" Value="{Binding ClarityStrength, Mode=TwoWay}" />
+                                </DockPanel>
+                            </StackPanel>
+                            <Border Grid.Column="1" BorderThickness="1,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                                <StackPanel Margin="20,14,20,16">
+                                    <DockPanel>
+                                        <ui:ToggleSwitch DockPanel.Dock="Right" VerticalAlignment="Top" IsChecked="{Binding DebandEnabled, Mode=TwoWay}" />
+                                        <TextBlock Text="{x:Static resources:Strings.Menu_RiShade_Debanding}" Margin="0,4,12,0" FontSize="14" FontWeight="SemiBold" Foreground="White" TextWrapping="Wrap" />
+                                    </DockPanel>
+                                    <DockPanel Margin="0,8,0,0" IsEnabled="{Binding DebandEnabled, Mode=OneWay}">
+                                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource SliderValue}" Text="{Binding DebandStrength, Mode=OneWay, StringFormat={}{0:0.00}}" />
+                                        <Slider Minimum="0" Maximum="1" Value="{Binding DebandStrength, Mode=TwoWay}" />
+                                    </DockPanel>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="2" BorderThickness="1,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                                <StackPanel Margin="20,14,20,16">
+                                    <TextBlock Text="{x:Static resources:Strings.Menu_RiShade_AmbientGlow}" FontSize="14" FontWeight="SemiBold" Foreground="White" TextWrapping="Wrap" />
+                                    <DockPanel Margin="0,8,0,0">
+                                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource SliderValue}" Text="{Binding AmbientStrength, Mode=OneWay, StringFormat={}{0:0.00}}" />
+                                        <Slider Minimum="0" Maximum="1" Value="{Binding AmbientStrength, Mode=TwoWay}" />
+                                    </DockPanel>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </controls:SettingsCard>
             </controls:CardColumns>
         </StackPanel>
 
-        <!--  Right: before and after preview, rendered on the CPU from a bundled sample scene  -->
-        <StackPanel Grid.Column="1">
-            <Border x:Name="PreviewFrame" Height="200" Margin="0,0,0,8" CornerRadius="{DynamicResource PhasmaCornerRadius}" BorderThickness="1"
-                    BorderBrush="{DynamicResource PhasmaStrokeBrush}" Background="{DynamicResource PhasmaPanelBrush}" Cursor="SizeWE"
-                    ToolTip="Drag to compare, or use the left and right arrow keys" AutomationProperties.Name="RiShade preview" Focusable="True"
-                    KeyDown="PreviewFrame_KeyDown"
-                    MouseLeftButtonDown="PreviewFrame_MouseLeftButtonDown" MouseMove="PreviewFrame_MouseMove" MouseLeftButtonUp="PreviewFrame_MouseLeftButtonUp">
-                <Grid x:Name="PreviewGrid" SizeChanged="PreviewGrid_SizeChanged">
-                    <Image x:Name="PreviewBefore" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
-                    <Image x:Name="PreviewAfter" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
-                    <Border x:Name="PreviewDivider" Width="2" HorizontalAlignment="Left" Background="White" IsHitTestVisible="False" />
-                    <Border Margin="8" Padding="7,2" HorizontalAlignment="Left" VerticalAlignment="Top" CornerRadius="5" Background="#D90E0E12" IsHitTestVisible="False">
-                        <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="White" Text="Vanilla" />
+        <StackPanel Grid.Column="1" Margin="0,106,0,0">
+            <Border Style="{DynamicResource PhasmaCard}" Margin="0,0,0,16" Padding="18,18,18,18">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource MonoLabel}" Margin="0,0,0,10" Text="BEFORE AND AFTER" />
+                    <Border x:Name="PreviewFrame" Height="200" CornerRadius="0" phui:CutCorners.Size="6" BorderThickness="1"
+                            BorderBrush="{DynamicResource PhasmaStrokeBrush}" Background="{DynamicResource PhasmaPanelBrush}" Cursor="SizeWE"
+                            ToolTip="Drag to compare, or use the left and right arrow keys" AutomationProperties.Name="RiShade preview" Focusable="True"
+                            KeyDown="PreviewFrame_KeyDown"
+                            MouseLeftButtonDown="PreviewFrame_MouseLeftButtonDown" MouseMove="PreviewFrame_MouseMove" MouseLeftButtonUp="PreviewFrame_MouseLeftButtonUp">
+                        <Grid x:Name="PreviewGrid" SizeChanged="PreviewGrid_SizeChanged">
+                            <Image x:Name="PreviewBefore" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                            <Image x:Name="PreviewAfter" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                            <Border x:Name="PreviewDivider" Width="2" HorizontalAlignment="Left" Background="White" IsHitTestVisible="False" />
+                            <Border Margin="8" HorizontalAlignment="Left" VerticalAlignment="Top" Style="{DynamicResource PhasmaTagNeutral}" IsHitTestVisible="False">
+                                <TextBlock Text="VANILLA" />
+                            </Border>
+                            <Border Margin="8" HorizontalAlignment="Right" VerticalAlignment="Top" Style="{DynamicResource PhasmaTagBad}" IsHitTestVisible="False">
+                                <TextBlock Text="{Binding PreviewEffectLabel, Mode=OneWay, Converter={StaticResource PhasmaUpper}}" />
+                            </Border>
+                        </Grid>
                     </Border>
-                    <Border Margin="8" HorizontalAlignment="Right" VerticalAlignment="Top" Style="{DynamicResource PhasmaTag}" IsHitTestVisible="False">
-                        <TextBlock FontSize="11" FontWeight="SemiBold" Text="{Binding PreviewEffectLabel, Mode=OneWay}" />
-                    </Border>
-                </Grid>
+                    <TextBlock Margin="0,10,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                               Text="A sample scene with your current settings. Drag across it to compare." />
+                </StackPanel>
             </Border>
-            <TextBlock Margin="2,0,0,12" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                       Text="A sample scene with your current settings. Drag across it to compare." />
 
-            <Border Style="{DynamicResource PhasmaCard}" Margin="0,0,0,12">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Grid.Column="0" Symbol="Info24" FontSize="15" Margin="0,1,10,0" VerticalAlignment="Top" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                    <StackPanel Grid.Column="1">
-                        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_RiShade_CustomEffects}" />
-                        <TextBlock Margin="0,8,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_RiShade_NotPorted}" />
+            <Border Style="{DynamicResource PhasmaCard}" Padding="20,18,20,18">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <ui:SymbolIcon Symbol="Info24" FontSize="16" Margin="0,0,9,0" VerticalAlignment="Center" Foreground="{DynamicResource PhasmaInfoBrush}" />
+                        <TextBlock FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="15" FontWeight="Bold" Foreground="White" VerticalAlignment="Center" Text="CUSTOM EFFECTS" />
                     </StackPanel>
-                </Grid>
+                    <TextBlock FontSize="13" LineHeight="20" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_RiShade_CustomEffects}" />
+                    <TextBlock Margin="0,10,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_RiShade_NotPorted}" />
+                </StackPanel>
             </Border>
         </StackPanel>
     </Grid>

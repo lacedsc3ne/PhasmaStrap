@@ -29,13 +29,20 @@
         <ui:TitleBar
             x:Name="RootTitleBar"
             Grid.Row="0"
-            Padding="8"
-            Title="{x:Static resources:Strings.Menu_Appearance_ColorTheme_Editor_Title}"
+            Height="32"
+            Padding="12,0,0,0"
+            Background="{DynamicResource PhasmaChromeBrush}"
+            FontFamily="{DynamicResource PhasmaMono}"
+            FontSize="11"
+            FontWeight="Medium"
+            Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+            Title="{Binding Source={x:Static resources:Strings.Menu_Appearance_ColorTheme_Editor_Title}, Converter={StaticResource PhasmaUpper}, Mode=OneTime}"
             Icon="pack://application:,,,/PhasmaStrap.ico"
             MinimizeToTray="False"
             ShowMaximize="True" />
+        <Border Grid.Row="0" Height="1" VerticalAlignment="Bottom" Background="{DynamicResource PhasmaStrokeBrush}" IsHitTestVisible="False" />
 
-        <Grid Grid.Row="1" Margin="16,6,16,0">
+        <Grid Grid.Row="1" Margin="22,14,22,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="PreviewColumn" Width="300" />
                 <ColumnDefinition x:Name="PreviewGap" Width="14" />
@@ -117,7 +124,7 @@
                 Background="#00FFFFFF"
                 BorderThickness="0"
                 SelectionChanged="EditorTabs_SelectionChanged">
-                <TabItem x:Name="ColoursTab">
+                <TabItem x:Name="ColoursTab" Style="{StaticResource PhasmaTabItem}">
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Margin="0,0,6,0" Symbol="Color24" />
@@ -126,10 +133,10 @@
                     </TabItem.Header>
                     <Border
                         Margin="0,10,0,0"
-                        Background="{DynamicResource ControlSolidFillColorDefaultBrush}"
-                        BorderBrush="{DynamicResource CardStrokeColorDefaultSolidBrush}"
+                        Background="{DynamicResource PhasmaPanelBrush}"
+                        BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}"
                         BorderThickness="1"
-                        CornerRadius="8">
+                        CornerRadius="6">
                         <ScrollViewer Padding="14,12" VerticalScrollBarVisibility="Auto">
                             <ItemsControl x:Name="ColorList">
                                 <ItemsControl.GroupStyle>
@@ -138,10 +145,11 @@
                                             <DataTemplate>
                                                 <TextBlock
                                                     Margin="0,10,0,6"
+                                                    FontFamily="{DynamicResource PhasmaMono}"
                                                     FontSize="11"
                                                     FontWeight="SemiBold"
                                                     Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                                                    Text="{Binding Name}" />
+                                                    Text="{Binding Name, Converter={StaticResource PhasmaUpper}}" />
                                             </DataTemplate>
                                         </GroupStyle.HeaderTemplate>
                                     </GroupStyle>
@@ -179,7 +187,7 @@
                                             <ui:TextBox
                                                 Grid.Column="2"
                                                 Margin="6,0"
-                                                FontFamily="Consolas"
+                                                FontFamily="{DynamicResource PhasmaMono}"
                                                 Text="{Binding Hex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                             <Button
                                                 Grid.Column="3"
@@ -204,7 +212,7 @@
                     </Border>
                 </TabItem>
 
-                <TabItem x:Name="CodeTab">
+                <TabItem x:Name="CodeTab" Style="{StaticResource PhasmaTabItem}">
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Margin="0,0,6,0" Symbol="Code24" />
@@ -246,7 +254,7 @@
                         </Grid>
                         <Border
                             Grid.Row="1"
-                            BorderBrush="{DynamicResource CardStrokeColorDefaultSolidBrush}"
+                            BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}"
                             BorderThickness="1"
                             ClipToBounds="True"
                             CornerRadius="6">
@@ -268,7 +276,7 @@
         <Border
             x:Name="StatusBorder"
             Grid.Row="2"
-            Margin="16,10,16,0"
+            Margin="22,10,22,0"
             Padding="12,8"
             BorderThickness="1"
             CornerRadius="6"
@@ -288,24 +296,29 @@
 
         <Border
             Grid.Row="3"
-            Margin="0,10,0,0"
-            Padding="16,10"
-            Background="{DynamicResource SolidBackgroundFillColorSecondaryBrush}">
+            Margin="0,12,0,0"
+            Padding="18,12"
+            Background="{DynamicResource PhasmaPanelBrush}"
+            BorderBrush="{DynamicResource PhasmaStrokeBrush}"
+            BorderThickness="0,1,0,0">
             <Grid>
                 <ui:Button
                     HorizontalAlignment="Left"
                     Appearance="Secondary"
+                    Style="{StaticResource PhasmaSoftButton}"
                     Click="Reset_Click"
                     Content="{x:Static resources:Strings.Menu_Appearance_ColorTheme_Editor_ResetToDefault}" />
                 <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
                     <ui:Button
                         x:Name="SaveButton"
-                        Margin="0,0,8,0"
+                        Margin="0,0,10,0"
                         Appearance="Primary"
+                        Style="{StaticResource PhasmaAccentButton}"
                         Click="Save_Click"
                         Content="{x:Static resources:Strings.Menu_Appearance_ColorTheme_Editor_Save}" />
                     <ui:Button
                         Appearance="Secondary"
+                        Style="{StaticResource PhasmaSoftButton}"
                         Click="Close_Click"
                         Content="{x:Static resources:Strings.Menu_Appearance_ColorTheme_Editor_Close}"
                         IsCancel="True" />

@@ -8,22 +8,18 @@ using PhasmaStrap.Utility;
 
 namespace PhasmaStrap.UI.ViewModels.Settings
 {
-    /// <summary>A game shown as a tile or a row anywhere in the catalog.</summary>
     public sealed class GameCard : NotifyPropertyChangedViewModel
     {
         public long UniverseId { get; set; }
 
-        /// <summary>The place Play launches. For played games this is the place last played.</summary>
         public long PlaceId { get; init; }
 
         public string Name { get; init; } = "";
 
         public string Subtitle { get; init; } = "";
 
-        /// <summary>Tracked play time, for the Library's "Most played" order. 0 for games not played.</summary>
         public double TotalMinutes { get; init; }
 
-        /// <summary>When it was last played (local time), or default for games not played.</summary>
         public DateTime LastPlayed { get; init; }
 
         private string _iconUrl = "";
@@ -277,7 +273,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public Visibility WelcomeVisibility => _hero is null ? Visibility.Visible : Visibility.Collapsed;
 
         private string _heroDetail = "";
-        /// <summary>Minutes played in this game over the last 7 days, from the session history on Activity. 0 when none or off.</summary>
         private static double MinutesThisWeek(long universeId, long placeId)
         {
             try
@@ -375,10 +370,8 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public const string FilterOwnFlags = "flags";
         public const string FilterFavourites = "favourites";
 
-        /// <summary>How far back "Recent" looks.</summary>
         private const int RecentDays = 14;
 
-        /// <summary>The Library tab's tiles: <see cref="Library"/> filtered and sorted, plus favourites never played.</summary>
         public ObservableCollection<GameCard> LibraryView { get; } = new();
 
         private string _libraryFilter = FilterAll;
@@ -403,7 +396,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool IsFilterFavourites { get => _libraryFilter == FilterFavourites; set { if (value) LibraryFilter = FilterFavourites; } }
 
         private bool _mostPlayed;
-        /// <summary>Most played first instead of most recent first.</summary>
         public bool MostPlayed
         {
             get => _mostPlayed;
@@ -439,7 +431,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 List<GamesStore.FavouriteGame> favourites = GamesStore.Shared.Favourites();
                 var played = Library.Where(card => favourites.Any(f => SameGame(f, card))).ToList();
 
-                // Favourites you have not played through PhasmaStrap still get a tile.
                 var unplayed = favourites
                     .Where(f => !played.Any(card => SameGame(f, card)))
                     .Select(f => new GameCard { UniverseId = f.UniverseId, PlaceId = f.PlaceId, Name = f.Name, IconUrl = f.IconUrl, Subtitle = "Not played yet" });
@@ -556,7 +547,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public bool IsInLibrary(GameCard card) => Library.Contains(card);
 
-        /// <summary>Forgets a played place, along with its play time.</summary>
         public void RemoveFromLibrary(GameCard card)
         {
             if (PlayTimeStore.Remove(card.PlaceId))
@@ -577,14 +567,12 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         }
 
         private string _friendsCountText = "";
-        /// <summary>"3 of 41 online", next to the panel title. Empty until the friends are loaded.</summary>
         public string FriendsCountText
         {
             get => _friendsCountText;
             private set { _friendsCountText = value; OnPropertyChanged(nameof(FriendsCountText)); }
         }
 
-        /// <summary>Raised when the page should open the Party page.</summary>
         public event EventHandler? OpenPartyRequested;
 
         private bool _partyBusy;
@@ -599,7 +587,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             _partyBusy = true;
             try
             {
-                // Without an account or with parties off, the Party page explains what to turn on.
                 if (!PartyService.InParty && PhasmaAccount.SignedIn && App.Settings.Prop.PartyEnabled)
                     await PartyService.CreateAsync();
             }
@@ -708,12 +695,10 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             _ = FillIconsAsync(SortGames.ToList());
         }
 
-        /// <summary>Tiles in the catalog row on Home. Browse shows the whole list.</summary>
         private const int HomeSortCount = 12;
 
         public Visibility BrowseVisibility => Sorts.Any(s => s.IsSelected) ? Visibility.Visible : Visibility.Collapsed;
 
-        /// <summary>Shows every game of the picked catalog list, in the search view.</summary>
         public ICommand BrowseCommand => new RelayCommand(() =>
         {
             CatalogSortRow? row = Sorts.FirstOrDefault(s => s.IsSelected);
@@ -877,7 +862,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             try
             {
-                // A plain place ID or game link opens the game page straight away.
                 if (RobloxLinkParser.TryParse(text, out RobloxLaunchTarget parsed))
                 {
                     if (parsed.Kind == RobloxLinkKind.Place && !parsed.IsPrivateServer && parsed.PlaceId > 0)
@@ -939,11 +923,9 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         #region Flag profiles and accounts for the right click menus
 
-        /// <summary>The profile a whole game starts with, or "" for the usual flags.</summary>
         internal static string ProfileIdFor(long universeId) =>
             universeId <= 0 ? "" : App.FlagProfiles.Prop.Rules.FirstOrDefault(r => r.IsWholeGame && r.UniverseId == universeId)?.ProfileId ?? "";
 
-        /// <summary>Gives a whole game a flag profile, or takes it away when <paramref name="profileId"/> is empty.</summary>
         internal static void AssignProfile(long universeId, long rootPlaceId, string gameName, string iconUrl, string profileId)
         {
             if (universeId <= 0)
@@ -979,7 +961,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             try
             {
-                // Saved straight away, like the game page: a launch reads it from disk.
                 App.FlagProfiles.Save();
                 App.FlagProfiles.NotifyEdited();
             }
@@ -989,7 +970,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        /// <summary>Makes an empty profile named after the game and gives it to the whole game.</summary>
         internal static string CreateOwnProfile(long universeId, long rootPlaceId, string gameName, string iconUrl)
         {
             var profile = new FlagProfile { Name = FlagLayers.UniqueName(App.FlagProfiles.Prop, gameName) };
@@ -1000,7 +980,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         internal static List<AccountQuickSwitch.Account> SavedAccounts() => AccountQuickSwitch.List(Paths.AccountBackups);
 
-        /// <summary>Signs Roblox in as a saved account, then opens <paramref name="uri"/>. Roblox has to be closed, since the login is swapped on disk.</summary>
         internal static async Task LaunchAsAccountAsync(AccountQuickSwitch.Account account, string uri)
         {
             Process[] running = Process.GetProcessesByName(App.RobloxPlayerAppName);

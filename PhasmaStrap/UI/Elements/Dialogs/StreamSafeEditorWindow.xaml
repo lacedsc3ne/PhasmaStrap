@@ -3,24 +3,32 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:base="clr-namespace:PhasmaStrap.UI.Elements.Base"
+        xmlns:phui="clr-namespace:PhasmaStrap.UI"
         Title="Stream-safe areas"
         Width="1180"
         Height="760"
         MinWidth="900"
         MinHeight="560"
-        Background="{ui:ThemeResource ApplicationBackgroundBrush}"
+        Background="{DynamicResource PhasmaPanelBrush}"
         ExtendsContentIntoTitleBar="True"
         WindowStartupLocation="CenterOwner">
     <base:WpfUiWindow.Resources>
         <Style x:Key="Section" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="15" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Margin" Value="0,16,0,6" />
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaHeadingFont}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+            <Setter Property="Margin" Value="0,22,0,8" />
         </Style>
         <Style x:Key="Hint" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12" />
             <Setter Property="TextWrapping" Value="Wrap" />
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        </Style>
+        <Style x:Key="SideButton" TargetType="ButtonBase" BasedOn="{StaticResource PhasmaSoftButton}">
+            <Setter Property="Margin" Value="0,0,8,8" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="FontSize" Value="12.5" />
         </Style>
     </base:WpfUiWindow.Resources>
 
@@ -31,17 +39,24 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Padding="12,0,0,0" MinHeight="40" Title="Stream-safe areas" Icon="pack://application:,,,/PhasmaStrap.ico" />
+        <Border Grid.Row="0" Background="{DynamicResource PhasmaPanelBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,0,0,1" />
+        <StackPanel Grid.Row="0" Margin="20,0,0,0" VerticalAlignment="Center" Orientation="Horizontal" IsHitTestVisible="False" Panel.ZIndex="1">
+            <Border Width="30" Height="30" phui:CutCorners.Size="6" Background="{DynamicResource PhasmaAccentBrush}">
+                <ui:SymbolIcon Symbol="Eye24" FontSize="16" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="15" FontWeight="Bold" Foreground="White" Text="STREAM-SAFE AREAS" />
+        </StackPanel>
+        <ui:TitleBar Grid.Row="0" Height="56" MinHeight="56" Padding="0" Title="" />
 
-        <Grid Grid.Row="1" Margin="12,4,12,0">
+        <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="320" />
+                <ColumnDefinition Width="340" />
             </Grid.ColumnDefinitions>
 
-            <Border x:Name="StageHost" Grid.Column="0" Margin="0,0,12,0" CornerRadius="{DynamicResource PhasmaCornerRadius}" ClipToBounds="True" Background="#FF15171B"
-                    BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1" SizeChanged="StageHost_SizeChanged">
-                <Canvas x:Name="Stage" HorizontalAlignment="Center" VerticalAlignment="Center" Background="#FF24262C" ClipToBounds="True" Cursor="Cross"
+            <Border x:Name="StageHost" Grid.Column="0" Margin="20" phui:CutCorners.Size="9" ClipToBounds="True" Background="{DynamicResource PhasmaChromeBrush}"
+                    BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" BorderThickness="1" SizeChanged="StageHost_SizeChanged">
+                <Canvas x:Name="Stage" HorizontalAlignment="Center" VerticalAlignment="Center" Background="{DynamicResource PhasmaS3Brush}" ClipToBounds="True" Cursor="Cross"
                         MouseLeftButtonDown="Stage_MouseLeftButtonDown" MouseMove="Stage_MouseMove" MouseLeftButtonUp="Stage_MouseLeftButtonUp" LostMouseCapture="Stage_LostMouseCapture">
                     <Image x:Name="Picture" Stretch="Fill" IsHitTestVisible="False" />
                     <TextBlock x:Name="PicturePlaceholder" IsHitTestVisible="False" Foreground="#88FFFFFF" FontSize="13" TextAlignment="Center" TextWrapping="Wrap" Width="420"
@@ -49,81 +64,104 @@
                 </Canvas>
             </Border>
 
-            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource Section}" Margin="0,0,0,6" Text="Hidden areas" />
-                    <TextBlock Style="{StaticResource Hint}" Text="Drag on the picture to mark a new area. Drag a box to move it, or drag its edges to resize it." />
+            <Border Grid.Column="1" Background="{DynamicResource PhasmaSubnavBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1,0,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="20,0,20,16">
+                        <TextBlock Style="{StaticResource Section}" Text="HIDDEN AREAS" />
+                        <TextBlock Style="{StaticResource Hint}" Text="Drag on the picture to mark a new area. Drag a box to move it, or drag its edges to resize it." />
 
-                    <ListBox x:Name="AreaList" Margin="0,10,0,0" MaxHeight="300" SelectionChanged="AreaList_SelectionChanged">
-                        <ListBox.ItemContainerStyle>
-                            <Style TargetType="ListBoxItem">
-                                <EventSetter Event="GotKeyboardFocus" Handler="AreaItem_GotKeyboardFocus" />
-                                <Setter Property="Margin" Value="0,0,0,4" />
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="ListBoxItem">
-                                            <Border x:Name="Row" Padding="6" CornerRadius="6" BorderThickness="1" BorderBrush="Transparent" Background="Transparent">
-                                                <ContentPresenter />
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="Row" Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
-                                                </Trigger>
-                                                <Trigger Property="IsSelected" Value="True">
-                                                    <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
-                                                    <Setter TargetName="Row" Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </ListBox.ItemContainerStyle>
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <ui:TextBox Grid.Column="0" ClearButtonEnabled="False" PlaceholderText="Name" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                    <TextBlock Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="11" FontFamily="Consolas"
-                                               Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding SizeText}" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                    <TextBlock x:Name="EmptyText" Margin="0,8,0,0" Style="{StaticResource Hint}" Text="Nothing is hidden yet." />
+                        <ListBox x:Name="AreaList" Margin="0,12,0,0" MaxHeight="300" Background="Transparent" BorderThickness="0" SelectionChanged="AreaList_SelectionChanged">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <EventSetter Event="GotKeyboardFocus" Handler="AreaItem_GotKeyboardFocus" />
+                                    <Setter Property="Margin" Value="0,0,0,4" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem">
+                                                <Border x:Name="Row" Padding="6" BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeBrush}" Background="Transparent">
+                                                    <ContentPresenter />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Row" Property="Background" Value="{DynamicResource PhasmaHoverBrush}" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource PhasmaAccentStrokeBrush}" />
+                                                        <Setter TargetName="Row" Property="Background" Value="{DynamicResource PhasmaAccentSoftBrush}" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <ui:TextBox Grid.Column="0" ClearButtonEnabled="False" PlaceholderText="Name" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                        <TextBlock Grid.Column="1" Margin="10,0,4,0" VerticalAlignment="Center" FontSize="11" FontFamily="{DynamicResource PhasmaMono}"
+                                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding SizeText}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <TextBlock x:Name="EmptyText" Margin="0,8,0,0" Style="{StaticResource Hint}" Text="Nothing is hidden yet." />
 
-                    <WrapPanel Margin="0,10,0,0">
-                        <ui:Button x:Name="AddButton" Margin="0,0,8,8" Content="Add area" Icon="Add24" Click="Add_Click" />
-                        <ui:Button x:Name="DeleteButton" Margin="0,0,8,8" Content="Delete" Icon="Delete24" Appearance="Secondary" Click="Delete_Click" />
-                        <ui:Button Margin="0,0,8,8" Content="Reset to defaults" Icon="ArrowReset24" Appearance="Secondary" Click="Reset_Click"
-                                   ToolTip="Roblox's chat (top left) and player list (top right)" />
-                    </WrapPanel>
+                        <WrapPanel Margin="0,12,0,0">
+                            <ui:Button x:Name="AddButton" Style="{StaticResource SideButton}" Click="Add_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Add24" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="Add area" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </ui:Button>
+                            <ui:Button x:Name="DeleteButton" Style="{StaticResource SideButton}" Click="Delete_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Delete24" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="Delete" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </ui:Button>
+                            <ui:Button Style="{StaticResource SideButton}" Click="Reset_Click" ToolTip="Roblox's chat (top left) and player list (top right)">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="ArrowReset24" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="Reset to defaults" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </ui:Button>
+                        </WrapPanel>
 
-                    <TextBlock Style="{StaticResource Section}" Text="Picture" />
-                    <TextBlock x:Name="PictureStatus" Style="{StaticResource Hint}" Text="Looking for Roblox..." />
-                    <WrapPanel Margin="0,10,0,0">
-                        <Button Margin="0,0,8,8" Content="Grab from Roblox" Click="Grab_Click" Padding="14,7" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" />
-                        <Button Margin="0,0,8,8" Content="Use a screenshot..." Click="Browse_Click" Padding="14,7" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" />
-                    </WrapPanel>
-                    <TextBlock Margin="0,4,0,12" Style="{StaticResource Hint}" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                               Text="The picture is only a guide. Areas are kept as a share of the Roblox window, so they stay in place at any window size." />
+                        <TextBlock Style="{StaticResource Section}" Text="PICTURE" />
+                        <TextBlock x:Name="PictureStatus" Style="{StaticResource Hint}" Text="Looking for Roblox..." />
+                        <StackPanel Margin="0,12,0,0" HorizontalAlignment="Left">
+                            <Button Content="Grab from Roblox" Click="Grab_Click" Focusable="False" HorizontalAlignment="Left" Style="{StaticResource SideButton}" />
+                            <Button Content="Use a screenshot..." Click="Browse_Click" Focusable="False" HorizontalAlignment="Left" Style="{StaticResource SideButton}" />
+                        </StackPanel>
+                        <TextBlock Margin="0,4,0,0" Style="{StaticResource Hint}" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                   Text="The picture is only a guide. Areas are kept as a share of the Roblox window, so they stay in place at any window size." />
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <Border Grid.Row="2" Padding="20,12" Background="{DynamicResource PhasmaSubnavBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="StatusText" Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="Close" Click="Close_Click" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" />
+                    <Button Margin="8,0,0,0" Click="Apply_Click" Focusable="False" Style="{DynamicResource PhasmaAccentButton}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Checkmark24" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                            <TextBlock Text="Apply" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
-            </ScrollViewer>
-        </Grid>
-
-        <Grid Grid.Row="2" Margin="12,10,12,12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock x:Name="StatusText" Grid.Column="0" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <Button Content="Apply" Click="Apply_Click" Padding="16,7" Focusable="False" Style="{DynamicResource PhasmaAccentButton}" />
-                <Button Margin="8,0,0,0" Content="Close" Click="Close_Click" Padding="14,7" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" />
-            </StackPanel>
-        </Grid>
+            </Grid>
+        </Border>
     </Grid>
 </base:WpfUiWindow>

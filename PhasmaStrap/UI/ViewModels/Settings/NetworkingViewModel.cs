@@ -210,13 +210,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             if (window is null)
                 return;
 
-            var entry = new UI.Elements.Settings.Search.SettingsSearchEntry(
-                UI.Elements.Settings.Search.SettingsSearchEntryKind.Tab,
-                Strings.Menu_FastFlagSettings_Tab_AssetWarp, "",
-                typeof(UI.Elements.Settings.Pages.FastFlagSettingsPage), Strings.Menu_FastFlagSettings_Title,
-                Strings.Menu_FastFlagSettings_Tab_AssetWarp, "", "", null);
-
-            UI.Elements.Settings.Search.SettingsSearchNavigator.Reveal(window.GetNavigation(), window.GetFrame(), entry);
+            UI.Elements.Settings.Search.SettingsSearchNavigator.OpenPage(window.GetNavigation(), window.GetFrame(), typeof(UI.Elements.Settings.Pages.AssetWarpPage));
         });
 
         public ICommand InstallCertificateCommand => new RelayCommand(() =>

@@ -2,11 +2,6 @@ using System.Windows.Data;
 
 namespace PhasmaStrap.UI.Converters
 {
-    /// <summary>
-    /// One line about a custom program that launches with Roblox, like "Closes with Roblox · minimised" or
-    /// "Only for Rivals · 2000 ms delay". Built from the program's own settings.
-    /// Values, in order: AutoClose, AutoCloseOnGame, SpecifyGame, GameID, RunMinimized, RunAsAdmin, Delay.
-    /// </summary>
     internal class CustomIntegrationSummaryConverter : IMultiValueConverter
     {
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)

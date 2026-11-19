@@ -7,19 +7,19 @@
         xmlns:base="clr-namespace:PhasmaStrap.UI.Elements.Base"
         mc:Ignorable="d"
         Title="Edit clip"
-        Width="1100"
-        Height="800"
-        MinWidth="900"
-        MinHeight="600"
-        Background="{ui:ThemeResource ApplicationBackgroundBrush}"
+        Width="1180"
+        Height="840"
+        MinWidth="960"
+        MinHeight="620"
+        Background="{DynamicResource PhasmaPanelBrush}"
         ExtendsContentIntoTitleBar="True"
         WindowStartupLocation="CenterOwner"
         PreviewKeyDown="Window_PreviewKeyDown"
         Closing="Window_Closing">
     <base:WpfUiWindow.Resources>
         <Style x:Key="ToolButton" TargetType="Button" BasedOn="{StaticResource PhasmaSoftButton}">
-            <Setter Property="Margin" Value="0,0,4,0" />
-            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="Padding" Value="12,6" />
             <Setter Property="FontSize" Value="12.5" />
             <Setter Property="Focusable" Value="False" />
         </Style>
@@ -27,14 +27,50 @@
             <Setter Property="Background" Value="{DynamicResource PhasmaAccentSoftBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource PhasmaAccentStrokeBrush}" />
         </Style>
+        <Style x:Key="PlayStyle" TargetType="Button" BasedOn="{StaticResource PhasmaAccentButton}">
+            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="Padding" Value="14,6" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Focusable" Value="False" />
+        </Style>
+        <Style x:Key="StepButton" TargetType="Button" BasedOn="{StaticResource PhasmaIconButton}">
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Margin" Value="0,0,4,0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Focusable" Value="False" />
+        </Style>
         <Style x:Key="ToolIcon" TargetType="ui:SymbolIcon" BasedOn="{StaticResource {x:Type ui:SymbolIcon}}">
             <Setter Property="FontSize" Value="14" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
         <Style x:Key="ToolDivider" TargetType="Rectangle">
             <Setter Property="Width" Value="1" />
-            <Setter Property="Margin" Value="4,4,10,4" />
-            <Setter Property="Fill" Value="{DynamicResource PhasmaStrokeBrush}" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="Margin" Value="6,0,12,8" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Fill" Value="{DynamicResource PhasmaStrokeStrongBrush}" />
+        </Style>
+        <Style x:Key="BarLabel" TargetType="TextBlock" BasedOn="{StaticResource PhasmaCaption}">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="4,0,10,0" />
+        </Style>
+        <Style x:Key="Key" TargetType="Border">
+            <Setter Property="Padding" Value="5,1" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="Background" Value="{DynamicResource PhasmaS4Brush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="KeyText" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaMono}" />
+            <Setter Property="FontSize" Value="10.5" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        </Style>
+        <Style x:Key="KeyLabel" TargetType="TextBlock" BasedOn="{StaticResource PhasmaCaption}">
+            <Setter Property="FontSize" Value="10.5" />
+            <Setter Property="Margin" Value="0,0,18,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
     </base:WpfUiWindow.Resources>
 
@@ -45,12 +81,14 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Padding="12,0,0,0" MinHeight="40" x:Name="RootTitleBar" Title="Edit clip" Icon="pack://application:,,,/PhasmaStrap.ico" />
+        <Border Grid.Row="0" Background="{DynamicResource PhasmaChromeBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,0,0,1" />
+        <ui:TitleBar Grid.Row="0" x:Name="RootTitleBar" Height="32" MinHeight="32" Padding="14,0,0,0" Title="Edit clip" Icon="pack://application:,,,/Resources/PhasmaStrapLogo.png"
+                     FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
 
-        <!--  The picture, with a big play button over it while it is paused  -->
-        <Border Grid.Row="1" Margin="22,14,22,0" CornerRadius="{DynamicResource PhasmaCornerRadius}" Background="#FF000000" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1" ClipToBounds="True">
+        <Border Grid.Row="1" Margin="20,18,20,0" Background="#FF000000" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1" ClipToBounds="True">
             <Grid>
                 <Viewbox Stretch="Uniform" Margin="2">
                     <Grid x:Name="Surface" Width="1280" Height="720">
@@ -61,17 +99,20 @@
                                 MouseLeftButtonDown="CropCanvas_MouseLeftButtonDown" MouseMove="CropCanvas_MouseMove" MouseLeftButtonUp="CropCanvas_MouseLeftButtonUp" />
                     </Grid>
                 </Viewbox>
+                <Border Margin="12" Padding="7,2" HorizontalAlignment="Right" VerticalAlignment="Top" Background="#CC0D0D12" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" BorderThickness="1" IsHitTestVisible="False">
+                    <TextBlock FontFamily="{DynamicResource PhasmaMono}" FontSize="10.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding SelectedItem.Content, ElementName=SpeedBox, StringFormat={}{0} PREVIEW}" />
+                </Border>
                 <Button x:Name="BigPlay" Width="56" Height="56" HorizontalAlignment="Center" VerticalAlignment="Center" Focusable="False" Click="Play_Click" ToolTip="Play (Space)"
-                        Background="#8C000000" Foreground="White" BorderBrush="#33FFFFFF" BorderThickness="1">
+                        Background="{DynamicResource PhasmaAccentBrush}" Foreground="White" BorderBrush="Transparent" BorderThickness="0">
                     <ui:SymbolIcon Symbol="Play24" Filled="True" FontSize="22" />
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
-                            <Border x:Name="Disc" CornerRadius="28" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1">
+                            <Border x:Name="Disc" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Disc" Property="Background" Value="#B3000000" />
+                                    <Setter TargetName="Disc" Property="Opacity" Value="0.88" />
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -81,64 +122,54 @@
             </Grid>
         </Border>
 
-        <!--  Timeline  -->
-        <Border Grid.Row="2" Margin="22,14,22,0" Padding="16,14,16,12" Style="{DynamicResource PhasmaPanel}">
-            <StackPanel>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock x:Name="PositionText" Grid.Column="0" Text="0:00.00" VerticalAlignment="Center" Width="68" FontSize="13" FontFamily="{DynamicResource PhasmaMono}" />
-                    <Grid x:Name="Timeline" Grid.Column="1" Height="54" Background="Transparent" ClipToBounds="True"
-                          SizeChanged="Timeline_SizeChanged"
-                          MouseLeftButtonDown="Timeline_MouseLeftButtonDown" MouseMove="Timeline_MouseMove" MouseLeftButtonUp="Timeline_MouseLeftButtonUp">
-                        <Border Margin="8,6" CornerRadius="6" Background="{DynamicResource PhasmaPanelRaisedBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1" ClipToBounds="True">
-                            <UniformGrid x:Name="ThumbStrip" Rows="1" />
-                        </Border>
-                        <Canvas x:Name="TimelineCanvas" IsHitTestVisible="False">
-                            <Rectangle x:Name="DimLeft" Fill="#B0000000" />
-                            <Rectangle x:Name="DimRight" Fill="#B0000000" />
-                            <Rectangle x:Name="RangeOutline" Stroke="{DynamicResource PhasmaAccentBrush}" StrokeThickness="2" RadiusX="6" RadiusY="6" />
-                            <Border x:Name="StartHandle" Width="10" CornerRadius="4,0,0,4" Background="{DynamicResource PhasmaAccentBrush}">
-                                <Rectangle Width="2" Height="16" Fill="{DynamicResource PhasmaAccentTextBrush}" Opacity="0.85" />
-                            </Border>
-                            <Border x:Name="EndHandle" Width="10" CornerRadius="0,4,4,0" Background="{DynamicResource PhasmaAccentBrush}">
-                                <Rectangle Width="2" Height="16" Fill="{DynamicResource PhasmaAccentTextBrush}" Opacity="0.85" />
-                            </Border>
-                            <Rectangle x:Name="Playhead" Width="2" Fill="White" />
-                        </Canvas>
-                    </Grid>
-                    <TextBlock x:Name="DurationText" Grid.Column="2" Text="0:00.00" VerticalAlignment="Center" Width="68" TextAlignment="Right" FontSize="13" FontFamily="{DynamicResource PhasmaMono}" />
-                </Grid>
-                <Grid Margin="0,10,0,0">
-                    <TextBlock FontSize="12.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Drag the accent edges to trim" />
-                    <TextBlock x:Name="StatusText" HorizontalAlignment="Right" FontSize="12.5" FontFamily="{DynamicResource PhasmaMono}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
-                </Grid>
-            </StackPanel>
-        </Border>
+        <Grid Grid.Row="2" Margin="20,14,20,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="PositionText" Grid.Column="0" Text="0:00.00" VerticalAlignment="Center" Width="72" FontSize="13" FontFamily="{DynamicResource PhasmaMono}" />
+            <Grid x:Name="Timeline" Grid.Column="1" Height="62" Background="Transparent" ClipToBounds="True"
+                  SizeChanged="Timeline_SizeChanged"
+                  MouseLeftButtonDown="Timeline_MouseLeftButtonDown" MouseMove="Timeline_MouseMove" MouseLeftButtonUp="Timeline_MouseLeftButtonUp">
+                <Border Margin="8,4" Background="{DynamicResource PhasmaPanelRaisedBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1" ClipToBounds="True">
+                    <UniformGrid x:Name="ThumbStrip" Rows="1" />
+                </Border>
+                <Canvas x:Name="TimelineCanvas" IsHitTestVisible="False">
+                    <Rectangle x:Name="DimLeft" Fill="#B0000000" />
+                    <Rectangle x:Name="DimRight" Fill="#B0000000" />
+                    <Rectangle x:Name="RangeOutline" Stroke="{DynamicResource PhasmaAccentBrush}" StrokeThickness="2" />
+                    <Border x:Name="StartHandle" Width="10" Background="{DynamicResource PhasmaAccentBrush}">
+                        <Rectangle Width="2" Height="16" Fill="{DynamicResource PhasmaAccentTextBrush}" Opacity="0.85" />
+                    </Border>
+                    <Border x:Name="EndHandle" Width="10" Background="{DynamicResource PhasmaAccentBrush}">
+                        <Rectangle Width="2" Height="16" Fill="{DynamicResource PhasmaAccentTextBrush}" Opacity="0.85" />
+                    </Border>
+                    <Rectangle x:Name="Playhead" Width="2" Fill="White" />
+                </Canvas>
+            </Grid>
+            <TextBlock x:Name="DurationText" Grid.Column="2" Text="0:00.00" VerticalAlignment="Center" Width="72" TextAlignment="Right" FontSize="13" FontFamily="{DynamicResource PhasmaMono}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+        </Grid>
 
-        <!--  Tools  -->
-        <Border Grid.Row="3" Margin="22,12,22,0" Padding="12,10,12,2" Style="{DynamicResource PhasmaPanel}">
+        <Border Grid.Row="3" Padding="20,12,20,4" Background="{DynamicResource PhasmaSubnavBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,1">
             <WrapPanel x:Name="ToolsPanel" VerticalAlignment="Center">
-                <StackPanel Orientation="Horizontal" Margin="0,0,4,8">
-                    <Button x:Name="PlayButton" Style="{StaticResource ToolButton}" Click="Play_Click" ToolTip="Play / pause the selection (Space)">
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <Button x:Name="PlayButton" Style="{StaticResource PlayStyle}" Click="Play_Click" ToolTip="Play / pause the selection (Space)">
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon x:Name="PlayIcon" Style="{StaticResource ToolIcon}" Symbol="Play24" Margin="0,0,6,0" />
+                            <ui:SymbolIcon x:Name="PlayIcon" Style="{StaticResource ToolIcon}" Symbol="Play24" Margin="0,0,6,0" Foreground="White" />
                             <TextBlock x:Name="PlayLabel" Text="Play" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource ToolButton}" AutomationProperties.Name="Back one frame" Click="StepBack_Click" ToolTip="Back one frame (Left arrow)">
+                    <Button Style="{StaticResource StepButton}" AutomationProperties.Name="Back one frame" Click="StepBack_Click" ToolTip="Back one frame (Left arrow)">
                         <ui:SymbolIcon Style="{StaticResource ToolIcon}" Symbol="Previous24" />
                     </Button>
-                    <Button Style="{StaticResource ToolButton}" AutomationProperties.Name="Forward one frame" Click="StepForward_Click" ToolTip="Forward one frame (Right arrow)">
+                    <Button Style="{StaticResource StepButton}" AutomationProperties.Name="Forward one frame" Click="StepForward_Click" ToolTip="Forward one frame (Right arrow)">
                         <ui:SymbolIcon Style="{StaticResource ToolIcon}" Symbol="Next24" />
                     </Button>
                 </StackPanel>
-                <Rectangle Style="{StaticResource ToolDivider}" Margin="4,4,10,12" />
+                <Rectangle Style="{StaticResource ToolDivider}" />
 
-                <StackPanel Orientation="Horizontal" Margin="0,0,4,8">
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                     <Button Style="{StaticResource ToolButton}" Click="SetStart_Click" ToolTip="Start the clip at the current position (I or [)">
                         <StackPanel Orientation="Horizontal"><ui:SymbolIcon Style="{StaticResource ToolIcon}" Symbol="ArrowPrevious24" Margin="0,0,6,0" /><TextBlock Text="Set start" VerticalAlignment="Center" /></StackPanel>
                     </Button>
@@ -149,19 +180,20 @@
                         <StackPanel Orientation="Horizontal"><ui:SymbolIcon Style="{StaticResource ToolIcon}" Symbol="ArrowRepeatAll24" Margin="0,0,6,0" /><TextBlock Text="Reset trim" VerticalAlignment="Center" /></StackPanel>
                     </Button>
                 </StackPanel>
-                <Rectangle Style="{StaticResource ToolDivider}" Margin="4,4,10,12" />
+                <Rectangle Style="{StaticResource ToolDivider}" />
 
-                <StackPanel Orientation="Horizontal" Margin="0,0,4,8">
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                     <Button x:Name="CropButton" Style="{StaticResource ToolButton}" Click="Crop_Click" ToolTip="Drag a rectangle over the video to keep only that area (C)">
                         <StackPanel Orientation="Horizontal"><ui:SymbolIcon Style="{StaticResource ToolIcon}" Symbol="Crop24" Margin="0,0,6,0" /><TextBlock Text="Crop" VerticalAlignment="Center" /></StackPanel>
                     </Button>
                     <Button x:Name="ClearCropButton" Style="{StaticResource ToolButton}" Click="ClearCrop_Click" Visibility="Collapsed">
-                        <StackPanel Orientation="Horizontal"><ui:SymbolIcon Style="{StaticResource ToolIcon}" Symbol="DismissCircle24" Margin="0,0,6,0" /><TextBlock Text="Clear crop" VerticalAlignment="Center" /></StackPanel>
+                        <StackPanel Orientation="Horizontal"><ui:SymbolIcon Style="{StaticResource ToolIcon}" Symbol="Dismiss24" Margin="0,0,6,0" /><TextBlock Text="Clear crop" VerticalAlignment="Center" /></StackPanel>
                     </Button>
                 </StackPanel>
+                <Rectangle Style="{StaticResource ToolDivider}" />
 
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,8">
-                    <TextBlock Text="Speed" VerticalAlignment="Center" Margin="4,0,10,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="SPEED" Style="{StaticResource BarLabel}" />
                     <ComboBox x:Name="SpeedBox" Width="96" SelectionChanged="SpeedBox_SelectionChanged" ToolTip="Slow motion or fast forward - the preview plays at this speed and the saved clip keeps it">
                         <ComboBoxItem Content="0.25×" Tag="0.25" />
                         <ComboBoxItem Content="0.5×" Tag="0.5" />
@@ -171,9 +203,10 @@
                         <ComboBoxItem Content="4×" Tag="4" />
                     </ComboBox>
                 </StackPanel>
+                <Rectangle Style="{StaticResource ToolDivider}" />
                 <StackPanel x:Name="GifTools" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
-                    <TextBlock Text="GIF" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <ComboBox x:Name="GifWidthBox" Width="104" Margin="0,0,8,0" ToolTip="Width of the GIF - smaller means a much smaller file">
+                    <TextBlock Text="GIF" Style="{StaticResource BarLabel}" />
+                    <ComboBox x:Name="GifWidthBox" Width="104" Margin="0,0,6,0" ToolTip="Width of the GIF - smaller means a much smaller file">
                         <ComboBoxItem Content="320 px" Tag="320" />
                         <ComboBoxItem Content="480 px" Tag="480" />
                         <ComboBoxItem Content="640 px" Tag="640" IsSelected="True" />
@@ -187,33 +220,65 @@
                         <ComboBoxItem Content="25 fps" Tag="25" />
                         <ComboBoxItem Content="33 fps" Tag="33" />
                     </ComboBox>
-                    <CheckBox x:Name="GifDitherBox" Content="Smooth colours" Margin="0,0,14,0" VerticalAlignment="Center" Focusable="False" ToolTip="Dither gradients such as skies so they don't band - the file gets around a third bigger" />
+                    <CheckBox x:Name="GifDitherBox" Content="Smooth colours" Margin="0,0,12,0" VerticalAlignment="Center" Focusable="False" ToolTip="Dither gradients such as skies so they don't band - the file gets around a third bigger" />
                     <Button x:Name="GifButton" Style="{StaticResource ToolButton}" Margin="0" Click="ExportGif_Click" ToolTip="Save the selection as an animated GIF next to the clip (keeps the trim, crop and speed) and copy it, ready to paste into a chat">
-                        <StackPanel Orientation="Horizontal"><ui:SymbolIcon Style="{StaticResource ToolIcon}" Symbol="ArrowExportLtr24" Margin="0,0,6,0" /><TextBlock Text="Make GIF" VerticalAlignment="Center" /></StackPanel>
+                        <StackPanel Orientation="Horizontal"><ui:SymbolIcon Style="{StaticResource ToolIcon}" Symbol="Gif24" Margin="0,0,6,0" /><TextBlock Text="Make GIF" VerticalAlignment="Center" /></StackPanel>
                     </Button>
                 </StackPanel>
             </WrapPanel>
         </Border>
 
-        <!--  Footer  -->
-        <Border Grid.Row="4" Margin="0,16,0,0" Padding="22,14" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0">
+        <Border Grid.Row="4" Padding="20,12">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <ProgressBar x:Name="ExportProgress" Height="4" Margin="0,0,24,0" VerticalAlignment="Center" Minimum="0" Maximum="1" Visibility="Collapsed" />
-                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button x:Name="CancelSaveButton" Margin="0,0,8,0" Padding="14,7" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" Content="Cancel saving" Visibility="Collapsed" ToolTip="Stop saving and keep the clip as it was" Click="CancelSave_Click" />
+                <StackPanel Grid.Column="0" Margin="0,0,20,0" VerticalAlignment="Center">
+                    <TextBlock x:Name="StatusText" FontSize="11.5" FontFamily="{DynamicResource PhasmaMono}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                    <ProgressBar x:Name="ExportProgress" Margin="0,8,0,0" Height="4" Minimum="0" Maximum="1" Visibility="Collapsed" Style="{DynamicResource PhasmaMiniBar}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="CancelSaveButton" Margin="0,0,8,0" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" Content="Cancel saving" Visibility="Collapsed" ToolTip="Stop saving and keep the clip as it was" Click="CancelSave_Click" />
                     <StackPanel x:Name="FooterButtons" Orientation="Horizontal">
-                        <Button Margin="0,0,8,0" Padding="14,7" Focusable="False" Style="{DynamicResource PhasmaGhostButton}" Content="Save frame" ToolTip="Save the frame on screen as a screenshot - it shows up in the gallery above, where you can edit it" Click="SaveFrame_Click" />
-                        <Button Margin="0,0,8,0" Padding="14,7" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" Content="Copy" ToolTip="Copy the clip to the clipboard so you can paste it into a chat (saves your edits as a copy first)" Click="CopyClip_Click" />
-                        <Button Margin="0,0,8,0" Padding="14,7" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" Content="Save as copy" ToolTip="Keep the original and write the edited clip next to it (Ctrl+S)" Click="SaveCopy_Click" />
-                        <Button Margin="0,0,8,0" Padding="14,7" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" Content="Close" Click="Close_Click" />
-                        <Button Padding="16,7" Focusable="False" Style="{DynamicResource PhasmaAccentButton}" Content="Save clip" ToolTip="Replace the original clip with the edited one" Click="Save_Click" />
+                        <Button Margin="0,0,8,0" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" ToolTip="Save the frame on screen as a screenshot - it shows up in the gallery above, where you can edit it" Click="SaveFrame_Click">
+                            <StackPanel Orientation="Horizontal"><ui:SymbolIcon Style="{StaticResource ToolIcon}" Symbol="Camera24" Margin="0,0,6,0" /><TextBlock Text="Save frame" VerticalAlignment="Center" /></StackPanel>
+                        </Button>
+                        <Button Margin="0,0,8,0" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" ToolTip="Copy the clip to the clipboard so you can paste it into a chat (saves your edits as a copy first)" Click="CopyClip_Click">
+                            <StackPanel Orientation="Horizontal"><ui:SymbolIcon Style="{StaticResource ToolIcon}" Symbol="Copy24" Margin="0,0,6,0" /><TextBlock Text="Copy" VerticalAlignment="Center" /></StackPanel>
+                        </Button>
+                        <Button Margin="0,0,8,0" Focusable="False" Style="{DynamicResource PhasmaSoftButton}" ToolTip="Keep the original and write the edited clip next to it (Ctrl+S)" Click="SaveCopy_Click">
+                            <StackPanel Orientation="Horizontal"><ui:SymbolIcon Style="{StaticResource ToolIcon}" Symbol="DocumentCopy24" Margin="0,0,6,0" /><TextBlock Text="Save as copy" VerticalAlignment="Center" /></StackPanel>
+                        </Button>
+                        <Button Margin="0,0,8,0" Focusable="False" Style="{DynamicResource PhasmaAccentButton}" ToolTip="Replace the original clip with the edited one" Click="Save_Click">
+                            <StackPanel Orientation="Horizontal"><ui:SymbolIcon Style="{StaticResource ToolIcon}" Symbol="Save24" Margin="0,0,6,0" Foreground="White" /><TextBlock Text="Save clip" VerticalAlignment="Center" /></StackPanel>
+                        </Button>
+                        <Button Focusable="False" Style="{DynamicResource PhasmaSoftButton}" Content="Close" Click="Close_Click" />
                     </StackPanel>
                 </StackPanel>
             </Grid>
+        </Border>
+
+        <Border Grid.Row="5" Padding="20,6" Background="{DynamicResource PhasmaChromeBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0">
+            <DockPanel LastChildFill="False">
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                    <Border Style="{StaticResource Key}"><TextBlock Style="{StaticResource KeyText}" Text="Space" /></Border>
+                    <TextBlock Style="{StaticResource KeyLabel}" Text="PLAY" />
+                    <Border Style="{StaticResource Key}"><TextBlock Style="{StaticResource KeyText}" Text="Left Right" /></Border>
+                    <TextBlock Style="{StaticResource KeyLabel}" Text="FRAME" />
+                    <Border Style="{StaticResource Key}"><TextBlock Style="{StaticResource KeyText}" Text="Home End" /></Border>
+                    <TextBlock Style="{StaticResource KeyLabel}" Text="JUMP" />
+                    <Border Style="{StaticResource Key}"><TextBlock Style="{StaticResource KeyText}" Text="I [" /></Border>
+                    <TextBlock Style="{StaticResource KeyLabel}" Text="START" />
+                    <Border Style="{StaticResource Key}"><TextBlock Style="{StaticResource KeyText}" Text="O ]" /></Border>
+                    <TextBlock Style="{StaticResource KeyLabel}" Text="END" />
+                    <Border Style="{StaticResource Key}"><TextBlock Style="{StaticResource KeyText}" Text="C" /></Border>
+                    <TextBlock Style="{StaticResource KeyLabel}" Text="CROP" />
+                    <Border Style="{StaticResource Key}"><TextBlock Style="{StaticResource KeyText}" Text="Ctrl S" /></Border>
+                    <TextBlock Style="{StaticResource KeyLabel}" Text="SAVE AS COPY" />
+                </StackPanel>
+                <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" FontSize="11.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Drag the accent edges to trim" />
+            </DockPanel>
         </Border>
     </Grid>
 </base:WpfUiWindow>

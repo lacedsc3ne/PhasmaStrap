@@ -132,10 +132,6 @@ namespace PhasmaStrap.Utility
             return new ManagedModStatistics(count, total);
         }
 
-        /// <summary>
-        /// Writes every file of a mod into a .zip at <paramref name="destination"/>, keeping its folder layout.
-        /// Goes through a temporary file so a failed export never leaves half a zip behind. Returns how many files went in.
-        /// </summary>
         public static int ExportZip(string id, string destination)
         {
             string folder = GetFolder(id);

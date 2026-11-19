@@ -376,10 +376,8 @@ namespace PhasmaStrap.Utility
             }
         }
 
-        /// <summary>Only backed up when "What to include" is set to Everything.</summary>
         private static readonly string[] EverythingOnlyBackups = { "FriendNotes.json", "FriendHistory.json", "Games.json" };
 
-        /// <summary>Every file a backup may hold, by its name in the backup. Restore writes only these (plus any custom theme).</summary>
         public static Dictionary<string, string> BackupTargets()
         {
             var targets = new Dictionary<string, string>(StringComparer.Ordinal)
@@ -413,13 +411,11 @@ namespace PhasmaStrap.Utility
             return targets;
         }
 
-        /// <summary>Where a file from a backup goes back to, or null for a name this PhasmaStrap does not restore.</summary>
         public static string? RestorePathFor(string name)
         {
             if (BackupTargets().TryGetValue(name, out string? known))
                 return known;
 
-            // A custom theme made on another PC: CustomThemes/<name>/Theme.xml
             Match match = Regex.Match(name, @"^CustomThemes/([^/\\:*?""<>|]+)/Theme\.xml$");
             if (!match.Success)
                 return null;

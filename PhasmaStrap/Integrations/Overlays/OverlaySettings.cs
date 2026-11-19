@@ -47,7 +47,7 @@ namespace PhasmaStrap.Integrations.Overlays
         {
             long placeId = OverlayHub.CurrentPlaceId;
 
-            if (placeId != 0 && App.Settings.Prop.OverlayPlaceProfiles.TryGetValue(placeId.ToString(), out var found))
+            if (placeId != 0 && App.Settings.Prop.OverlayPlaceProfiles.Count > 0 && App.Settings.Prop.OverlayPlaceProfiles.TryGetValue(PlaceKey(placeId), out var found))
             {
                 profile = found;
                 return true;
@@ -55,6 +55,20 @@ namespace PhasmaStrap.Integrations.Overlays
 
             profile = null!;
             return false;
+        }
+
+        private sealed record PlaceKeyCache(long PlaceId, string Key);
+
+        private static PlaceKeyCache _placeKey = new(0, "0");
+
+        private static string PlaceKey(long placeId)
+        {
+            PlaceKeyCache cached = Volatile.Read(ref _placeKey);
+            if (cached.PlaceId == placeId)
+                return cached.Key;
+            cached = new PlaceKeyCache(placeId, placeId.ToString());
+            Volatile.Write(ref _placeKey, cached);
+            return cached.Key;
         }
     }
 }

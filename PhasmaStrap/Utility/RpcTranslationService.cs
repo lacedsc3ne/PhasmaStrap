@@ -2,9 +2,7 @@ namespace PhasmaStrap.Utility
 {
     public static class RpcTranslationService
     {
-        public static bool IsEnabled =>
-            App.Settings.Prop.AutoTranslate &&
-            App.Settings.Prop.RpcAutoTranslate;
+        public static bool IsEnabled => App.Settings.Prop.RpcAutoTranslate;
 
         private static string TargetLanguage => App.Settings.Prop.AutoTranslateLanguage;
 

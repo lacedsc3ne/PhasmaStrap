@@ -21,10 +21,6 @@ namespace PhasmaStrap.Integrations
 
     public sealed record MediaInfo(bool IsVideo, string Title, string ImageUrl);
 
-    /// <summary>
-    /// Extra read only facts for the game page: release details, votes, game passes, badges and media.
-    /// Everything fails soft and returns empty results.
-    /// </summary>
     public static class GameExtras
     {
         private const string LOG_IDENT = "GameExtras";

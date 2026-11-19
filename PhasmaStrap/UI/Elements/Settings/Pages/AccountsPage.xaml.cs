@@ -49,7 +49,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             if (AccountsList.ItemContainerGenerator.ContainerFromItem(row) is not ContentPresenter presenter)
                 return;
 
-            // Wait for the menu to close so focus is not taken back
             Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
             {
                 if (presenter.ContentTemplate?.FindName("NoteBox", presenter) is TextBoxBase box)

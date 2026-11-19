@@ -8,13 +8,25 @@
         Height="780"
         MinWidth="640"
         MinHeight="480"
-        Background="{ui:ThemeResource ApplicationBackgroundBrush}"
+        Background="{DynamicResource PhasmaPanelBrush}"
         ExtendsContentIntoTitleBar="True"
         WindowStartupLocation="CenterOwner">
     <base:WpfUiWindow.Resources>
+        <Style x:Key="CardAction" TargetType="ButtonBase" BasedOn="{StaticResource PhasmaIconButton}">
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Margin" Value="2,0,0,0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+        <Style x:Key="FilterBox" TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="Padding" Value="10,5,10,5" />
+        </Style>
+
         <DataTemplate x:Key="CardTemplate">
-            <Border x:Name="Card" Width="250" Margin="0,0,12,12" CornerRadius="8" BorderThickness="1"
-                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}"
+            <Border x:Name="Card" Width="250" Margin="0,0,12,12" BorderThickness="1"
+                    BorderBrush="{DynamicResource PhasmaStrokeBrush}" Background="{DynamicResource PhasmaSubnavBrush}"
                     Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}">
                 <Border.ContextMenu>
                     <ContextMenu DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}">
@@ -44,34 +56,40 @@
                     </ContextMenu>
                 </Border.ContextMenu>
                 <StackPanel>
-                    <Border Height="141" CornerRadius="8,8,0,0" ClipToBounds="True" Background="{DynamicResource ControlFillColorSecondaryBrush}" ToolTip="Open">
+                    <Border Height="141" ClipToBounds="True" Background="{DynamicResource PhasmaS3Brush}" ToolTip="Open" Cursor="Hand">
                         <Border.InputBindings>
                             <MouseBinding MouseAction="LeftClick" Command="{Binding Tag.OpenCommand, ElementName=Card}" CommandParameter="{Binding}" />
                         </Border.InputBindings>
                         <Grid>
                             <ui:SymbolIcon Symbol="{Binding Symbol}" FontSize="28" Opacity="0.35" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding PlaceholderVisibility}" />
-                            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
-                            <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="6" Padding="4,2" CornerRadius="4" Background="#B0000000" Visibility="{Binding BadgeVisibility}">
-                                <ui:SymbolIcon Symbol="{Binding Symbol}" FontSize="13" Foreground="White" />
+                            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" />
+                            <Border Width="32" Height="32" Margin="0,0,10,10" HorizontalAlignment="Right" VerticalAlignment="Bottom" Background="{DynamicResource PhasmaAccentBrush}" Visibility="{Binding BadgeVisibility}">
+                                <ui:SymbolIcon Symbol="{Binding Symbol}" FontSize="14" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                         </Grid>
                     </Border>
-                    <Grid Margin="10,8,6,8">
+                    <Grid Margin="12,10,6,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                            <TextBlock FontSize="13" FontWeight="SemiBold" Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FileName}" />
-                            <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Opacity="0.85" Text="{Binding GameText}" Visibility="{Binding GameVisibility}" TextTrimming="CharacterEllipsis" ToolTip="{Binding GameText}" />
-                            <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Subtitle}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Subtitle}" />
+                            <TextBlock FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="12.5" FontWeight="Bold" Foreground="White" Text="{Binding GameText, Converter={StaticResource PhasmaUpper}}" Visibility="{Binding GameVisibility}" TextTrimming="CharacterEllipsis" ToolTip="{Binding GameText}" />
+                            <TextBlock Margin="0,2,0,0" FontSize="12.5" FontWeight="SemiBold" Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FileName}" />
+                            <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Subtitle}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Subtitle}" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <ui:Button Padding="5" Appearance="Transparent" Icon="Edit16" ToolTip="Edit" Visibility="{Binding EditVisibility}"
-                                       Command="{Binding Tag.EditCommand, ElementName=Card}" CommandParameter="{Binding}" />
-                            <ui:Button Padding="5" Appearance="Transparent" Icon="Copy16" ToolTip="Copy, ready to paste into a chat"
-                                       Command="{Binding Tag.CopyCommand, ElementName=Card}" CommandParameter="{Binding}" />
-                            <ui:Button Padding="5" Appearance="Transparent" Icon="MoreHorizontal16" ToolTip="Rename, show in folder, delete..." Click="More_Click" />
+                            <Button Style="{StaticResource CardAction}" ToolTip="Edit" AutomationProperties.Name="Edit" Visibility="{Binding EditVisibility}"
+                                    Command="{Binding Tag.EditCommand, ElementName=Card}" CommandParameter="{Binding}">
+                                <ui:SymbolIcon Symbol="Edit16" FontSize="14" />
+                            </Button>
+                            <Button Style="{StaticResource CardAction}" ToolTip="Copy, ready to paste into a chat" AutomationProperties.Name="Copy"
+                                    Command="{Binding Tag.CopyCommand, ElementName=Card}" CommandParameter="{Binding}">
+                                <ui:SymbolIcon Symbol="Copy16" FontSize="14" />
+                            </Button>
+                            <Button Style="{StaticResource CardAction}" ToolTip="Rename, show in folder, delete..." AutomationProperties.Name="More" Click="More_Click">
+                                <ui:SymbolIcon Symbol="MoreHorizontal16" FontSize="14" />
+                            </Button>
                         </StackPanel>
                     </Grid>
                 </StackPanel>
@@ -84,61 +102,84 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Padding="8" Title="Captures" Icon="pack://application:,,,/PhasmaStrap.ico" />
+        <Border Grid.Row="0" Background="{DynamicResource PhasmaChromeBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,0,0,1" />
+        <StackPanel Grid.Row="0" Margin="14,0,0,0" VerticalAlignment="Center" Orientation="Horizontal" IsHitTestVisible="False" Panel.ZIndex="1">
+            <Image Width="14" Height="14" Margin="0,0,8,0" Source="pack://application:,,,/Resources/PhasmaStrapLogo.png" RenderOptions.BitmapScalingMode="HighQuality" />
+            <TextBlock VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="CAPTURES" />
+        </StackPanel>
+        <ui:TitleBar Grid.Row="0" Height="32" MinHeight="32" Padding="0" Title="" />
 
-        <TabControl Grid.Row="1" Margin="12,0,12,0" SelectedIndex="{Binding Tab, Mode=TwoWay}">
+        <TabControl Grid.Row="1" Margin="20,8,20,0" SelectedIndex="{Binding Tab, Mode=TwoWay}" ItemContainerStyle="{StaticResource PhasmaTabItem}" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+            <TabControl.Template>
+                <ControlTemplate TargetType="TabControl">
+                    <Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="0,0,0,1">
+                        <TabPanel IsItemsHost="True" Margin="-10,0,0,0" />
+                    </Border>
+                </ControlTemplate>
+            </TabControl.Template>
             <TabItem>
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="Image24" Margin="0,0,6,0" />
-                        <TextBlock Text="{Binding ScreenshotsHeader}" />
+                        <ui:SymbolIcon Symbol="Image24" FontSize="15" Margin="0,0,8,0" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding ScreenshotsHeader, Converter={StaticResource PhasmaUpper}}" VerticalAlignment="Center" />
                     </StackPanel>
                 </TabItem.Header>
             </TabItem>
             <TabItem>
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="VideoClip24" Margin="0,0,6,0" />
-                        <TextBlock Text="{Binding ClipsHeader}" />
+                        <ui:SymbolIcon Symbol="VideoClip24" FontSize="15" Margin="0,0,8,0" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding ClipsHeader, Converter={StaticResource PhasmaUpper}}" VerticalAlignment="Center" />
                     </StackPanel>
                 </TabItem.Header>
             </TabItem>
         </TabControl>
 
-        <Grid Grid.Row="2" Margin="12,10,12,10">
+        <Grid Grid.Row="2" Margin="20,14,20,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" MinWidth="180" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <ui:TextBox Grid.Column="0" Icon="Search24" PlaceholderText="Search names and games" Text="{Binding Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             <WrapPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
-                <ComboBox Width="170" Margin="0,0,8,0" Padding="10,5,10,5" ToolTip="Which game it was taken in" ItemsSource="{Binding GameOptions}" SelectedItem="{Binding Game, Mode=TwoWay}" />
-                <ComboBox Width="140" Margin="0,0,8,0" Padding="10,5,10,5" SelectedIndex="{Binding DateIndex, Mode=TwoWay}">
+                <ComboBox Width="170" Style="{StaticResource FilterBox}" ToolTip="Which game it was taken in" ItemsSource="{Binding GameOptions}" SelectedItem="{Binding Game, Mode=TwoWay}" />
+                <ComboBox Width="140" Style="{StaticResource FilterBox}" SelectedIndex="{Binding DateIndex, Mode=TwoWay}">
                     <ComboBoxItem Content="Any time" />
                     <ComboBoxItem Content="Today" />
                     <ComboBoxItem Content="Last 7 days" />
                     <ComboBoxItem Content="Last 30 days" />
                 </ComboBox>
-                <ComboBox Width="120" Margin="0,0,8,0" Padding="10,5,10,5" Visibility="{Binding TypeVisibility}" SelectedIndex="{Binding TypeIndex, Mode=TwoWay}">
+                <ComboBox Width="120" Style="{StaticResource FilterBox}" Visibility="{Binding TypeVisibility}" SelectedIndex="{Binding TypeIndex, Mode=TwoWay}">
                     <ComboBoxItem Content="All clips" />
                     <ComboBoxItem Content="Videos" />
                     <ComboBoxItem Content="GIFs" />
                 </ComboBox>
-                <ComboBox Width="140" Margin="0,0,8,0" Padding="10,5,10,5" SelectedIndex="{Binding SortIndex, Mode=TwoWay}">
+                <ComboBox Width="140" Style="{StaticResource FilterBox}" SelectedIndex="{Binding SortIndex, Mode=TwoWay}">
                     <ComboBoxItem Content="Newest first" />
                     <ComboBoxItem Content="Oldest first" />
                     <ComboBoxItem Content="Name" />
                     <ComboBoxItem Content="Largest first" />
                 </ComboBox>
-                <ui:Button Padding="8,6" Appearance="Secondary" Icon="Dismiss16" ToolTip="Clear filters" Command="{Binding ClearFiltersCommand, Mode=OneTime}" />
+                <Button Width="32" Height="32" Style="{DynamicResource PhasmaIconButton}" ToolTip="Clear filters" AutomationProperties.Name="Clear filters" Command="{Binding ClearFiltersCommand, Mode=OneTime}">
+                    <ui:SymbolIcon Symbol="Dismiss16" FontSize="14" />
+                </Button>
             </WrapPanel>
         </Grid>
 
-        <Grid Grid.Row="3" Margin="12,0,0,0">
+        <Grid Grid.Row="3" Margin="20,12,20,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Summary}" />
+            <TextBlock Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Status}" />
+        </Grid>
+
+        <Grid Grid.Row="4" Margin="20,0,0,0">
             <ItemsControl x:Name="CardRows" ItemsSource="{Binding Rows}" SizeChanged="CardRows_SizeChanged"
                           VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True">
                 <ItemsControl.Template>
@@ -170,15 +211,6 @@
                 <ui:SymbolIcon Symbol="ImageMultiple24" FontSize="40" Opacity="0.25" HorizontalAlignment="Center" />
                 <TextBlock Margin="0,10,0,0" FontSize="14" Opacity="0.6" HorizontalAlignment="Center" Text="{Binding EmptyText}" />
             </StackPanel>
-        </Grid>
-
-        <Grid Grid.Row="4" Margin="12,8,12,12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Status}" />
-            <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Summary}" />
         </Grid>
     </Grid>
 </base:WpfUiWindow>

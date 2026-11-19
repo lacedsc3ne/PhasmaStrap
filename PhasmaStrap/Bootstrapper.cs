@@ -284,6 +284,9 @@ namespace PhasmaStrap
                 if (_cancelTokenSource.IsCancellationRequested)
                     return;
 
+                if (App.Settings.Prop.ForceHighPerformanceGpu)
+                    Integrations.SystemPerformanceBoost.ApplyGpuPreference();
+
                 allModificationsApplied = await ApplyModifications();
 
                 if (App.Settings.Prop.NetworkingProxyEnabled)
@@ -331,7 +334,6 @@ namespace PhasmaStrap
                     LaunchGame game = App.Settings.Prop.UseFastFlagManager ? await ResolveLaunchGameAsync() : LaunchGame.Unknown;
                     Utility.FlagProfile? profile = game.Known ? Utility.FlagLayers.ProfileFor(App.FlagProfiles.Prop, game.PlaceId, game.UniverseId) : null;
 
-                    // "Launch with flag profile" from the Games pages: a profile for this launch only.
                     Utility.FlagProfileSession.OneTimeRequest? oneTimeRequest = null;
                     Utility.FlagProfile? oneTimeProfile = null;
                     bool oneTime = App.Settings.Prop.UseFastFlagManager
@@ -375,7 +377,6 @@ namespace PhasmaStrap
                     Utility.RobloxAppStorage.Apply();
 
                 StartRoblox();
-
             }
 
             await mutex.ReleaseAsync();
@@ -920,10 +921,6 @@ namespace PhasmaStrap
             }
         }
 
-        /// <summary>
-        /// Turns on Roblox's own Fullscreen setting in GlobalBasicSettings before it starts, so the game opens fullscreen.
-        /// The resolution override (Performance) still applies on join. Skipped while a Roblox is running, as it rewrites the file on exit.
-        /// </summary>
         private static void ApplyFullscreenOnLaunch()
         {
             const string LOG_IDENT = "Bootstrapper::ApplyFullscreenOnLaunch";

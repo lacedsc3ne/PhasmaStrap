@@ -12,10 +12,55 @@
     Height="600"
     MinWidth="480"
     MinHeight="360"
-    Background="{ui:ThemeResource ApplicationBackgroundBrush}"
+    Background="{DynamicResource PhasmaPanelBrush}"
     ExtendsContentIntoTitleBar="True"
     WindowStartupLocation="CenterOwner"
     mc:Ignorable="d">
+    <base:WpfUiWindow.Resources>
+        <Style x:Key="GridHeader" TargetType="{x:Type DataGridColumnHeader}">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaMono}" />
+            <Setter Property="FontSize" Value="10.5" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Padding" Value="14,0" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PhasmaStrokeBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Converter={StaticResource PhasmaUpper}}" />
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="GridCell" TargetType="{x:Type DataGridCell}">
+            <Setter Property="Height" Value="42" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type DataGridCell}">
+                        <Border Padding="14,0" Background="{TemplateBinding Background}">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource PhasmaAccentSoftBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="MonoCell" TargetType="{x:Type TextBlock}">
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaMono}" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+    </base:WpfUiWindow.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -24,48 +69,67 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar x:Name="TitleBarElement" Grid.Row="0" Padding="8" CanMaximize="False" KeyboardNavigation.TabNavigation="None" ShowMaximize="False" ShowMinimize="False" />
+        <ui:TitleBar x:Name="TitleBarElement" Grid.Row="0" Padding="12,8" Background="{DynamicResource PhasmaChromeBrush}" FontFamily="{DynamicResource PhasmaMono}" FontSize="11"
+                     Foreground="{DynamicResource TextFillColorTertiaryBrush}" Icon="pack://application:,,,/PhasmaStrap.ico"
+                     CanMaximize="False" KeyboardNavigation.TabNavigation="None" ShowMaximize="False" ShowMinimize="False" />
+        <Border Grid.Row="0" VerticalAlignment="Bottom" Style="{DynamicResource PhasmaDivider}" />
 
-        <StackPanel Grid.Row="1" Margin="16,8,16,10">
-            <TextBlock x:Name="HeadingText" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" />
-            <TextBlock x:Name="SummaryText" Margin="0,4,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+        <StackPanel Grid.Row="1" Margin="20,20,20,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border RenderTransformOrigin="0.5,0.5" Width="4" Height="20" Margin="3,0,12,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaAccentBrush}">
+                    <Border.RenderTransform>
+                        <SkewTransform AngleX="-14" />
+                    </Border.RenderTransform>
+                </Border>
+                <TextBlock x:Name="HeadingText" Grid.Column="1" VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="17" FontWeight="Bold" Foreground="White" TextWrapping="Wrap" />
+            </Grid>
+            <TextBlock x:Name="SummaryText" Margin="0,10,0,0" FontSize="13.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
         </StackPanel>
 
-        <DataGrid x:Name="FlagGrid" Grid.Row="2" Margin="16,0,16,0" IsReadOnly="True" AutoGenerateColumns="False" HeadersVisibility="Column" GridLinesVisibility="Horizontal"
-                  CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" Background="Transparent" BorderThickness="0">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Flag" Binding="{Binding Name}" Width="2*" />
-                <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*" />
-                <DataGridTemplateColumn Header="Comes from" Width="1.4*">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding From}" FontSize="12" VerticalAlignment="Center">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Tone}" Value="Added">
-                                                <Setter Property="Foreground" Value="{DynamicResource SystemFillColorSuccessBrush}" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding Tone}" Value="Changed">
-                                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding Tone}" Value="Off">
-                                                <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
+        <Border Grid.Row="2" Margin="20,0,20,0" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}" BorderThickness="1">
+            <DataGrid x:Name="FlagGrid" IsReadOnly="True" AutoGenerateColumns="False" HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                      CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" Background="Transparent" BorderThickness="0"
+                      RowBackground="Transparent" AlternatingRowBackground="Transparent" HorizontalGridLinesBrush="{DynamicResource PhasmaStrokeBrush}"
+                      ColumnHeaderStyle="{StaticResource GridHeader}" CellStyle="{StaticResource GridCell}"
+                      VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Flag" Binding="{Binding Name}" Width="2*" ElementStyle="{StaticResource MonoCell}" />
+                    <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*" ElementStyle="{StaticResource MonoCell}" />
+                    <DataGridTemplateColumn Header="Comes from" Width="1.4*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding From}" FontSize="13" FontWeight="Medium" VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Tone}" Value="Added">
+                                                    <Setter Property="Foreground" Value="{DynamicResource PhasmaGoodBrush}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Tone}" Value="Changed">
+                                                    <Setter Property="Foreground" Value="{DynamicResource PhasmaWarnBrush}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Tone}" Value="Off">
+                                                    <Setter Property="Foreground" Value="{DynamicResource PhasmaRedTextBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
 
-        <Border Grid.Row="3" Margin="0,10,0,0" Padding="15" Background="{ui:ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+        <Border Grid.Row="3" Margin="0,18,0,0" Padding="18,12" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0">
             <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-                <Button MinWidth="100" Content="{x:Static resources:Strings.Common_Close}" IsCancel="True" IsDefault="True" />
+                <Button MinWidth="90" Content="{x:Static resources:Strings.Common_Close}" IsCancel="True" IsDefault="True" Style="{StaticResource PhasmaAccentButton}" />
             </StackPanel>
         </Border>
     </Grid>

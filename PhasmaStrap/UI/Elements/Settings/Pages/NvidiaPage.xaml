@@ -6,13 +6,13 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       mc:Ignorable="d"
       Title="NvidiaPage"
       Scrollable="True"
       Loaded="Page_Loaded"
       Unloaded="Page_Unloaded">
     <ui:UiPage.Resources>
-        <!--  Status line under a card that hides itself while empty  -->
         <Style x:Key="StatusLine" TargetType="{x:Type TextBlock}">
             <Setter Property="Margin" Value="0,0,0,10" />
             <Setter Property="FontSize" Value="11.5" />
@@ -32,7 +32,6 @@
     <StackPanel Margin="0,0,14,14">
         <controls:PageHeader Title="{x:Static resources:Strings.Menu_Nvidia_Title}" Subtitle="Applied to a dedicated Roblox driver profile, separate from the game's own FastFlags. Needs an NVIDIA GPU." />
 
-        <!--  No NVIDIA GPU or driver: empty state  -->
         <Border Style="{DynamicResource PhasmaCard}" Padding="20" Visibility="{Binding UnavailableVisibility}">
             <StackPanel HorizontalAlignment="Center">
                 <ui:SymbolIcon Symbol="Warning24" FontSize="28" HorizontalAlignment="Center" Foreground="{DynamicResource PhasmaWarnBrush}" />
@@ -42,7 +41,6 @@
         </Border>
 
         <StackPanel Visibility="{Binding AvailableVisibility}">
-            <!--  Main view  -->
             <StackPanel>
                 <StackPanel.Style>
                     <Style TargetType="StackPanel">
@@ -54,146 +52,203 @@
                     </Style>
                 </StackPanel.Style>
 
-                <!--  Driver profile banner with the page actions  -->
-                <Border Style="{DynamicResource PhasmaCard}" Margin="0,0,0,12">
+                <Border Style="{DynamicResource PhasmaCard}" Margin="0,0,0,16" Padding="20,18,20,18">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <Border Grid.Column="0" Width="38" Height="38" Margin="0,0,12,0" VerticalAlignment="Center" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="{DynamicResource PhasmaAccentSoftBrush}">
-                            <ui:SymbolIcon Symbol="TopSpeed24" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource PhasmaAccentBrush}" />
+                        <Border Grid.Column="0" Width="46" Height="46" Margin="0,0,16,0" VerticalAlignment="Center" CornerRadius="0" phui:CutCorners.Size="6" Background="{DynamicResource PhasmaAccentBrush}">
+                            <ui:SymbolIcon Symbol="TopSpeed24" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" />
                         </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,12,0">
-                            <TextBlock FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding GpuBannerTitle}" />
-                            <TextBlock Margin="0,2,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{x:Static resources:Strings.Menu_Nvidia_ApplyCard_Description}" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,16,0">
+                            <TextBlock FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="18" FontWeight="Bold" Foreground="White" TextWrapping="Wrap" Text="{Binding GpuBannerTitle, Converter={StaticResource PhasmaUpper}}" />
+                            <TextBlock Margin="0,3,0,0" FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Nvidia_ApplyCard_Description}" />
                         </StackPanel>
                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                             <Button Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Menu_Nvidia_Setup_Description}" AutomationProperties.Name="NVIDIA setup" Click="NvidiaSetup_Click">
-                                <ui:SymbolIcon Symbol="Info24" FontSize="14" />
+                                <ui:SymbolIcon Symbol="Info24" FontSize="15" />
                             </Button>
-                            <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" ToolTip="{x:Static resources:Strings.Menu_Nvidia_AdvancedEditor_Description}" Click="AdvancedEditor_Click">
+                            <Button Margin="10,0,0,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" ToolTip="{x:Static resources:Strings.Menu_Nvidia_AdvancedEditor_Description}" Click="AdvancedEditor_Click">
                                 <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="Code24" FontSize="13" Margin="0,0,6,0" />
+                                    <ui:SymbolIcon Symbol="Code24" FontSize="14" Margin="0,0,7,0" />
                                     <TextBlock Text="Advanced editor" />
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="ApplyButton" Margin="6,0,0,0" Style="{DynamicResource PhasmaAccentButton}" Content="{x:Static resources:Strings.Menu_Nvidia_ApplyButton}" Click="Apply_Click" />
+                            <Button x:Name="ApplyButton" Margin="14,0,0,0" Padding="18,10" Style="{DynamicResource PhasmaAccentButton}" Click="Apply_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Flash24" FontSize="15" Margin="0,0,7,0" />
+                                    <TextBlock Text="{x:Static resources:Strings.Menu_Nvidia_ApplyButton}" />
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </Grid>
                 </Border>
 
-                <controls:CardColumns>
-                    <controls:SettingsCard Header="Game details">
-                        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Nvidia_BackgroundFrameRateLimit_Title}" Description="Only while Roblox is unfocused. 0 is uncapped.">
-                            <ui:NumberBox ClearButtonEnabled="False" IntegersOnly="True" Width="140" Min="0" Max="1000" Value="{Binding BackgroundFrameRateLimit, Mode=TwoWay}" />
-                        </controls:OptionControl>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
 
-                        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Nvidia_BenchmarkOverlay_Title}" ToolTip="{x:Static resources:Strings.Menu_Nvidia_BenchmarkOverlay_Description}">
-                            <ComboBox MinWidth="100" MaxWidth="220" ItemsSource="{Binding BenchmarkOverlayModes, Mode=OneTime}" SelectedItem="{Binding BenchmarkOverlayMode, Mode=TwoWay}" />
-                        </controls:OptionControl>
+                    <StackPanel Grid.Column="0">
+                        <controls:SettingsCard Header="Game details" Margin="0,0,0,16">
+                            <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Nvidia_BackgroundFrameRateLimit_Title}" Description="Only while Roblox is unfocused. 0 is uncapped.">
+                                <ui:NumberBox ClearButtonEnabled="False" IntegersOnly="True" Width="140" Min="0" Max="1000" Value="{Binding BackgroundFrameRateLimit, Mode=TwoWay}" />
+                            </controls:OptionControl>
 
-                        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Nvidia_DlssSuperResolution_Title}" ToolTip="{x:Static resources:Strings.Menu_Nvidia_DlssSuperResolution_Description}">
-                            <ui:ToggleSwitch IsChecked="{Binding DlssSuperResolution, Mode=TwoWay}" />
-                        </controls:OptionControl>
+                            <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Nvidia_BenchmarkOverlay_Title}" Description="{x:Static resources:Strings.Menu_Nvidia_BenchmarkOverlay_Description}" ToolTip="{x:Static resources:Strings.Menu_Nvidia_BenchmarkOverlay_Description}">
+                                <ComboBox MinWidth="140" MaxWidth="220" ItemsSource="{Binding BenchmarkOverlayModes, Mode=OneTime}" SelectedItem="{Binding BenchmarkOverlayMode, Mode=TwoWay}" />
+                            </controls:OptionControl>
 
-                        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Nvidia_DlssFrameGeneration_Title}" ToolTip="{x:Static resources:Strings.Menu_Nvidia_DlssFrameGeneration_Description}">
-                            <ui:ToggleSwitch IsChecked="{Binding DlssFrameGeneration, Mode=TwoWay}" />
-                        </controls:OptionControl>
-                    </controls:SettingsCard>
+                            <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Nvidia_DlssSuperResolution_Title}" Description="{x:Static resources:Strings.Menu_Nvidia_DlssSuperResolution_Description}" ToolTip="{x:Static resources:Strings.Menu_Nvidia_DlssSuperResolution_Description}">
+                                <ui:ToggleSwitch IsChecked="{Binding DlssSuperResolution, Mode=TwoWay}" />
+                            </controls:OptionControl>
 
-                    <controls:SettingsCard Header="Low latency modes">
-                        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Nvidia_LowLatencyMode_Title}" Description="Limits how far ahead the CPU queues frames">
-                            <ComboBox MinWidth="100" ItemsSource="{Binding LowLatencyModes, Mode=OneTime}" SelectedItem="{Binding LowLatencyMode, Mode=TwoWay}" />
-                        </controls:OptionControl>
+                            <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Nvidia_DlssFrameGeneration_Title}" Description="{x:Static resources:Strings.Menu_Nvidia_DlssFrameGeneration_Description}" ToolTip="{x:Static resources:Strings.Menu_Nvidia_DlssFrameGeneration_Description}">
+                                <ui:ToggleSwitch IsChecked="{Binding DlssFrameGeneration, Mode=TwoWay}" />
+                            </controls:OptionControl>
+                        </controls:SettingsCard>
 
-                        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Nvidia_FrlLowLatencyMode_Title}" Description="Couples the limiter to low latency pacing">
-                            <ComboBox MinWidth="100" ItemsSource="{Binding FrlLowLatencyModes, Mode=OneTime}" SelectedItem="{Binding FrlLowLatencyMode, Mode=TwoWay}" />
-                        </controls:OptionControl>
-                    </controls:SettingsCard>
+                        <controls:SettingsCard Header="Low latency modes" Margin="0,0,0,16">
+                            <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Nvidia_LowLatencyMode_Title}" Description="Limits how far ahead the CPU queues frames">
+                                <ComboBox MinWidth="120" ItemsSource="{Binding LowLatencyModes, Mode=OneTime}" SelectedItem="{Binding LowLatencyMode, Mode=TwoWay}" />
+                            </controls:OptionControl>
 
-                    <controls:SettingsCard Header="Hardware and driver overrides">
-                        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Nvidia_ResizableBar_Title}" ToolTip="{x:Static resources:Strings.Menu_Nvidia_ResizableBar_Description}">
+                            <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Nvidia_FrlLowLatencyMode_Title}" Description="Couples the limiter to low latency pacing">
+                                <ComboBox MinWidth="120" ItemsSource="{Binding FrlLowLatencyModes, Mode=OneTime}" SelectedItem="{Binding FrlLowLatencyMode, Mode=TwoWay}" />
+                            </controls:OptionControl>
+                        </controls:SettingsCard>
+                    </StackPanel>
+
+                    <controls:SettingsCard Grid.Column="2" Header="Hardware and driver overrides" Margin="0,0,0,16">
+                        <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Nvidia_ResizableBar_Title}" Description="{x:Static resources:Strings.Menu_Nvidia_ResizableBar_Description}" ToolTip="{x:Static resources:Strings.Menu_Nvidia_ResizableBar_Description}">
                             <ui:ToggleSwitch IsChecked="{Binding ResizableBar, Mode=TwoWay}" />
                         </controls:OptionControl>
 
-                        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Nvidia_Mfaa_Title}" ToolTip="{x:Static resources:Strings.Menu_Nvidia_Mfaa_Description}">
+                        <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Nvidia_Mfaa_Title}" Description="{x:Static resources:Strings.Menu_Nvidia_Mfaa_Description}" ToolTip="{x:Static resources:Strings.Menu_Nvidia_Mfaa_Description}">
                             <ui:ToggleSwitch IsChecked="{Binding Mfaa, Mode=TwoWay}" />
                         </controls:OptionControl>
 
-                        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Nvidia_Fxaa_Title}" ToolTip="{x:Static resources:Strings.Menu_Nvidia_Fxaa_Description}">
+                        <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Nvidia_Fxaa_Title}" Description="{x:Static resources:Strings.Menu_Nvidia_Fxaa_Description}" ToolTip="{x:Static resources:Strings.Menu_Nvidia_Fxaa_Description}">
                             <ui:ToggleSwitch IsChecked="{Binding Fxaa, Mode=TwoWay}" />
                         </controls:OptionControl>
 
-                        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Nvidia_GammaCorrection_Title}" ToolTip="{x:Static resources:Strings.Menu_Nvidia_GammaCorrection_Description}">
+                        <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Nvidia_GammaCorrection_Title}" Description="{x:Static resources:Strings.Menu_Nvidia_GammaCorrection_Description}" ToolTip="{x:Static resources:Strings.Menu_Nvidia_GammaCorrection_Description}">
                             <ui:ToggleSwitch IsChecked="{Binding GammaCorrection, Mode=TwoWay}" />
                         </controls:OptionControl>
 
-                        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Nvidia_SilkSmoothness_Title}" ToolTip="{x:Static resources:Strings.Menu_Nvidia_SilkSmoothness_Description}">
-                            <ComboBox MinWidth="100" ItemsSource="{Binding SilkSmoothnessModes, Mode=OneTime}" SelectedItem="{Binding SilkSmoothness, Mode=TwoWay}" />
+                        <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Nvidia_SilkSmoothness_Title}" Description="{x:Static resources:Strings.Menu_Nvidia_SilkSmoothness_Description}" ToolTip="{x:Static resources:Strings.Menu_Nvidia_SilkSmoothness_Description}">
+                            <ComboBox MinWidth="120" ItemsSource="{Binding SilkSmoothnessModes, Mode=OneTime}" SelectedItem="{Binding SilkSmoothness, Mode=TwoWay}" />
                         </controls:OptionControl>
 
-                        <controls:OptionControl Header="{x:Static resources:Strings.Menu_Nvidia_TextureLodBias_Title}" Description="{Binding TextureLodBiasLabel}">
+                        <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Nvidia_TextureLodBias_Title}" Description="{Binding TextureLodBiasLabel}">
                             <StackPanel Orientation="Horizontal">
-                                <Slider Width="120" Minimum="-32" Maximum="120" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding TextureLodBias, Mode=TwoWay}" />
-                                <TextBlock VerticalAlignment="Center" Margin="8,0,0,0" MinWidth="24" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding TextureLodBias, Mode=OneWay}" />
+                                <Slider Width="110" Minimum="-32" Maximum="120" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding TextureLodBias, Mode=TwoWay}" />
+                                <TextBlock VerticalAlignment="Center" Margin="12,0,0,0" MinWidth="30" TextAlignment="Right" FontFamily="{DynamicResource PhasmaMono}" FontSize="12.5" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding TextureLodBias, Mode=OneWay}" />
                             </StackPanel>
                         </controls:OptionControl>
                     </controls:SettingsCard>
+                </Grid>
 
-                    <!--  Raw driver settings by ID  -->
-                    <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Nvidia_CustomSettings_Title}" Description="By raw NVIDIA Profile Inspector setting ID, applied with everything else.">
-                        <ItemsControl ItemsSource="{Binding CustomSettings}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel>
-                                        <Border Style="{DynamicResource PhasmaDivider}" />
-                                        <Grid Margin="0,6,0,6">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="12.5" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-                                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" FontFamily="Consolas" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding HexId}" />
-                                            <TextBlock Grid.Column="2" VerticalAlignment="Center" Margin="8,0,0,0" FontFamily="Consolas" FontSize="12" Text="{Binding Value}" />
-                                            <Button Grid.Column="3" Margin="6,0,0,0" Padding="4" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Common_Delete}" Tag="{Binding}" Click="RemoveCustomSetting_Click">
-                                                <ui:SymbolIcon Symbol="Delete24" FontSize="13" />
-                                            </Button>
-                                        </Grid>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Nvidia_CustomSettings_Title}" Description="By raw NVIDIA Profile Inspector setting ID, applied with everything else.">
+                    <Border Margin="20,0,20,0">
+                        <Border Margin="-20,0,-20,0" Padding="16,10,20,10" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="44" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Style="{DynamicResource PhasmaCaption}" Text="{Binding Source={x:Static resources:Strings.Common_Name}, Converter={StaticResource PhasmaUpper}}" />
+                                <TextBlock Grid.Column="1" Style="{DynamicResource PhasmaCaption}" Text="{Binding Source={x:Static resources:Strings.Menu_Nvidia_Editor_Column_SettingId}, Converter={StaticResource PhasmaUpper}}" />
+                                <TextBlock Grid.Column="2" Style="{DynamicResource PhasmaCaption}" HorizontalAlignment="Right" Text="{Binding Source={x:Static resources:Strings.Common_Value}, Converter={StaticResource PhasmaUpper}}" />
+                            </Grid>
+                        </Border>
+                    </Border>
 
-                        <TextBlock Text="{x:Static resources:Strings.Menu_Nvidia_CustomSettings_Empty}" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,10">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Visibility" Value="Collapsed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding CustomSettings.Count}" Value="0">
-                                            <Setter Property="Visibility" Value="Visible" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
+                    <ItemsControl Margin="20,0,20,0" ItemsSource="{Binding CustomSettings}" Focusable="False">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="-20,0,-20,0" Padding="16,0,20,0" MinHeight="50" Style="{DynamicResource PhasmaTableRow}">
+                                    <Grid VerticalAlignment="Center">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="110" />
+                                            <ColumnDefinition Width="44" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="0,0,10,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="12.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding HexId}" />
+                                        <TextBlock Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="{DynamicResource PhasmaMono}" FontSize="12.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Value}" />
+                                        <Button Grid.Column="3" HorizontalAlignment="Right" Padding="4" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Common_Delete}" Tag="{Binding}" Click="RemoveCustomSetting_Click">
+                                            <ui:SymbolIcon Symbol="Delete24" FontSize="15" />
+                                        </Button>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
 
-                        <WrapPanel Margin="0,4,0,6">
-                            <Button Margin="0,0,6,6" Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Menu_Nvidia_CustomSettings_AddButton}" Click="AddCustomSetting_Click" />
-                            <Button Margin="0,0,6,6" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Content="{x:Static resources:Strings.Menu_Nvidia_ExportNipButton}" Click="ExportNip_Click" />
-                            <Button Margin="0,0,6,6" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Content="{x:Static resources:Strings.Menu_Nvidia_CopySettingsButton}" Click="CopySettings_Click" />
-                            <Button Margin="0,0,0,6" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Content="{x:Static resources:Strings.Menu_Nvidia_ReloadButton}" Click="Reload_Click" />
-                        </WrapPanel>
+                    <TextBlock Text="{x:Static resources:Strings.Menu_Nvidia_CustomSettings_Empty}" FontSize="12.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,4,0,12">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CustomSettings.Count}" Value="0">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
 
-                        <TextBlock Style="{StaticResource StatusLine}" Text="{Binding StatusMessage}" />
-                    </controls:SettingsCard>
-                </controls:CardColumns>
+                    <Border Margin="20,0,20,0">
+                        <Border Margin="-20,0,-20,0" Padding="20,12,20,12" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                            <DockPanel>
+                                <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Margin="12,0,0,0" MaxWidth="320" FontFamily="{DynamicResource PhasmaMono}" FontSize="12"
+                                           Foreground="{DynamicResource PhasmaGoodBrush}" Text="{Binding StatusMessage}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource StatusLine}">
+                                            <Setter Property="Margin" Value="12,0,0,0" />
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <WrapPanel VerticalAlignment="Center">
+                                    <Button Margin="0,0,8,0" Style="{DynamicResource PhasmaGhostButton}" Click="AddCustomSetting_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:SymbolIcon Symbol="Add24" FontSize="14" Margin="0,0,7,0" />
+                                            <TextBlock Text="{x:Static resources:Strings.Menu_Nvidia_CustomSettings_AddButton}" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Margin="0,0,8,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="ExportNip_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:SymbolIcon Symbol="ArrowUpload24" FontSize="14" Margin="0,0,7,0" />
+                                            <TextBlock Text="{x:Static resources:Strings.Menu_Nvidia_ExportNipButton}" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Margin="0,0,8,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="CopySettings_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:SymbolIcon Symbol="Copy24" FontSize="14" Margin="0,0,7,0" />
+                                            <TextBlock Text="{x:Static resources:Strings.Menu_Nvidia_CopySettingsButton}" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Click="Reload_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14" Margin="0,0,7,0" />
+                                            <TextBlock Text="{x:Static resources:Strings.Menu_Nvidia_ReloadButton}" />
+                                        </StackPanel>
+                                    </Button>
+                                </WrapPanel>
+                            </DockPanel>
+                        </Border>
+                    </Border>
+                </controls:SettingsCard>
             </StackPanel>
 
-            <!--  Advanced editor view  -->
             <StackPanel>
                 <StackPanel.Style>
                     <Style TargetType="StackPanel">
@@ -248,7 +303,7 @@
                         </Grid>
 
                         <Grid MinHeight="160">
-                            <DataGrid Name="NvidiaEditorGrid" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" IsReadOnly="True" SelectionMode="Extended">
+                            <DataGrid Name="NvidiaEditorGrid" MaxHeight="520" controls:ScrollBubbling.Enabled="True" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" IsReadOnly="True" SelectionMode="Extended">
                                 <DataGrid.Style>
                                     <Style TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
                                         <Setter Property="Background" Value="Transparent" />

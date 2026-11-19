@@ -40,7 +40,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
                     .Add("Remove", SymbolRegular.Delete24, () => _viewModel.RemoveShortcutCommand.Execute(entry), "Del", danger: true);
             });
 
-            // Del on a focused row removes that shortcut, like the menu says.
             ShortcutsList.PreviewKeyDown += (_, e) =>
             {
                 if (e.Key != Key.Delete)

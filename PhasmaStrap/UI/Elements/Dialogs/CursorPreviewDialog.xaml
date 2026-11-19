@@ -12,7 +12,7 @@
         Width="360"
         MinHeight="0"
         Height="460"
-        Background="{ui:ThemeResource ApplicationBackgroundBrush}"
+        Background="{DynamicResource PhasmaPanelBrush}"
         ExtendsContentIntoTitleBar="True"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen">
@@ -23,15 +23,20 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Padding="8" Title="Cursor Preview" ShowMinimize="False" ShowMaximize="False" CanMaximize="False" KeyboardNavigation.TabNavigation="None" />
+        <Border Grid.Row="0" Background="{DynamicResource PhasmaChromeBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,0,0,1" />
+        <StackPanel Grid.Row="0" Margin="14,0,0,0" VerticalAlignment="Center" Orientation="Horizontal" IsHitTestVisible="False" Panel.ZIndex="1">
+            <Image Width="14" Height="14" Margin="0,0,8,0" Source="pack://application:,,,/Resources/PhasmaStrapLogo.png" RenderOptions.BitmapScalingMode="HighQuality" />
+            <TextBlock VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="CURSOR PREVIEW" />
+        </StackPanel>
+        <ui:TitleBar Grid.Row="0" Height="32" MinHeight="32" Padding="0" Title="" ShowMinimize="False" ShowMaximize="False" CanMaximize="False" KeyboardNavigation.TabNavigation="None" />
 
-        <ScrollViewer Grid.Row="1" Margin="16" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="1" Margin="20,16" VerticalScrollBarVisibility="Auto">
             <StackPanel Name="CursorStackPanel" />
         </ScrollViewer>
 
-        <Border Grid.Row="2" Padding="14,10" Background="{ui:ThemeResource SolidBackgroundFillColorSecondaryBrush}" BorderThickness="0,1,0,0">
+        <Border Grid.Row="2" Padding="20,12" Background="{DynamicResource PhasmaSubnavBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0">
             <StackPanel HorizontalAlignment="Right" FlowDirection="LeftToRight" Orientation="Horizontal">
-                <Button MinWidth="100" Content="{x:Static resources:Strings.Common_OK}" Click="CloseButton_Click" IsCancel="True" />
+                <Button MinWidth="80" Content="{x:Static resources:Strings.Common_OK}" Click="CloseButton_Click" IsCancel="True" Style="{DynamicResource PhasmaAccentButton}" />
             </StackPanel>
         </Border>
     </Grid>

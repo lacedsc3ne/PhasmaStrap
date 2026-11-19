@@ -121,7 +121,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string? FlagState
         {
             get => App.FastFlags.GetPreset("Debug.FlagState");
-            set => App.FastFlags.SetPreset("Debug.FlagState", value);
+            set => App.FastFlags.SetPreset("Debug.FlagState", NullIfBlank(value));
         }
 
         #endregion
@@ -531,13 +531,13 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string ForceBuggyVulkan
         {
             get => App.FastFlags.GetPreset("Rendering.ForceVulkan") ?? "Automatic";
-            set => App.FastFlags.SetPreset("Rendering.ForceVulkan", value == "Automatic" ? null : value);
+            set => App.FastFlags.SetPreset("Rendering.ForceVulkan", value == "Automatic" ? null : NullIfBlank(value));
         }
 
         public string BypassVulkan
         {
             get => App.FastFlags.GetPreset("System.BypassVulkan") ?? "Automatic";
-            set => App.FastFlags.SetPreset("System.BypassVulkan", value == "Automatic" ? null : value);
+            set => App.FastFlags.SetPreset("System.BypassVulkan", value == "Automatic" ? null : NullIfBlank(value));
         }
 
         public bool OldChromeUI
@@ -694,7 +694,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        /// <summary>"Match my monitor": sets the frame rate limit flag to this display's refresh rate.</summary>
         public bool MatchMonitorFramerate
         {
             get => MonitorRefreshRate > 1 && FramerateLimit == MonitorRefreshRate;
@@ -983,26 +982,28 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string? CustomDisconnectError
         {
             get => App.FastFlags.GetPreset("UI.CustomDisconnectError2");
-            set => App.FastFlags.SetPreset("UI.CustomDisconnectError2", value);
+            set => App.FastFlags.SetPreset("UI.CustomDisconnectError2", NullIfBlank(value));
         }
 
         public string? FakeVerify
         {
             get => App.FastFlags.GetPreset("Fake.Verify");
-            set => App.FastFlags.SetPreset("Fake.Verify", value);
+            set => App.FastFlags.SetPreset("Fake.Verify", NullIfBlank(value));
         }
 
         public string? NewCamera
         {
             get => App.FastFlags.GetPreset("Camera.Controls");
-            set => App.FastFlags.SetPreset("Camera.Controls", value);
+            set => App.FastFlags.SetPreset("Camera.Controls", NullIfBlank(value));
         }
 
         public string? ChatUI
         {
             get => App.FastFlags.GetPreset("Camera.Chat");
-            set => App.FastFlags.SetPreset("Camera.Chat", value);
+            set => App.FastFlags.SetPreset("Camera.Chat", NullIfBlank(value));
         }
+
+        private static string? NullIfBlank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
 
         public bool RobloxStudioCoreUI
         {
@@ -1151,7 +1152,11 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool UseFastFlagManager
         {
             get => App.Settings.Prop.UseFastFlagManager;
-            set => App.Settings.Prop.UseFastFlagManager = value;
+            set
+            {
+                App.Settings.Prop.UseFastFlagManager = value;
+                OnPropertyChanged(nameof(UseFastFlagManager));
+            }
         }
 
         public IReadOnlyDictionary<MSAAMode, string?> MSAALevels => FastFlagManager.MSAAModes;

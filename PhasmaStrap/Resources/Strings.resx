@@ -2166,13 +2166,13 @@ Defaulting to {1}.</value>
     <value>DLSS Super Resolution override</value>
   </data>
   <data name="Menu.Nvidia.DlssSuperResolution.Description" xml:space="preserve">
-    <value>Forces the driver-level DLSS Super Resolution override on, independent of Roblox's own graphics settings.</value>
+    <value>Driver-level DLSS override. Roblox doesn't use DLSS, so this does nothing in Roblox.</value>
   </data>
   <data name="Menu.Nvidia.DlssFrameGeneration.Title" xml:space="preserve">
     <value>DLSS Frame Generation override</value>
   </data>
   <data name="Menu.Nvidia.DlssFrameGeneration.Description" xml:space="preserve">
-    <value>Forces the driver-level DLSS Frame Generation override on.</value>
+    <value>Driver-level DLSS override. Roblox doesn't use DLSS, so this does nothing in Roblox.</value>
   </data>
   <data name="Menu.Nvidia.Mfaa.Title" xml:space="preserve">
     <value>MFAA</value>
@@ -2878,16 +2878,16 @@ Example:
     <value>On laptops with both an integrated and a dedicated GPU, pins Roblox to the dedicated one. Windows sometimes runs Roblox on the weaker integrated GPU by default since it isn't recognized as a full-screen game.</value>
   </data>
   <data name="Menu.Performance.DisableGameDVR.Title" xml:space="preserve">
-    <value>Disable Game Bar / Game DVR for Roblox</value>
+    <value>Disable Game Bar background recording</value>
   </data>
   <data name="Menu.Performance.DisableGameDVR.Description" xml:space="preserve">
-    <value>Stops Xbox Game Bar's background recording from hooking into Roblox, which costs some FPS and can add input latency even when you never open the overlay.</value>
+    <value>Turns off Xbox Game Bar's background recording for all games, not just Roblox. Your previous setting is put back when you switch this off.</value>
   </data>
   <data name="Menu.Performance.BoostTimerResolution.Title" xml:space="preserve">
-    <value>Smoother frame pacing</value>
+    <value>Boost timer resolution</value>
   </data>
   <data name="Menu.Performance.BoostTimerResolution.Description" xml:space="preserve">
-    <value>Raises the system timer resolution while you're in a game, the same trick most FPS-unlocker tools use to reduce stutter and frame-time inconsistency. Small effect, no downside beyond marginally higher power use.</value>
+    <value>Raises the timer resolution for PhasmaStrap's own process while you're in a game. Since Windows 10 version 2004 this no longer changes Roblox's timer, so the benefit is minor.</value>
   </data>
   <data name="Menu.Performance.UseHighPerformancePowerPlan.Title" xml:space="preserve">
     <value>Use High performance power plan in-game</value>
@@ -5963,7 +5963,7 @@ Everything on this page (and the Advanced Editor) reads and writes a dedicated "
     <value>Translate the game's status text</value>
   </data>
   <data name="Menu.Integrations.GameNamesStatusLinesOtherLanguages" xml:space="preserve">
-    <value>Game names and status lines in other languages are shown in English on your profile.</value>
+    <value>Game names and status lines in other languages are translated into your Game Chat translation language on your profile.</value>
   </data>
   <data name="Menu.Rendering.PerGame" xml:space="preserve">
     <value>Per game</value>

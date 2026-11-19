@@ -8,6 +8,8 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
     {
         private readonly NotificationsViewModel _viewModel;
 
+        private MainWindow? _mainWindow;
+
         public NotificationsPage()
         {
             _viewModel = new NotificationsViewModel();
@@ -18,12 +20,32 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
             _viewModel.Attach();
-            _viewModel.OnPropertyChanged(nameof(NotificationsViewModel.DoNotDisturbEnabled));
+            RefreshDoNotDisturb();
+
+            if (_mainWindow is null && Window.GetWindow(this) is MainWindow window)
+            {
+                _mainWindow = window;
+                _mainWindow.DoNotDisturbToggle.Click += DoNotDisturbToggle_Click;
+            }
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e)
         {
             _viewModel.Detach();
+
+            if (_mainWindow is not null)
+            {
+                _mainWindow.DoNotDisturbToggle.Click -= DoNotDisturbToggle_Click;
+                _mainWindow = null;
+            }
+        }
+
+        private void DoNotDisturbToggle_Click(object sender, RoutedEventArgs e) => RefreshDoNotDisturb();
+
+        private void RefreshDoNotDisturb()
+        {
+            _viewModel.OnPropertyChanged(nameof(NotificationsViewModel.DoNotDisturbEnabled));
+            _viewModel.OnPropertyChanged(nameof(NotificationsViewModel.SummaryText));
         }
     }
 }

@@ -128,6 +128,10 @@ namespace PhasmaStrap.Integrations.GameChat
         [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
         [DllImport("user32.dll")] private static extern bool GetWindowRect(IntPtr hwnd, out RECT rect);
         [DllImport("user32.dll")] private static extern bool IsIconic(IntPtr hwnd);
+        [DllImport("user32.dll")] private static extern bool IsWindow(IntPtr hwnd);
+        [DllImport("user32.dll", EntryPoint = "GetWindowThreadProcessId")] private static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint processId);
+
+        private IntPtr _trackedHwnd;
 
         [StructLayout(LayoutKind.Sequential)]
         private struct RECT
@@ -397,13 +401,19 @@ namespace PhasmaStrap.Integrations.GameChat
                 return;
             try
             {
-                using var process = Process.GetProcessById((int)_robloxPid);
-                if (process.HasExited)
+                IntPtr hwnd = _trackedHwnd;
+                if (hwnd == IntPtr.Zero || !IsWindow(hwnd) || GetWindowThreadProcessId(hwnd, out uint ownerPid) == 0 || ownerPid != _robloxPid)
                 {
-                    ApplyTrackerRect(default, false, false);
-                    return;
+                    _trackedHwnd = IntPtr.Zero;
+                    using var process = Process.GetProcessById((int)_robloxPid);
+                    if (process.HasExited)
+                    {
+                        ApplyTrackerRect(default, false, false);
+                        return;
+                    }
+                    hwnd = process.MainWindowHandle;
+                    _trackedHwnd = hwnd;
                 }
-                IntPtr hwnd = process.MainWindowHandle;
                 if (hwnd == IntPtr.Zero || IsIconic(hwnd) || !GetWindowRect(hwnd, out RECT rect))
                 {
                     ApplyTrackerRect(default, false, false);

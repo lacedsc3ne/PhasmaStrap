@@ -16,7 +16,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
 
         Game,
 
-        /// <summary>A recent or suggested search: opening it types the words into the search box.</summary>
         Query,
     }
 
@@ -31,12 +30,10 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
         Games,
     }
 
-    /// <summary>One row in the search popup: a setting, a page to jump to, one of your flags or a game you've played.</summary>
     internal sealed class PaletteItem
     {
         public PaletteCategory Category { get; init; }
 
-        /// <summary>Heading the row is listed under.</summary>
         public string Group { get; set; } = "";
 
         public string Header { get; init; } = "";
@@ -45,7 +42,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
 
         public string Description { get; init; } = "";
 
-        /// <summary>Short value shown on the right of the row, like a flag value or time played.</summary>
         public string Badge { get; init; } = "";
 
         public SymbolRegular Icon { get; init; } = SymbolRegular.Settings24;
@@ -104,7 +100,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
             ("Settings", "Everything about how PhasmaStrap runs", SymbolRegular.Settings24, typeof(SettingsPage)),
         };
 
-        /// <summary>The top bar page a settings page lives under, used as the group heading.</summary>
         public static string AreaName(Type pageType)
         {
             Type host = SectionHosts.Resolve(pageType);
@@ -131,8 +126,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
             Setting = result,
         };
 
-        /// <summary>What shows before anything is typed: recently opened settings, then pages to jump to.</summary>
-        /// <summary>Plain words to try, shown under the pages before anything is typed.</summary>
         public static readonly string[] TrySearches = { "ping", "crosshair", "vsync", "hotkey", "DFInt", "place ID" };
 
         public static List<PaletteItem> StartItems(IEnumerable<SettingsSearchResult> recents, IEnumerable<string>? recentQueries = null)
@@ -229,7 +222,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
             if (filter is PaletteFilter.All or PaletteFilter.Games)
                 chosen.AddRange(games);
 
-            // Groups come out in the order of their best match, so the most likely answer is always on top.
             var best = chosen
                 .GroupBy(i => i.Group)
                 .ToDictionary(g => g.Key, g => g.Max(i => i.Score));
@@ -284,7 +276,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
                 return items;
             }
 
-            // Flag names have no spaces, so "prefer vulkan" should still find FFlagDebugGraphicsPreferVulkan.
             string joined = string.Concat(tokens);
 
             foreach (var pair in flags)

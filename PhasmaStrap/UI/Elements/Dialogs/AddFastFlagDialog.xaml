@@ -14,11 +14,32 @@
         Width="480"
         SizeToContent="Height"
         ResizeMode="NoResize"
-        Background="{ui:ThemeResource ApplicationBackgroundBrush}"
+        Background="{DynamicResource PhasmaPanelBrush}"
         ExtendsContentIntoTitleBar="True"
         WindowStartupLocation="CenterScreen">
     <ui:UiWindow.Resources>
         <converters:RangeConverter x:Key="ValidationConverter" From="0" />
+
+        <Style x:Key="FieldLabel" TargetType="{x:Type TextBlock}">
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaMono}" />
+            <Setter Property="FontSize" Value="10.5" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+
+        <ControlTemplate x:Key="PhasmaTabsTemplate" TargetType="{x:Type TabControl}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Border BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,0,0,1">
+                    <TabPanel IsItemsHost="True" />
+                </Border>
+                <ContentPresenter x:Name="PART_SelectedContentHost" Grid.Row="1" ContentSource="SelectedContent" />
+            </Grid>
+        </ControlTemplate>
     </ui:UiWindow.Resources>
 
     <Grid>
@@ -28,42 +49,48 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Grid.ColumnSpan="2" Padding="8" Title="{x:Static resources:Strings.Dialog_AddFastFlag_Title}" ShowMinimize="False" ShowMaximize="False" CanMaximize="False" KeyboardNavigation.TabNavigation="None" />
+        <ui:TitleBar Grid.Row="0" Grid.ColumnSpan="2" Padding="12,8" Title="{Binding Source={x:Static resources:Strings.Dialog_AddFastFlag_Title}, Converter={StaticResource PhasmaUpper}}"
+                     Background="{DynamicResource PhasmaChromeBrush}" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                     Icon="pack://application:,,,/PhasmaStrap.ico" ShowMinimize="False" ShowMaximize="False" CanMaximize="False" KeyboardNavigation.TabNavigation="None" />
+        <Border Grid.Row="0" VerticalAlignment="Bottom" Style="{DynamicResource PhasmaDivider}" />
 
-        <TabControl x:Name="Tabs" Grid.Row="1" Margin="16">
-            <TabItem Header="{x:Static resources:Strings.Common_AddSingle}">
-                <Grid Grid.Row="1" Margin="16">
+        <TabControl x:Name="Tabs" Grid.Row="1" Margin="20,14,20,20" Template="{StaticResource PhasmaTabsTemplate}" ItemContainerStyle="{StaticResource PhasmaTabItem}">
+            <TabItem Header="{Binding Source={x:Static resources:Strings.Common_AddSingle}, Converter={StaticResource PhasmaUpper}}">
+                <Grid Margin="0,18,0,0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" MinWidth="100" Text="{x:Static resources:Strings.Common_Name}" Margin="0,0,0,12" />
-                    <TextBox Grid.Row="0" Grid.Column="1" Name="FlagNameTextBox" Margin="0,0,0,12" />
+                    <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{Binding Source={x:Static resources:Strings.Common_Name}, Converter={StaticResource PhasmaUpper}}" />
+                    <TextBox Grid.Row="1" Name="FlagNameTextBox" Margin="0,0,0,14" FontFamily="{DynamicResource PhasmaMono}" />
 
-                    <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" MinWidth="100" Text="{x:Static resources:Strings.Common_Value}" />
-                    <Grid Grid.Row="1" Grid.Column="1">
+                    <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{Binding Source={x:Static resources:Strings.Common_Value}, Converter={StaticResource PhasmaUpper}}" />
+                    <Grid Grid.Row="3">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBox Grid.Column="0" Name="FlagValueTextBox" />
-                        <Button Grid.Column="1" Margin="6,0,0,0" Content="{x:Static resources:Strings.Dialog_AddFastFlag_PresetValues}" Click="PresetValuesButton_Click" />
+                        <TextBox Grid.Column="0" Name="FlagValueTextBox" FontFamily="{DynamicResource PhasmaMono}" />
+                        <Button Grid.Column="1" Margin="10,0,0,0" Style="{StaticResource PhasmaSoftButton}" Click="PresetValuesButton_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="TextBulletListLtr24" FontSize="15" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                <TextBlock VerticalAlignment="Center" Text="{x:Static resources:Strings.Dialog_AddFastFlag_PresetValues}" />
+                            </StackPanel>
+                        </Button>
                     </Grid>
                 </Grid>
             </TabItem>
-            <TabItem Header="{x:Static resources:Strings.Common_ImportJson}">
-                <Grid Margin="11">
+            <TabItem Header="{Binding Source={x:Static resources:Strings.Common_ImportJson}, Converter={StaticResource PhasmaUpper}}">
+                <Grid Margin="0,14,0,0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*" />
-                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
-                    <TextBox Grid.Row="0" x:Name="JsonTextBox" Margin="5" AcceptsTab="True" AcceptsReturn="True" MinHeight="80" MaxHeight="480" />
-                    <TextBlock Grid.Row="0" IsHitTestVisible="False" Margin="18,14,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{}{&#10;    &quot;FFlagDebugDisplayFPS&quot;: &quot;True&quot;&#10;}">
+                    <TextBox Grid.Row="0" x:Name="JsonTextBox" AcceptsTab="True" AcceptsReturn="True" MinHeight="150" MaxHeight="480" FontFamily="{DynamicResource PhasmaMono}" FontSize="12.5" />
+                    <TextBlock Grid.Row="0" IsHitTestVisible="False" Margin="12,9,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="12.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{}{&#10;    &quot;FFlagDebugDisplayFPS&quot;: &quot;True&quot;&#10;}">
                         <TextBlock.Style>
                             <Style TargetType="{x:Type TextBlock}">
                                 <Setter Property="Visibility" Value="Collapsed"/>
@@ -75,16 +102,22 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
-                    <ui:Button Grid.Row="1" Margin="4" Icon="DocumentArrowUp16" Content="{x:Static resources:Strings.Common_ImportFromFile}" HorizontalAlignment="Stretch" Click="ImportButton_Click" />
+                    <Button Grid.Row="1" Margin="0,12,0,0" HorizontalAlignment="Left" Style="{StaticResource PhasmaSoftButton}" Click="ImportButton_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="DocumentArrowUp16" FontSize="15" Margin="0,0,8,0" VerticalAlignment="Center" />
+                            <TextBlock VerticalAlignment="Center" Text="{x:Static resources:Strings.Common_ImportFromFile}" />
+                        </StackPanel>
+                    </Button>
                 </Grid>
             </TabItem>
         </TabControl>
 
-        <Border Grid.Row="2" Margin="0,10,0,0" Padding="15" Background="{ui:ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+        <Border Grid.Row="2" Padding="18,12" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0">
             <StackPanel Orientation="Horizontal" FlowDirection="LeftToRight" HorizontalAlignment="Right">
-                <Button MinWidth="100" Content="{x:Static resources:Strings.Common_OK}" IsDefault="True" Click="OKButton_Click">
+                <Button MinWidth="90" Content="{x:Static resources:Strings.Common_Cancel}" IsCancel="True" Style="{StaticResource PhasmaSoftButton}" />
+                <Button MinWidth="90" Margin="10,0,0,0" Content="{x:Static resources:Strings.Common_OK}" IsDefault="True" Click="OKButton_Click">
                     <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                        <Style TargetType="Button" BasedOn="{StaticResource PhasmaAccentButton}">
                             <Style.Triggers>
                                 <MultiDataTrigger>
                                     <MultiDataTrigger.Conditions>
@@ -105,7 +138,6 @@
                         </Style>
                     </Button.Style>
                 </Button>
-                <Button MinWidth="100" Margin="12,0,0,0" Content="{x:Static resources:Strings.Common_Cancel}" IsCancel="True" />
             </StackPanel>
         </Border>
     </Grid>

@@ -5,101 +5,119 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       mc:Ignorable="d"
       Title="PartyPage"
       Scrollable="True"
       Loaded="Page_Loaded"
       Unloaded="Page_Unloaded">
 
+    <ui:UiPage.Resources>
+        <CollectionViewSource x:Key="MembersSource" Source="{Binding Members, Mode=OneWay}" />
+
+        <Style x:Key="PartyGlyph" TargetType="Border">
+            <Setter Property="Width" Value="34" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Background" Value="{DynamicResource PhasmaS3Brush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PhasmaStrokeBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="phui:CutCorners.Size" Value="6" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        </Style>
+
+        <Style x:Key="PartyCardTitle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaHeadingFont}" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="PartyCap" TargetType="TextBlock" BasedOn="{StaticResource PhasmaCaption}">
+            <Setter Property="FontSize" Value="10.5" />
+        </Style>
+
+        <Style x:Key="PartyGhostSm" TargetType="ButtonBase" BasedOn="{StaticResource PhasmaGhostButton}">
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
+        <Style x:Key="PartyAccentSm" TargetType="ButtonBase" BasedOn="{StaticResource PhasmaAccentButton}">
+            <Setter Property="Padding" Value="14,7" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
+        <Style x:Key="PartyH2Bar" TargetType="Border">
+            <Setter Property="Width" Value="4" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="Margin" Value="3,0,12,0" />
+            <Setter Property="Background" Value="{DynamicResource PhasmaAccentBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <SkewTransform AngleX="-14" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PartyH2Text" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaHeadingFont}" />
+            <Setter Property="FontSize" Value="17" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </ui:UiPage.Resources>
+
     <Grid Margin="0,0,14,14">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" MinWidth="380" />
-            <ColumnDefinition Width="450" />
+            <ColumnDefinition Width="340" />
         </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-        <!--  The party itself  -->
-        <StackPanel Grid.Column="0">
-            <TextBlock Margin="2,0,0,12" Style="{DynamicResource PhasmaSubtle}" TextWrapping="Wrap" TextTrimming="None" Text="{Binding Status, Mode=OneWay}" />
+        <controls:PageHeader Grid.Row="0" Grid.ColumnSpan="2" Title="Party" Subtitle="{Binding Status, Mode=OneWay}">
+            <Border Style="{DynamicResource PhasmaTagNeutral}" Visibility="{Binding InPartyVisibility, Mode=OneWay}">
+                <TextBlock Text="{Binding MemberCount, Mode=OneWay, Converter={StaticResource PhasmaUpper}}" />
+            </Border>
+        </controls:PageHeader>
 
+        <StackPanel Grid.Row="1" Grid.Column="0">
             <Border Margin="0,0,0,12" Style="{DynamicResource PhasmaCard}" Visibility="{Binding SignedOutVisibility, Mode=OneWay}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Grid.Column="0" Symbol="Info24" FontSize="18" Margin="0,1,12,0" VerticalAlignment="Top" Foreground="{DynamicResource PhasmaAccentBrush}" />
-                    <StackPanel Grid.Column="1">
-                        <TextBlock FontSize="13" FontWeight="SemiBold" Text="Not signed in" />
-                        <TextBlock Margin="0,2,0,0" Style="{DynamicResource PhasmaSubtle}" TextWrapping="Wrap" TextTrimming="None"
+                    <Border Grid.Column="0" Margin="0,0,14,0" Style="{StaticResource PartyGlyph}">
+                        <ui:SymbolIcon Symbol="Info24" FontSize="16" Foreground="{DynamicResource PhasmaRedTextBrush}" />
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="White" Text="Not signed in" />
+                        <TextBlock Margin="0,2,0,0" FontSize="12.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextWrapping="Wrap"
                                    Text="A party needs a PhasmaStrap account so everyone can be told where to go. Sign in under Settings > Account and backup." />
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!--  Someone asked you to take over  -->
-            <Border Margin="0,0,0,12" Style="{DynamicResource PhasmaCard}" Visibility="{Binding OfferForYouVisibility, Mode=OneWay}"
-                    Background="{DynamicResource PhasmaAccentSoftBrush}" BorderBrush="{DynamicResource PhasmaAccentStrokeBrush}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <!--  The person asking, as on the accept toast in the mockup  -->
-                    <Grid Grid.Column="0" Width="38" Height="38" Margin="0,0,12,0" VerticalAlignment="Center">
-                        <Ellipse Fill="{DynamicResource PhasmaSelectedBrush}" />
-                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15" FontWeight="SemiBold" Text="{Binding OfferFromInitial, Mode=OneWay}" />
-                        <Ellipse Visibility="{Binding OfferFromAvatarVisibility, Mode=OneWay}">
-                            <Ellipse.Fill>
-                                <ImageBrush ImageSource="{Binding OfferFromAvatar, Mode=OneWay}" Stretch="UniformToFill" />
-                            </Ellipse.Fill>
-                        </Ellipse>
-                    </Grid>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <TextBlock FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding OfferForYouText, Mode=OneWay}" />
-                        <TextBlock Margin="0,2,0,0" Style="{DynamicResource PhasmaSubtle}" TextWrapping="Wrap" TextTrimming="None" Text="{Binding OfferForYouDetail, Mode=OneWay}" />
-                    </StackPanel>
-                    <StackPanel Grid.Column="2" Margin="12,0,0,0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Style="{DynamicResource PhasmaGhostButton}" Content="No thanks" FontWeight="SemiBold" Command="{Binding DeclineLeaderCommand}" />
-                        <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaAccentButton}" Command="{Binding AcceptLeaderCommand}">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="PersonSwap24" FontSize="14" VerticalAlignment="Center" />
-                                <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="Become leader" />
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
-                </Grid>
-            </Border>
-
-            <!--  You asked someone and are waiting  -->
-            <Border Margin="0,0,0,12" Style="{DynamicResource PhasmaCard}" Visibility="{Binding OfferPendingVisibility, Mode=OneWay}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Grid.Column="0" Symbol="Clock24" FontSize="18" Margin="2,0,12,0" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <TextBlock FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding OfferPendingText, Mode=OneWay}" />
-                        <TextBlock Margin="0,2,0,0" Style="{DynamicResource PhasmaSubtle}" TextWrapping="Wrap" TextTrimming="None"
-                                   Text="They get a notification and have to accept. Until then you stay leader." />
-                    </StackPanel>
-                    <Button Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaSoftButton}" Content="Cancel" Command="{Binding CancelLeaderOfferCommand}" />
-                </Grid>
-            </Border>
-
-            <!--  Not in a party yet  -->
-            <Border Style="{DynamicResource PhasmaCard}" Padding="22,20" Visibility="{Binding NoPartyVisibility, Mode=OneWay}">
+            <Border Margin="0,0,0,12" Style="{DynamicResource PhasmaCard}" Padding="22,20" Visibility="{Binding NoPartyVisibility, Mode=OneWay}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <TextBlock Style="{DynamicResource PhasmaCaption}" Foreground="{DynamicResource PhasmaAccentBrush}" Text="NOT IN A PARTY" />
-                        <TextBlock Margin="0,6,0,0" Style="{DynamicResource PhasmaHeading}" Text="Lead a party" />
-                        <TextBlock Margin="0,4,0,0" Style="{DynamicResource PhasmaSubtle}" TextWrapping="Wrap" TextTrimming="None"
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="22" Height="2" Margin="0,0,8,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaAccentBrush}" />
+                            <TextBlock Style="{DynamicResource PhasmaCaption}" Foreground="{DynamicResource PhasmaRedTextBrush}" Text="NOT IN A PARTY" />
+                        </StackPanel>
+                        <TextBlock Margin="0,8,0,0" FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="17" FontWeight="Bold" Foreground="White" Text="{Binding Source='Lead a party', Converter={StaticResource PhasmaUpper}}" />
+                        <TextBlock Margin="0,4,0,0" FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
                                    Text="You get a six character code to share. Everyone who joins follows you into whatever you launch." />
                     </StackPanel>
                     <Button Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaAccentButton}"
@@ -112,201 +130,294 @@
                 </Grid>
             </Border>
 
-            <!--  In a party  -->
-            <StackPanel Visibility="{Binding InPartyVisibility, Mode=OneWay}">
-                <Border Style="{DynamicResource PhasmaCard}" Padding="20,16">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                            <TextBlock Style="{DynamicResource PhasmaSubtle}" FontSize="11.5" Text="{Binding LeaderLine, Mode=OneWay}" ToolTip="{Binding LeaderHint, Mode=OneWay}" />
-                            <TextBlock Margin="0,6,0,0" FontFamily="Consolas" FontSize="36" FontWeight="Bold" Text="{Binding Code, Mode=OneWay}" ToolTip="{Binding LeaderHint, Mode=OneWay}" />
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Button Style="{DynamicResource PhasmaSoftButton}" Padding="16,9" Command="{Binding CopyCodeCommand}">
-                                <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="Copy24" FontSize="15" VerticalAlignment="Center" />
-                                    <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="Copy code" />
-                                </StackPanel>
-                            </Button>
-                            <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaGhostButton}" Padding="14,9" FontWeight="SemiBold" Command="{Binding LeavePartyCommand}">
-                                <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="DoorArrowRight20" FontSize="15" VerticalAlignment="Center" />
-                                    <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="Leave" />
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-                <Grid Margin="0,12,0,0">
+            <Border Margin="0,0,0,12" Style="{DynamicResource PhasmaCard}" Padding="22,20" Visibility="{Binding InPartyVisibility, Mode=OneWay}">
+                <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <ItemsControl x:Name="MembersList" Grid.Column="0" ItemsSource="{Binding Members, Mode=OneWay}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Width="188" Height="152" Margin="0,0,12,12" Padding="10">
-                                    <Border.Style>
-                                        <Style TargetType="Border" BasedOn="{StaticResource PhasmaCard}">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Leader}" Value="True">
-                                                    <Setter Property="BorderBrush" Value="{DynamicResource PhasmaAccentStrokeBrush}" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                    <Grid>
-                                        <Border Style="{DynamicResource PhasmaTag}" VerticalAlignment="Top" Visibility="{Binding LeaderTagVisibility}">
-                                            <TextBlock FontSize="10" Text="Leader" />
-                                        </Border>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="22" Height="2" Margin="0,0,8,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaAccentBrush}" />
+                            <TextBlock Style="{DynamicResource PhasmaCaption}" Foreground="{DynamicResource PhasmaRedTextBrush}" Text="YOUR PARTY" />
+                        </StackPanel>
+                        <TextBlock Margin="0,8,0,0" FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="{Binding LeaderLine, Mode=OneWay}" ToolTip="{Binding LeaderHint, Mode=OneWay}" />
+                        <TextBlock Margin="0,6,0,0" FontFamily="{DynamicResource PhasmaLabelFont}" FontSize="36" FontWeight="SemiBold" Foreground="White" Text="{Binding Code, Mode=OneWay}" ToolTip="{Binding LeaderHint, Mode=OneWay}" />
+                    </StackPanel>
 
-                                        <Button HorizontalAlignment="Right" VerticalAlignment="Top" Width="26" Height="26" Style="{DynamicResource PhasmaIconButton}"
-                                                BorderBrush="{DynamicResource PhasmaStrokeBrush}" ToolTip="More" Visibility="{Binding MoreVisibility}" Click="MemberMore_Click">
-                                            <ui:SymbolIcon Symbol="MoreHorizontal16" FontSize="14" />
-                                        </Button>
-
-                                        <StackPanel VerticalAlignment="Center" Margin="0,14,0,0">
-                                            <Border Width="50" Height="50" CornerRadius="25" HorizontalAlignment="Center"
-                                                    Background="{DynamicResource PhasmaSelectedBrush}"
-                                                    BorderThickness="{Binding Ring}" BorderBrush="{DynamicResource PhasmaAccentBrush}">
-                                                <Grid>
-                                                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" FontWeight="SemiBold"
-                                                               Text="{Binding Initial}" Visibility="{Binding InitialVisibility}" />
-                                                    <Border CornerRadius="25" Visibility="{Binding AvatarVisibility}">
-                                                        <Border.Background>
-                                                            <ImageBrush ImageSource="{Binding Avatar}" Stretch="UniformToFill" />
-                                                        </Border.Background>
-                                                    </Border>
-                                                </Grid>
-                                            </Border>
-                                            <TextBlock Margin="0,8,0,0" FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="160" Text="{Binding Name}" />
-                                            <TextBlock Margin="0,3,0,0" HorizontalAlignment="Center" MaxWidth="160" Style="{DynamicResource PhasmaSubtle}" FontSize="11" Text="{Binding Where}" ToolTip="{Binding Where}" />
-                                        </StackPanel>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-
-                    <StackPanel Grid.Column="1">
-                        <Button Width="188" Height="152" Padding="0" Style="{DynamicResource PhasmaGhostButton}" ToolTip="Invite a friend" Command="{Binding InviteFriendCommand}">
-                            <Grid Width="186" Height="150">
-                                <Rectangle RadiusX="12" RadiusY="12" Stroke="{DynamicResource PhasmaStrokeStrongBrush}" StrokeThickness="1" StrokeDashArray="4 3" />
-                                <StackPanel VerticalAlignment="Center">
-                                    <Border Width="46" Height="46" CornerRadius="23" HorizontalAlignment="Center" Background="{DynamicResource PhasmaHoverBrush}"
-                                            BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}">
-                                        <ui:SymbolIcon Symbol="Add24" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <TextBlock Margin="0,10,0,0" HorizontalAlignment="Center" Style="{DynamicResource PhasmaSubtle}" Text="Invite a friend" />
-                                </StackPanel>
-                            </Grid>
+                    <StackPanel Grid.Column="1" Margin="20,0,0,0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Style="{StaticResource PartyGhostSm}" Command="{Binding CopyCodeCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Copy24" FontSize="14" VerticalAlignment="Center" />
+                                <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="Copy code" />
+                            </StackPanel>
                         </Button>
-                        <TextBlock Margin="0,6,0,0" HorizontalAlignment="Center" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="{Binding MemberCount, Mode=OneWay}" />
+                        <Button Margin="8,0,0,0" Style="{StaticResource PartyGhostSm}" Command="{Binding LeavePartyCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="DoorArrowRight20" FontSize="14" VerticalAlignment="Center" />
+                                <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="Leave" />
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </Grid>
+            </Border>
+
+            <Border Margin="0,0,0,12" Style="{DynamicResource PhasmaCard}" Visibility="{Binding OfferForYouVisibility, Mode=OneWay}"
+                    Background="{DynamicResource PhasmaAccentSoftBrush}" BorderBrush="{DynamicResource PhasmaAccentStrokeBrush}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0" Width="38" Height="38" Margin="0,0,14,0" VerticalAlignment="Center">
+                        <Ellipse Fill="{DynamicResource PhasmaAccentBrush}" />
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15" FontWeight="Bold" Foreground="White" Text="{Binding OfferFromInitial, Mode=OneWay}" />
+                        <Ellipse Visibility="{Binding OfferFromAvatarVisibility, Mode=OneWay}">
+                            <Ellipse.Fill>
+                                <ImageBrush ImageSource="{Binding OfferFromAvatar, Mode=OneWay}" Stretch="UniformToFill" />
+                            </Ellipse.Fill>
+                        </Ellipse>
+                    </Grid>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="White" TextWrapping="Wrap" Text="{Binding OfferForYouText, Mode=OneWay}" />
+                        <TextBlock Margin="0,2,0,0" FontSize="12.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" Text="{Binding OfferForYouDetail, Mode=OneWay}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Margin="12,0,0,0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Style="{StaticResource PartyGhostSm}" Content="No thanks" Command="{Binding DeclineLeaderCommand}" />
+                        <Button Margin="8,0,0,0" Style="{StaticResource PartyAccentSm}" Command="{Binding AcceptLeaderCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="PersonSwap24" FontSize="14" VerticalAlignment="Center" />
+                                <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="Become leader" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Border Margin="0,0,0,12" Style="{DynamicResource PhasmaCard}" Padding="20,14" Background="{DynamicResource PhasmaAccentSoftBrush}" Visibility="{Binding OfferPendingVisibility, Mode=OneWay}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Margin="0,0,14,0" Style="{StaticResource PartyGlyph}">
+                        <ui:SymbolIcon Symbol="Clock24" FontSize="16" />
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="White" TextWrapping="Wrap" Text="{Binding OfferPendingText, Mode=OneWay}" />
+                        <TextBlock Margin="0,2,0,0" FontSize="12.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextWrapping="Wrap"
+                                   Text="They get a notification and have to accept. Until then you stay leader." />
+                    </StackPanel>
+                    <Button Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" Style="{StaticResource PartyGhostSm}" Content="Cancel" Command="{Binding CancelLeaderOfferCommand}" />
+                </Grid>
+            </Border>
+
+            <StackPanel Visibility="{Binding InPartyVisibility, Mode=OneWay}">
+                <StackPanel Margin="0,14,0,14" Orientation="Horizontal">
+                    <Border Style="{StaticResource PartyH2Bar}" />
+                    <TextBlock Style="{StaticResource PartyH2Text}" Text="{Binding Source='Members', Converter={StaticResource PhasmaUpper}}" />
+                    <TextBlock Margin="12,2,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="{Binding MemberCount, Mode=OneWay, Converter={StaticResource PhasmaUpper}}" />
+                </StackPanel>
+
+                <ItemsControl x:Name="MembersList" Margin="0,0,-12,0" Focusable="False">
+                    <ItemsControl.ItemsSource>
+                        <CompositeCollection>
+                            <CollectionContainer Collection="{Binding Source={StaticResource MembersSource}}" />
+                            <Button Height="152" Margin="0,0,12,12" Padding="0" Style="{DynamicResource PhasmaGhostButton}" Background="Transparent" BorderBrush="Transparent"
+                                    phui:CutCorners.Size="0" ToolTip="Invite a friend" Command="{Binding InviteFriendCommand}"
+                                    HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+                                <Grid>
+                                    <Rectangle RadiusX="10" RadiusY="10" Stroke="{DynamicResource PhasmaStrokeStrongBrush}" StrokeThickness="1" StrokeDashArray="4 3" />
+                                    <StackPanel VerticalAlignment="Center">
+                                        <Border Width="44" Height="44" CornerRadius="22" HorizontalAlignment="Center" BorderThickness="1" BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}">
+                                            <ui:SymbolIcon Symbol="Add24" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <TextBlock Margin="0,8,0,0" HorizontalAlignment="Center" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Invite a friend" />
+                                        <TextBlock Margin="0,4,0,0" HorizontalAlignment="Center" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="{Binding MemberCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Button>
+                        </CompositeCollection>
+                    </ItemsControl.ItemsSource>
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3" VerticalAlignment="Top" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Height="152" Margin="0,0,12,12" Padding="10">
+                                <Border.Style>
+                                    <Style TargetType="Border" BasedOn="{StaticResource PhasmaCard}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Leader}" Value="True">
+                                                <Setter Property="BorderBrush" Value="{DynamicResource PhasmaAccentStrokeBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Grid>
+                                    <Border Margin="-2,-2,0,0" Style="{DynamicResource PhasmaTagBad}" VerticalAlignment="Top" Visibility="{Binding LeaderTagVisibility}">
+                                        <TextBlock FontSize="10" Text="LEADER" />
+                                    </Border>
+
+                                    <Button HorizontalAlignment="Right" VerticalAlignment="Top" Width="26" Height="26" Margin="0,-4,-4,0" Style="{DynamicResource PhasmaIconButton}"
+                                            ToolTip="More" Visibility="{Binding MoreVisibility}" Click="MemberMore_Click">
+                                        <ui:SymbolIcon Symbol="MoreHorizontal16" FontSize="14" />
+                                    </Button>
+
+                                    <StackPanel VerticalAlignment="Center">
+                                        <Border Width="50" Height="50" CornerRadius="25" HorizontalAlignment="Center"
+                                                Background="{DynamicResource PhasmaS4Brush}"
+                                                BorderThickness="{Binding Ring}" BorderBrush="{DynamicResource PhasmaAccentBrush}">
+                                            <Grid>
+                                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" FontWeight="Bold" Foreground="White"
+                                                           Text="{Binding Initial}" Visibility="{Binding InitialVisibility}" />
+                                                <Border CornerRadius="25" Visibility="{Binding AvatarVisibility}">
+                                                    <Border.Background>
+                                                        <ImageBrush ImageSource="{Binding Avatar}" Stretch="UniformToFill" />
+                                                    </Border.Background>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                        <TextBlock Margin="0,8,0,0" FontSize="13" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="160" Text="{Binding Name}" />
+                                        <TextBlock Margin="0,4,0,0" HorizontalAlignment="Center" MaxWidth="160" FontSize="12" TextTrimming="CharacterEllipsis" Text="{Binding Where}" ToolTip="{Binding Where}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Together}" Value="True">
+                                                            <Setter Property="Foreground" Value="{DynamicResource PhasmaGoodBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </StackPanel>
 
-            <!--  Invites from other people  -->
-            <ItemsControl Margin="0,12,0,0" ItemsSource="{Binding Invites, Mode=OneWay}" Visibility="{Binding InvitesVisibility, Mode=OneWay}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Margin="0,0,0,8" Style="{DynamicResource PhasmaCard}" Padding="14,10">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <ui:SymbolIcon Grid.Column="0" Symbol="People24" FontSize="16" Margin="0,0,10,0" VerticalAlignment="Center" Foreground="{DynamicResource PhasmaAccentBrush}" />
-                                <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="13" TextWrapping="Wrap" Text="{Binding Summary}" />
-                                <StackPanel Grid.Column="2" Margin="12,0,0,0" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Button Style="{DynamicResource PhasmaAccentButton}" Content="Join"
-                                            Command="{Binding DataContext.AcceptInviteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                            CommandParameter="{Binding}" />
-                                    <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Content="No thanks"
-                                            Command="{Binding DataContext.DeclineInviteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                            CommandParameter="{Binding}" />
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            <StackPanel Visibility="{Binding InvitesVisibility, Mode=OneWay}">
+                <StackPanel Margin="0,14,0,14" Orientation="Horizontal">
+                    <Border Style="{StaticResource PartyH2Bar}" />
+                    <TextBlock Style="{StaticResource PartyH2Text}" Text="{Binding Source='Invites', Converter={StaticResource PhasmaUpper}}" />
+                    <TextBlock Margin="12,2,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaCaption}" FontWeight="Normal" Text="{Binding Invites.Count, Mode=OneWay}" />
+                </StackPanel>
+                <ItemsControl ItemsSource="{Binding Invites, Mode=OneWay}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,0,8" Style="{DynamicResource PhasmaCard}" Padding="20,12">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Margin="0,0,14,0" Style="{StaticResource PartyGlyph}">
+                                        <ui:SymbolIcon Symbol="People24" FontSize="16" />
+                                    </Border>
+                                    <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" TextWrapping="Wrap" Text="{Binding Summary}" />
+                                    <StackPanel Grid.Column="2" Margin="12,0,0,0" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Button Style="{StaticResource PartyGhostSm}" Content="No thanks"
+                                                Command="{Binding DataContext.DeclineInviteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}" />
+                                        <Button Margin="8,0,0,0" Style="{StaticResource PartyAccentSm}" Content="Join"
+                                                Command="{Binding DataContext.AcceptInviteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
 
             <TextBlock Margin="2,8,0,0" Style="{DynamicResource PhasmaSubtle}" TextWrapping="Wrap" TextTrimming="None" Text="{Binding Message, Mode=OneWay}" />
         </StackPanel>
 
-        <!--  Settings, leader hand over, join by code  -->
-        <controls:SettingsCard Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Top" Header="Party settings">
-            <controls:OptionControl Header="Parties" Description="Share a code, follow a leader into games, and be invited by friends.">
-                <ui:ToggleSwitch IsChecked="{Binding PartyEnabled, Mode=TwoWay}" />
-            </controls:OptionControl>
-
-            <controls:OptionControl Header="Keep listening in the background"
-                                    Description="So your party can pull you in even when nothing is open. Turned off, you only get pulled in while PhasmaStrap is open."
-                                    IsEnabled="{Binding PartyEnabled, Mode=OneWay}">
-                <ui:ToggleSwitch IsChecked="{Binding PartyBackgroundEnabled, Mode=TwoWay}" />
-            </controls:OptionControl>
-
-            <controls:OptionControl Header="When the leader starts a game"
-                                    Description="What happens on your PC."
-                                    IsEnabled="{Binding PartyEnabled, Mode=OneWay}">
-                <ComboBox Width="236" Padding="10,5,10,5" ItemsSource="{Binding JoinModeOptions, Mode=OneTime}" SelectedIndex="{Binding JoinModeIndex, Mode=TwoWay}" />
-            </controls:OptionControl>
-
-            <StackPanel Visibility="{Binding LeaderPickerVisibility, Mode=OneWay}">
-                <Border Style="{DynamicResource PhasmaDivider}" />
-                <TextBlock Style="{DynamicResource PhasmaSectionLabel}" Margin="0,14,0,6" Text="PARTY LEADER" />
-                <TextBlock Style="{DynamicResource PhasmaSubtle}" FontSize="11.5" TextWrapping="Wrap" TextTrimming="None"
-                           Text="The leader picks the games. Hand it to someone else and you stay in the party as a member." />
-                <Grid Margin="0,10,0,12">
+        <Border Grid.Row="1" Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Top" Style="{DynamicResource PhasmaCard}" Padding="0">
+            <StackPanel>
+                <Grid Margin="18,14">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <ComboBox Grid.Column="0" Padding="10,5,10,5" ItemsSource="{Binding LeaderCandidates, Mode=OneWay}" SelectedItem="{Binding SelectedCandidate, Mode=TwoWay}" DisplayMemberPath="Name" />
-                    <Button Grid.Column="1" Margin="8,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding MakeLeaderCommand}">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="PersonSwap24" FontSize="14" VerticalAlignment="Center" />
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="Make leader" />
-                        </StackPanel>
-                    </Button>
-                </Grid>
-            </StackPanel>
-
-            <!--  Party wide, set by the leader; everyone else sees the leader's pick  -->
-            <controls:OptionControl Header="If the leader leaves"
-                                    Description="{Binding LeaderLeavesHint, Mode=OneWay}"
-                                    Visibility="{Binding LeaderLeavesVisibility, Mode=OneWay}">
-                <ComboBox Width="150" Padding="10,5,10,5" ItemsSource="{Binding LeaderLeavesOptions, Mode=OneTime}" SelectedIndex="{Binding LeaderLeavesIndex, Mode=TwoWay}"
-                          IsEnabled="{Binding CanSetLeaderLeaves, Mode=OneWay}" />
-            </controls:OptionControl>
-
-            <StackPanel IsEnabled="{Binding SignedIn, Mode=OneWay}">
-                <Border Style="{DynamicResource PhasmaDivider}" />
-                <TextBlock Style="{DynamicResource PhasmaSectionLabel}" Margin="0,14,0,6" Text="OR JOIN ONE" />
-                <Grid Margin="0,0,0,12">
-                    <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <ui:TextBox Grid.Column="0" MaxLength="6" CharacterCasing="Upper" FontFamily="Consolas"
-                                PlaceholderText="Type a code, like QK7MRD" Text="{Binding JoinCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <Button Grid.Column="1" Margin="8,0,0,0" Style="{DynamicResource PhasmaAccentButton}" Content="Join" Command="{Binding JoinPartyCommand}" IsEnabled="{Binding PartyEnabled, Mode=OneWay}" />
+                    <Border Grid.Column="0" Margin="0,0,12,0" Style="{StaticResource PartyGlyph}" Background="{DynamicResource PhasmaAccentBrush}" BorderThickness="0">
+                        <ui:SymbolIcon Symbol="Options24" FontSize="16" Foreground="White" />
+                    </Border>
+                    <TextBlock Grid.Column="1" Style="{StaticResource PartyCardTitle}" Text="{Binding Source='Party settings', Converter={StaticResource PhasmaUpper}}" />
                 </Grid>
+
+                <controls:OptionControl Flat="True" Header="Parties" Description="Share a code, follow a leader into games, and be invited by friends.">
+                    <ui:ToggleSwitch IsChecked="{Binding PartyEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <controls:OptionControl Flat="True" Header="Keep listening in the background"
+                                        Description="So your party can pull you in even when nothing is open. Turned off, you only get pulled in while PhasmaStrap is open."
+                                        IsEnabled="{Binding PartyEnabled, Mode=OneWay}">
+                    <ui:ToggleSwitch IsChecked="{Binding PartyBackgroundEnabled, Mode=TwoWay}" />
+                </controls:OptionControl>
+
+                <Border Padding="18,12,18,14" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0" IsEnabled="{Binding PartyEnabled, Mode=OneWay}">
+                    <StackPanel>
+                        <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="White" TextWrapping="Wrap" Text="When the leader starts a game" />
+                        <TextBlock Margin="0,2,0,0" FontSize="12.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" Text="What happens on your PC." />
+                        <ComboBox Margin="0,10,0,0" MinWidth="200" HorizontalAlignment="Left" Padding="10,5,10,5" ItemsSource="{Binding JoinModeOptions, Mode=OneTime}" SelectedIndex="{Binding JoinModeIndex, Mode=TwoWay}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Padding="18,14" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0" Visibility="{Binding LeaderPickerVisibility, Mode=OneWay}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource PartyCap}" Text="PARTY LEADER" />
+                        <TextBlock Margin="0,8,0,0" FontSize="12.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextWrapping="Wrap"
+                                   Text="The leader picks the games. Hand it to someone else and you stay in the party as a member." />
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0" Padding="10,5,10,5" ItemsSource="{Binding LeaderCandidates, Mode=OneWay}" SelectedItem="{Binding SelectedCandidate, Mode=TwoWay}" DisplayMemberPath="Name" />
+                            <Button Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource PartyGhostSm}" Command="{Binding MakeLeaderCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="PersonSwap24" FontSize="14" VerticalAlignment="Center" />
+                                    <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="Make leader" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Border Padding="18,12,18,14" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0" Visibility="{Binding LeaderLeavesVisibility, Mode=OneWay}">
+                    <StackPanel>
+                        <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="White" TextWrapping="Wrap" Text="If the leader leaves" />
+                        <TextBlock Margin="0,2,0,0" FontSize="12.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" Text="{Binding LeaderLeavesHint, Mode=OneWay}" />
+                        <ComboBox Margin="0,10,0,0" MinWidth="150" HorizontalAlignment="Left" Padding="10,5,10,5" ItemsSource="{Binding LeaderLeavesOptions, Mode=OneTime}" SelectedIndex="{Binding LeaderLeavesIndex, Mode=TwoWay}"
+                                  IsEnabled="{Binding CanSetLeaderLeaves, Mode=OneWay}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Padding="18,14,18,18" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0" IsEnabled="{Binding SignedIn, Mode=OneWay}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource PartyCap}" Text="OR JOIN ONE" />
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBox Grid.Column="0" MaxLength="6" CharacterCasing="Upper" FontFamily="{DynamicResource PhasmaLabelFont}"
+                                        PlaceholderText="Type a code, like QK7MRD" Text="{Binding JoinCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <Button Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource PartyAccentSm}" Content="Join" Command="{Binding JoinPartyCommand}" IsEnabled="{Binding PartyEnabled, Mode=OneWay}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
             </StackPanel>
-        </controls:SettingsCard>
+        </Border>
     </Grid>
 </ui:UiPage>

@@ -169,7 +169,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             public int Count { get; init; }
             public double BarHeight { get; init; } = 6;
 
-            /// <summary>How strongly the day's tile is coloured: 0 for no updates, up to 1 for the busiest day.</summary>
             public double TileOpacity { get; init; }
 
             public string Tip => Count == 1 ? $"{Label}: 1 update" : $"{Label}: {Count} updates";

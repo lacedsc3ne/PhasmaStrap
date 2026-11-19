@@ -36,7 +36,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             });
         }
 
-        /// <summary>The menu for one public server, shared with the server list on a game's page.</summary>
         internal static void FillServerMenu(ItemMenu menu, long placeId, string jobId, Action join, bool canJoin = true, Action? info = null)
         {
             bool known = placeId > 0 && jobId.Length > 0;
@@ -45,7 +44,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             menu.Add("Join", SymbolRegular.Play24, join, gesture: "Enter", enabled: known && canJoin, bold: true)
                 .Sub("Join with account", SymbolRegular.PersonSwap24, sub => HomePage.FillAccountMenu(sub, invite ?? ""), enabled: known && canJoin);
 
-            // Only the party leader can send the party somewhere.
             if (PartyService.LeaderFromMarker())
                 menu.Add("Invite my party here", SymbolRegular.PeopleTeam24, () => _ = PartyService.ReportLaunchAsync(placeId, jobId), enabled: known);
 

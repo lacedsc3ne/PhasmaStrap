@@ -25,7 +25,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         Header,
     }
 
-    /// <summary>One line of the log viewer, split into time, source and message.</summary>
     public sealed class LogRow
     {
         public string Time { get; init; } = "";
@@ -407,7 +406,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        /// <summary>The log text split into coloured rows. Only the newest lines are shown, Copy still copies everything.</summary>
         public ObservableCollection<LogRow> LogRows { get; } = new();
 
         private const int MaxLogRows = 3000;

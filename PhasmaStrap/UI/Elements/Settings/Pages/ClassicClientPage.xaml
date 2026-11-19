@@ -7,80 +7,108 @@
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       xmlns:models="clr-namespace:PhasmaStrap.UI.ViewModels.Settings"
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       d:DataContext="{d:DesignInstance Type=models:ClassicClientViewModel}"
       mc:Ignorable="d"
       Title="ClassicClientPage"
       Scrollable="True">
     <ui:UiPage.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+
+        <Style x:Key="PhRow" TargetType="{x:Type Border}">
+            <Setter Property="Margin" Value="-20,0,-20,0" />
+            <Setter Property="Padding" Value="20,12,20,12" />
+            <Setter Property="BorderThickness" Value="0,1,0,0" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PhasmaStrokeBrush}" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+        </Style>
     </ui:UiPage.Resources>
     <StackPanel Margin="0,0,14,14">
-        <StackPanel Orientation="Horizontal">
-            <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="Classic client" />
-            <Border Margin="10,2,0,0" Style="{DynamicResource PhasmaTagNeutral}">
-                <TextBlock Text="Launching" />
-            </Border>
-        </StackPanel>
-        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" Text="Play old Roblox clients against a private server on your own PC." />
+        <controls:PageHeader Eyebrow="Settings · Launching" Title="Classic client" Subtitle="Play old Roblox clients against a private server on your own PC." />
 
-        <!--  Master switch  -->
-        <Border x:Name="ClassicClientEnabledOption" Margin="0,0,0,12" Padding="16,14,16,14" Style="{DynamicResource PhasmaCard}">
-            <Grid>
+        <Grid x:Name="ClassicClientEnabledOption" Margin="0,0,0,12">
+            <Border Background="{DynamicResource PhasmaPanelBrush}" phui:CutCorners.Size="9" />
+            <Border BorderBrush="{DynamicResource PhasmaAccentBrush}" BorderThickness="1" Opacity="0.45" phui:CutCorners.Size="9" />
+            <Grid Margin="20,18,20,18">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <Border Width="44" Height="44" Margin="0,0,14,0" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="{DynamicResource PhasmaSelectedBrush}">
-                    <ui:SymbolIcon Symbol="History24" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <Border Width="40" Height="40" Margin="0,0,16,0" phui:CutCorners.Size="6" Background="{DynamicResource PhasmaAccentBrush}">
+                    <ui:SymbolIcon Symbol="History24" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" />
                 </Border>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Text="{x:Static resources:Strings.Menu_ClassicClient_Enabled_Title}" />
-                    <TextBlock Margin="0,2,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                    <TextBlock FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="16" FontWeight="Bold" TextWrapping="Wrap"
+                               Text="{Binding Source={x:Static resources:Strings.Menu_ClassicClient_Enabled_Title}, Converter={StaticResource PhasmaUpper}}" />
+                    <TextBlock Margin="0,2,0,0" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                                Text="Runs a private server on your own PC and points classic clients at it" />
                 </StackPanel>
                 <ui:ToggleSwitch Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" IsChecked="{Binding ClassicClientEnabled, Mode=TwoWay}" />
             </Grid>
-        </Border>
+        </Grid>
 
-        <Border Margin="0,0,0,12" Padding="14,10,14,10" Style="{DynamicResource PhasmaCard}" ToolTip="{x:Static resources:Strings.Menu_ClassicClient_Description}">
-            <Grid>
+        <Grid Margin="0,0,0,22" ToolTip="{x:Static resources:Strings.Menu_ClassicClient_Description}">
+            <Border Background="{DynamicResource PhasmaInfoBrush}" Opacity="0.07" phui:CutCorners.Size="6" />
+            <Border BorderBrush="{DynamicResource PhasmaInfoBrush}" BorderThickness="1" Opacity="0.35" phui:CutCorners.Size="6" />
+            <Grid Margin="16,12,16,12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <ui:SymbolIcon Margin="0,1,10,0" VerticalAlignment="Top" Symbol="Info24" FontSize="14" Foreground="{DynamicResource PhasmaWarnBrush}" />
-                <TextBlock Grid.Column="1" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                <ui:SymbolIcon Margin="0,0,12,0" VerticalAlignment="Center" Symbol="Info24" FontSize="16" Foreground="{DynamicResource PhasmaInfoBrush}" />
+                <TextBlock Grid.Column="1" FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
                     <Run FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="Hosts file redirect:" />
                     <Run Text="classic clients are pointed at your PC through the Windows hosts file while one is running." />
                 </TextBlock>
             </Grid>
-        </Border>
+        </Grid>
 
         <controls:CardColumns IsEnabled="{Binding ClassicClientEnabled, Mode=OneWay}">
-            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_ClassicClient_Installation_Title}">
-                <Border Style="{DynamicResource PhasmaDivider}" />
-                <Grid Margin="2,10,2,10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Margin="0,0,12,0">
-                        <TextBlock FontSize="13.5" FontWeight="SemiBold" Text="Engine" />
-                        <TextBlock Margin="0,2,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding EngineStatus, Mode=OneWay}" />
-                        <TextBlock Margin="0,2,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding EngineDataStatus, Mode=OneWay}" />
-                        <TextBlock Margin="0,2,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding RedirectStatus, Mode=OneWay}" />
-                    </StackPanel>
-                    <Border Grid.Column="1" VerticalAlignment="Top" Style="{DynamicResource PhasmaTag}"
-                            Visibility="{Binding EngineReady, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <TextBlock Text="Ready" />
+            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_ClassicClient_Installation_Title}" Description="What the classic engine needs on this PC">
+                <controls:SettingsCard.HeaderContent>
+                    <Border Style="{DynamicResource PhasmaTagGood}" Visibility="{Binding EngineReady, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="5" Height="5" Margin="0,0,6,0" VerticalAlignment="Center" Fill="{DynamicResource PhasmaGoodBrush}" />
+                            <TextBlock Text="READY" />
+                        </StackPanel>
                     </Border>
-                </Grid>
+                </controls:SettingsCard.HeaderContent>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_ClassicClient_InstallLocation_Label}">
+                <StackPanel><Border Style="{StaticResource PhRow}" Padding="20,16,20,16">
+                    <StackPanel>
+                        <TextBlock FontFamily="{DynamicResource PhasmaMono}" FontSize="10.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="ENGINE" />
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Margin="0,1,10,0" VerticalAlignment="Top" Symbol="CircleSmall24" FontSize="13" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                            <TextBlock Grid.Column="1" FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding EngineStatus, Mode=OneWay}" />
+                        </Grid>
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Margin="0,1,10,0" VerticalAlignment="Top" Symbol="CircleSmall24" FontSize="13" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                            <TextBlock Grid.Column="1" FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding EngineDataStatus, Mode=OneWay}" />
+                        </Grid>
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Margin="0,1,10,0" VerticalAlignment="Top" Symbol="CircleSmall24" FontSize="13" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                            <TextBlock Grid.Column="1" FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding RedirectStatus, Mode=OneWay}" />
+                        </Grid>
+                    </StackPanel>
+                </Border></StackPanel>
+
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_ClassicClient_InstallLocation_Label}" Description="Leave blank to use the default location">
                     <StackPanel Orientation="Horizontal">
-                        <ui:TextBox Width="170" PlaceholderText="Default location" ToolTip="{x:Static resources:Strings.Menu_ClassicClient_InstallLocation_PlaceholderText}" Text="{Binding ClassicClientInstallLocation}" />
-                        <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding BrowseInstallLocationCommand}">
+                        <ui:TextBox Width="200" PlaceholderText="Default location" ToolTip="{x:Static resources:Strings.Menu_ClassicClient_InstallLocation_PlaceholderText}" Text="{Binding ClassicClientInstallLocation}" />
+                        <Button Margin="8,0,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaGhostButton}" Command="{Binding BrowseInstallLocationCommand}">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="Folder24" FontSize="14" Margin="0,0,6,0" />
                                 <TextBlock Text="{x:Static resources:Strings.Common_Browse}" />
@@ -92,9 +120,8 @@
 
             <controls:SettingsCard Header="Get clients"
                                    Description="Downloaded from a third party release on GitHub, not built or hosted by PhasmaStrap">
-                <Border Style="{DynamicResource PhasmaDivider}" />
-                <StackPanel Margin="0,12,0,12">
-                    <Button HorizontalAlignment="Left" Style="{DynamicResource PhasmaSoftButton}"
+                <controls:OptionControl Header="Engine data pack" Description="{x:Static resources:Strings.Menu_ClassicClient_AcquireClients_EngineData_Description}">
+                    <Button Style="{DynamicResource PhasmaGhostButton}"
                             ToolTip="{x:Static resources:Strings.Menu_ClassicClient_AcquireClients_EngineData_Description}"
                             IsEnabled="{Binding IsNotBusy, Mode=OneWay}"
                             Command="{Binding InstallEngineCommand}">
@@ -103,80 +130,98 @@
                             <TextBlock Text="{x:Static resources:Strings.Menu_ClassicClient_InstallEngineDataPack}" />
                         </StackPanel>
                     </Button>
+                </controls:OptionControl>
 
-                    <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
-                        <ComboBox MinWidth="150" Padding="10,5,10,5" VerticalAlignment="Center" ItemsSource="{Binding AvailableClients}" SelectedItem="{Binding SelectedAvailableClient, Mode=TwoWay}"
+                <controls:OptionControl Header="Available clients" Description="{x:Static resources:Strings.Menu_ClassicClient_AcquireClients_InstallUpdate_Description}">
+                    <StackPanel Orientation="Horizontal">
+                        <ComboBox MinWidth="180" Padding="10,5,10,5" VerticalAlignment="Center" ItemsSource="{Binding AvailableClients}" SelectedItem="{Binding SelectedAvailableClient, Mode=TwoWay}"
                                   DisplayMemberPath="Name" IsEnabled="{Binding IsNotBusy, Mode=OneWay}" />
-                        <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaAccentButton}" Content="{x:Static resources:Strings.Menu_ClassicClient_Install}"
+                        <Button Margin="8,0,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaAccentButton}" Content="{x:Static resources:Strings.Menu_ClassicClient_Install}"
                                 ToolTip="{x:Static resources:Strings.Menu_ClassicClient_AcquireClients_InstallUpdate_Description}"
                                 IsEnabled="{Binding IsNotBusy, Mode=OneWay}"
                                 Command="{Binding InstallSelectedClientCommand}" />
                     </StackPanel>
+                </controls:OptionControl>
 
-                    <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
-                        <ComboBox MinWidth="150" Padding="10,5,10,5" VerticalAlignment="Center"
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_ClassicClient_InstalledClients_Title}" Description="The client that Update all brings up to date">
+                    <StackPanel Orientation="Horizontal">
+                        <ComboBox MinWidth="120" Padding="10,5,10,5" VerticalAlignment="Center"
                                   ItemsSource="{Binding InstalledClients, Mode=OneWay}"
                                   SelectedItem="{Binding SelectedClassicClient, Mode=TwoWay}"
                                   IsEnabled="{Binding IsNotBusy, Mode=OneWay}"
                                   ToolTip="The client that Update all brings up to date" />
-                        <Button Margin="4,0,0,0" Style="{DynamicResource PhasmaGhostButton}" Command="{Binding RefreshClientsCommand}">
+                        <Button Margin="8,0,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaGhostButton}" Command="{Binding RefreshClientsCommand}">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14" Margin="0,0,6,0" />
                                 <TextBlock Text="{x:Static resources:Strings.Menu_ClassicClient_Refresh}" />
                             </StackPanel>
                         </Button>
                     </StackPanel>
+                </controls:OptionControl>
 
-                    <WrapPanel Margin="-8,8,0,0">
+                <controls:OptionControl Header="Update everything">
+                    <StackPanel Orientation="Horizontal">
                         <Button Style="{DynamicResource PhasmaGhostButton}" IsEnabled="{Binding IsNotBusy, Mode=OneWay}" Command="{Binding UpdateAllCommand}">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="ArrowSync24" FontSize="14" Margin="0,0,6,0" />
                                 <TextBlock Text="{x:Static resources:Strings.Menu_ClassicClient_UpdateAll}" />
                             </StackPanel>
                         </Button>
-                        <Button Style="{DynamicResource PhasmaGhostButton}" Content="{x:Static resources:Strings.Common_Cancel}"
+                        <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaGhostButton}" Content="{x:Static resources:Strings.Common_Cancel}"
                                 Visibility="{Binding IsBusy, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 IsEnabled="{Binding IsBusy, Mode=OneWay}" Command="{Binding CancelOperationCommand}" />
-                    </WrapPanel>
+                    </StackPanel>
+                </controls:OptionControl>
 
-                    <ProgressBar Margin="0,10,0,0" Height="4" Minimum="0" Maximum="100"
-                                 Value="{Binding ProgressValue, Mode=OneWay}"
-                                 Visibility="{Binding IsBusy, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                    <TextBlock Margin="0,4,0,0" FontSize="12" Text="{Binding ProgressText, Mode=OneWay}" TextWrapping="Wrap"
-                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                               Visibility="{Binding IsBusy, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                <StackPanel Margin="0,0,0,16" Visibility="{Binding IsBusy, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ProgressBar Style="{DynamicResource PhasmaMiniBar}" Minimum="0" Maximum="100" Value="{Binding ProgressValue, Mode=OneWay}" />
+                    <TextBlock Margin="0,6,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" Text="{Binding ProgressText, Mode=OneWay}" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
             </controls:SettingsCard>
 
-            <controls:SettingsCard controls:CardColumns.FullRow="True" Header="{x:Static resources:Strings.Menu_ClassicClient_InstalledClients_Title}">
-                <Border Style="{DynamicResource PhasmaDivider}" Visibility="{Binding HasNoInstalledClients, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                <StackPanel Margin="0,22,0,24" HorizontalAlignment="Center"
-                            Visibility="{Binding HasNoInstalledClients, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <ui:SymbolIcon HorizontalAlignment="Center" Symbol="History24" FontSize="22" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                    <TextBlock Margin="0,8,0,0" HorizontalAlignment="Center" FontSize="13" FontWeight="SemiBold" Text="No classic clients yet" />
-                    <TextBlock Margin="0,3,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                               Text="Install the engine data pack, then pick a client above." />
-                </StackPanel>
+            <controls:SettingsCard controls:CardColumns.FullRow="True" Header="{x:Static resources:Strings.Menu_ClassicClient_InstalledClients_Title}" Description="Classic clients on this PC">
+                <StackPanel Visibility="{Binding HasNoInstalledClients, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"><Border Style="{StaticResource PhRow}" Padding="20,24,20,26">
+                    <StackPanel HorizontalAlignment="Center">
+                        <ui:SymbolIcon HorizontalAlignment="Center" Symbol="History24" FontSize="22" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                        <TextBlock Margin="0,8,0,0" HorizontalAlignment="Center" FontSize="13.5" FontWeight="SemiBold" Text="No classic clients yet" />
+                        <TextBlock Margin="0,3,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" FontSize="12.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                   Text="Install the engine data pack, then pick a client above." />
+                    </StackPanel>
+                </Border></StackPanel>
 
                 <ItemsControl ItemsSource="{Binding InstalledClientCards, Mode=OneWay}" Focusable="False">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel>
-                                <Border Style="{DynamicResource PhasmaDivider}" />
-                                <Grid Margin="2,10,2,10">
+                            <Border Style="{StaticResource PhRow}">
+                                <Grid>
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" Margin="0,0,14,0" VerticalAlignment="Center">
-                                        <TextBlock FontSize="13.5" FontWeight="SemiBold" Text="{Binding Name, Mode=OneWay}" TextWrapping="Wrap" />
-                                        <TextBlock Margin="0,2,0,0" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding VersionDisplay, Mode=OneWay}" />
+                                    <Border Width="36" Height="36" Margin="0,0,14,0" VerticalAlignment="Center" phui:CutCorners.Size="6" Background="{DynamicResource PhasmaS3Brush}">
+                                        <ui:SymbolIcon Symbol="History24" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Margin="0,0,14,0" VerticalAlignment="Center">
+                                        <TextBlock FontSize="14" FontWeight="SemiBold" Text="{Binding Name, Mode=OneWay}" TextWrapping="Wrap" />
+                                        <TextBlock Margin="0,2,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding VersionDisplay, Mode=OneWay}" />
                                     </StackPanel>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <Button Margin="0,0,8,0" Style="{DynamicResource PhasmaGhostButton}"
-                                                Content="{x:Static resources:Strings.Menu_ClassicClient_StopPrivateServer}"
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Border Margin="0,0,10,0" Style="{DynamicResource PhasmaTagGood}" Visibility="{Binding IsRunning, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Ellipse Width="5" Height="5" Margin="0,0,6,0" VerticalAlignment="Center" Fill="{DynamicResource PhasmaGoodBrush}" />
+                                                <TextBlock Text="SERVER RUNNING" />
+                                            </StackPanel>
+                                        </Border>
+                                        <Button Style="{DynamicResource PhasmaGhostButton}"
                                                 Visibility="{Binding IsRunning, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                Command="{Binding DataContext.StopServerCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" />
+                                                Command="{Binding DataContext.StopServerCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="Stop24" FontSize="13" Margin="0,0,6,0" Foreground="{DynamicResource PhasmaRedTextBrush}" />
+                                                <TextBlock Foreground="{DynamicResource PhasmaRedTextBrush}" Text="{x:Static resources:Strings.Menu_ClassicClient_StopPrivateServer}" />
+                                            </StackPanel>
+                                        </Button>
                                         <Button Style="{DynamicResource PhasmaAccentButton}"
                                                 ToolTip="{x:Static resources:Strings.Menu_ClassicClient_LaunchSelectedClient}"
                                                 Visibility="{Binding IsNotRunning, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
@@ -189,7 +234,7 @@
                                         </Button>
                                     </StackPanel>
                                 </Grid>
-                            </StackPanel>
+                            </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>

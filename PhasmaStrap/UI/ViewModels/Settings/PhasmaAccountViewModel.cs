@@ -22,7 +22,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
                 if (PhasmaStrap.Utility.PhasmaAccount.SignedIn)
                 {
-                    // The server says whether a Roblox account is linked. Until it answers, show the account ID as before.
                     if (_summary is not null)
                     {
                         string roblox = _summary.RobloxLinked
@@ -38,7 +37,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        /// <summary>First letter of the account name, for the round avatar on the page.</summary>
         public string AccountInitial
         {
             get
@@ -48,14 +46,12 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        /// <summary>The account ID, on hover over the account line, for support.</summary>
         public string? AccountIdTip => PhasmaStrap.Utility.PhasmaAccount.SignedIn && !string.IsNullOrEmpty(App.State.Prop.AccountId)
             ? $"Account ID {App.State.Prop.AccountId}. Give it to support if you ever need help."
             : null;
 
         private PhasmaStrap.Utility.Backend.AccountSummary? _summary;
 
-        /// <summary>Asks the server for the Roblox link and the newest backup. Quietly keeps the local view when it does not answer.</summary>
         public async Task LoadSummaryAsync(bool fresh = false)
         {
             if (!PhasmaStrap.Utility.PhasmaAccount.SignedIn)
@@ -83,7 +79,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public ICommand LinkRobloxCommand => new RelayCommand(() => Utilities.ShellExecute("https://phasmastrap.com/link-roblox"));
 
-        /// <summary>The account's page on phasmastrap.com, from GET /v1/account/summary. Only an https phasmastrap.com link is used.</summary>
         private string? ProfileUrl
         {
             get
@@ -107,7 +102,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 Utilities.ShellExecute(url);
         });
 
-        /// <summary>"Link Roblox" only while no Roblox account is linked (or the server has not said yet).</summary>
         public Visibility LinkRobloxVisibility => _summary is { RobloxLinked: true } ? Visibility.Collapsed : Visibility.Visible;
 
         private void RefreshAccountCard()
@@ -196,7 +190,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        /// <summary>The newest backup: what the server says, or else the last one this PC made.</summary>
         private DateTime? LastBackupUtc
         {
             get
@@ -211,7 +204,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        /// <summary>"today at 14:02", "yesterday at 22:14", or "on 28 Sept at 09:30".</summary>
         private static string DescribeWhen(DateTime utc)
         {
             DateTime local = utc.ToLocalTime();
@@ -242,7 +234,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public string[] BackupScopes { get; } = { "Settings, flags and themes", "Everything" };
 
-        /// <summary>"What to include". Everything also backs up friend notes, friends since dates and the games library.</summary>
         public string BackupScope
         {
             get => string.Equals(App.Settings.Prop.BackupScope, "Everything", StringComparison.OrdinalIgnoreCase) ? BackupScopes[1] : BackupScopes[0];
@@ -287,7 +278,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
                 if (count > 0)
                 {
-                    // Counts as the newest backup for this PC too, so the page and the once a day backup both know.
                     App.State.Prop.LastAutoBackup = DateTime.UtcNow.ToString("o");
                     App.State.Save();
                     _ = LoadSummaryAsync(fresh: true);

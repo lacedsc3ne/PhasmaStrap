@@ -98,6 +98,7 @@ namespace PhasmaStrap.Integrations.GameChat
 
         private void HookThreadMain(GameChatOverlay overlay)
         {
+            PhasmaStrap.Utility.LauncherThrottle.MarkCurrentThreadLatencyCritical();
             Dispatcher dispatcher = Dispatcher.CurrentDispatcher;
             GameChatKeyboardHook? hook = null;
             try

@@ -41,11 +41,8 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
             EnterSection((FrameworkElement)frame.Content, entry);
         }
 
-        /// <summary>
-        /// Pages that used to be shown inside another page (Game chat in Integrations, Diagnostics in Developer tools,
-        /// Channel and Roblox version in Deployment, Extensions in Mods) now have their own place in the rail.
-        /// Entries that still describe them as embedded are pointed straight at the section instead.
-        /// </summary>
+        private static bool Same(string? a, string? b) => string.Equals((a ?? "").Trim(), (b ?? "").Trim(), StringComparison.OrdinalIgnoreCase);
+
         private static SettingsSearchEntry AsOwnSection(SettingsSearchEntry entry)
         {
             if (entry.NestedPageType is null || !SectionHosts.IsSection(entry.NestedPageType))
@@ -54,10 +51,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
             return new SettingsSearchEntry(entry.Kind, entry.Header, entry.Description, entry.NestedPageType, entry.PageName, entry.Tab, entry.Section, entry.Group, null);
         }
 
-        /// <summary>
-        /// Opens a page (or a section inside one of the top bar pages) and runs <paramref name="whenShown"/>
-        /// on the page itself once it is loaded.
-        /// </summary>
         public static void OpenPage(INavigation navigation, Frame frame, Type pageType, Action<FrameworkElement>? whenShown = null)
         {
             Type host = SectionHosts.Resolve(pageType);
@@ -194,7 +187,7 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
 
                 if (tabName.Length > 0)
                 {
-                    TabItem? tab = Descendants<TabItem>(page).FirstOrDefault(t => HeaderText(t.Header) == tabName);
+                    TabItem? tab = Descendants<TabItem>(page).FirstOrDefault(t => Same(HeaderText(t.Header), tabName));
 
                     if (tab is null)
                     {
@@ -290,7 +283,7 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
 
                 if (tabName.Length > 0)
                 {
-                    TabItem? tab = Descendants<TabItem>(nestedPage).FirstOrDefault(t => HeaderText(t.Header) == tabName);
+                    TabItem? tab = Descendants<TabItem>(nestedPage).FirstOrDefault(t => Same(HeaderText(t.Header), tabName));
 
                     if (tab is null)
                     {
@@ -399,25 +392,25 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
             switch (entry.Kind)
             {
                 case SettingsSearchEntryKind.Option:
-                    return (FrameworkElement?)Descendants<OptionControl>(scope).FirstOrDefault(o => (o.Header ?? "") == entry.Header)
-                        ?? (FrameworkElement?)Descendants<ToggleSwitch>(scope).FirstOrDefault(t => HeaderText(t.Content) == entry.Header)
-                        ?? (FrameworkElement?)Descendants<CheckBox>(scope).FirstOrDefault(c => HeaderText(c.Content) == entry.Header)
+                    return (FrameworkElement?)Descendants<OptionControl>(scope).FirstOrDefault(o => Same(o.Header, entry.Header))
+                        ?? (FrameworkElement?)Descendants<ToggleSwitch>(scope).FirstOrDefault(t => Same(HeaderText(t.Content), entry.Header))
+                        ?? (FrameworkElement?)Descendants<CheckBox>(scope).FirstOrDefault(c => Same(HeaderText(c.Content), entry.Header))
 
-                        ?? Descendants<TextBlock>(scope).FirstOrDefault(t => !IsIcon(t) && t.Text == entry.Header);
+                        ?? Descendants<TextBlock>(scope).FirstOrDefault(t => !IsIcon(t) && Same(t.Text, entry.Header));
 
                 case SettingsSearchEntryKind.Group:
-                    return (FrameworkElement?)Descendants<CardExpander>(scope).FirstOrDefault(c => HeaderText(c.Header) == entry.Header)
-                        ?? (FrameworkElement?)Descendants<System.Windows.Controls.Expander>(scope).FirstOrDefault(c => HeaderText(c.Header) == entry.Header)
-                        ?? Descendants<SettingsCard>(scope).FirstOrDefault(c => c.Header == entry.Header);
+                    return (FrameworkElement?)Descendants<CardExpander>(scope).FirstOrDefault(c => Same(HeaderText(c.Header), entry.Header))
+                        ?? (FrameworkElement?)Descendants<System.Windows.Controls.Expander>(scope).FirstOrDefault(c => Same(HeaderText(c.Header), entry.Header))
+                        ?? Descendants<SettingsCard>(scope).FirstOrDefault(c => Same(c.Header, entry.Header));
 
                 case SettingsSearchEntryKind.Section:
-                    return Descendants<TextBlock>(scope).FirstOrDefault(t => !IsIcon(t) && t.Text == entry.Header);
+                    return Descendants<TextBlock>(scope).FirstOrDefault(t => !IsIcon(t) && Same(t.Text, entry.Header));
 
                 case SettingsSearchEntryKind.Action:
-                    return Descendants<System.Windows.Controls.Button>(scope).FirstOrDefault(b => HeaderText(b.Content) == entry.Header);
+                    return Descendants<System.Windows.Controls.Button>(scope).FirstOrDefault(b => Same(HeaderText(b.Content), entry.Header));
 
                 case SettingsSearchEntryKind.Tab:
-                    return Descendants<TabItem>(scope).FirstOrDefault(t => HeaderText(t.Header) == entry.Header);
+                    return Descendants<TabItem>(scope).FirstOrDefault(t => Same(HeaderText(t.Header), entry.Header));
 
                 default:
                     return null;

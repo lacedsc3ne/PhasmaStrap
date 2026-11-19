@@ -26,18 +26,15 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public string IdText => $"Place ID {PlaceId}";
 
-        /// <summary>Players and servers, then the place ID, for the Places tab.</summary>
         public string DetailText => StatsText.Length > 0 ? $"{StatsText}  ·  {IdText}" : IdText;
 
         private string _statsText = "";
-        /// <summary>"214K playing · 18.1K servers" once known, from PhasmaStrap's server or this place's server list.</summary>
         public string StatsText
         {
             get => _statsText;
             private set { _statsText = value; OnPropertyChanged(nameof(StatsText)); OnPropertyChanged(nameof(Caption)); OnPropertyChanged(nameof(DetailText)); }
         }
 
-        /// <summary>True once the totals came from the server, so a partial count from one list doesn't replace them.</summary>
         public bool HasFullStats { get; private set; }
 
         public void SetStats(long playing, long servers, bool full, bool atLeast = false)
@@ -53,7 +50,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         }
     }
 
-    /// <summary>A friend shown on a server row: a round initial or avatar.</summary>
     public sealed class ServerFriend
     {
         public long UserId { get; init; }
@@ -62,7 +58,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string Initial => Name.Length > 0 ? Name[..1].ToUpperInvariant() : "?";
     }
 
-    /// <summary>A friend in the "Friends in this game" card on the Overview tab.</summary>
     public sealed class GameFriendRow
     {
         public long UserId { get; init; }
@@ -75,7 +70,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public Visibility JoinVisibility => CanJoin ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    /// <summary>A region chip above the server list.</summary>
     public sealed class RegionChip : NotifyPropertyChangedViewModel
     {
         public string Code { get; init; } = "";
@@ -93,7 +87,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
     public sealed class GameAccountOption
     {
-        /// <summary>0 means whoever is signed in to Roblox at launch.</summary>
         public long UserId { get; init; }
         public string Name { get; init; } = "";
         public string Initial => Name.Length > 0 ? Name[..1].ToUpperInvariant() : "?";
@@ -105,7 +98,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public ServerListItem Server { get; init; } = new();
 
         private string _region = "";
-        /// <summary>"Frankfurt, DE" when known.</summary>
         public string Region
         {
             get => _region;
@@ -139,7 +131,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string UptimeText => ServerFacts.Uptime(_firstSeenUtc);
 
         private double _fps;
-        /// <summary>The server's frame rate: Roblox's own number when it lists one, otherwise PhasmaStrap's server.</summary>
         public double Fps
         {
             get => Server.Fps > 0 ? Server.Fps : _fps;
@@ -148,7 +139,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public string FpsText => Fps > 0 ? Math.Round(Fps).ToString() : "";
 
-        /// <summary>Average FPS of PhasmaStrap players in this server, for the information window.</summary>
         public double ClientFps { get; set; }
 
         private List<ServerFriend> _friends = new();
@@ -174,7 +164,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool CanJoin => !IsFull;
         public string ShortJobId => Server.JobId.Length > 8 ? Server.JobId[..8] : Server.JobId;
 
-        /// <summary>good, ok, bad or none, picked up by the row's colour triggers.</summary>
         public string PingLevel => Server.Ping <= 0 ? "none" : Server.Ping < 60 ? "good" : Server.Ping < 130 ? "ok" : "bad";
     }
 
@@ -183,7 +172,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public PrivateServerInfo Info { get; init; } = new();
 
         private bool _isFriend;
-        /// <summary>The owner is one of your Roblox friends.</summary>
         public bool IsFriend
         {
             get => _isFriend;
@@ -192,7 +180,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public Visibility FriendVisibility => _isFriend && !Info.Owned ? Visibility.Visible : Visibility.Collapsed;
 
-        /// <summary>Short line for the places rail: whose it is.</summary>
         public string RailText => Info.Owned ? "Yours" : string.IsNullOrEmpty(Info.OwnerName) ? "Shared with you" : $"Shared by {Info.OwnerName}";
         public string Title => string.IsNullOrWhiteSpace(Info.Name) ? "Private server" : Info.Name;
 
@@ -218,7 +205,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string StateText => Info.Active ? "Can join now" : "Inactive";
     }
 
-    /// <summary>One visit to this game, read from the session history on Activity.</summary>
     public sealed class GameSessionRow
     {
         public long PlaceId { get; init; }
@@ -231,7 +217,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string FpsText { get; init; } = "";
     }
 
-    /// <summary>One day in the "last 14 days" chart on a game's History tab.</summary>
     public sealed class GameDayBar
     {
         public double Height { get; init; }
@@ -245,7 +230,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public override string ToString() => Name;
     }
 
-    /// <summary>One game's page: details, places, public servers, private servers and what it launches with.</summary>
     public sealed class GameViewModel : NotifyPropertyChangedViewModel, IDisposable
     {
         private const string LOG_IDENT = "GameViewModel";
@@ -266,7 +250,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public event EventHandler? ProfileAssigned;
 
-        /// <summary>Raised when the page wants another settings page (overlay, resolution, flag editor) opened.</summary>
         public event EventHandler<Type>? OpenPageRequested;
 
         public GameViewModel(long universeId, long placeId, string name, string iconUrl)
@@ -479,7 +462,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 _ = LoadFriendsAsync();
                 _ = LoadFactsAsync();
 
-                // Loaded straight away so the tab count and the places rail can show them.
                 if (!_privateLoaded)
                     _ = LoadPrivateServersAsync();
             }
@@ -494,7 +476,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         }
 
         #endregion
-
 
         #region Facts, passes, badges and media
 
@@ -815,7 +796,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public string PlacesHeader => $"Places in {Name}";
 
-        /// <summary>Players and servers per place from PhasmaStrap's server, when it has them.</summary>
         private async Task LoadPlaceStatsAsync()
         {
             try
@@ -843,7 +823,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        /// <summary>Places tab: picks the place and shows its public servers.</summary>
         public ICommand ShowPlaceServersCommand => new RelayCommand<PlaceItem>(place =>
         {
             if (place is null)
@@ -853,7 +832,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             ShowTab(TabServers);
         });
 
-        /// <summary>Places tab: picks the place and switches the launch setup to that place only.</summary>
         public ICommand PlaceFlagsCommand => new RelayCommand<PlaceItem>(place =>
         {
             if (place is null)
@@ -864,8 +842,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             ShowTab(TabOverview);
         });
 
-        /// <summary>Places tab: picks the place and launches it.</summary>
-        /// <summary>The place Play launches: the picked place, else the start place.</summary>
         public long LaunchPlaceId => _selectedPlace?.PlaceId ?? (RootPlaceId > 0 ? RootPlaceId : _requestedPlaceId);
 
         public ICommand PlayPlaceCommand => new RelayCommand<PlaceItem>(place =>
@@ -942,15 +918,12 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool SortByPlayers { get => _sortMode == "players"; set { if (value) { SortMode = "players"; ApplyServerView(); } } }
         public bool SortBySpace { get => _sortMode == "space"; set { if (value) { SortMode = "space"; ApplyServerView(); } } }
 
-        /// <summary>All public servers of the game, when PhasmaStrap's server knows it.</summary>
         private long _totalServers;
 
         public string ServerCountText => _totalServers > 0 ? GameCatalog.Compact(_totalServers) : _allServers.Count > 0 ? GameCatalog.Compact(_allServers.Count) : "";
 
-        /// <summary>Region, uptime and FPS per job id, filled in after the list arrives.</summary>
         private Dictionary<string, ServerStats> _facts = new(StringComparer.OrdinalIgnoreCase);
 
-        /// <summary>Friends in each server, from their Roblox presence.</summary>
         private Dictionary<string, List<ServerFriend>> _friendsByJob = new(StringComparer.OrdinalIgnoreCase);
 
         public ObservableCollection<RegionChip> RegionChips { get; } = new();
@@ -1077,7 +1050,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
                 _allServers = servers;
 
-                // Until the server has totals, the list itself gives a lower bound for this place.
                 bool capped = servers.Count >= 300;
                 place.SetStats(servers.Sum(s => (long)s.Playing), servers.Count, full: false, atLeast: capped);
 
@@ -1173,7 +1145,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 Launch(RobloxLaunch.DeepLink(placeId));
         }
 
-        /// <summary>Opens a Roblox link as the account picked in the launch setup, or as whoever is signed in.</summary>
         public void Launch(string uri)
         {
             long userId = _selectedAccount?.UserId ?? 0;
@@ -1353,7 +1324,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 Utilities.ShellExecute($"https://www.roblox.com/games/{row.Info.PlaceId}#!/game-instances");
         });
 
-        /// <summary>Hides a private server from the lists on this PC. The Private servers tab can show it again.</summary>
         public void HidePrivateServer(GamePrivateServerRow? row)
         {
             if (row is null)
@@ -1406,7 +1376,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         private bool BelongsHere(long universeId, long placeId) =>
             (UniverseId > 0 && universeId == UniverseId) || (placeId > 0 && Places.Any(p => p.PlaceId == placeId));
 
-        /// <summary>Totals this game's tracked play time, the same numbers the Library shows.</summary>
         private void RefreshPlaytime()
         {
             List<PlayTimeEntry> entries = PlayTimeStore.GetAll().Where(e => BelongsHere(e.UniverseId, e.PlaceId)).ToList();
@@ -1527,7 +1496,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 });
             }
 
-            // Minutes played per day over the last two weeks, oldest first.
             DateTime first = DateTime.Now.Date.AddDays(-13);
             double[] perDay = new double[14];
             foreach (ServerVisit visit in visits)
@@ -1579,10 +1547,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 || (RootPlaceId > 0 && presence.RootPlaceId == RootPlaceId)
                 || (presence.PlaceId > 0 && Places.Any(p => p.PlaceId == presence.PlaceId)));
 
-        /// <summary>
-        /// Friends playing this game right now (Roblox presence), then friends you have played it with before
-        /// (the session history on Activity). Also fills the friends shown on each server row.
-        /// </summary>
         private async Task LoadFriendsAsync()
         {
             try
@@ -1610,7 +1574,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                     .Where(f => presence.TryGetValue(f.UserId, out FriendPresence? p) && InThisGame(p))
                     .ToList();
 
-                // Friends you have been in a server of this game with, most recent first.
                 var together = new List<(long UserId, string Name, DateTime When)>();
                 try
                 {
@@ -1709,7 +1672,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         private long _signedInUserId;
 
         private GameAccountOption? _selectedAccount;
-        /// <summary>Which saved account Play and Join use for this game. Kept per game on this PC.</summary>
         public GameAccountOption? SelectedAccount
         {
             get => _selectedAccount;
@@ -1740,7 +1702,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
                 RobloxCookie.RobloxAccount? me = await RobloxCookie.GetAccountAsync();
                 _signedInUserId = me?.UserId ?? 0;
 
-                // Waits for the game's ID, which the saved choice is keyed by.
                 for (int i = 0; i < 40 && UniverseId <= 0 && !_cts.IsCancellationRequested; i++)
                     await Task.Delay(250);
 
@@ -1801,8 +1762,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             get => _selectedProfile;
             set
             {
-                // A null here comes from the ComboBox letting go of its items (page closing or
-                // switching games), never from the user: "Your usual flags" is a real option.
                 if (value is null || ReferenceEquals(_selectedProfile, value) || _cts.IsCancellationRequested)
                     return;
 
@@ -1907,7 +1866,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             try
             {
-                // Saved straight away: a game launched from this page starts a new process that reads it from disk.
                 App.FlagProfiles.Save();
                 App.FlagProfiles.NotifyEdited();
             }

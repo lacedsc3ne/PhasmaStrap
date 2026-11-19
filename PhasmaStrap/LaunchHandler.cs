@@ -321,7 +321,6 @@ namespace PhasmaStrap
 
                 if (!string.IsNullOrWhiteSpace(link))
                 {
-                    // The open window brings itself forward when it gets the link, which it may only do with our permission.
                     AllowSetForegroundWindow(ASFW_ANY);
 
                     if (Utility.SettingsLinkPipe.Send(link))
@@ -372,7 +371,6 @@ namespace PhasmaStrap
             window.Left = double.TryParse(Environment.GetEnvironmentVariable("PHASMASTRAP_UITEST_X"), out double x) ? x : 40;
             window.Top = double.TryParse(Environment.GetEnvironmentVariable("PHASMASTRAP_UITEST_Y"), out double y) ? y : 40;
 
-            // PHASMASTRAP_UITEST_VISIBLE=1 keeps the window on top where it was placed, so it can be watched on another monitor.
             if (Environment.GetEnvironmentVariable("PHASMASTRAP_UITEST_VISIBLE") == "1")
                 return true;
 

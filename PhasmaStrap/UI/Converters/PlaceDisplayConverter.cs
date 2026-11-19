@@ -2,9 +2,6 @@ using System.Windows.Data;
 
 namespace PhasmaStrap.UI.Converters
 {
-    /// <summary>
-    /// Shows a place ID as "Game name · 1234567" when the game is in play time history, otherwise just the ID.
-    /// </summary>
     internal class PlaceDisplayConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

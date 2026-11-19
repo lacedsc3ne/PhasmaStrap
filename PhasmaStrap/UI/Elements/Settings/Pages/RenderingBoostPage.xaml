@@ -1,4 +1,4 @@
-<ui:UiPage x:Class="PhasmaStrap.UI.Elements.Settings.Pages.RenderingBoostPage"
+﻿<ui:UiPage x:Class="PhasmaStrap.UI.Elements.Settings.Pages.RenderingBoostPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -12,40 +12,47 @@
       Loaded="Page_Loaded">
 
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Style="{DynamicResource PhasmaPageTitle}" Text="{x:Static resources:Strings.Menu_Rendering_BoostOptions}" />
-        <TextBlock Style="{DynamicResource PhasmaPageSubtitle}" MaxWidth="760" HorizontalAlignment="Left"
-                   Text="These change how Windows treats the Roblox process, not a single FastFlag. That is where a lot of the FPS gap on laptops and busy PCs comes from." />
+        <controls:PageHeader Eyebrow="Performance · Rendering" Title="{x:Static resources:Strings.Menu_Rendering_BoostOptions}"
+                             Subtitle="These change how Windows treats the Roblox process, not a single FastFlag. That is where a lot of the FPS gap on laptops and busy PCs comes from." />
 
-        <controls:CardColumns>
-            <controls:SettingsCard Header="While you play">
-                <controls:OptionControl Header="Force high performance GPU" Description="Pins Roblox to the dedicated GPU on laptops">
+        <StackPanel>
+            <controls:SettingsCard Margin="0,0,0,18" Header="While you play">
+                <controls:OptionControl Flat="True" Header="Force high performance GPU" Description="Pins Roblox to the dedicated GPU on laptops">
                     <ui:ToggleSwitch IsChecked="{Binding ForceHighPerformanceGpu, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="Disable Game Bar and Game DVR for Roblox" Description="Stops background recording hooking into the game">
+                <controls:OptionControl Flat="True" Header="Disable Game Bar background recording" Description="Turns it off for all games, not just Roblox. Put back when you switch this off.">
                     <ui:ToggleSwitch IsChecked="{Binding DisableGameDVR, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_BoostTimerResolution_Title}" Description="Raises the timer resolution while in a game">
+                <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Performance_BoostTimerResolution_Title}" Description="Only affects PhasmaStrap itself, not Roblox on current Windows. Minor benefit.">
                     <ui:ToggleSwitch IsChecked="{Binding BoostTimerResolution, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="High performance power plan in game" Description="Restores your plan afterwards">
+                <controls:OptionControl Flat="True" Header="High performance power plan in game" Description="Restores your plan afterwards">
                     <ui:ToggleSwitch IsChecked="{Binding UseHighPerformancePowerPlan, Mode=TwoWay}" />
                 </controls:OptionControl>
             </controls:SettingsCard>
 
             <controls:SettingsCard Header="Memory">
                 <StackPanel>
-                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_Performance_CleanRam_Title}" Description="Frees RAM across the whole PC. One admin prompt to fully clear it.">
-                        <Button Style="{DynamicResource PhasmaSoftButton}" Command="{Binding CleanRamCommand, Mode=OneTime}">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Flash24" FontSize="14" Margin="0,0,6,0" />
-                                <TextBlock Text="{x:Static resources:Strings.Menu_Performance_CleanRam_Button}" />
-                            </StackPanel>
-                        </Button>
+                    <controls:OptionControl Flat="True" Header="{x:Static resources:Strings.Menu_Performance_CleanRam_Title}" Description="Frees RAM across the whole PC. One admin prompt to fully clear it.">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Margin="0,0,10,0" Style="{DynamicResource PhasmaTagWarn}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Shield24" FontSize="11" Margin="0,0,5,0" />
+                                    <TextBlock Text="ADMIN PROMPT" />
+                                </StackPanel>
+                            </Border>
+                            <Button Style="{DynamicResource PhasmaGhostButton}" Command="{Binding CleanRamCommand, Mode=OneTime}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Flash24" FontSize="14" Margin="0,0,6,0" />
+                                    <TextBlock Text="{x:Static resources:Strings.Menu_Performance_CleanRam_Button}" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
                     </controls:OptionControl>
-                    <TextBlock Margin="2,0,2,10" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource PhasmaGoodBrush}" Text="{Binding CleanRamStatus}" ToolTip="{Binding CleanRamDetail}">
+                    <TextBlock Margin="20,-6,20,14" FontFamily="{DynamicResource PhasmaMono}" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource PhasmaGoodBrush}" Text="{Binding CleanRamStatus}" ToolTip="{Binding CleanRamDetail}">
                         <TextBlock.Style>
                             <Style TargetType="{x:Type TextBlock}">
                                 <Style.Triggers>
@@ -58,10 +65,10 @@
                     </TextBlock>
                 </StackPanel>
 
-                <controls:OptionControl Header="Clean RAM on its own" Description="When usage gets high. Only does the safe part.">
+                <controls:OptionControl Flat="True" Header="Clean RAM on its own" Description="When usage gets high. Only does the safe part.">
                     <ui:ToggleSwitch IsChecked="{Binding AutoCleanRam, Mode=TwoWay}" />
                 </controls:OptionControl>
             </controls:SettingsCard>
-        </controls:CardColumns>
+        </StackPanel>
     </StackPanel>
 </ui:UiPage>

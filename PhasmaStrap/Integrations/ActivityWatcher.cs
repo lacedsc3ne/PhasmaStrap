@@ -157,7 +157,7 @@ namespace PhasmaStrap.Integrations
 
             if (_logEntriesRead <= 1000 && _logEntriesRead % 50 == 0)
                 App.Logger.WriteLine(LOG_IDENT, $"Read {_logEntriesRead} log entries");
-            else if (_logEntriesRead % 100 == 0)
+            else if (_logEntriesRead > 1000 && _logEntriesRead % 1000 == 0)
                 App.Logger.WriteLine(LOG_IDENT, $"Read {_logEntriesRead} log entries");
 
             int logMessageIdx = entry.IndexOf(' ');

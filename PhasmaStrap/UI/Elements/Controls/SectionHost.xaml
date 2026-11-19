@@ -9,7 +9,6 @@
     mc:Ignorable="d">
 
     <UserControl.Resources>
-        <!--  Side rail item (Settings)  -->
         <Style x:Key="SectionRailItemStyle" TargetType="{x:Type ListBoxItem}">
             <Setter Property="Padding" Value="10,0" />
             <Setter Property="Margin" Value="0,0,0,2" />
@@ -63,7 +62,6 @@
             </Setter>
         </Style>
 
-        <!--  Horizontal tab item (Social, Performance, FastFlags, Capture)  -->
         <Style x:Key="SectionTabItemStyle" TargetType="{x:Type ListBoxItem}">
             <Setter Property="Padding" Value="14,9" />
             <Setter Property="Margin" Value="0,0,2,0" />
@@ -136,7 +134,6 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!--  Tabs layout: title and a row of tabs above the page  -->
         <Grid x:Name="TabBar" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="22,18,22,12" Visibility="Collapsed">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -150,11 +147,9 @@
                 VerticalAlignment="Center"
                 Style="{DynamicResource PhasmaTitle}" />
             <ContentControl x:Name="TabSlot" Grid.Column="1" VerticalAlignment="Center" Focusable="False" />
-            <!--  Optional HeaderContent from the host page (status pill, button)  -->
             <ContentControl x:Name="HeaderSlot" Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" Focusable="False" />
         </Grid>
 
-        <!--  Rail layout: a side menu with group headings  -->
         <Border
             x:Name="Rail"
             Grid.Row="0"
@@ -182,7 +177,6 @@
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="{Binding Label}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                <!--  Optional count after the label  -->
                                 <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="11" Text="{Binding Badge}" Foreground="{DynamicResource TextFillColorTertiaryBrush}">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
@@ -202,8 +196,6 @@
             </DockPanel>
         </Border>
 
-
-        <!--  Header card for pages that don't draw their own  -->
         <local:PageHeader x:Name="HostHeader" Grid.Row="0" Grid.Column="1" Margin="4,0,18,0" Visibility="Collapsed" />
 
         <Frame

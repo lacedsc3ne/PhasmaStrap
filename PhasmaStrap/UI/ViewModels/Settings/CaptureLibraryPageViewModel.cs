@@ -11,7 +11,6 @@ using PhasmaStrap.Utility;
 
 namespace PhasmaStrap.UI.ViewModels.Settings
 {
-    /// <summary>One screenshot, clip or GIF in the Library tab. Wraps the item the other Capture tabs use, so their commands work on it.</summary>
     public sealed class LibraryEntry : NotifyPropertyChangedViewModel
     {
         public ScreenshotItem? Shot { get; }
@@ -54,7 +53,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public string GameText => string.IsNullOrEmpty(Game) ? "Unknown game" : Game!;
 
-        /// <summary>"Clip 0:30", "Screenshot", "GIF".</summary>
         public string TagText => Kind switch
         {
             CaptureKind.Screenshot => "Screenshot",
@@ -132,7 +130,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         }
     }
 
-    /// <summary>The Library tab: every screenshot, clip and GIF in one grid, with filters and a detail panel.</summary>
     public sealed class CaptureLibraryPageViewModel : NotifyPropertyChangedViewModel
     {
         public const string AnyGame = "Any game";
@@ -181,18 +178,16 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             switch (e.PropertyName)
             {
                 case nameof(CaptureViewModel.Status):
-                    Status = Capture.Status;
+                    SetStatus(Capture.Status, Capture.StatusIsError);
                     break;
                 case nameof(CaptureViewModel.ReplayStatus):
-                    Status = Capture.ReplayStatus;
+                    SetStatus(Capture.ReplayStatus, Capture.ReplayStatusIsError);
                     break;
                 case nameof(CaptureViewModel.Storage):
                     OnPropertyChanged(nameof(StorageText));
                     break;
             }
         }
-
-        // ---- Building the list ----
 
         private void Rebuild()
         {
@@ -295,8 +290,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             OnPropertyChanged(nameof(CountText));
         }
 
-        // ---- Filters ----
-
         private int _kind;
 
         public bool ShowEverything { get => _kind == 0; set { if (value) SetKind(0); } }
@@ -364,8 +357,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             Apply();
         });
 
-        // ---- Selection and detail panel ----
-
         private LibraryEntry? _selected;
         public LibraryEntry? Selected
         {
@@ -427,7 +418,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             parts.Add(Size(entry.Bytes));
             DetailMeta = string.Join(" · ", parts);
 
-            // Clips and GIFs use their thumbnail; screenshots get a sharper preview and their size, read off the UI thread.
             if (entry.Kind != CaptureKind.Screenshot)
             {
                 Preview = entry.Thumbnail;
@@ -504,9 +494,21 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         }
 
         private string _status = "";
-        public string Status { get => _status; private set { _status = value; OnPropertyChanged(nameof(Status)); } }
+        public string Status => _status;
 
-        // ---- Actions: the same commands the Screenshots and Instant Replay tabs use ----
+        private bool _statusIsError;
+        public bool StatusIsError => _statusIsError;
+
+        private System.Windows.Threading.DispatcherTimer? _statusClear;
+
+        private void SetStatus(string message, bool error = false)
+        {
+            _statusIsError = error;
+            _status = message;
+            OnPropertyChanged(nameof(StatusIsError));
+            OnPropertyChanged(nameof(Status));
+            _statusClear = CaptureViewModel.ClearLater(_statusClear, message, () => SetStatus(""));
+        }
 
         private static void Run(ICommand screenshot, ICommand clip, LibraryEntry? entry)
         {
@@ -536,7 +538,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             if (entry is null)
                 return;
 
-            // Select the next capture so Delete can be pressed again.
             int index = _shown.IndexOf(entry);
             LibraryEntry? next = index >= 0 && index + 1 < _shown.Count ? _shown[index + 1] : index > 0 ? _shown[index - 1] : null;
 
@@ -544,7 +545,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
             if (!File.Exists(entry.Path))
             {
-                Status = $"{entry.FileName} moved to the Recycle Bin.";
+                SetStatus($"{entry.FileName} moved to the Recycle Bin.");
                 Rebuild();
                 Selected = next is not null && _shown.Contains(next) ? next : null;
             }

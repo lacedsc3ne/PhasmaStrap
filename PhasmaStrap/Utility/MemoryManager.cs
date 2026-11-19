@@ -204,6 +204,8 @@ namespace PhasmaStrap.Utility
         {
             if (_bgModeSet)
                 return;
+            if (LauncherThrottle.SessionActive)
+                return;
             try
             {
                 using Process self = Process.GetCurrentProcess();

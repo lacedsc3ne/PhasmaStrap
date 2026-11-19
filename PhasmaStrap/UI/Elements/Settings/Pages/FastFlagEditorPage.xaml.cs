@@ -34,15 +34,12 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
         private bool _isInherited;
         public bool IsInherited { get => _isInherited; set { _isInherited = value; Changed(nameof(DeleteHint)); } }
 
-        /// <summary>Readable name for the card view (server catalog title, or the flag name in words).</summary>
         public string Title => FlagCategories.TitleOf(_name);
 
-        /// <summary>One line from the server catalog, or "".</summary>
         public string Description => FlagCategories.DescriptionOf(_name);
 
         public string Category => FlagCategories.CategoryOf(_name);
 
-        /// <summary>FFlag style flag holding True or False: shown as a switch in the card view.</summary>
         public bool IsSwitch => !_isTurnedOff && FlagCategories.IsSwitch(_name, _value);
 
         public bool IsOn => _value.Equals("True", StringComparison.OrdinalIgnoreCase);
@@ -69,7 +66,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
         public static string? ProfileToOpen { get; set; }
     }
 
-    /// <summary>One entry in the flag editor's sidebar: your flags, or a profile.</summary>
     public sealed class FlagScopeEntry
     {
         public string? ProfileId { get; init; }
@@ -79,7 +75,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
         public Visibility DefaultVisibility => ProfileId is null ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    /// <summary>A card of flags in one category.</summary>
     public sealed class FlagGroup
     {
         public string Name { get; init; } = "";
@@ -88,7 +83,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
         public string CountText => Rows.Count == 1 ? "1 flag" : $"{Rows.Count} flags";
     }
 
-    /// <summary>A game or place a profile is given to, shown as a chip.</summary>
     public sealed class FlagAssignChip
     {
         public FlagGameRule Rule { get; init; } = null!;
@@ -99,7 +93,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
         public string ToolTip => $"{Title}: {Subtitle}";
     }
 
-    /// <summary>A game in the "Assign to a game" picker.</summary>
     public sealed class FlagAssignResult
     {
         public long UniverseId { get; init; }
@@ -123,10 +116,8 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
 
         private readonly ObservableCollection<PhasmaStrap.Integrations.UniversePlace> _assignPlaces = new();
 
-        // Card view or table view; remembered while the app runs.
         private static bool _tableView;
 
-        // The card row the keyboard (F2, Del, Ctrl C) and the right click menu act on.
         private FlagRow? _cardRow;
 
         private bool _hideQuickFlags = false;
@@ -142,7 +133,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
 
         private static readonly HashSet<string> QuickFlagNames = new(FastFlagManager.PresetFlags.Values, StringComparer.Ordinal);
 
-        // The last row holds the list card plus the help note under it.
         private const double MinimumListHeight = 420;
 
         public FastFlagEditorPage()
@@ -207,7 +197,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             if (PageScroller is null || RootLayout is null || RootLayout.RowDefinitions.Count == 0)
                 return;
 
-            // Cards grow with their content and the page scrolls; only the table is sized to the window.
             if (!_tableView)
                 return;
 
@@ -245,7 +234,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             _ = LoadCatalogAsync();
         }
 
-        // Titles, descriptions and categories from the PhasmaStrap server, when it answers.
         private async Task LoadCatalogAsync()
         {
             if (FlagsCaptureApi.Catalog is not null)
@@ -458,8 +446,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
 
             menu.IsOpen = true;
         }
-
-        // ---- Assign to a game ----
 
         private CancellationTokenSource? _assignCts;
         private FlagAssignResult? _assignGame;
@@ -696,7 +682,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             Assign(game, place.PlaceId, place.Name);
         }
 
-        // Same rule handling as the Per game flags tab: one rule per whole game or per place.
         private void Assign(FlagAssignResult game, long placeId, string placeName)
         {
             FlagProfile? profile = Profile;
@@ -1110,7 +1095,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             _ => SymbolRegular.Flag24,
         };
 
-        // The card view: the same rows, one card per category.
         private void RebuildGroups()
         {
             _groups.Clear();
@@ -1177,7 +1161,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
                 ReloadList();
         }
 
-        /// <summary>Shows one of your own flags (every game scope), used when it is picked from the top bar search.</summary>
         public void FocusFlag(string name)
         {
             if (_profileId is not null)
@@ -1194,7 +1177,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
 
             if (!_tableView)
             {
-                // The card view has no selection: narrow the list down to that flag instead.
                 SearchTextBox.Text = name;
                 _searchFilter = name;
                 _searchDebounce.Stop();
@@ -1482,7 +1464,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             }), System.Windows.Threading.DispatcherPriority.Background);
         }
 
-        /// <summary>Gives a flag a new value in the scope being edited (both views use this). False when the value isn't valid.</summary>
         private bool CommitValue(FlagRow row, string text)
         {
             if (FlagValidation.Problem(row.Name, text) is string problem)
@@ -1498,7 +1479,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             return true;
         }
 
-        // Card view: refresh one row's note in place, so typing on into the next box keeps its focus.
         private void RefreshRowNote(FlagRow row)
         {
             FlagProfile? profile = Profile;
@@ -1597,7 +1577,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
 
             _cardRow = row;
 
-            // Keep keyboard shortcuts working on the row unless a value box or switch was clicked.
             if (e.OriginalSource is DependencyObject source && FindAncestor<TextBox>(source) is null && FindAncestor<ButtonBase>(source) is null)
                 element.Focus();
         }
@@ -1802,7 +1781,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             FillRowMenu(menu, rows, fromTable: true);
         }
 
-        // The right click menu for one or more flags, shared by the table and the cards.
         private void FillRowMenu(System.Windows.Controls.ContextMenu menu, List<FlagRow> rows, bool fromTable)
         {
             menu.Items.Clear();
@@ -1857,7 +1835,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             ClipboardShare.CopyText(JsonSerializer.Serialize(dictionary, new JsonSerializerOptions { WriteIndented = true }));
         }
 
-        // Right click picks the clicked row first, so the menu acts on it.
         private void DataGrid_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
             DependencyObject? current = e.OriginalSource as DependencyObject;
@@ -1894,7 +1871,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
         {
             if (!_tableView)
             {
-                // Card view: ask for the value in a small box.
                 string? text = AskName("Edit value", $"New value for {row.Name}:", row.IsTurnedOff ? "" : row.Value);
                 if (text is null)
                     return;

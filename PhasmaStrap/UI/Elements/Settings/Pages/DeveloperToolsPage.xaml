@@ -7,6 +7,7 @@
       xmlns:resources="clr-namespace:PhasmaStrap.Resources"
       xmlns:controls="clr-namespace:PhasmaStrap.UI.Elements.Controls"
       xmlns:dmodels="clr-namespace:PhasmaStrap.UI.ViewModels.Settings"
+      xmlns:phui="clr-namespace:PhasmaStrap.UI"
       mc:Ignorable="d"
       d:DataContext="{d:DesignInstance dmodels:DeveloperToolsViewModel, IsDesignTimeCreatable=False}"
       Title="DeveloperToolsPage"
@@ -14,28 +15,29 @@
       Loaded="Page_Loaded"
       Unloaded="Page_Unloaded">
     <ui:UiPage.Resources>
-        <!--  Tool picker drawn as flat pill tabs  -->
         <Style x:Key="ToolTabItemStyle" TargetType="{x:Type ListBoxItem}">
-            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="Padding" Value="14,0,14,0" />
             <Setter Property="Margin" Value="0,0,4,0" />
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaHeadingFont}" />
             <Setter Property="FontSize" Value="13" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
             <Setter Property="FocusVisualStyle" Value="{StaticResource PhasmaFocusVisual}" />
+            <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                        <Border x:Name="Fill" Background="Transparent" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
-                            <ContentPresenter VerticalAlignment="Center" SnapsToDevicePixels="True" />
-                        </Border>
+                        <Grid Height="44" Background="Transparent">
+                            <ContentPresenter Margin="{TemplateBinding Padding}" VerticalAlignment="Center" />
+                            <Border x:Name="Underline" Height="2" VerticalAlignment="Bottom" Background="{DynamicResource PhasmaAccentBrush}" Visibility="Hidden" />
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaHoverBrush}" />
-                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource PhasmaSelectedBrush}" />
-                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                                <Setter TargetName="Underline" Property="Visibility" Value="Visible" />
+                                <Setter Property="Foreground" Value="White" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -44,14 +46,21 @@
         </Style>
 
         <Style x:Key="ToolHeading" TargetType="TextBlock" BasedOn="{StaticResource PhasmaHeading}">
-            <Setter Property="FontSize" Value="17" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="Foreground" Value="White" />
         </Style>
 
         <Style x:Key="ToolDescription" TargetType="TextBlock">
-            <Setter Property="Margin" Value="0,4,0,14" />
+            <Setter Property="Margin" Value="0,2,0,0" />
             <Setter Property="FontSize" Value="12.5" />
             <Setter Property="TextWrapping" Value="Wrap" />
-            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+        </Style>
+
+        <Style x:Key="ToolHeaderBar" TargetType="Border">
+            <Setter Property="Padding" Value="20,16,20,16" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PhasmaStrokeBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
         </Style>
 
         <Style x:Key="ColumnLabel" TargetType="TextBlock" BasedOn="{StaticResource PhasmaCaption}" />
@@ -64,299 +73,341 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,14">
-            <TextBlock Style="{DynamicResource PhasmaPageTitle}" VerticalAlignment="Center" Text="Developer tools" />
-            <Border Style="{DynamicResource PhasmaTagNeutral}" Margin="12,0,0,0">
-                <TextBlock FontSize="11" Text="PhasmaStrap" />
-            </Border>
-        </StackPanel>
+        <controls:PageHeader Grid.Row="0" Title="Developer tools" Subtitle="FastFlag snapshots, the local proxy's traffic, the newest logs and a Studio plugin installer." />
 
-        <!--  ToolRail: the code behind reads and sets its selection  -->
-        <ListBox x:Name="ToolRail" Grid.Row="1" Margin="0,0,0,16" HorizontalAlignment="Left"
-                 Background="Transparent"
-                 BorderThickness="0"
-                 Padding="0"
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                 ItemsSource="{Binding Tools, Mode=OneTime}"
-                 SelectedItem="{Binding SelectedTool, Mode=TwoWay}"
-                 ItemContainerStyle="{StaticResource ToolTabItemStyle}"
-                 SelectionChanged="ToolRail_SelectionChanged">
-            <ListBox.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <WrapPanel Orientation="Horizontal" />
-                </ItemsPanelTemplate>
-            </ListBox.ItemsPanel>
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <TextBlock Text="{Binding Label}" ToolTip="{Binding Label}" />
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+        <Border Grid.Row="1" Margin="0,-8,0,20" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,0,0,1">
+            <ListBox x:Name="ToolRail" HorizontalAlignment="Left"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     Padding="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ItemsSource="{Binding Tools, Mode=OneTime}"
+                     SelectedItem="{Binding SelectedTool, Mode=TwoWay}"
+                     ItemContainerStyle="{StaticResource ToolTabItemStyle}"
+                     SelectionChanged="ToolRail_SelectionChanged">
+                <ListBox.Template>
+                    <ControlTemplate TargetType="ListBox">
+                        <ItemsPresenter />
+                    </ControlTemplate>
+                </ListBox.Template>
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Label, Converter={StaticResource PhasmaUpper}}" ToolTip="{Binding Label}" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
 
         <Grid Grid.Row="2">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <Grid Margin="0,0,4,0">
 
-                    <!--  FastFlag snapshots  -->
-                    <StackPanel Visibility="{Binding SnapshotsVisibility, Mode=OneWay}">
-                        <TextBlock Style="{StaticResource ToolHeading}" Text="{x:Static resources:Strings.Menu_DeveloperTools_FastFlagSnapshots}" />
-                        <TextBlock Style="{StaticResource ToolDescription}" Text="Save your current flag set, put a saved one back, or compare any two." />
-
-                        <StackPanel Orientation="Horizontal">
-                            <ui:TextBox Width="240" PlaceholderText="{x:Static resources:Strings.Menu_DeveloperTools_SnapshotName}" Text="{Binding NewSnapshotName, UpdateSourceTrigger=PropertyChanged}" />
-                            <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaAccentButton}" Command="{Binding SaveSnapshotCommand, Mode=OneTime}">
-                                <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="Add24" FontSize="14" Margin="0,0,6,0" />
-                                    <TextBlock Text="{x:Static resources:Strings.Menu_DeveloperTools_SaveCurrentAsSnapshot}" />
+                    <Border VerticalAlignment="Top" Style="{DynamicResource PhasmaPanel}" Visibility="{Binding SnapshotsVisibility, Mode=OneWay}">
+                        <StackPanel>
+                            <Border Style="{StaticResource ToolHeaderBar}">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource ToolHeading}" Text="{x:Static resources:Strings.Menu_DeveloperTools_FastFlagSnapshots}" />
+                                    <TextBlock Style="{StaticResource ToolDescription}" Text="Save your current flag set, put a saved one back, or compare any two." />
                                 </StackPanel>
-                            </Button>
-                        </StackPanel>
-                        <TextBlock Margin="0,6,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding SnapshotStatus, Mode=OneWay}" />
-
-                        <Grid Margin="0,12,0,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="300" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <!--  Saved snapshots  -->
-                            <Border Grid.Column="0" Style="{DynamicResource PhasmaCard}" Padding="14,6" VerticalAlignment="Stretch">
-                                <Grid>
-                                <TextBlock Margin="0,12" HorizontalAlignment="Center" FontSize="12" TextWrapping="Wrap" TextAlignment="Center" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                                           Text="No snapshots yet. Name one above and save it.">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Snapshots.Count}" Value="0">
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                                <ItemsControl ItemsSource="{Binding Snapshots, Mode=OneWay}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Grid Margin="0,8">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
-                                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                                    <TextBlock FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding Name}" />
-                                                    <TextBlock FontSize="11.5" Margin="0,1,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
-                                                        <Run Text="{Binding FlagCount, Mode=OneWay}" /><Run Text="{x:Static resources:Strings.Menu_DeveloperTools_FlagSSaved}" /><Run Text="{Binding CreatedDisplay, Mode=OneWay}" />
-                                                    </TextBlock>
-                                                </StackPanel>
-                                                <Button Grid.Column="1" Margin="8,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Content="{x:Static resources:Strings.Dialog_GoogleFonts_Apply}"
-                                                        Command="{Binding DataContext.ApplySnapshotCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}"
-                                                        CommandParameter="{Binding}" />
-                                                <Button Grid.Column="2" Margin="4,0,0,0" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Common_Delete}"
-                                                        Command="{Binding DataContext.DeleteSnapshotCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}"
-                                                        CommandParameter="{Binding}">
-                                                    <ui:SymbolIcon Symbol="Delete24" FontSize="14" />
-                                                </Button>
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                                </Grid>
                             </Border>
 
-                            <!--  Compare two  -->
-                            <Border Grid.Column="1" Margin="12,0,0,0" Style="{DynamicResource PhasmaCard}" Padding="16,14">
-                                <StackPanel>
-                                    <TextBlock Margin="0,0,0,8" FontSize="13" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_DeveloperTools_CompareTwoSnapshots}" />
+                            <Border Style="{StaticResource ToolHeaderBar}" Padding="20,14,20,14">
+                                <WrapPanel>
+                                    <ui:TextBox Width="420" VerticalAlignment="Center" PlaceholderText="{x:Static resources:Strings.Menu_DeveloperTools_SnapshotName}" Text="{Binding NewSnapshotName, UpdateSourceTrigger=PropertyChanged}" />
+                                    <Button Margin="16,0,0,0" VerticalAlignment="Center" Style="{DynamicResource PhasmaAccentButton}" Command="{Binding SaveSnapshotCommand, Mode=OneTime}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:SymbolIcon Symbol="Add24" FontSize="14" Margin="0,0,8,0" />
+                                            <TextBlock Text="{x:Static resources:Strings.Menu_DeveloperTools_SaveCurrentAsSnapshot}" />
+                                        </StackPanel>
+                                    </Button>
+                                    <TextBlock Margin="16,0,0,0" VerticalAlignment="Center" FontSize="13" FontWeight="Medium" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding SnapshotStatus, Mode=OneWay}" />
+                                </WrapPanel>
+                            </Border>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="5*" />
+                                    <ColumnDefinition Width="7*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,0,1,0">
+                                    <StackPanel>
+                                        <TextBlock Margin="16,16,16,8" Style="{StaticResource ColumnLabel}" Text="SAVED" />
+                                        <TextBlock Margin="16,12" HorizontalAlignment="Center" FontSize="12.5" TextWrapping="Wrap" TextAlignment="Center" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                                   Text="No snapshots yet. Name one above and save it.">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Snapshots.Count}" Value="0">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <ItemsControl ItemsSource="{Binding Snapshots, Mode=OneWay}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,0,0,1" Padding="16,10,16,10">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                                <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="White" TextTrimming="CharacterEllipsis" Text="{Binding Name}" />
+                                                                <TextBlock FontSize="12.5" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}">
+                                                                    <Run Text="{Binding FlagCount, Mode=OneWay}" /><Run Text="{x:Static resources:Strings.Menu_DeveloperTools_FlagSSaved}" /><Run Text="{Binding CreatedDisplay, Mode=OneWay}" />
+                                                                </TextBlock>
+                                                            </StackPanel>
+                                                            <Button Grid.Column="1" Margin="8,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Padding="10,4" FontSize="12.5" FontWeight="SemiBold" Content="{x:Static resources:Strings.Dialog_GoogleFonts_Apply}"
+                                                                    Command="{Binding DataContext.ApplySnapshotCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}"
+                                                                    CommandParameter="{Binding}" />
+                                                            <Button Grid.Column="2" Margin="6,0,0,0" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Common_Delete}"
+                                                                    Command="{Binding DataContext.DeleteSnapshotCommand, RelativeSource={RelativeSource AncestorType=ui:UiPage}}"
+                                                                    CommandParameter="{Binding}">
+                                                                <ui:SymbolIcon Symbol="Delete24" FontSize="14" />
+                                                            </Button>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+
+                                <StackPanel Grid.Column="1" Margin="20,16,20,16">
+                                    <TextBlock Margin="0,0,0,10" Style="{StaticResource ColumnLabel}" Text="{x:Static resources:Strings.Menu_DeveloperTools_CompareTwoSnapshots}" />
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-                                        <WrapPanel Grid.Column="0" VerticalAlignment="Center">
-                                            <ComboBox MinWidth="150" Padding="10,5,10,5" ItemsSource="{Binding Snapshots, Mode=OneWay}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedSnapshotA, Mode=TwoWay}" />
-                                            <TextBlock Text="{x:Static resources:Strings.Menu_DeveloperTools_Vs}" VerticalAlignment="Center" Margin="8,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                            <ComboBox MinWidth="150" Padding="10,5,10,5" ItemsSource="{Binding Snapshots, Mode=OneWay}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedSnapshotB, Mode=TwoWay}" />
-                                        </WrapPanel>
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0"
-                                                    ToolTip="Making one live writes it to your flags. Roblox reads flags when it starts, so restart it to play on the other set.">
-                                            <Button Style="{DynamicResource PhasmaSoftButton}" Content="Make A live" Command="{Binding ApplyACommand}" />
-                                            <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Content="Make B live" Command="{Binding ApplyBCommand}" />
-                                        </StackPanel>
+                                        <ComboBox Grid.Column="0" Padding="10,5,10,5" ItemsSource="{Binding Snapshots, Mode=OneWay}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedSnapshotA, Mode=TwoWay}" />
+                                        <TextBlock Grid.Column="1" Text="{x:Static resources:Strings.Menu_DeveloperTools_Vs}" VerticalAlignment="Center" Margin="12,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                        <ComboBox Grid.Column="2" Padding="10,5,10,5" ItemsSource="{Binding Snapshots, Mode=OneWay}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedSnapshotB, Mode=TwoWay}" />
                                     </Grid>
 
-                                    <TextBlock Margin="0,10,0,6" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding DiffSummary, Mode=OneWay}" />
+                                    <Grid Margin="0,12,0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center"
+                                                    ToolTip="Making one live writes it to your flags. Roblox reads flags when it starts, so restart it to play on the other set.">
+                                            <Button Style="{DynamicResource PhasmaSoftButton}" Padding="10,4" FontSize="12.5" FontWeight="SemiBold" Content="Make A live" Command="{Binding ApplyACommand}" />
+                                            <Button Margin="8,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Padding="10,4" FontSize="12.5" FontWeight="SemiBold" Content="Make B live" Command="{Binding ApplyBCommand}" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" TextAlignment="Right" FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding DiffSummary, Mode=OneWay}" />
+                                    </Grid>
 
-                                    <ItemsControl ItemsSource="{Binding DiffEntries, Mode=OneWay}">
+                                    <ItemsControl ItemsSource="{Binding DiffEntries, Mode=OneWay}"
+                                                  VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True">
                                         <ItemsControl.Template>
                                             <ControlTemplate TargetType="ItemsControl">
-                                                <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="260" controls:ScrollBubbling.Enabled="True">
+                                                <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="300" CanContentScroll="True" controls:ScrollBubbling.Enabled="True">
                                                     <ItemsPresenter />
                                                 </ScrollViewer>
                                             </ControlTemplate>
                                         </ItemsControl.Template>
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <VirtualizingStackPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <StackPanel>
-                                                    <Border Style="{DynamicResource PhasmaDivider}" />
-                                                    <Grid Margin="0,7">
+                                                <Border BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0" Padding="0,10,0,10">
+                                                    <Grid>
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="Auto" />
                                                             <ColumnDefinition Width="*" />
                                                             <ColumnDefinition Width="Auto" />
                                                         </Grid.ColumnDefinitions>
-                                                        <Border Grid.Column="0" Margin="0,0,10,0" MinWidth="62">
+                                                        <Border Grid.Column="0" Margin="0,0,16,0" MinWidth="80" HorizontalAlignment="Left">
                                                             <Border.Style>
                                                                 <Style TargetType="Border" BasedOn="{StaticResource PhasmaTagNeutral}">
-                                                                    <Setter Property="TextElement.Foreground" Value="{DynamicResource PhasmaWarnBrush}" />
+                                                                    <Setter Property="TextElement.Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
                                                                     <Style.Triggers>
                                                                         <DataTrigger Binding="{Binding ChangeType}" Value="Added">
+                                                                            <Setter Property="Background" Value="#1F3DDC97" />
                                                                             <Setter Property="TextElement.Foreground" Value="{DynamicResource PhasmaGoodBrush}" />
                                                                         </DataTrigger>
                                                                         <DataTrigger Binding="{Binding ChangeType}" Value="Removed">
                                                                             <Setter Property="Background" Value="{DynamicResource PhasmaAccentSoftBrush}" />
-                                                                            <Setter Property="TextElement.Foreground" Value="{DynamicResource PhasmaBadBrush}" />
+                                                                            <Setter Property="TextElement.Foreground" Value="{DynamicResource PhasmaRedTextBrush}" />
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
                                                             </Border.Style>
-                                                            <TextBlock FontSize="10.5" HorizontalAlignment="Center" Text="{Binding ChangeType}" />
+                                                            <TextBlock FontSize="10.5" Text="{Binding ChangeType, Converter={StaticResource PhasmaUpper}}" />
                                                         </Border>
-                                                        <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="11.5" FontFamily="Consolas" Text="{Binding Key}" TextTrimming="CharacterEllipsis" />
-                                                        <TextBlock Grid.Column="2" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="11.5" FontFamily="Consolas" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                                                        <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="12.5" FontWeight="SemiBold" FontFamily="{DynamicResource PhasmaMono}" Foreground="White" Text="{Binding Key}" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Grid.Column="2" VerticalAlignment="Center" Margin="12,0,0,0" FontSize="12" FontFamily="{DynamicResource PhasmaMono}" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
                                                             <Run Text="{Binding OldValue, Mode=OneWay}" /><Run Text=" → " /><Run Text="{Binding NewValue, Mode=OneWay}" />
                                                         </TextBlock>
                                                     </Grid>
-                                                </StackPanel>
+                                                </Border>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-
-                                    <Button Margin="0,8,0,0" HorizontalAlignment="Left" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Command="{Binding CompareWithDefaultsCommand}">
-                                        <StackPanel Orientation="Horizontal">
-                                            <ui:SymbolIcon Symbol="ArrowSwap24" FontSize="14" Margin="0,0,6,0" />
-                                            <TextBlock Text="Compare with Roblox's defaults" />
-                                        </StackPanel>
-                                    </Button>
                                 </StackPanel>
+                            </Grid>
+
+                            <Border BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0" Padding="20,12,20,14">
+                                <Button HorizontalAlignment="Left" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Command="{Binding CompareWithDefaultsCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="ArrowSwap24" FontSize="14" Margin="0,0,8,0" />
+                                        <TextBlock Text="Compare with Roblox's defaults" />
+                                    </StackPanel>
+                                </Button>
                             </Border>
-                        </Grid>
-                    </StackPanel>
+                        </StackPanel>
+                    </Border>
 
-                    <!--  Live proxy traffic  -->
-                    <StackPanel Visibility="{Binding ProxyVisibility, Mode=OneWay}">
-                        <TextBlock Style="{StaticResource ToolHeading}" Text="{x:Static resources:Strings.Menu_DeveloperTools_LiveProxyTraffic}" />
-                        <TextBlock Style="{StaticResource ToolDescription}" Text="Requests handled by the local proxy in this window. Launched Roblox sessions run their own proxy and do not show up here." />
-
-                        <Grid Margin="0,0,0,12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                <Button Style="{DynamicResource PhasmaSoftButton}" Command="{Binding RefreshProxyTrafficCommand, Mode=OneTime}">
-                                    <StackPanel Orientation="Horizontal">
-                                        <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14" Margin="0,0,6,0" />
-                                        <TextBlock Text="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" />
-                                    </StackPanel>
-                                </Button>
-                                <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Command="{Binding ClearProxyTrafficCommand, Mode=OneTime}">
-                                    <StackPanel Orientation="Horizontal">
-                                        <ui:SymbolIcon Symbol="Delete24" FontSize="14" Margin="0,0,6,0" />
-                                        <TextBlock Text="{x:Static resources:Strings.ContextMenu_OutputConsole_Clear}" />
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
-                            <TextBlock Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ProxyStatus, Mode=OneWay}" />
-                        </Grid>
-
-                        <Border Style="{DynamicResource PhasmaCard}" Padding="16,10">
-                            <StackPanel>
-                                <Grid Margin="0,2,0,8">
+                    <Border VerticalAlignment="Top" Style="{DynamicResource PhasmaPanel}" Visibility="{Binding ProxyVisibility, Mode=OneWay}">
+                        <StackPanel>
+                            <Border Style="{StaticResource ToolHeaderBar}">
+                                <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="80" />
                                         <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Style="{StaticResource ColumnLabel}" Text="Time" />
-                                    <TextBlock Grid.Column="1" Style="{StaticResource ColumnLabel}" Text="Request" />
-                                    <TextBlock Grid.Column="2" Style="{StaticResource ColumnLabel}" Text="Outcome" />
-                                </Grid>
-                                <ItemsControl ItemsSource="{Binding ProxyTraffic, Mode=OneWay}">
-                                    <ItemsControl.Template>
-                                        <ControlTemplate TargetType="ItemsControl">
-                                            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="420" controls:ScrollBubbling.Enabled="True">
-                                                <ItemsPresenter />
-                                            </ScrollViewer>
-                                        </ControlTemplate>
-                                    </ItemsControl.Template>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <StackPanel>
-                                                <Border Style="{DynamicResource PhasmaDivider}" />
-                                                <Grid Margin="0,8">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="80" />
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="110" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="11.5" FontFamily="Consolas" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Timestamp, StringFormat='HH:mm:ss'}" />
-                                                    <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="0,0,10,0" FontSize="11.5" FontFamily="Consolas" Text="{Binding Summary}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Summary}" />
-                                                    <Border Grid.Column="2" Style="{DynamicResource PhasmaTagNeutral}">
-                                                        <TextBlock FontSize="10.5" Text="{Binding OutcomeDisplay}" />
-                                                    </Border>
-                                                </Grid>
+                                    <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                        <TextBlock Style="{StaticResource ToolHeading}" Text="{x:Static resources:Strings.Menu_DeveloperTools_LiveProxyTraffic}" />
+                                        <TextBlock Style="{StaticResource ToolDescription}" Text="Requests handled by the local proxy in this window. Launched Roblox sessions run their own proxy and do not show up here." />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Button Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Command="{Binding RefreshProxyTrafficCommand, Mode=OneTime}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14" Margin="0,0,8,0" />
+                                                <TextBlock Text="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" />
                                             </StackPanel>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-
-                    <!--  Log viewer: one row per log line, coloured by how serious it is. Copy still copies the raw text.  -->
-                    <StackPanel Visibility="{Binding LogsVisibility, Mode=OneWay}">
-                        <Grid Margin="0,0,0,12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
-                                <TextBlock Style="{StaticResource ToolHeading}" Text="{x:Static resources:Strings.Menu_DeveloperTools_LogViewer}" />
-                                <TextBlock Margin="0,3,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding LogSubtitle, Mode=OneWay}" ToolTip="{Binding LogDescription, Mode=OneTime}" />
-                            </StackPanel>
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                <Button Style="{DynamicResource PhasmaSoftButton}" Command="{Binding CopyLogsCommand, Mode=OneTime}">
-                                    <StackPanel Orientation="Horizontal">
-                                        <ui:SymbolIcon Symbol="Copy24" FontSize="14" Margin="0,0,6,0" />
-                                        <TextBlock Text="{x:Static resources:Strings.Common_Copy}" />
+                                        </Button>
+                                        <Button Margin="10,0,0,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Command="{Binding ClearProxyTrafficCommand, Mode=OneTime}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="Delete24" FontSize="14" Margin="0,0,8,0" />
+                                                <TextBlock Text="{x:Static resources:Strings.ContextMenu_OutputConsole_Clear}" />
+                                            </StackPanel>
+                                        </Button>
                                     </StackPanel>
-                                </Button>
-                                <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding BundleDiagnosticsCommand, Mode=OneTime}">
-                                    <StackPanel Orientation="Horizontal">
-                                        <ui:SymbolIcon Symbol="FolderZip24" FontSize="14" Margin="0,0,6,0" />
-                                        <TextBlock Text="Bundle for a bug report" />
-                                    </StackPanel>
-                                </Button>
-                                <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" Command="{Binding RefreshLogsCommand, Mode=OneTime}">
-                                    <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14" />
-                                </Button>
-                            </StackPanel>
-                        </Grid>
+                                </Grid>
+                            </Border>
 
-                        <WrapPanel Margin="0,0,0,10">
-                            <TextBlock VerticalAlignment="Center" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding LogStatus, Mode=OneWay}" />
-                            <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" FontSize="11.5" Foreground="{DynamicResource PhasmaBadBrush}" Text="{Binding LogErrorCountText, Mode=OneWay}" />
-                            <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" FontSize="11.5" Foreground="{DynamicResource PhasmaWarnBrush}" Text="{Binding LogWarningCountText, Mode=OneWay}" />
-                        </WrapPanel>
+                            <Border Style="{StaticResource ToolHeaderBar}" Padding="20,12,20,12">
+                                <TextBlock FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ProxyStatus, Mode=OneWay}" />
+                            </Border>
 
-                        <Border Style="{DynamicResource PhasmaCard}" Padding="14,10">
-                            <ItemsControl ItemsSource="{Binding LogRows, Mode=OneWay}" Focusable="False"
+                            <Grid Margin="16,12,16,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="140" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Style="{StaticResource ColumnLabel}" Text="TIME" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource ColumnLabel}" Text="REQUEST" />
+                                <TextBlock Grid.Column="2" Style="{StaticResource ColumnLabel}" Text="OUTCOME" />
+                            </Grid>
+                            <ItemsControl ItemsSource="{Binding ProxyTraffic, Mode=OneWay}"
                                           VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True">
                                 <ItemsControl.Template>
                                     <ControlTemplate TargetType="ItemsControl">
-                                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" MaxHeight="460" CanContentScroll="True" controls:ScrollBubbling.Enabled="True">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="460" CanContentScroll="True" controls:ScrollBubbling.Enabled="True">
+                                            <ItemsPresenter />
+                                        </ScrollViewer>
+                                    </ControlTemplate>
+                                </ItemsControl.Template>
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <VirtualizingStackPanel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0" Padding="16,11,16,11">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="110" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="140" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="12.5" FontFamily="{DynamicResource PhasmaMono}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Timestamp, StringFormat='HH:mm:ss'}" />
+                                                <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12.5" FontFamily="{DynamicResource PhasmaMono}" Foreground="White" Text="{Binding Summary}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Summary}" />
+                                                <Border Grid.Column="2" Style="{DynamicResource PhasmaTagNeutral}">
+                                                    <TextBlock FontSize="10.5" Text="{Binding OutcomeDisplay, Converter={StaticResource PhasmaUpper}}" />
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <Border VerticalAlignment="Top" Style="{DynamicResource PhasmaPanel}" Visibility="{Binding LogsVisibility, Mode=OneWay}">
+                        <StackPanel>
+                            <Border Style="{StaticResource ToolHeaderBar}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
+                                        <TextBlock Style="{StaticResource ToolHeading}" Text="{x:Static resources:Strings.Menu_DeveloperTools_LogViewer}" />
+                                        <TextBlock Style="{StaticResource ToolDescription}" Text="{Binding LogSubtitle, Mode=OneWay}" ToolTip="{Binding LogDescription, Mode=OneTime}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Button Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Command="{Binding CopyLogsCommand, Mode=OneTime}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="Copy24" FontSize="14" Margin="0,0,8,0" />
+                                                <TextBlock Text="{x:Static resources:Strings.Common_Copy}" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Margin="10,0,0,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Command="{Binding BundleDiagnosticsCommand, Mode=OneTime}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="FolderZip24" FontSize="14" Margin="0,0,8,0" />
+                                                <TextBlock Text="Bundle for a bug report" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Margin="10,0,0,0" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Dialog_ChannelLists_Refresh}" Command="{Binding RefreshLogsCommand, Mode=OneTime}">
+                                            <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14" />
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <Border Style="{StaticResource ToolHeaderBar}" Padding="20,12,20,12">
+                                <WrapPanel>
+                                    <TextBlock VerticalAlignment="Center" FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding LogStatus, Mode=OneWay}" />
+                                    <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource PhasmaRedTextBrush}" Text="{Binding LogErrorCountText, Mode=OneWay}" />
+                                    <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource PhasmaWarnBrush}" Text="{Binding LogWarningCountText, Mode=OneWay}" />
+                                </WrapPanel>
+                            </Border>
+
+                            <Grid Margin="16,12,16,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="92" />
+                                    <ColumnDefinition Width="150" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Style="{StaticResource ColumnLabel}" Text="TIME" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource ColumnLabel}" Text="SOURCE" />
+                                <TextBlock Grid.Column="2" Style="{StaticResource ColumnLabel}" Text="MESSAGE" />
+                            </Grid>
+
+                            <ItemsControl Margin="0,0,0,6" ItemsSource="{Binding LogRows, Mode=OneWay}" Focusable="False"
+                                          VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True">
+                                <ItemsControl.Template>
+                                    <ControlTemplate TargetType="ItemsControl">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" MaxHeight="520" CanContentScroll="True" controls:ScrollBubbling.Enabled="True">
                                             <ItemsPresenter />
                                         </ScrollViewer>
                                     </ControlTemplate>
@@ -368,67 +419,71 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="{x:Type dmodels:LogRow}">
-                                        <Grid Margin="0,1,0,1">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="68" />
-                                                <ColumnDefinition Width="120" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" FontFamily="Consolas" FontSize="11.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Time, Mode=OneTime}" />
-                                            <TextBlock Grid.Column="1" Margin="0,0,10,0" FontFamily="Consolas" FontSize="11.5" TextTrimming="CharacterEllipsis" Foreground="{Binding SourceBrush, Mode=OneTime}" Text="{Binding Source, Mode=OneTime}" ToolTip="{Binding Source, Mode=OneTime}" />
-                                            <TextBlock Grid.Column="2" FontFamily="Consolas" FontSize="11.5" TextWrapping="NoWrap" Text="{Binding Message, Mode=OneTime}">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Level, Mode=OneTime}" Value="Error">
-                                                                <Setter Property="Foreground" Value="{DynamicResource PhasmaBadBrush}" />
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Level, Mode=OneTime}" Value="Warning">
-                                                                <Setter Property="Foreground" Value="{DynamicResource PhasmaWarnBrush}" />
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Level, Mode=OneTime}" Value="Header">
-                                                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
-                                                                <Setter Property="FontWeight" Value="SemiBold" />
-                                                                <Setter Property="Margin" Value="0,6,0,2" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </Grid>
+                                        <Border BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0" Padding="16,6,16,6">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="92" />
+                                                    <ColumnDefinition Width="150" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" FontFamily="{DynamicResource PhasmaMono}" FontSize="12.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Time, Mode=OneTime}" />
+                                                <TextBlock Grid.Column="1" Margin="0,0,10,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="12.5" TextTrimming="CharacterEllipsis" Foreground="{Binding SourceBrush, Mode=OneTime}" Text="{Binding Source, Mode=OneTime}" ToolTip="{Binding Source, Mode=OneTime}" />
+                                                <TextBlock Grid.Column="2" FontFamily="{DynamicResource PhasmaMono}" FontSize="12.5" TextWrapping="NoWrap" Text="{Binding Message, Mode=OneTime}">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Level, Mode=OneTime}" Value="Error">
+                                                                    <Setter Property="Foreground" Value="{DynamicResource PhasmaRedTextBrush}" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Level, Mode=OneTime}" Value="Warning">
+                                                                    <Setter Property="Foreground" Value="{DynamicResource PhasmaWarnBrush}" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Level, Mode=OneTime}" Value="Header">
+                                                                    <Setter Property="Foreground" Value="White" />
+                                                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Grid>
+                                        </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                        </Border>
-                    </StackPanel>
+                        </StackPanel>
+                    </Border>
 
-                    <!--  Studio plugin installer  -->
-                    <StackPanel Visibility="{Binding PluginsVisibility, Mode=OneWay}">
-                        <TextBlock Style="{StaticResource ToolHeading}" Text="{x:Static resources:Strings.Menu_DeveloperTools_StudioPluginInstaller}" />
-                        <TextBlock Style="{StaticResource ToolDescription}" Text="{x:Static resources:Strings.Menu_DeveloperTools_InstallAnyStudioPluginByIts}" />
+                    <Border VerticalAlignment="Top" Style="{DynamicResource PhasmaPanel}" Visibility="{Binding PluginsVisibility, Mode=OneWay}">
+                        <StackPanel>
+                            <Border Style="{StaticResource ToolHeaderBar}">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource ToolHeading}" Text="{x:Static resources:Strings.Menu_DeveloperTools_StudioPluginInstaller}" />
+                                    <TextBlock Style="{StaticResource ToolDescription}" Text="{x:Static resources:Strings.Menu_DeveloperTools_InstallAnyStudioPluginByIts}" />
+                                </StackPanel>
+                            </Border>
 
-                        <Border Style="{DynamicResource PhasmaCard}" Padding="16,14">
-                            <StackPanel>
+                            <StackPanel Margin="20,14,20,18">
                                 <WrapPanel>
-                                    <ui:TextBox Width="180" Margin="0,0,8,0" PlaceholderText="{x:Static resources:Strings.Menu_DeveloperTools_AssetID}" Text="{Binding PluginAssetId, UpdateSourceTrigger=PropertyChanged}" />
-                                    <Button Margin="0,0,8,0" Style="{DynamicResource PhasmaAccentButton}" Command="{Binding InstallPluginCommand, Mode=OneTime}">
+                                    <ui:TextBox Width="260" Margin="0,0,16,0" Icon="Box24" PlaceholderText="{x:Static resources:Strings.Menu_DeveloperTools_AssetID}" Text="{Binding PluginAssetId, UpdateSourceTrigger=PropertyChanged}" />
+                                    <Button Margin="0,0,10,0" Style="{DynamicResource PhasmaAccentButton}" Command="{Binding InstallPluginCommand, Mode=OneTime}">
                                         <StackPanel Orientation="Horizontal">
-                                            <ui:SymbolIcon Symbol="ArrowDownload24" FontSize="14" Margin="0,0,6,0" />
+                                            <ui:SymbolIcon Symbol="ArrowDownload24" FontSize="14" Margin="0,0,8,0" />
                                             <TextBlock Text="{x:Static resources:Strings.Installer_Install_Title}" />
                                         </StackPanel>
                                     </Button>
-                                    <Button Style="{DynamicResource PhasmaSoftButton}" Command="{Binding OpenPluginsFolderCommand, Mode=OneTime}">
+                                    <Button Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Command="{Binding OpenPluginsFolderCommand, Mode=OneTime}">
                                         <StackPanel Orientation="Horizontal">
-                                            <ui:SymbolIcon Symbol="Folder24" FontSize="14" Margin="0,0,6,0" />
+                                            <ui:SymbolIcon Symbol="Folder24" FontSize="14" Margin="0,0,8,0" />
                                             <TextBlock Text="{x:Static resources:Strings.Menu_DeveloperTools_OpenPluginsFolder}" />
                                         </StackPanel>
                                     </Button>
                                 </WrapPanel>
-                                <TextBlock Margin="0,10,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding PluginInstallStatus, Mode=OneWay}" />
+                                <TextBlock Margin="0,12,0,0" FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding PluginInstallStatus, Mode=OneWay}" />
                             </StackPanel>
-                        </Border>
-                    </StackPanel>
+                        </StackPanel>
+                    </Border>
 
                 </Grid>
             </ScrollViewer>

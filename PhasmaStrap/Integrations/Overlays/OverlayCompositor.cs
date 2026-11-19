@@ -967,13 +967,14 @@ namespace PhasmaStrap.Integrations.Overlays
 
         private void RenderOverlayOnly(CancellationToken token)
         {
-            bool counted = CountGameFrames();
+            bool hudOn = OverlaySettings.HudEnabled;
+            bool counted = hudOn ? CountGameFrames() : ReleaseCountingDuplication();
 
             double now = _clock.Elapsed.TotalMilliseconds;
             if (!_overlayDirty && now - _lastOverlayPresentMs < 1000)
             {
                 if (!counted)
-                    token.WaitHandle.WaitOne(8);
+                    token.WaitHandle.WaitOne(hudOn ? 8 : 16);
                 return;
             }
 
@@ -987,6 +988,16 @@ namespace PhasmaStrap.Integrations.Overlays
             _overlayDirty = false;
             _lastOverlayPresentMs = now;
             _framesPresented++;
+        }
+
+        private bool ReleaseCountingDuplication()
+        {
+            if (_duplication != null && !SharedGameFrame.RecorderActive)
+            {
+                try { _duplication.Dispose(); } catch { }
+                _duplication = null;
+            }
+            return false;
         }
 
         private bool CountGameFrames()
@@ -1447,11 +1458,8 @@ namespace PhasmaStrap.Integrations.Overlays
                 }
                 if (stamp != _settingsFileTimeUtc)
                 {
-                    if (!App.Settings.Load(alertFailure: false))
-                    {
-                        App.Logger.WriteLine(LOG_IDENT, $"Settings changed on disk at {stamp:O} but could not be read yet, will try again");
+                    if (App.Settings.HasFileOnDiskChanged())
                         return;
-                    }
                     _settingsFileTimeUtc = stamp;
                     _overlayDirty = true;
                     App.Logger.WriteLine(LOG_IDENT, "Settings changed on disk, reloaded so overlay toggles apply live");

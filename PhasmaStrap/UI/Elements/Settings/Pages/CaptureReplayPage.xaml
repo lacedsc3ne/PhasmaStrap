@@ -12,12 +12,12 @@
       Title="CaptureReplayPage"
       Scrollable="True">
     <ui:UiPage.Resources>
-        <!--  The key field (DataContext is the HotkeyRow): looks like a key cap, lights up while it is listening  -->
         <Style x:Key="HotkeyCaptureButton" TargetType="Button" BasedOn="{StaticResource PhasmaSoftButton}">
-            <Setter Property="MinWidth" Value="90" />
-            <Setter Property="Padding" Value="10,5" />
-            <Setter Property="FontWeight" Value="Normal" />
-            <Setter Property="FontSize" Value="12" />
+            <Setter Property="MinWidth" Value="44" />
+            <Setter Property="Padding" Value="9,4" />
+            <Setter Property="FontFamily" Value="{DynamicResource PhasmaMono}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="11.5" />
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
             <Setter Property="ToolTip" Value="Click, then press the key or combination. Esc cancels and keeps the current hotkey." />
             <Style.Triggers>
@@ -39,9 +39,8 @@
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
         </Style>
 
-        <!--  Small dark buttons that sit on top of a thumbnail  -->
         <Style x:Key="ThumbOverlayButton" TargetType="Button" BasedOn="{StaticResource PhasmaGhostButton}">
-            <Setter Property="Background" Value="#8C000000" />
+            <Setter Property="Background" Value="#D1060608" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="Height" Value="26" />
             <Setter Property="MinWidth" Value="26" />
@@ -52,28 +51,43 @@
     </ui:UiPage.Resources>
 
     <StackPanel Margin="0,0,14,14">
-        <!--  Actions  -->
-        <WrapPanel Margin="0,0,0,6">
-            <Button Margin="0,0,8,6" Style="{DynamicResource PhasmaSoftButton}" ToolTip="{x:Static resources:Strings.Menu_Capture_EveryClipSearchFiltersRename}" Command="{Binding OpenClipLibraryCommand, Mode=OneTime}">
+        <WrapPanel Margin="0,0,0,8">
+            <Button Margin="0,0,10,6" Style="{DynamicResource PhasmaSoftButton}" ToolTip="{x:Static resources:Strings.Menu_Capture_EveryClipSearchFiltersRename}" Command="{Binding OpenClipLibraryCommand, Mode=OneTime}">
                 <StackPanel Orientation="Horizontal">
                     <ui:SymbolIcon Symbol="VideoClip24" FontSize="14" Margin="0,0,6,0" />
                     <TextBlock Text="{Binding AllClipsText}" />
                 </StackPanel>
             </Button>
-            <Button Margin="0,0,8,6" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Command="{Binding OpenReplaysFolderCommand, Mode=OneTime}">
+            <Button Margin="0,0,10,6" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" Command="{Binding OpenReplaysFolderCommand, Mode=OneTime}">
                 <StackPanel Orientation="Horizontal">
                     <ui:SymbolIcon Symbol="Folder24" FontSize="14" Margin="0,0,6,0" />
                     <TextBlock Text="{x:Static resources:Strings.Menu_Capture_OpenFolder}" />
                 </StackPanel>
             </Button>
-            <!--  What the rolling buffer holds right now, from the settings below  -->
-            <TextBlock Margin="4,0,12,6" VerticalAlignment="Center" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ReplayBufferText, Mode=OneWay}"
-                       ToolTip="{Binding ReplayEstimateText, Mode=OneWay}" />
-            <TextBlock Margin="4,0,0,6" VerticalAlignment="Center" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding ReplayStatus, Mode=OneWay}" />
+            <StackPanel Margin="4,0,12,6" VerticalAlignment="Center" Orientation="Horizontal" ToolTip="{Binding ReplayEstimateText, Mode=OneWay}">
+                <ui:SymbolIcon Symbol="DataLine24" FontSize="14" Margin="0,0,8,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                <TextBlock VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ReplayBufferText, Mode=OneWay}" />
+            </StackPanel>
         </WrapPanel>
 
-        <controls:CardColumns Columns="3" MinColumnWidth="280">
-            <controls:SettingsCard Header="Recording">
+        <TextBlock Margin="0,0,0,18" FontFamily="{DynamicResource PhasmaMono}" FontSize="12" TextWrapping="Wrap" Text="{Binding ReplayStatus, Mode=OneWay}">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Foreground" Value="{DynamicResource PhasmaGoodBrush}" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ReplayStatusIsError}" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource PhasmaRedTextBrush}" />
+                        </DataTrigger>
+                        <Trigger Property="Text" Value="">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <controls:CardColumns Columns="2" MinColumnWidth="340" Spacing="16">
+            <controls:SettingsCard Header="Recording" Description="Buffer, hotkey and clip length">
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Capture_EnableInstantReplay}" x:Name="InstantReplayOption">
                     <ui:ToggleSwitch IsChecked="{Binding InstantReplayEnabled, Mode=TwoWay}" />
                 </controls:OptionControl>
@@ -84,10 +98,9 @@
 
                 <controls:OptionControl Header="Save hotkey" Description="Writes the last few seconds to a clip">
                     <StackPanel Orientation="Horizontal">
-                        <!--  Uid="Capture" and Tag are used by the code behind to keep listening when this is clicked  -->
                         <Button Uid="Capture" DataContext="{Binding ReplayHotkey}" Style="{StaticResource HotkeyCaptureButton}"
                                 Content="{Binding ButtonText}" Tag="{Binding}" Click="CaptureButton_Click" />
-                        <Button Margin="6,0,0,0" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold"
+                        <Button Margin="8,0,0,0" Padding="10,4" Style="{DynamicResource PhasmaSoftButton}" FontSize="12" FontWeight="SemiBold"
                                 Content="{x:Static resources:Strings.ContextMenu_OutputConsole_Clear}"
                                 IsEnabled="{Binding ReplayHotkey.HasGesture}" Tag="{Binding ReplayHotkey}" Click="ClearButton_Click" />
                     </StackPanel>
@@ -108,19 +121,23 @@
                     </TextBlock.Style>
                 </TextBlock>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Capture_ClipLength}" Description="Up to 5 minutes" IsEnabled="{Binding InnerContent.IsChecked, ElementName=InstantReplayOption, Mode=OneWay}">
-                    <StackPanel Orientation="Horizontal">
-                        <Slider Width="110" VerticalAlignment="Center" Minimum="5" Maximum="{Binding MaxClipSeconds, Mode=OneTime}" TickFrequency="5" IsSnapToTickEnabled="True" Value="{Binding InstantReplayClipSeconds, Mode=TwoWay}" />
-                        <TextBlock VerticalAlignment="Center" Margin="8,0,0,0" MinWidth="34" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ClipLengthText, Mode=OneWay}" />
-                    </StackPanel>
-                </controls:OptionControl>
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Capture_ClipLength}" Description="Up to 5 minutes" IsEnabled="{Binding InnerContent.IsChecked, ElementName=InstantReplayOption, Mode=OneWay}" />
+
+                <Grid Margin="20,-6,20,16" IsEnabled="{Binding InnerContent.IsChecked, ElementName=InstantReplayOption, Mode=OneWay}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Slider Grid.Column="0" VerticalAlignment="Center" Minimum="5" Maximum="{Binding MaxClipSeconds, Mode=OneTime}" TickFrequency="5" IsSnapToTickEnabled="True" Value="{Binding InstantReplayClipSeconds, Mode=TwoWay}" />
+                    <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="20,0,0,0" MinWidth="34" TextAlignment="Right" FontFamily="{DynamicResource PhasmaMono}" FontSize="12" FontWeight="SemiBold" Foreground="White" Text="{Binding ClipLengthText, Mode=OneWay}" />
+                </Grid>
 
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Capture_CopyNewClipsClipboard}">
                     <ui:ToggleSwitch IsChecked="{Binding CopyReplayToClipboard, Mode=TwoWay}" />
                 </controls:OptionControl>
             </controls:SettingsCard>
 
-            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Capture_Quality}">
+            <controls:SettingsCard Header="{x:Static resources:Strings.Menu_Capture_Quality}" Description="Frame rate, size and encoder">
                 <controls:OptionControl Header="Quality preset" Description="Sets the four below together" IsEnabled="{Binding InnerContent.IsChecked, ElementName=InstantReplayOption, Mode=OneWay}">
                     <ComboBox Width="130" ItemsSource="{Binding PresetOptions, Mode=OneTime}" SelectedItem="{Binding SelectedPreset, Mode=TwoWay}" />
                 </controls:OptionControl>
@@ -161,16 +178,16 @@
                 </controls:OptionControl>
             </controls:SettingsCard>
 
-            <controls:SettingsCard Header="Sound" Description="Needs encoding on the graphics card">
+            <controls:SettingsCard controls:CardColumns.FullRow="True" Header="Sound" Description="Needs encoding on the graphics card">
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Capture_RecordGameSound}" Description="Only what Roblox plays, not Discord or music" IsEnabled="{Binding SoundAvailable, Mode=OneWay}">
                     <ui:ToggleSwitch IsChecked="{Binding RecordSound, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="Record all PC audio" Description="Everything you hear, including Discord and music, even before Roblox opens" IsEnabled="{Binding SoundAvailable, Mode=OneWay}">
+                <controls:OptionControl Header="Record all PC audio" Description="Everything you hear, including Discord and music, even before Roblox opens" IsEnabled="{Binding ExtraSoundEnabled, Mode=OneWay}">
                     <ui:ToggleSwitch IsChecked="{Binding RecordAllAudio, Mode=TwoWay}" />
                 </controls:OptionControl>
 
-                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Capture_RecordMyMicrophoneToo}" Description="Mixed in exactly as it sounds" IsEnabled="{Binding SoundAvailable, Mode=OneWay}">
+                <controls:OptionControl Header="{x:Static resources:Strings.Menu_Capture_RecordMyMicrophoneToo}" Description="Mixed in exactly as it sounds" IsEnabled="{Binding ExtraSoundEnabled, Mode=OneWay}">
                     <ui:ToggleSwitch IsChecked="{Binding RecordMicrophone, Mode=TwoWay}" />
                 </controls:OptionControl>
 
@@ -180,7 +197,6 @@
             </controls:SettingsCard>
 
             <controls:SettingsCard controls:CardColumns.FullRow="True" Header="Latest clips">
-                <!--  Empty state  -->
                 <StackPanel HorizontalAlignment="Center" Margin="0,16,0,22">
                     <StackPanel.Style>
                         <Style TargetType="StackPanel">
@@ -197,7 +213,7 @@
                     <TextBlock Margin="0,2,0,0" HorizontalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Turn on Instant Replay and press the save hotkey in game" />
                 </StackPanel>
 
-                <ItemsControl Margin="0,0,0,4" ItemsSource="{Binding RecentReplays, Mode=OneWay}">
+                <ItemsControl Margin="20,16,6,6" ItemsSource="{Binding RecentReplays, Mode=OneWay}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <UniformGrid Columns="4" />
@@ -205,7 +221,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Margin="0,0,10,12" Background="Transparent" Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ItemsControl}}">
+                            <Border Margin="0,0,14,14" Style="{DynamicResource PhasmaPanel}" Background="{DynamicResource PhasmaS3Brush}" Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ItemsControl}}">
                                 <Border.ContextMenu>
                                     <ContextMenu DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}">
                                         <MenuItem Header="{x:Static resources:Strings.Common_Copy}" Command="{Binding Tag.CopyReplayCommand}" CommandParameter="{Binding DataContext}">
@@ -234,24 +250,23 @@
                                     </ContextMenu>
                                 </Border.ContextMenu>
                                 <StackPanel>
-                                    <Grid Height="88">
-                                        <Border Style="{DynamicResource PhasmaThumb}" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Cursor="Hand">
+                                    <Grid Height="140">
+                                        <Border Background="{DynamicResource PhasmaS4Brush}" ClipToBounds="True" Cursor="Hand">
                                             <Border.InputBindings>
                                                 <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.OpenReplayCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
                                             </Border.InputBindings>
                                             <Grid>
                                                 <ui:SymbolIcon Symbol="{Binding Symbol}" FontSize="22" Opacity="0.4" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding PlaceholderVisibility}" />
-                                                <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                                                <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" />
                                             </Grid>
                                         </Border>
-                                        <Border Margin="6" Padding="5,2" HorizontalAlignment="Left" VerticalAlignment="Bottom" CornerRadius="5" Background="#99000000" IsHitTestVisible="False" Visibility="{Binding SymbolBadgeVisibility}">
-                                            <ui:SymbolIcon Symbol="{Binding Symbol}" FontSize="12" Foreground="White" />
+                                        <Border Margin="8" Padding="6,3" HorizontalAlignment="Left" VerticalAlignment="Top" Style="{StaticResource PhasmaTagNeutral}" Background="#CC0D0D12" IsHitTestVisible="False" Visibility="{Binding SymbolBadgeVisibility}">
+                                            <ui:SymbolIcon Symbol="{Binding Symbol}" FontSize="12" Foreground="{DynamicResource PhasmaInfoBrush}" />
                                         </Border>
-                                        <!--  Clip length, read from the file and cached  -->
-                                        <Border Margin="6" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Bottom" CornerRadius="5" Background="#AA000000" IsHitTestVisible="False" Visibility="{Binding DurationVisibility}">
-                                            <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="White" Text="{Binding DurationText}" />
+                                        <Border Margin="8" Padding="7,2" HorizontalAlignment="Left" VerticalAlignment="Top" Style="{StaticResource PhasmaTag}" Background="#CC0D0D12" IsHitTestVisible="False" Visibility="{Binding DurationVisibility}">
+                                            <TextBlock Text="{Binding DurationText}" />
                                         </Border>
-                                        <StackPanel Margin="0,0,6,6" HorizontalAlignment="Right" VerticalAlignment="Bottom" Orientation="Horizontal">
+                                        <StackPanel Margin="0,8,8,0" HorizontalAlignment="Right" VerticalAlignment="Top" Orientation="Horizontal">
                                             <Button Style="{StaticResource ThumbOverlayButton}" ToolTip="{x:Static resources:Strings.Menu_Capture_CopyClipClipboardReadyPasteInto}" AutomationProperties.Name="{x:Static resources:Strings.Common_Copy}"
                                                     Command="{Binding DataContext.CopyReplayCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
                                                 <ui:SymbolIcon Symbol="Copy16" FontSize="12" />
@@ -264,8 +279,10 @@
                                             </Button>
                                         </StackPanel>
                                     </Grid>
-                                    <TextBlock Margin="0,6,0,0" FontSize="12" FontWeight="SemiBold" Text="{Binding Title}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FileName}" />
-                                    <TextBlock FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding TakenDisplay}" />
+                                    <StackPanel Margin="12,10,12,12">
+                                        <TextBlock FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="12.5" FontWeight="Bold" Foreground="White" Text="{Binding Title, Converter={StaticResource PhasmaUpper}}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FileName}" />
+                                        <TextBlock Margin="0,4,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding TakenDisplay}" />
+                                    </StackPanel>
                                 </StackPanel>
                             </Border>
                         </DataTemplate>
@@ -274,6 +291,6 @@
             </controls:SettingsCard>
         </controls:CardColumns>
 
-        <TextBlock Margin="2,4,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding ReplayEstimateText, Mode=OneWay}" />
+        <TextBlock Margin="2,4,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding ReplayEstimateText, Mode=OneWay}" />
     </StackPanel>
 </ui:UiPage>

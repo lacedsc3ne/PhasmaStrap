@@ -12,7 +12,7 @@
         Width="350"
         Height="500"
         ResizeMode="NoResize"
-        Background="{ui:ThemeResource ApplicationBackgroundBrush}"
+        Background="{DynamicResource PhasmaPanelBrush}"
         ExtendsContentIntoTitleBar="True"
         WindowStartupLocation="CenterOwner">
     <Grid>
@@ -22,15 +22,84 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Padding="8" Title="{x:Static resources:Strings.Dialog_FFlagPresetValues_Title}" ShowMinimize="False" ShowMaximize="False" CanMaximize="False" KeyboardNavigation.TabNavigation="None" />
+        <ui:TitleBar Grid.Row="0" Padding="12,8" Title="{Binding Source={x:Static resources:Strings.Dialog_FFlagPresetValues_Title}, Converter={StaticResource PhasmaUpper}}"
+                     Background="{DynamicResource PhasmaChromeBrush}" FontFamily="{DynamicResource PhasmaMono}" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                     Icon="pack://application:,,,/PhasmaStrap.ico" ShowMinimize="False" ShowMaximize="False" CanMaximize="False" KeyboardNavigation.TabNavigation="None" />
+        <Border Grid.Row="0" VerticalAlignment="Bottom" Style="{DynamicResource PhasmaDivider}" />
 
-        <ScrollViewer Grid.Row="1" Margin="16" VerticalScrollBarVisibility="Auto">
-            <StackPanel Name="PresetStackPanel" />
+        <ScrollViewer Grid.Row="1" Margin="14,12,14,12" VerticalScrollBarVisibility="Auto">
+            <StackPanel Name="PresetStackPanel">
+                <StackPanel.Resources>
+                    <Style TargetType="{x:Type Expander}">
+                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type Expander}">
+                                    <StackPanel>
+                                        <ToggleButton Content="{TemplateBinding Header}" Cursor="Hand" FocusVisualStyle="{StaticResource PhasmaFocusVisual}"
+                                                      IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                            <ToggleButton.Template>
+                                                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                                    <Border x:Name="Bd" Padding="8,8" Background="Transparent">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <ui:SymbolIcon x:Name="Chevron" Margin="0,0,12,0" VerticalAlignment="Center" FontSize="12" Symbol="ChevronRight24" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                                            <ContentPresenter VerticalAlignment="Center" TextElement.FontSize="13.5" TextElement.FontWeight="Bold" TextElement.Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                                        </StackPanel>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter TargetName="Chevron" Property="Symbol" Value="ChevronDown24" />
+                                                        </Trigger>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource PhasmaHoverBrush}" />
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </ToggleButton.Template>
+                                        </ToggleButton>
+                                        <ContentPresenter x:Name="Body" Visibility="Collapsed" />
+                                    </StackPanel>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsExpanded" Value="True">
+                                            <Setter TargetName="Body" Property="Visibility" Value="Visible" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+
+                    <Style TargetType="{x:Type Button}">
+                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                        <Setter Property="FontFamily" Value="{DynamicResource PhasmaMono}" />
+                        <Setter Property="FontSize" Value="13" />
+                        <Setter Property="Cursor" Value="Hand" />
+                        <Setter Property="FocusVisualStyle" Value="{StaticResource PhasmaFocusVisual}" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type Button}">
+                                    <Border x:Name="Bd" Padding="{TemplateBinding Padding}" Background="Transparent" SnapsToDevicePixels="True">
+                                        <ContentPresenter Margin="22,0,0,0" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource PhasmaHoverBrush}" />
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource PhasmaAccentSoftBrush}" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </StackPanel.Resources>
+            </StackPanel>
         </ScrollViewer>
 
-        <Border Grid.Row="2" Padding="14,10" Background="{ui:ThemeResource SolidBackgroundFillColorSecondaryBrush}" BorderThickness="0,1,0,0">
+        <Border Grid.Row="2" Padding="18,12" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="0,1,0,0">
             <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-                <Button MinWidth="100" Content="{x:Static resources:Strings.Common_Cancel}" Click="CancelButton_Click" />
+                <Button MinWidth="90" Content="{x:Static resources:Strings.Common_Cancel}" Click="CancelButton_Click" Style="{StaticResource PhasmaSoftButton}" />
             </StackPanel>
         </Border>
     </Grid>

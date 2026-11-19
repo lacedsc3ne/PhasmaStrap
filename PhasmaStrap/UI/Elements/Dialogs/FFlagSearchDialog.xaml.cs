@@ -164,7 +164,6 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
                 await UpdateStatusAsync(String.Format(Strings.Dialog_FFlagSearch_StatusLoaded, allFlags.Count));
 
-                // A search typed (or passed in) before the data arrived ran on an empty list: run it again now.
                 RerunCurrentSearch();
             }
             catch (OperationCanceledException) when (token.IsCancellationRequested)

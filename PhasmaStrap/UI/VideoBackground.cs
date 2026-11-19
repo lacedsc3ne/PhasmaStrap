@@ -82,6 +82,7 @@ namespace PhasmaStrap.UI
                 _window.Activated += WindowChanged;
                 _window.Deactivated += WindowChanged;
                 _window.StateChanged += WindowChanged;
+                _window.IsVisibleChanged += WindowVisibleChanged;
                 _window.Closed += WindowClosed;
             }
 
@@ -93,6 +94,8 @@ namespace PhasmaStrap.UI
         private void OnUnloaded(object sender, RoutedEventArgs e) => Stop();
 
         private void WindowChanged(object? sender, EventArgs e) => UpdatePlayState();
+
+        private void WindowVisibleChanged(object sender, DependencyPropertyChangedEventArgs e) => UpdatePlayState();
 
         private void WindowClosed(object? sender, EventArgs e) => Stop();
 
@@ -125,6 +128,7 @@ namespace PhasmaStrap.UI
                 _window.Activated -= WindowChanged;
                 _window.Deactivated -= WindowChanged;
                 _window.StateChanged -= WindowChanged;
+                _window.IsVisibleChanged -= WindowVisibleChanged;
                 _window.Closed -= WindowClosed;
                 _window = null;
             }

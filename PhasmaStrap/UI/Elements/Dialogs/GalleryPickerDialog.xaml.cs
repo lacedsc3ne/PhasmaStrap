@@ -24,7 +24,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
             _kind = kind;
             Title = title;
-            TitleBarElement.Title = title;
+            TitleBarElement.Title = title.ToUpperInvariant();
             PromptText.Text = prompt;
 
             Loaded += async (_, _) =>

@@ -13,6 +13,24 @@
       Unloaded="Page_Unloaded">
     <ui:UiPage.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+
+        <Style x:Key="Eyebrow" TargetType="TextBlock" BasedOn="{StaticResource PhasmaCaption}">
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="TextTrimming" Value="None" />
+        </Style>
+
+        <Style x:Key="NoteText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        </Style>
+
+        <Style x:Key="HintText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+        </Style>
     </ui:UiPage.Resources>
 
     <Grid>
@@ -21,33 +39,75 @@
             <ColumnDefinition Width="380" />
         </Grid.ColumnDefinitions>
 
-        <!--  Left: the games that have their own flags  -->
         <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Margin="0,0,20,14">
+            <StackPanel Margin="0,0,24,14">
                 <controls:PageHeader Title="{x:Static resources:Strings.Menu_FastFlagGames_Games}" Subtitle="When you launch one through PhasmaStrap it starts with your flags plus the changes in its profile." />
 
-                <Border Margin="0,0,0,12" Padding="14,10" CornerRadius="{DynamicResource PhasmaCornerRadius}" BorderThickness="1"
-                        BorderBrush="{DynamicResource PhasmaWarnBrush}" Background="{DynamicResource PhasmaPanelRaisedBrush}"
-                        Visibility="{Binding ManagerDisabledVisibility, Mode=OneWay}">
-                    <Grid>
+                <Grid Margin="0,0,0,16" Visibility="{Binding ManagerDisabledVisibility, Mode=OneWay}">
+                    <Border Background="{DynamicResource PhasmaWarnBrush}" Opacity="0.07" CornerRadius="10" />
+                    <Border BorderBrush="{DynamicResource PhasmaWarnBrush}" BorderThickness="1" Opacity="0.28" CornerRadius="10" />
+                    <Grid Margin="16,12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="Warning24" FontSize="16" Margin="0,1,10,0" VerticalAlignment="Top" Foreground="{DynamicResource PhasmaWarnBrush}" />
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Warning24" FontSize="18" Margin="0,0,12,0" VerticalAlignment="Top" Foreground="{DynamicResource PhasmaWarnBrush}" />
                         <StackPanel Grid.Column="1">
-                            <TextBlock FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" Text="{x:Static resources:Strings.Menu_FastFlagEditor_PhasmaStrapIsnTManagingFastFlagsRight}" />
-                            <TextBlock Margin="0,2,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_FastFlagEditor_AllowPhasmaStrapManageFFlagsOffEngine}" />
+                            <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="White" TextWrapping="Wrap" Text="{x:Static resources:Strings.Menu_FastFlagEditor_PhasmaStrapIsnTManagingFastFlagsRight}" />
+                            <TextBlock Margin="0,2,0,0" Style="{StaticResource NoteText}" FontSize="12.5" Text="{x:Static resources:Strings.Menu_FastFlagEditor_AllowPhasmaStrapManageFFlagsOffEngine}" />
                         </StackPanel>
                     </Grid>
-                </Border>
+                </Grid>
 
-                <Border Margin="0,0,0,12" Padding="12,8" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" Background="{DynamicResource PhasmaSelectedBrush}" Visibility="{Binding StatusVisibility}">
-                    <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding Status}" />
-                </Border>
+                <Grid Margin="0,0,0,16" Visibility="{Binding StatusVisibility}">
+                    <Border Opacity="0.07" CornerRadius="10">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="{DynamicResource PhasmaGoodBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding StatusIsWarning}" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource PhasmaWarnBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                    </Border>
+                    <Border BorderThickness="1" Opacity="0.28" CornerRadius="10">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="BorderBrush" Value="{DynamicResource PhasmaGoodBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding StatusIsWarning}" Value="True">
+                                        <Setter Property="BorderBrush" Value="{DynamicResource PhasmaWarnBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                    </Border>
+                    <Grid Margin="16,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Grid.Column="0" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center">
+                            <ui:SymbolIcon.Style>
+                                <Style TargetType="ui:SymbolIcon">
+                                    <Setter Property="Symbol" Value="Checkmark24" />
+                                    <Setter Property="Foreground" Value="{DynamicResource PhasmaGoodBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding StatusIsWarning}" Value="True">
+                                            <Setter Property="Symbol" Value="Warning24" />
+                                            <Setter Property="Foreground" Value="{DynamicResource PhasmaWarnBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ui:SymbolIcon.Style>
+                        </ui:SymbolIcon>
+                        <TextBlock Grid.Column="1" Style="{StaticResource NoteText}" Text="{Binding Status}" />
+                    </Grid>
+                </Grid>
 
-                <!--  Empty state  -->
-                <Border Margin="0,0,0,10" Padding="20,26" Style="{DynamicResource PhasmaCard}" Visibility="{Binding NoRulesVisibility}">
+                <Border Margin="0,0,0,16" Padding="20,26" Style="{DynamicResource PhasmaCard}" Visibility="{Binding NoRulesVisibility}">
                     <StackPanel HorizontalAlignment="Center">
                         <ui:SymbolIcon Symbol="Flag24" FontSize="30" Opacity="0.35" HorizontalAlignment="Center" />
                         <TextBlock Margin="0,10,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" FontSize="13"
@@ -55,58 +115,84 @@
                     </StackPanel>
                 </Border>
 
-                <ItemsControl x:Name="RulesList" ItemsSource="{Binding Rules}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Margin="0,0,0,10" Padding="14,10" Style="{DynamicResource PhasmaCard}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
+                <Border Margin="0,0,0,16" Padding="0">
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource PhasmaPanel}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Rules.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <ItemsControl x:Name="RulesList" ItemsSource="{Binding Rules}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border x:Name="Row" Padding="18,14" MinHeight="72" Background="Transparent" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
 
-                                    <Border Grid.Column="0" Width="40" Height="40" Style="{DynamicResource PhasmaThumb}" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}">
-                                        <Image Source="{Binding IconUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
-                                    </Border>
+                                        <Border Grid.Column="0" Width="40" Height="40" VerticalAlignment="Center" Style="{DynamicResource PhasmaThumb}" CornerRadius="8">
+                                            <Image Source="{Binding IconUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                                        </Border>
 
-                                    <StackPanel Grid.Column="1" Margin="12,0,12,0" VerticalAlignment="Center">
-                                        <TextBlock FontSize="13.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding Title}" />
-                                        <TextBlock FontSize="11.5" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Subtitle}" />
-                                        <TextBlock FontSize="11.5" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding ProfileSummary}" />
-                                    </StackPanel>
+                                        <StackPanel Grid.Column="1" Margin="12,0,16,0" VerticalAlignment="Center">
+                                            <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="White" TextTrimming="CharacterEllipsis" Text="{Binding Title}" />
+                                            <TextBlock Margin="0,1,0,0" FontSize="12.5" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Subtitle}" />
+                                            <TextBlock Margin="0,2,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding ProfileSummary}" />
+                                        </StackPanel>
 
-                                    <WrapPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                        <ComboBox Width="150" Margin="0,2,8,2" ToolTip="{x:Static resources:Strings.Menu_FastFlagGames_ProfileGameUses}"
-                                                  ItemsSource="{Binding Profiles}" DisplayMemberPath="Name" SelectedValuePath="Id" SelectedValue="{Binding ProfileId, Mode=TwoWay}" />
-                                        <Button Margin="0,2,6,2" Style="{DynamicResource PhasmaSoftButton}" ToolTip="{x:Static resources:Strings.Menu_FastFlagGames_OpenGameSProfileFastFlag}"
-                                                Command="{Binding DataContext.EditProfileCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
-                                            <StackPanel Orientation="Horizontal">
-                                                <ui:SymbolIcon Symbol="Code24" FontSize="14" Margin="0,0,6,0" />
-                                                <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_EditFlags}" />
-                                            </StackPanel>
-                                        </Button>
-                                        <Button Margin="0,2,6,2" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Menu_FastFlagGames_SeeEveryFlagGameStarts}"
-                                                AutomationProperties.Name="{x:Static resources:Strings.Menu_FastFlagGames_SeeEveryFlagGameStarts}"
-                                                Command="{Binding DataContext.PreviewCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
-                                            <ui:SymbolIcon Symbol="Eye24" FontSize="15" />
-                                        </Button>
-                                        <Button Margin="0,2,0,2" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Menu_FastFlagGames_StopGivingGameItsOwnFlags}"
-                                                AutomationProperties.Name="{x:Static resources:Strings.Menu_FastFlagGames_StopGivingGameItsOwnFlags}"
-                                                Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
-                                            <ui:SymbolIcon Symbol="Dismiss24" FontSize="15" />
-                                        </Button>
-                                    </WrapPanel>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                                        <WrapPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                            <ComboBox Width="150" Margin="0,2,12,2" VerticalAlignment="Center" ToolTip="{x:Static resources:Strings.Menu_FastFlagGames_ProfileGameUses}"
+                                                      ItemsSource="{Binding Profiles}" DisplayMemberPath="Name" SelectedValuePath="Id" SelectedValue="{Binding ProfileId, Mode=TwoWay}" />
+                                            <Button Margin="0,2,10,2" Style="{DynamicResource PhasmaGhostButton}" FontWeight="SemiBold" ToolTip="{x:Static resources:Strings.Menu_FastFlagGames_OpenGameSProfileFastFlag}"
+                                                    Command="{Binding DataContext.EditProfileCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <ui:SymbolIcon Symbol="Code24" FontSize="14" Margin="0,0,6,0" />
+                                                    <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_EditFlags}" />
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Margin="0,2,4,2" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Menu_FastFlagGames_SeeEveryFlagGameStarts}"
+                                                    AutomationProperties.Name="{x:Static resources:Strings.Menu_FastFlagGames_SeeEveryFlagGameStarts}"
+                                                    Command="{Binding DataContext.PreviewCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                                <ui:SymbolIcon Symbol="Eye24" FontSize="15" />
+                                            </Button>
+                                            <Button Margin="0,2,0,2" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Menu_FastFlagGames_StopGivingGameItsOwnFlags}"
+                                                    AutomationProperties.Name="{x:Static resources:Strings.Menu_FastFlagGames_StopGivingGameItsOwnFlags}"
+                                                    Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                                <ui:SymbolIcon Symbol="Dismiss24" FontSize="15" />
+                                            </Button>
+                                        </WrapPanel>
+                                    </Grid>
+                                </Border>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource PreviousData}}" Value="{x:Null}">
+                                        <Setter TargetName="Row" Property="BorderThickness" Value="0" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Border>
 
-                <controls:SettingsCard Margin="0,6,0,0" Header="{x:Static resources:Strings.Menu_FastFlagGames_WhenRobloxAlreadyOpen}"
+                <controls:SettingsCard Header="{x:Static resources:Strings.Menu_FastFlagGames_WhenRobloxAlreadyOpen}"
                                        Description="Roblox only reads FastFlags when it starts. Joining from inside Roblox keeps the flags it started with.">
-                    <TextBlock Margin="0,0,0,10" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource PhasmaWarnBrush}" Visibility="{Binding TrackingOffVisibility, Mode=OneWay}"
-                               Text="{x:Static resources:Strings.Menu_FastFlagGames_ActivityTrackingOffIntegrationsPageSo}" />
+                    <Grid Margin="20,0,20,12" Visibility="{Binding TrackingOffVisibility, Mode=OneWay}">
+                        <Border Background="{DynamicResource PhasmaWarnBrush}" Opacity="0.07" CornerRadius="10" />
+                        <Border BorderBrush="{DynamicResource PhasmaWarnBrush}" BorderThickness="1" Opacity="0.28" CornerRadius="10" />
+                        <Grid Margin="16,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="Warning24" FontSize="18" Margin="0,0,12,0" VerticalAlignment="Top" Foreground="{DynamicResource PhasmaWarnBrush}" />
+                            <TextBlock Grid.Column="1" Style="{StaticResource NoteText}" Text="{x:Static resources:Strings.Menu_FastFlagGames_ActivityTrackingOffIntegrationsPageSo}" />
+                        </Grid>
+                    </Grid>
 
                     <controls:OptionControl Header="{x:Static resources:Strings.Menu_FastFlagGames_CloseRobloxFirstWhenLaunchNeeds}"
                                             Description="{x:Static resources:Strings.Menu_FastFlagGames_WhenYouClickPlayWebsiteLink}">
@@ -116,20 +202,27 @@
             </StackPanel>
         </ScrollViewer>
 
-        <!--  Right: add a game  -->
-        <Border Grid.Column="1" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                <StackPanel Margin="18,0,14,14">
-                    <TextBlock Style="{DynamicResource PhasmaHeading}" FontSize="14" Text="{x:Static resources:Strings.Menu_FastFlagGames_AddGame}" />
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Border Margin="0,0,14,14" Padding="20" VerticalAlignment="Top" Style="{DynamicResource PhasmaPanel}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Border RenderTransformOrigin="0.5,0.5" Width="4" Height="20" Margin="3,0,12,0" VerticalAlignment="Center" Background="{DynamicResource PhasmaAccentBrush}">
+                            <Border.RenderTransform>
+                                <SkewTransform AngleX="-14" />
+                            </Border.RenderTransform>
+                        </Border>
+                        <TextBlock VerticalAlignment="Center" FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="17" FontWeight="Bold" Foreground="White"
+                                   Text="{Binding Source={x:Static resources:Strings.Menu_FastFlagGames_AddGame}, Converter={StaticResource PhasmaUpper}}" />
+                    </StackPanel>
 
-                    <Grid Margin="0,12,0,0">
+                    <Grid Margin="0,14,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <ui:TextBox x:Name="SearchBox" Grid.Column="0" PlaceholderText="{x:Static resources:Strings.Menu_FastFlagGames_GameNameGameLinkPlaceID}"
+                        <ui:TextBox x:Name="SearchBox" Grid.Column="0" Icon="Search24" PlaceholderText="{x:Static resources:Strings.Menu_FastFlagGames_GameNameGameLinkPlaceID}"
                                     Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" KeyDown="SearchBox_KeyDown" />
-                        <Button Grid.Column="1" Margin="8,0,0,0" Style="{DynamicResource PhasmaSoftButton}" Command="{Binding SearchCommand, Mode=OneTime}">
+                        <Button Grid.Column="1" Margin="8,0,0,0" Style="{DynamicResource PhasmaSoftButton}" FontWeight="SemiBold" Command="{Binding SearchCommand, Mode=OneTime}">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="Search24" FontSize="14" Margin="0,0,6,0" />
                                 <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagGames_Find}" />
@@ -137,30 +230,33 @@
                         </Button>
                     </Grid>
 
-                    <DockPanel Margin="0,12,0,8">
+                    <DockPanel Margin="0,16,0,10">
                         <ui:ProgressRing DockPanel.Dock="Right" Width="16" Height="16" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ResultsHeader}" />
+                        <TextBlock Style="{StaticResource Eyebrow}" Text="{Binding ResultsHeader, Converter={StaticResource PhasmaUpper}}" />
                     </DockPanel>
 
                     <ItemsControl ItemsSource="{Binding Results}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <UniformGrid Columns="3" />
+                                <UniformGrid Columns="2" />
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Button Margin="0,0,8,8" ToolTip="{Binding Name}" AutomationProperties.Name="{Binding Name}"
+                                <Button Margin="0,0,10,10" ToolTip="{Binding Name}" AutomationProperties.Name="{Binding Name}"
                                         Command="{Binding DataContext.SelectGameCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
                                     <Button.Template>
                                         <ControlTemplate TargetType="Button">
-                                            <Border x:Name="Tile" Padding="6" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}" BorderThickness="1"
-                                                    Background="{DynamicResource PhasmaHoverBrush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
-                                                <ContentPresenter />
-                                            </Border>
+                                            <Grid>
+                                                <Border x:Name="Tile" BorderThickness="1" Background="{DynamicResource PhasmaS3Brush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}">
+                                                    <ContentPresenter />
+                                                </Border>
+                                                <Border x:Name="Bar" Height="2" VerticalAlignment="Bottom" Background="{DynamicResource PhasmaAccentBrush}" Visibility="Collapsed" />
+                                            </Grid>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="Tile" Property="Background" Value="{DynamicResource PhasmaSelectedBrush}" />
+                                                    <Setter TargetName="Tile" Property="BorderBrush" Value="{DynamicResource PhasmaStrokeStrongBrush}" />
+                                                    <Setter TargetName="Bar" Property="Visibility" Value="Visible" />
                                                 </Trigger>
                                                 <Trigger Property="IsKeyboardFocused" Value="True">
                                                     <Setter TargetName="Tile" Property="BorderBrush" Value="{DynamicResource PhasmaAccentBrush}" />
@@ -169,32 +265,34 @@
                                         </ControlTemplate>
                                     </Button.Template>
                                     <StackPanel>
-                                        <Border Height="86" Style="{DynamicResource PhasmaThumb}" CornerRadius="6">
-                                            <Image Source="{Binding IconUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                                        <Border Height="92" Background="{DynamicResource PhasmaS4Brush}" ClipToBounds="True">
+                                            <Image Source="{Binding IconUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill" />
                                         </Border>
-                                        <TextBlock Margin="0,6,0,0" FontSize="12" FontWeight="SemiBold" Height="32" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{Binding Name}" />
-                                        <TextBlock FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Tag}" />
+                                        <StackPanel Margin="12,10,12,10">
+                                            <TextBlock FontFamily="{DynamicResource PhasmaHeadingFont}" FontSize="13" FontWeight="Bold" Foreground="White" TextTrimming="CharacterEllipsis"
+                                                       Text="{Binding Name, Converter={StaticResource PhasmaUpper}}" />
+                                            <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource PhasmaMono}" FontSize="11.5" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Tag}" />
+                                        </StackPanel>
                                     </StackPanel>
                                 </Button>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <!--  The picked game and how to apply it  -->
-                    <StackPanel Margin="0,4,0,0" Visibility="{Binding SelectedVisibility}">
-                        <Border Padding="10" Style="{DynamicResource PhasmaCard}">
+                    <StackPanel Margin="0,10,0,0" Visibility="{Binding SelectedVisibility}">
+                        <Border Padding="16,12" Background="{DynamicResource PhasmaS3Brush}" BorderBrush="{DynamicResource PhasmaStrokeBrush}" BorderThickness="1" CornerRadius="10">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <Border Grid.Column="0" Width="34" Height="34" Style="{DynamicResource PhasmaThumb}" CornerRadius="{DynamicResource PhasmaCornerRadiusSmall}">
+                                <Border Grid.Column="0" Width="34" Height="34" Style="{DynamicResource PhasmaThumb}" CornerRadius="8">
                                     <Image Source="{Binding Selected.IconUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill" />
                                 </Border>
-                                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
-                                    <TextBlock FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="{Binding Selected.Name}" />
-                                    <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Selected" />
+                                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="White" TextTrimming="CharacterEllipsis" Text="{Binding Selected.Name}" />
+                                    <TextBlock FontSize="12.5" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Selected" />
                                 </StackPanel>
                                 <Button Grid.Column="2" Style="{DynamicResource PhasmaIconButton}" ToolTip="{x:Static resources:Strings.Menu_FastFlagGames_PickAnotherGame}"
                                         AutomationProperties.Name="{x:Static resources:Strings.Menu_FastFlagGames_PickAnotherGame}" Command="{Binding CancelAddCommand, Mode=OneTime}">
@@ -203,24 +301,22 @@
                             </Grid>
                         </Border>
 
-                        <TextBlock Margin="0,14,0,6" FontSize="13" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_FastFlagGames_WhereShouldApply}" />
+                        <TextBlock Margin="0,18,0,10" Style="{StaticResource Eyebrow}" Text="{Binding Source={x:Static resources:Strings.Menu_FastFlagGames_WhereShouldApply}, Converter={StaticResource PhasmaUpper}}" />
                         <RadioButton GroupName="FlagRuleScope" Content="The whole game, every place in it" IsChecked="{Binding WholeGame, Mode=TwoWay}" />
-                        <DockPanel Margin="0,6,0,0">
+                        <DockPanel Margin="0,8,0,0">
                             <RadioButton DockPanel.Dock="Left" GroupName="FlagRuleScope" VerticalAlignment="Center" Content="Only one place" IsChecked="{Binding OnePlace, Mode=TwoWay}" />
-                            <ComboBox Margin="8,0,0,0" IsEnabled="{Binding OnePlace}" ItemsSource="{Binding Places}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedPlace, Mode=TwoWay}" />
+                            <ComboBox Margin="12,0,0,0" IsEnabled="{Binding OnePlace}" ItemsSource="{Binding Places}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedPlace, Mode=TwoWay}" />
                         </DockPanel>
-                        <TextBlock Margin="0,4,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding PlacesStatus}" />
-                        <TextBlock Margin="0,4,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                                   Text="{x:Static resources:Strings.Menu_FastFlagGames_MostGamesAreMadeSeveralPlaces}" />
+                        <TextBlock Margin="0,8,0,0" Style="{StaticResource HintText}" Text="{Binding PlacesStatus}" />
+                        <TextBlock Margin="0,4,0,0" Style="{StaticResource HintText}" Text="{x:Static resources:Strings.Menu_FastFlagGames_MostGamesAreMadeSeveralPlaces}" />
 
-                        <TextBlock Margin="0,14,0,6" FontSize="13" FontWeight="SemiBold" Text="{x:Static resources:Strings.Menu_FastFlagGames_WhichFlags}" />
+                        <TextBlock Margin="0,18,0,10" Style="{StaticResource Eyebrow}" Text="{Binding Source={x:Static resources:Strings.Menu_FastFlagGames_WhichFlags}, Converter={StaticResource PhasmaUpper}}" />
                         <ComboBox ItemsSource="{Binding AddProfileOptions}" DisplayMemberPath="Name" SelectedValuePath="Id" SelectedValue="{Binding AddProfileId, Mode=TwoWay}" />
-                        <TextBlock Margin="0,6,0,0" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                                   Text="{x:Static resources:Strings.Menu_FastFlagGames_NewProfileStartsEmptyOpensFast}" />
+                        <TextBlock Margin="0,10,0,0" Style="{StaticResource HintText}" Text="{x:Static resources:Strings.Menu_FastFlagGames_NewProfileStartsEmptyOpensFast}" />
 
-                        <TextBlock Margin="0,10,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource PhasmaWarnBrush}" Visibility="{Binding ExistingNoteVisibility}" Text="{Binding ExistingNote}" />
+                        <TextBlock Margin="0,10,0,0" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource PhasmaWarnBrush}" Visibility="{Binding ExistingNoteVisibility}" Text="{Binding ExistingNote}" />
 
-                        <Button Margin="0,14,0,0" HorizontalAlignment="Stretch" Style="{DynamicResource PhasmaAccentButton}" Command="{Binding AddCommand, Mode=OneTime}">
+                        <Button Margin="0,16,0,0" HorizontalAlignment="Stretch" Style="{DynamicResource PhasmaAccentButton}" Command="{Binding AddCommand, Mode=OneTime}">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="Flag24" FontSize="14" Margin="0,0,6,0" />
                                 <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagGames_GiveGameItsOwnFlags}" />
@@ -228,7 +324,7 @@
                         </Button>
                     </StackPanel>
                 </StackPanel>
-            </ScrollViewer>
-        </Border>
+            </Border>
+        </ScrollViewer>
     </Grid>
 </ui:UiPage>

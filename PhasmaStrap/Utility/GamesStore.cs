@@ -1,9 +1,5 @@
 namespace PhasmaStrap.Utility
 {
-    /// <summary>
-    /// Small local choices on the Games pages: favourite games, private servers hidden from the list,
-    /// and which saved account a game launches with. Kept in Games.json next to the other stores.
-    /// </summary>
     public sealed class GamesStore
     {
         public sealed class FavouriteGame
@@ -27,7 +23,6 @@ namespace PhasmaStrap.Utility
         private static GamesStore? _shared;
         public static GamesStore Shared => _shared ??= new GamesStore(Path.Combine(Paths.Base, "Games.json"));
 
-        /// <summary>Raised after any change, so other open pages can refresh.</summary>
         public static event EventHandler? Changed;
 
         private readonly string _path;
@@ -158,7 +153,6 @@ namespace PhasmaStrap.Utility
 
         #region Account per game
 
-        /// <summary>The saved account this game launches with, or 0 for whoever is signed in.</summary>
         public long AccountFor(long universeId)
         {
             lock (_lock)

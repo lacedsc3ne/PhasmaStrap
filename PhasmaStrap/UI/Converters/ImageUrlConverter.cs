@@ -4,10 +4,6 @@ using System.Windows.Media.Imaging;
 
 namespace PhasmaStrap.UI.Converters
 {
-    /// <summary>
-    /// Turns an image URL (or local path) into an image source, and an empty value into nothing,
-    /// so tiles with no thumbnail yet just show their placeholder fill instead of a binding error.
-    /// </summary>
     internal class ImageUrlConverter : IValueConverter
     {
         private static readonly Dictionary<string, WeakReference<ImageSource>> Cache = new(StringComparer.Ordinal);
@@ -40,7 +36,13 @@ namespace PhasmaStrap.UI.Converters
                 image.EndInit();
 
                 lock (Cache)
+                {
+                    if (Cache.Count >= 512)
+                        foreach (string dead in Cache.Where(x => !x.Value.TryGetTarget(out _)).Select(x => x.Key).ToList())
+                            Cache.Remove(dead);
+
                     Cache[key] = new WeakReference<ImageSource>(image);
+                }
 
                 return image;
             }

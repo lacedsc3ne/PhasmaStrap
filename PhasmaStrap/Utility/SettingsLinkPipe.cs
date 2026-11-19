@@ -2,11 +2,6 @@ using System.IO.Pipes;
 
 namespace PhasmaStrap.Utility
 {
-    /// <summary>
-    /// Hands a setting link (phasmastrap://settings/...) to the settings window that is already open in another
-    /// PhasmaStrap process. Only one settings window runs at a time (the "Settings" <see cref="InterProcessLock"/>),
-    /// and that process listens here. Same user and same Windows session only.
-    /// </summary>
     internal static class SettingsLinkPipe
     {
         private const string LOG_IDENT = "SettingsLinkPipe";
@@ -24,7 +19,6 @@ namespace PhasmaStrap.Utility
 
         private static int _listening;
 
-        /// <summary>Starts listening on a background thread. <paramref name="received"/> runs on that thread.</summary>
         public static void Listen(Action<string> received)
         {
             if (Interlocked.Exchange(ref _listening, 1) == 1)
@@ -51,7 +45,6 @@ namespace PhasmaStrap.Utility
                 }
                 catch (Exception ex)
                 {
-                    // Another process already owns the name; links will reach that one instead.
                     App.Logger.WriteLine(LOG_IDENT, $"Could not listen for setting links: {ex.Message}");
                     return;
                 }
@@ -79,7 +72,6 @@ namespace PhasmaStrap.Utility
             }
         }
 
-        /// <summary>Sends <paramref name="link"/> to the open settings window. False when nobody is listening.</summary>
         public static bool Send(string link)
         {
             try

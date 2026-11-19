@@ -16,10 +16,6 @@ using SettingsModel = PhasmaStrap.Models.Persistable.Settings;
 
 namespace PhasmaStrap.UI.Elements.Settings
 {
-    /// <summary>
-    /// The right click menu shared by every setting row (<see cref="OptionControl"/>).
-    /// Hooked once for the whole app as a class handler from OptionControl's static constructor.
-    /// </summary>
     internal static class SettingRowMenu
     {
         private const string LOG_IDENT = "SettingRowMenu";
@@ -65,7 +61,6 @@ namespace PhasmaStrap.UI.Elements.Settings
                 if (window is null)
                     return;
 
-                // Run after the menu closes so it doesn't take focus back from the search box.
                 MainWindow target = window;
                 target.Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() => target.SearchFor(header)));
             }, enabled: window is not null && header.Length > 0);
@@ -98,7 +93,6 @@ namespace PhasmaStrap.UI.Elements.Settings
                 }, enabled: entry is not null);
         }
 
-        /// <summary>The settings pages this row sits in, innermost first (a section page, then the page hosting it).</summary>
         private static List<Type> PageTypesAround(OptionControl row)
         {
             string? pagesNamespace = typeof(Pages.SettingsPage).Namespace;
@@ -127,7 +121,6 @@ namespace PhasmaStrap.UI.Elements.Settings
 
         private static bool ShouldOpen(DependencyObject source, OptionControl row)
         {
-            // Between the click and the row: leave text boxes and anything with its own menu alone.
             for (DependencyObject? current = source; current is not null && !ReferenceEquals(current, row); current = ParentOf(current))
             {
                 if (current is TextBoxBase or PasswordBox)
@@ -140,7 +133,6 @@ namespace PhasmaStrap.UI.Elements.Settings
             if (row.ContextMenu is not null)
                 return false;
 
-            // Rows that belong to a list item keep the list's own menu.
             for (DependencyObject? current = row; current is not null; current = ParentOf(current))
             {
                 if (current is ListBoxItem or DataGridRow or TreeViewItem)
@@ -173,7 +165,6 @@ namespace PhasmaStrap.UI.Elements.Settings
 
             public void Apply()
             {
-                // Set through the bound property so the view model runs its own logic and notifications.
                 SourceProperty.SetValue(Source, Default);
 
                 foreach (BindingExpression expression in Expressions)
@@ -184,10 +175,6 @@ namespace PhasmaStrap.UI.Elements.Settings
             }
         }
 
-        /// <summary>
-        /// The one setting this row edits, or null when the row edits nothing, edits more than one thing,
-        /// or edits something that can't be traced back to a property on the settings file.
-        /// </summary>
         private static ResetTarget? FindResetTarget(OptionControl row)
         {
             ResetTarget? found = null;
@@ -208,7 +195,6 @@ namespace PhasmaStrap.UI.Elements.Settings
                     object? source = expression.ResolvedSource;
                     string? name = expression.ResolvedSourcePropertyName;
 
-                    // Bindings inside a control's own template point at other UI elements, not at settings.
                     if (source is null || source is DependencyObject)
                         continue;
 
@@ -247,7 +233,6 @@ namespace PhasmaStrap.UI.Elements.Settings
             if (bound is null || bound.PropertyType != setting.PropertyType)
                 return null;
 
-            // Same name and type isn't enough on its own: the bound property must also show the saved value.
             if (!Equals(bound.GetValue(source), setting.GetValue(App.Settings.Prop)))
                 return null;
 
@@ -312,7 +297,6 @@ namespace PhasmaStrap.UI.Elements.Settings
             {
                 DependencyObject current = pending.Pop();
 
-                // A row inside a row has its own menu.
                 if (current is OptionControl && !ReferenceEquals(current, row))
                     continue;
 

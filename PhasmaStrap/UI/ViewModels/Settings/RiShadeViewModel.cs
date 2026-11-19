@@ -81,7 +81,7 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public bool RiShadeEnabled
         {
             get => App.Settings.Prop.RiShadeEnabled;
-            set => App.Settings.Prop.RiShadeEnabled = value;
+            set { App.Settings.Prop.RiShadeEnabled = value; OnPropertyChanged(nameof(RiShadeEnabled)); }
         }
 
         public IEnumerable<string> RenderScaleNames { get; } = RiShadeSettings.RenderScaleNames;
@@ -112,7 +112,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         private void RefreshAll() => OnPropertyChanged(string.Empty);
 
-        /// <summary>Label on the right half of the preview: the chosen preset, or RiShade for hand tuned settings.</summary>
         public string PreviewEffectLabel =>
             !string.IsNullOrEmpty(_selectedPreset) && _selectedPreset != RiShadeSettings.PresetNames[0] ? _selectedPreset : "RiShade";
 

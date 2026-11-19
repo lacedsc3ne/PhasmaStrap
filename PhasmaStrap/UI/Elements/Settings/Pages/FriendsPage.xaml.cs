@@ -17,7 +17,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
             DataContext = vm;
             InitializeComponent();
 
-            // The party and accounts cards follow the party live while the page is open
             Loaded += (_, _) => vm.Attach();
             Unloaded += (_, _) => vm.Detach();
 
@@ -63,7 +62,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Pages
         {
             vm.SelectedFriend = row;
 
-            // The details panel needs a layout pass before its note box can take focus
             Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
             {
                 FriendNoteBox.Focus();

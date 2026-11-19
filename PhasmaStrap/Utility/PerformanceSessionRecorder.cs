@@ -2,7 +2,6 @@ using PhasmaStrap.Integrations;
 
 namespace PhasmaStrap.Utility
 {
-    /// <summary>FPS, ping and Roblox memory sampled through the last game you played. Stored locally only.</summary>
     public sealed class PerformanceSessionSummary
     {
         public long PlaceId { get; set; }
@@ -16,11 +15,6 @@ namespace PhasmaStrap.Utility
         public List<int> MemoryMb { get; set; } = new();
     }
 
-    /// <summary>
-    /// Runs in the watcher next to the activity tracker. Every few seconds while you are in a game it reads the FPS
-    /// the overlay or replay recorder sees, the ping the server ping monitor measures (when the HUD has it on) and
-    /// the Roblox player's memory, then writes a summary for the Performance pages when you leave.
-    /// </summary>
     public static class PerformanceSessionRecorder
     {
         private const string LOG_IDENT = "PerformanceSessionRecorder";
@@ -75,11 +69,10 @@ namespace PhasmaStrap.Utility
                         return;
                 }
 
-                int fps = (int)Math.Round(FpsFeed.Latest);
+                int fps = LauncherThrottle.IsRobloxInFront() ? (int)Math.Round(FpsFeed.Latest) : 0;
                 int ping = ServerPingMonitor.LatestMs;
                 int memoryMb = RobloxMemoryMb();
 
-                // The name and region are cleared when the game ends, so keep the latest known ones while playing.
                 string name = NowPlaying.GameName();
                 string region = ServerRegion.Current;
 
@@ -111,7 +104,6 @@ namespace PhasmaStrap.Utility
         {
             list.Add(value);
 
-            // Long sessions: halve the resolution instead of dropping the start.
             if (list.Count > MaxSamples)
             {
                 var halved = new List<int>(list.Count / 2 + 1);
@@ -167,7 +159,6 @@ namespace PhasmaStrap.Utility
             }
         }
 
-        /// <summary>The last finished session, or null when nothing was recorded yet.</summary>
         public static PerformanceSessionSummary? LoadLast()
         {
             try

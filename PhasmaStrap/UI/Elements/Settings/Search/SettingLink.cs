@@ -3,17 +3,6 @@ using System.Resources;
 
 namespace PhasmaStrap.UI.Elements.Settings.Search
 {
-    /// <summary>
-    /// Shareable links to one entry of the settings search index.
-    /// <para>
-    /// The key is the same string the search uses for recent results (<see cref="MainWindow.RecentKey"/>:
-    /// kind | page | tab | section | group | header), base64url encoded. Tab, section, group and header are written as
-    /// their resource name ("@Menu.Appearance.Theme") when they come from <see cref="Strings"/>, so a link copied in one
-    /// language opens the same setting in another.
-    /// </para>
-    /// The app link is phasmastrap://settings/&lt;key&gt;. What gets copied is the web form,
-    /// https://phasmastrap.com/s/&lt;key&gt;, which the site turns into the app link (see specs/extras.md).
-    /// </summary>
     internal static class SettingLink
     {
         private const string LOG_IDENT = "SettingLink";
@@ -41,7 +30,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
             return Convert.ToBase64String(Encoding.UTF8.GetBytes(text)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
         }
 
-        /// <summary>The key inside an app link or web link, or null when <paramref name="link"/> is neither.</summary>
         public static string? KeyFromLink(string? link)
         {
             if (string.IsNullOrWhiteSpace(link))
@@ -85,7 +73,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
 
         private static bool IsKeyChar(char c) => c is (>= 'a' and <= 'z') or (>= 'A' and <= 'Z') or (>= '0' and <= '9') or '-' or '_';
 
-        /// <summary>The index entry a key points at, or null when this version has nothing that matches.</summary>
         public static SettingsSearchEntry? Resolve(string key)
         {
             string? text = Decode(key);
@@ -106,7 +93,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
             if (exact is not null)
                 return exact;
 
-            // The setting may have moved to another tab or group on the same page since the link was made.
             string kind = parts[0], page = parts[1], header = parts[5];
             return entries.FirstOrDefault(e => e.Kind.ToString() == kind && e.PageType.Name == page && e.Header == header)
                 ?? entries.FirstOrDefault(e => e.PageType.Name == page && e.Header == header);
@@ -140,7 +126,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
             if (ResourceNames.Value.TryGetValue(value, out string? name))
                 return "@" + name;
 
-            // A plain text part that happens to start with @ is escaped as @@.
             return value.StartsWith('@') ? "@" + value : value;
         }
 
@@ -165,7 +150,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
             return value?.Trim() ?? part;
         }
 
-        /// <summary>Displayed text to resource name, for the language PhasmaStrap is showing.</summary>
         private static Dictionary<string, string> LoadResourceNames()
         {
             var map = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -181,7 +165,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
             if (!cultures.Contains(CultureInfo.InvariantCulture))
                 cultures.Add(CultureInfo.InvariantCulture);
 
-            // Most specific first, so a translated text maps to the name it is shown for.
             foreach (CultureInfo culture in cultures)
             {
                 ResourceSet? set;
@@ -211,10 +194,6 @@ namespace PhasmaStrap.UI.Elements.Settings.Search
 
         #region Finding a row's entry
 
-        /// <summary>
-        /// The index entry for a setting row: same header on the nearest page the row sits in
-        /// (<paramref name="pageTypes"/>, innermost first), else the same header anywhere.
-        /// </summary>
         public static SettingsSearchEntry? FindEntry(string header, IReadOnlyList<Type> pageTypes)
         {
             header = (header ?? "").Trim();

@@ -4,10 +4,6 @@ using PhasmaStrap.UI.ViewModels.Settings;
 
 namespace PhasmaStrap.UI.Elements.Settings.Pages
 {
-    /// <summary>
-    /// The Bootstrapper section of the settings rail: style, custom themes, icon and title of the loading window.
-    /// These settings used to sit at the bottom of Appearance and still use its view model.
-    /// </summary>
     public partial class BootstrapperStylePage
     {
         public BootstrapperStylePage()

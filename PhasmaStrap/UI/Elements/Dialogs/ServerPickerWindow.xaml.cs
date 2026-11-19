@@ -25,7 +25,6 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
         public string? ChosenJobId { get; private set; }
 
-        /// <param name="gameTitle">"Game · Place" for the headline. Looked up from the place when left empty.</param>
         public ServerPickerWindow(long placeId, Task<List<MatchmakerCandidate>> search, TimeSpan limit, string gameTitle = "")
         {
             InitializeComponent();
@@ -55,7 +54,6 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             Loaded += (_, _) => _ = FillAsync(placeId, search);
         }
 
-        /// <summary>"Game · Place" from what is already on this PC (your library and the place name cache), or empty.</summary>
         public static string LocalTitle(long placeId)
         {
             if (placeId <= 0)
@@ -77,7 +75,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
 
         private void ShowGame(string title)
         {
-            GameText.Text = title;
+            GameText.Text = title.ToUpperInvariant();
             GameText.Visibility = title.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         }
 

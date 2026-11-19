@@ -26,6 +26,7 @@ namespace PhasmaStrap.UI
         private bool _requestedActive;
         private bool _rendering;
         private bool _disposed;
+        private Window? _window;
 
         public SmoothSnowLayer()
         {
@@ -49,14 +50,27 @@ namespace PhasmaStrap.UI
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
+            HookWindow(Window.GetWindow(this));
             EnsureParticleCount();
             UpdateRenderingState();
         }
 
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
+            HookWindow(null);
             StopRendering();
         }
+
+        private void HookWindow(Window? window)
+        {
+            if (_window is not null)
+                _window.StateChanged -= OnWindowStateChanged;
+            _window = window;
+            if (_window is not null)
+                _window.StateChanged += OnWindowStateChanged;
+        }
+
+        private void OnWindowStateChanged(object? sender, EventArgs e) => UpdateRenderingState();
 
         private void OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
@@ -65,7 +79,7 @@ namespace PhasmaStrap.UI
 
         private void UpdateRenderingState()
         {
-            if (_requestedActive && IsLoaded && IsVisible)
+            if (_requestedActive && IsLoaded && IsVisible && _window?.WindowState != System.Windows.WindowState.Minimized)
             {
                 StartRendering();
             }
@@ -222,6 +236,7 @@ namespace PhasmaStrap.UI
             }
             _disposed = true;
             StopRendering();
+            HookWindow(null);
             Loaded -= OnLoaded;
             Unloaded -= OnUnloaded;
             IsVisibleChanged -= OnIsVisibleChanged;

@@ -56,15 +56,25 @@
                     Entries.RemoveLast();
             }
 
-            Share();
+            ScheduleShare();
             Changed?.Invoke(null, EventArgs.Empty);
+        }
+
+        private static System.Threading.Timer? _shareTimer;
+        private static int _sharePending;
+
+        private static void ScheduleShare()
+        {
+            if (Interlocked.Exchange(ref _sharePending, 1) != 0)
+                return;
+
+            System.Threading.Timer timer = LazyInitializer.EnsureInitialized(ref _shareTimer,
+                () => new System.Threading.Timer(_ => { Interlocked.Exchange(ref _sharePending, 0); Share(); }, null, Timeout.Infinite, Timeout.Infinite));
+            try { timer.Change(1000, Timeout.Infinite); } catch (ObjectDisposedException) { }
         }
 
         private static void Share()
         {
-            if (DateTime.UtcNow - _lastWrite < TimeSpan.FromMilliseconds(500))
-                return;
-
             _lastWrite = DateTime.UtcNow;
 
             try

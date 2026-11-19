@@ -7,16 +7,24 @@
     Title="Homepage background preview"
     Width="480" Height="270"
     MinWidth="240" MinHeight="135"
+    Background="{DynamicResource PhasmaPanelBrush}"
     WindowStartupLocation="CenterScreen"
     MouseLeftButtonDown="Window_MouseLeftButtonDown"
     mc:Ignorable="d">
     <Grid x:Name="RootGrid">
-        <TextBlock
+        <Border
             HorizontalAlignment="Center"
             VerticalAlignment="Bottom"
             Margin="0,0,0,12"
-            FontSize="12"
-            Foreground="#B0FFFFFF"
-            Text="Preview - click to close" />
+            Padding="8,3"
+            Background="#CC0D0D12"
+            BorderBrush="{DynamicResource PhasmaStrokeStrongBrush}"
+            BorderThickness="1">
+            <TextBlock
+                FontFamily="{DynamicResource PhasmaMono}"
+                FontSize="11"
+                Foreground="#B0FFFFFF"
+                Text="Preview - click to close" />
+        </Border>
     </Grid>
 </Window>

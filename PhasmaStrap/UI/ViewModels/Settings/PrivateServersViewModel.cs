@@ -47,7 +47,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public string? IconUrl { get => _icon; set { _icon = value; OnPropertyChanged(nameof(IconUrl)); } }
 
         private bool _isFriend;
-        /// <summary>The owner is one of your Roblox friends.</summary>
         public bool IsFriend
         {
             get => _isFriend;
@@ -57,7 +56,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         public Visibility FriendVisibility => _isFriend && !Server.Owned ? Visibility.Visible : Visibility.Collapsed;
 
         private bool _isHidden;
-        /// <summary>Hidden from the list on this PC. Only shown while "Show hidden" is on.</summary>
         public bool IsHidden
         {
             get => _isHidden;
@@ -72,10 +70,8 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public DateTime? EndsAt => Server.Expires is DateTime e && e < DateTime.UtcNow.AddYears(20) ? e : null;
 
-        /// <summary>The server's own name, shown as the row title.</summary>
         public string ServerName => Server.Name.Length > 0 ? Server.Name : "Private server";
 
-        /// <summary>The game and whose server it is, under the title.</summary>
         public string GameLine
         {
             get
@@ -85,7 +81,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
             }
         }
 
-        /// <summary>Short state for the tag: inactive, ending soon, or open.</summary>
         public string TagText
         {
             get
@@ -134,7 +129,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
         private HashSet<long> _hidden = PhasmaStrap.Utility.GamesStore.Shared.HiddenPrivateServers();
 
         private bool _showHidden;
-        /// <summary>Also lists the servers you hid, marked as hidden.</summary>
         public bool ShowHidden
         {
             get => _showHidden;
@@ -147,7 +141,6 @@ namespace PhasmaStrap.UI.ViewModels.Settings
 
         public Visibility HiddenToggleVisibility => _loaded && (HiddenCount > 0 || _showHidden) ? Visibility.Visible : Visibility.Collapsed;
 
-        /// <summary>Hides a server from this list on this PC, or brings it back.</summary>
         public void SetHidden(PrivateServerRow? row, bool hidden)
         {
             if (row is null)

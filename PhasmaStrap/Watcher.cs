@@ -34,6 +34,10 @@ namespace PhasmaStrap
 
         private readonly InstantReplayRecorder _instantReplay = new();
 
+        private string _replaySignature = ReplaySignature();
+
+        private EnginePresetValues? _optimizerValues;
+
         private RobloxProcessOptimizer? _processOptimizer;
 
         public Watcher()
@@ -151,23 +155,18 @@ namespace PhasmaStrap
 
                 _performanceMeasurer = new(ActivityWatcher);
 
-                if (App.Settings.Prop.FakeExclusiveFullscreen)
-                {
-                    ActivityWatcher.OnGameJoin += (_, _) => FakeExclusiveFullscreen.OnGameJoin();
-                    ActivityWatcher.OnGameLeave += (_, _) => FakeExclusiveFullscreen.OnGameLeave();
-                }
+                ActivityWatcher.OnGameJoin += (_, _) => FakeExclusiveFullscreen.OnGameJoin();
+                ActivityWatcher.OnGameLeave += (_, _) => FakeExclusiveFullscreen.OnGameLeave();
 
-                if (App.Settings.Prop.DuckRobloxAudioOnUnfocus)
+                ActivityWatcher.OnGameJoin += (_, _) =>
                 {
-                    ActivityWatcher.OnGameJoin += (_, _) => AudioDucker.Start();
-                    ActivityWatcher.OnGameLeave += (_, _) => AudioDucker.Stop();
-                }
+                    if (App.Settings.Prop.DuckRobloxAudioOnUnfocus)
+                        AudioDucker.Start();
+                };
+                ActivityWatcher.OnGameLeave += (_, _) => AudioDucker.Stop();
 
-                if (App.Settings.Prop.HeadsetAudioEnabled)
-                {
-                    ActivityWatcher.OnGameJoin += (_, _) => HeadsetAudio.Start();
-                    ActivityWatcher.OnGameLeave += (_, _) => HeadsetAudio.Stop();
-                }
+                ActivityWatcher.OnGameJoin += (_, _) => HeadsetAudio.ApplyFromSettings();
+                ActivityWatcher.OnGameLeave += (_, _) => HeadsetAudio.Stop();
 
                 ActivityWatcher.OnGameJoin += (_, _) =>
                 {
@@ -190,48 +189,11 @@ namespace PhasmaStrap
                         Utility.FlagProfileSession.OnGameJoined(watcher.Data);
                 };
 
-                Utility.SettingsHotReload.Reloaded += (_, _) =>
-                {
-                    try
-                    {
-                        App.Current.Dispatcher.BeginInvoke(() => _hotkeys?.ApplyBindings());
-                    }
-                    catch (Exception ex)
-                    {
-                        App.Logger.WriteLine("Watcher::SettingsReloaded", $"Hotkey re-apply failed: {ex.Message}");
-                    }
-
-                    try
-                    {
-                        OverlayHub.Refresh();
-                    }
-                    catch (Exception ex)
-                    {
-                        App.Logger.WriteLine("Watcher::SettingsReloaded", $"Overlay refresh failed: {ex.Message}");
-                    }
-
-                    try
-                    {
-                        bool wanted = App.Settings.Prop.InstantReplayEnabled && ActivityWatcher.InGame;
-                        if (wanted && !_instantReplay.IsRunning)
-                            _instantReplay.Start();
-                        else if (!App.Settings.Prop.InstantReplayEnabled && _instantReplay.IsRunning)
-                            _instantReplay.Stop();
-                    }
-                    catch (Exception ex)
-                    {
-                        App.Logger.WriteLine("Watcher::SettingsReloaded", $"Instant Replay state update failed: {ex.Message}");
-                    }
-                };
-
                 ActivityWatcher.OnGameJoin += (sender, _) => ForcedResolution.OnGameJoin((sender as ActivityWatcher)?.Data.PlaceId ?? 0);
                 ActivityWatcher.OnGameLeave += (_, _) => ForcedResolution.OnGameLeave();
 
-                if (RobloxProcessOptimizer.ShouldRun(App.Settings.Prop) || App.Settings.Prop.EnginePlaceProfiles.Count > 0)
-                {
-                    ActivityWatcher.OnGameJoin += (_, _) => StartProcessOptimizer();
-                    ActivityWatcher.OnGameLeave += (_, _) => StopProcessOptimizer();
-                }
+                ActivityWatcher.OnGameJoin += (_, _) => StartProcessOptimizer();
+                ActivityWatcher.OnGameLeave += (_, _) => StopProcessOptimizer();
 
                 if (App.Settings.Prop.LauncherMemoryManagerEnabled)
                 {
@@ -240,11 +202,8 @@ namespace PhasmaStrap
                     ActivityWatcher.OnGameLeave += (_, _) => MemoryManager.SetGameplayActive(false);
                 }
 
-                if (App.Settings.Prop.BoostTimerResolution || App.Settings.Prop.UseHighPerformancePowerPlan)
-                {
-                    ActivityWatcher.OnGameJoin += (_, _) => SystemPerformanceBoost.OnGameJoin();
-                    ActivityWatcher.OnGameLeave += (_, _) => SystemPerformanceBoost.OnGameLeave();
-                }
+                ActivityWatcher.OnGameJoin += (_, _) => SystemPerformanceBoost.OnGameJoin();
+                ActivityWatcher.OnGameLeave += (_, _) => SystemPerformanceBoost.OnGameLeave();
             }
 
             if (App.Settings.Prop.DisableRobloxCrashHandler)
@@ -267,7 +226,117 @@ namespace PhasmaStrap
             _hotkeys.RegisterAction(HotkeyActions.ToggleOverlayFocusMode, ToggleOverlayFocusMode);
             _hotkeys.ApplyBindings();
 
+            Utility.SettingsHotReload.Reloaded += (_, _) => OnSettingsReloaded();
+
             _notifyIcon = new(this);
+
+            LauncherThrottle.StartForSession(_watcherData.ProcessId, () =>
+                _instantReplay.IsRunning || HeadsetAudio.IsRunning || LauncherThrottle.CompositorDrawingGame());
+        }
+
+        private void OnSettingsReloaded()
+        {
+            const string LOG_IDENT = "Watcher::SettingsReloaded";
+
+            void Try(string what, Action action)
+            {
+                try { action(); }
+                catch (Exception ex) { App.Logger.WriteLine(LOG_IDENT, $"{what} failed: {ex.Message}"); }
+            }
+
+            Try("Hotkey re-apply", () => App.Current.Dispatcher.BeginInvoke(() => _hotkeys?.ApplyBindings()));
+
+            if (ActivityWatcher is null)
+                return;
+
+            Settings settings = App.Settings.Prop;
+            bool inGame = ActivityWatcher.InGame;
+
+            Try("Overlay refresh", () => OverlayHub.Refresh());
+
+            Try("Instant Replay state update", () =>
+            {
+                string signature = ReplaySignature();
+                bool changed = signature != _replaySignature;
+                _replaySignature = signature;
+
+                if (!settings.InstantReplayEnabled || !inGame)
+                {
+                    if (_instantReplay.IsRunning)
+                        _instantReplay.Stop();
+                    return;
+                }
+
+                if (_instantReplay.IsRunning && changed)
+                    _instantReplay.Stop();
+
+                if (!_instantReplay.IsRunning)
+                    _instantReplay.Start();
+            });
+
+            if (!inGame)
+                return;
+
+            Try("Ping monitor update", () =>
+            {
+                if (settings.OverlayHudShowPing || settings.OverlayHudShowRegion)
+                {
+                    if (!ServerPingMonitor.IsRunning)
+                        ServerPingMonitor.Start(ActivityWatcher.Data.MachineAddress);
+                }
+                else
+                    ServerPingMonitor.Stop();
+            });
+
+            Try("Fullscreen update", () =>
+            {
+                if (FakeExclusiveFullscreen.Enabled != FakeExclusiveFullscreen.IsApplied)
+                    FakeExclusiveFullscreen.OnGameJoin();
+            });
+
+            Try("Audio ducking update", () =>
+            {
+                if (settings.DuckRobloxAudioOnUnfocus)
+                {
+                    if (!AudioDucker.IsRunning)
+                        AudioDucker.Start();
+                }
+                else if (AudioDucker.IsRunning)
+                {
+                    AudioDucker.Stop();
+                }
+            });
+
+            Try("Headset audio update", HeadsetAudio.ApplyFromSettings);
+
+            Try("System boost update", () =>
+            {
+                if (settings.BoostTimerResolution || settings.UseHighPerformancePowerPlan)
+                    SystemPerformanceBoost.OnGameJoin();
+                else
+                    SystemPerformanceBoost.EndSession();
+            });
+
+            Try("Process optimizer update", () =>
+            {
+                if (_processOptimizer is null || _optimizerValues != EffectivePreset())
+                {
+                    StopProcessOptimizer();
+                    StartProcessOptimizer();
+                }
+                else if (!RobloxProcessOptimizer.ShouldRun(settings) && settings.EnginePlaceProfiles.Count == 0)
+                {
+                    StopProcessOptimizer();
+                }
+            });
+        }
+
+        private static string ReplaySignature()
+        {
+            Settings settings = App.Settings.Prop;
+            return string.Join("|", typeof(Settings).GetProperties()
+                .Where(property => property.Name.StartsWith("InstantReplay", StringComparison.Ordinal) && property.Name != nameof(Settings.InstantReplayEnabled))
+                .Select(property => $"{property.Name}={property.GetValue(settings)}"));
         }
 
         private void StartProcessOptimizer()
@@ -275,11 +344,20 @@ namespace PhasmaStrap
             if (_watcherData is null)
                 return;
 
-            long placeId = ActivityWatcher?.Data.PlaceId ?? 0;
-            EnginePresetValues effective = placeId != 0 ? EnginePresets.Resolve(placeId) : EnginePresets.FromSettings(App.Settings.Prop);
+            if (!RobloxProcessOptimizer.ShouldRun(App.Settings.Prop) && App.Settings.Prop.EnginePlaceProfiles.Count == 0)
+                return;
 
+            EnginePresetValues effective = EffectivePreset();
+
+            _optimizerValues = effective;
             _processOptimizer ??= new RobloxProcessOptimizer(_watcherData.ProcessId, effective);
             _processOptimizer.Start();
+        }
+
+        private EnginePresetValues EffectivePreset()
+        {
+            long placeId = ActivityWatcher?.Data.PlaceId ?? 0;
+            return placeId != 0 ? EnginePresets.Resolve(placeId) : EnginePresets.FromSettings(App.Settings.Prop);
         }
 
         private void StopProcessOptimizer()
@@ -332,56 +410,14 @@ namespace PhasmaStrap
             }
         }
 
-        private bool _pickingArea;
-
         public void TakeScreenshot()
         {
             App.SendStat("capture", "screenshot");
-
-            if (!App.Settings.Prop.ScreenshotPickArea)
-            {
-                ScreenshotTaken(ScreenshotCapture.Capture());
-                return;
-            }
-
-            if (_pickingArea)
-                return;
-
-            System.Drawing.Bitmap? shot = ScreenshotCapture.Grab(out System.Drawing.Rectangle where);
-            if (shot is null)
-            {
-                ScreenshotTaken(null);
-                return;
-            }
-
-            _pickingArea = true;
-            try
-            {
-                UI.Elements.Dialogs.ScreenshotAreaWindow.Pick(shot, where, picked =>
-                {
-                    _pickingArea = false;
-                    if (picked is null)
-                        return;
-
-                    using (picked)
-                        ScreenshotTaken(ScreenshotCapture.Save(picked));
-                });
-            }
-            catch (Exception ex)
-            {
-                _pickingArea = false;
-                App.Logger.WriteException("Watcher::TakeScreenshot", ex);
-                shot.Dispose();
-            }
+            ScreenshotTaker.Take(ScreenshotTaken);
         }
 
-        private void ScreenshotTaken(string? path)
+        private void ScreenshotTaken(string? path, bool copied)
         {
-            bool copied = path is not null && App.Settings.Prop.CaptureCopyScreenshotToClipboard && CopyCapture(path, image: true);
-
-            if (path is not null)
-                TidyCaptures();
-
             NotificationCenter.Notify(
                 path is null ? "Screenshot failed" : copied ? "Screenshot saved and copied" : "Screenshot saved",
                 path is not null ? Path.GetFileName(path) : "Could not find the Roblox window.",
@@ -392,37 +428,9 @@ namespace PhasmaStrap
                 kind: NotificationKindId.Screenshot);
         }
 
-        private static void TidyCaptures()
-        {
-            int limitMb = App.Settings.Prop.CaptureStorageLimitMB;
-            int maxAge = App.Settings.Prop.CaptureMaxAgeDays;
-            if (limitMb <= 0 && maxAge <= 0)
-                return;
+        private static void TidyCaptures() => ScreenshotTaker.TidyCaptures();
 
-            _ = Task.Run(() =>
-            {
-                try
-                {
-                    CaptureStorage.Log ??= message => App.Logger.WriteLine("CaptureStorage", message);
-                    CaptureStorage.Result result = CaptureStorage.Enforce(
-                        new[] { ScreenshotCapture.ScreenshotsDir, InstantReplayRecorder.ClipsDir },
-                        limitMb * 1048576L, maxAge);
-
-                    if (result.Removed > 0)
-                        App.Logger.WriteLine("Watcher::TidyCaptures", $"Moved {result.Removed} old capture(s) ({result.FreedBytes / 1048576.0:0} MB) to the Recycle Bin");
-                }
-                catch (Exception ex)
-                {
-                    App.Logger.WriteLine("Watcher::TidyCaptures", $"Failed: {ex.Message}");
-                }
-            });
-        }
-
-        private static bool CopyCapture(string path, bool image)
-        {
-            ClipboardShare.Log ??= message => App.Logger.WriteLine("ClipboardShare", message);
-            return image ? ClipboardShare.CopyImageFile(path) : ClipboardShare.CopyFile(path);
-        }
+        private static bool CopyCapture(string path, bool image) => ScreenshotTaker.CopyCapture(path, image);
 
         private int _replaySaving;
 
@@ -633,6 +641,8 @@ namespace PhasmaStrap
 
             await WaitForRobloxExitAsync();
 
+            LauncherThrottle.Stop();
+
             ReleaseWatcherLock();
 
             if (_rejoinAfterDropTask is not null)
@@ -815,6 +825,7 @@ namespace PhasmaStrap
             Step("window customizer", RobloxWindowCustomizer.Shutdown);
             Step("performance boost", SystemPerformanceBoost.EndSession);
             Step("process optimizer", StopProcessOptimizer);
+            Step("launcher throttle", LauncherThrottle.Stop);
             Step("memory manager", MemoryManager.Shutdown);
             Step("hotkeys", () => _hotkeys?.Dispose());
             Step("instant replay", _instantReplay.Dispose);

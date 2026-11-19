@@ -21,7 +21,7 @@ namespace PhasmaStrap.UI.Elements.Dialogs
             InitializeComponent();
 
             Title = App.ProjectName;
-            RootTitleBar.Title = Title;
+            RootTitleBar.Title = Title?.ToUpperInvariant();
 
             string? iconFilename = null;
             SystemSound? sound = null;

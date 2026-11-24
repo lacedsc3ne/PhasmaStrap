@@ -255,6 +255,13 @@ namespace PhasmaStrap
 
             bool allModificationsApplied = true;
 
+            if (!_noConnection && AppData.DistributionState.VersionGuid != _latestVersionGuid && ShouldKeepRunningClients())
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Roblox is already running on {AppData.DistributionState.VersionGuid}, staying on it instead of switching to {_latestVersionGuid}");
+                _latestVersionGuid = AppData.DistributionState.VersionGuid;
+                _latestVersionDirectory = AppData.Directory;
+            }
+
             if (!_noConnection)
             {
                 if (_usingKeptVersion && AppData.DistributionState.VersionGuid != _latestVersionGuid)
@@ -590,6 +597,18 @@ namespace PhasmaStrap
                     HandleConnectionError(ex);
                 }
             }
+        }
+
+        private bool ShouldKeepRunningClients()
+        {
+            if (IsStudioLaunch || _mustUpgrade || !File.Exists(AppData.ExecutablePath))
+                return false;
+
+            Process[] running = Process.GetProcessesByName(App.RobloxPlayerAppName);
+            foreach (Process process in running)
+                process.Dispose();
+
+            return running.Length > 0;
         }
 
         private void SwitchToKeptVersion()
